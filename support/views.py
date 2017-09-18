@@ -1,6 +1,5 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
-from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Sum
@@ -79,73 +78,78 @@ def supportListDistributionsXls(request):
 #        (11, 'all students on marketplace 15ects'),
 @group_required('type3staff')
 def mailinglist(request):
-    if request.method == 'POST':
-        form = ChooseMailingList(request.POST)
-        if form.is_valid():
-            users = []
-            form.cleaned_data['listtype'] = int(form.cleaned_data['listtype'])
-            if form.cleaned_data['listtype'] == 1:
-                # users
-                users = list(get_all_students())+list(get_all_staff())
-            elif form.cleaned_data['listtype'] == 2:
-                # all type1staff
-                # users = list(Group.objects.get(name='type1staff').user_set.all())
-                users = get_all_staff().filter(groups=get_grouptype("1"))
-            elif form.cleaned_data['listtype'] == 3:
-                # type2staff
-                users = get_all_staff().filter(groups=get_grouptype("2"))
-                # users = list(Group.objects.get(name='type2staff').user_set.all())
-            elif form.cleaned_data['listtype'] == 4:
-                # type2unverifiedstaff
-                users = get_all_staff().filter(groups=get_grouptype("2u"))
-                #users = list(Group.objects.get(name='type2staffunverified').user_set.all())
-            elif form.cleaned_data['listtype'] == 5:
-                # union set of 3&4
-                users = get_all_staff().filter(Q(groups=get_grouptype("2u")) | Q(groups=get_grouptype("2"))).distinct()
-                #users = list(chain(Group.objects.get(name='type2staff').user_set.all(),
-                #                   Group.objects.get(name='type2staffunverified').user_set.all()))
-            elif form.cleaned_data['listtype'] == 6:
-                # all staff
-                users = get_all_staff().filter(Q(groups=get_grouptype("2u")) | Q(groups=get_grouptype("2")) | Q(groups=get_grouptype("1")))
-            elif form.cleaned_data['listtype'] == 7:
-                # staff with projects of stats < 3
-                props = get_all_proposals().filter(Status__lt=3)
-                for prop in props:
-                    users.append(prop.ResponsibleStaff)
-                    users += list(prop.Assistants.all())
-            elif form.cleaned_data['listtype'] == 8:
-                # type3staff
-                users = get_all_staff().filter(groups=get_grouptype("3"))
-            elif form.cleaned_data['listtype'] == 9:
-                # all students on marketplace
-                users = get_all_students()
-            elif form.cleaned_data['listtype'] == 10:
-                # all students marketplace 10ects
-                users = get_all_students().filter(usermeta__EnrolledExt=False)
-            elif form.cleaned_data['listtype'] == 11:
-                # all students marketplace 15ects
-                users = get_all_students().filter(usermeta__EnrolledExt=True)
-            elif form.cleaned_data['listtype'] == 12:
-                # professors with no students
-                props = get_all_proposals().filter(distributions__isnull=True).distinct()
-                users = []
-                for prop in props:
-                    users.append(prop.ResponsibleStaff)
-            elif form.cleaned_data['listtype'] == 13:
-                #staff with students
-                props = get_all_proposals().filter(distributions__isnull=False).distinct()
-                users = []
-                for prop in props:
-                    users.append(prop.ResponsibleStaff)
-                    for ass in prop.Assistants.all():
-                        users.append(ass)
+    options = (
+        ('all', 'All users'),
+        ('type1', 'Type1 staff'),
+        ('type2', 'Type2 staff'),
+        ('type2un', 'Type2 staff unverified'),
+        ('type2', 'All type2 staff'),
+        ('staffnonfinishedprop', 'Staff with non finished proposal'),
+        ('type3', 'Type3 staff'),
+        ('allstudents', 'All students on marketplace'),
+        ('10ectsstud', 'Students on marketplace 10ECTS'),
+        ('15ectsstud', 'Students on marketplace 15ECTS'),
+        ('nostudprof', 'Professors with no students'),
+        ('staffdistr', 'Staff with distributed students'),
+    )
 
-            # filter for tracks
+    if request.method == 'POST':
+        form = ChooseMailingList(request.POST, options=options)
+        if form.is_valid():
             emails = set()
 
             # iterate through all selected users
-            for u in users:
-                emails.add(u.email)
+            if form.cleaned_data['people_all']:
+                # users
+                for user in list(get_all_students())+list(get_all_staff()):
+                    emails.add(user.email)
+            if form.cleaned_data['people_type1']:
+                # all type1staff
+                for user in get_all_staff().filter(groups=get_grouptype("1")):
+                    emails.add(user.email)
+            if form.cleaned_data['people_type2']:
+                # type2staff
+                for user in get_all_staff().filter(groups=get_grouptype("2")):
+                    emails.add(user.email)
+            if form.cleaned_data['people_type2un']:
+                # type2unverifiedstaff
+                for user in get_all_staff().filter(groups=get_grouptype("2u")):
+                    emails.add(user.email)
+            if form.cleaned_data['people_staffnonfinishedprop']:
+                # staff with projects of stats < 3
+                props = get_all_proposals().filter(Status__lt=3)
+                for prop in props:
+                    emails.add(prop.ResponsibleStaff.email)
+                    for ass in prop.Assistants.all():
+                        emails.add(ass.email)
+            if form.cleaned_data['people_type3']:
+                # type3staff
+                for user in get_all_staff().filter(groups=get_grouptype("3")):
+                    emails.add(user.email)
+            if form.cleaned_data['people_allstudents']:
+                # all students on marketplace
+                for user in get_all_students():
+                    emails.add(user.email)
+            if form.cleaned_data['people_10ectsstud']:
+                # all students marketplace 10ects
+                for user in get_all_students().filter(usermeta__EnrolledExt=False):
+                    emails.add(user.email)
+            if form.cleaned_data['people_15ectsstud']:
+                # all students marketplace 15ects
+                for user in get_all_students().filter(usermeta__EnrolledExt=True):
+                    emails.add(user.email)
+            if form.cleaned_data['people_nostudprof']:
+                # professors with no students
+                props = get_all_proposals().filter(distributions__isnull=True).distinct()
+                for prop in props:
+                    emails.add(prop.ResponsibleStaff.email)
+            if form.cleaned_data['people_staffdistr']:
+                #staff with students
+                props = get_all_proposals().filter(distributions__isnull=False).distinct()
+                for prop in props:
+                    emails.add(prop.ResponsibleStaff.email)
+                    for ass in prop.Assistants.all():
+                        emails.add(ass.email)
 
             # add support staff and study advisors
             for sup in list(get_grouptype("3").user_set.all()):
@@ -154,13 +158,10 @@ def mailinglist(request):
                 emails.add(sup.email)
             for sup in list(Group.objects.get(name='type6staff').user_set.all()):
                 emails.add(sup.email)
-            current_site = get_current_site(request)
-            domain = current_site.domain
+
             context = {
-                'domain' : domain,
                 'message' : form.cleaned_data['message'],
             }
-            # message = "The following users were mailed:<br/><ul>"
             if form.cleaned_data['subject'] != '':
                 subject = form.cleaned_data['subject']
             else:
@@ -169,7 +170,7 @@ def mailinglist(request):
                         emails).start()
             return render(request, "support/emailProgress.html")
     else:
-        form = ChooseMailingList()
+        form = ChooseMailingList(options=options)
 
     return render(request, "GenericForm.html", {
         "form" : form,

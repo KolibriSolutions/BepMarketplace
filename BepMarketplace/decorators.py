@@ -1,8 +1,9 @@
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 
-from general_view import get_timephase_number, get_grouptype
+from general_view import get_timephase_number, get_grouptype, get_timeslot
 from proposals.cacheprop import getProp
 from proposals.models import Proposal
 from support.models import CapacityGroupAdministration
@@ -89,14 +90,20 @@ def can_view_proposal(fn):
 
         # user needs to be logged in (so no need for login_required on top of this)
         if not request.user.is_authenticated:
-            raise PermissionDenied("Please login first")
+            page = args[0].path
+            return redirect_to_login(
+                next=page,
+                login_url='index:login',
+                redirect_field_name='next', )
 
         # support staf or superusers are always allowed to view
         if get_grouptype("3") in request.user.groups.all() or request.user.is_superuser:
             return fn(*args, **kw)
 
         # user is staffmember and involved in the proposal
-        if prop.ResponsibleStaff == request.user or request.user in prop.Assistants.all() or prop.Track.Head == request.user:
+        if prop.ResponsibleStaff == request.user \
+                or request.user in prop.Assistants.all() \
+                or prop.Track.Head == request.user:
             return fn(*args, **kw)
 
         # user is secretary (type4) and its the right group
@@ -107,7 +114,9 @@ def can_view_proposal(fn):
                     return fn(*args, **kw)
 
         # if project is published, non private and its the right time phase
-        if prop.Status == 4 and (not prop.Private.exists() or request.user in prop.Private.all()):
+        if prop.Status == 4 \
+                and (not prop.Private.exists() or request.user in prop.Private.all())\
+                and prop.TimeSlot == get_timeslot():
             # students only in timephase after 2
             if (not request.user.groups.exists()) and get_timephase_number() > 2:
                 return fn(*args, **kw)
@@ -115,7 +124,7 @@ def can_view_proposal(fn):
             if request.user.groups.exists():
                 return fn(*args, **kw)
 
-        raise PermissionDenied("You are not allowed to view this page.")
+        raise PermissionDenied("You are not allowed to view this proposal page.")
 
     return wrapper
 
@@ -137,39 +146,113 @@ def can_edit_proposal(fn):
 
         # user needs to be logged in (so no need for login_required on top of this)
         if not request.user.is_authenticated:
-            raise PermissionDenied("Please login first")
-
-        #if no timephase is enabled than forbid editing
-        if get_timephase_number() < 0:
-            raise PermissionDenied("No editing allowed when system is closed")
-
-        # if timephase is after checking phase no editing is allowed, except for support staff
-        if get_timephase_number() > 2 and not get_grouptype("3") in request.user.groups.all():
-            raise PermissionDenied("No editing allowed anymore, not right time phase")
+            page = args[0].path
+            return redirect_to_login(
+                    next=page,
+                    login_url='index:login',
+                    redirect_field_name='next',)
 
         # support staf or superusers are always allowed to edit
         if get_grouptype("3") in request.user.groups.all() or request.user.is_superuser:
-            return fn(*args, **kw)
-
-        # track heads are allowed to edit in the create and check phase
-        if prop.Track.Head == request.user:
             return fn(*args, **kw)
 
         # published proposals can never be edited.
         if prop.Status == 4:
             raise PermissionDenied("No editing possible. This proposal is already published")
 
+        # proposals of this year, check timephases
+        if prop.TimeSlot == get_timeslot():
+            # if no timephase is enabled than forbid editing
+            if get_timephase_number() < 0:
+                raise PermissionDenied("No editing allowed, system is closed")
+
+            # if timephase is after checking phase no editing is allowed, except for support staff
+            if get_timephase_number() > 2 and not get_grouptype("3") in request.user.groups.all():
+                raise PermissionDenied("No editing allowed anymore, not right time phase")
+
+            # track heads are allowed to edit in the create and check phase
+            if prop.Track.Head == request.user:
+                return fn(*args, **kw)
+
         # if status is either 1 or 2 and user is assistant edit is allowed in create+check timephase
-        if prop.Status < 3 and request.user in prop.Assistants.all():
+        if prop.Status < 3 and (request.user in prop.Assistants.all() or prop.ResponsibleStaff == request.user):
             return fn(*args, **kw)
 
-        # if status is either 1, 2 or 3(hidden edit, for downgrading api) and user is responsible staff member
-        if prop.Status < 4 and prop.ResponsibleStaff == request.user:
+        # if status is either 1, 2 or 3 and user is track head
+        if prop.Status < 4 and prop.Track.Head == request.user:
             return fn(*args, **kw)
 
-        raise PermissionDenied("You are not allowed to view this page.")
+        raise PermissionDenied("You are not allowed to edit this proposal.")
 
     return wrapper
+
+
+def can_downgrade_proposal(fn):
+    """
+    Test if a user can downgrade a given proposal.
+
+    :param fn:
+    :return:
+    """
+    def wrapper(*args, **kw):
+        if 'pk' in kw:
+            pk = int(kw['pk'])
+        else:
+            pk = int(args[1])
+        prop = get_object_or_404(Proposal, pk=pk)
+        request = args[0]
+
+        # user needs to be logged in (so no need for login_required on top of this)
+        if not request.user.is_authenticated:
+            page = args[0].path
+            return redirect_to_login(
+                next=page,
+                login_url='index:login',
+                redirect_field_name='next', )
+
+        if prop.Status == 1:
+            raise PermissionDenied("Already at first stage.")
+
+        # support staf, superusers are always allowed to downgrade
+        if get_grouptype("3") in request.user.groups.all() \
+                or request.user.is_superuser:
+            return fn(*args, **kw)
+
+        # proposals of this year, check timephases
+        if prop.TimeSlot == get_timeslot():
+            # if no timephase is enabled than forbid editing
+            if get_timephase_number() < 0:
+                raise PermissionDenied("No editing allowed, system is closed")
+
+            # if timephase is after checking phase no editing is allowed, except for support staff
+            if get_timephase_number() > 2 and not get_grouptype("3") in request.user.groups.all():
+                raise PermissionDenied("Proposal is frozen in this timeslot")
+
+            # if status is 3 Responsible can downgrade 3-2 in timephase 1
+            if prop.Status == 3 and prop.ResponsibleStaff == request.user and get_timephase_number() == 1:
+                return fn(*args, **kw)
+
+            # Track head can downgrade in phase 1 and 2
+            if get_timephase_number() <= 2 and prop.Track.Head == request.user:
+                return fn(*args, **kw)
+        else:
+            # if status is 3 Responsible can downgrade 3-2 if not in this timeslot
+            if prop.Status == 3 and prop.ResponsibleStaff == request.user:
+                return fn(*args, **kw)
+
+            # Track head is allowed all for not this timeslot
+            if prop.Track.Head == request.user:
+                return fn(*args, **kw)
+
+        # if status is 2 and user is assistant downgrade is allowed
+        if prop.Status == 2 \
+                and (request.user in prop.Assistants.all() or prop.ResponsibleStaff == request.user):
+            return fn(*args, **kw)
+
+        raise PermissionDenied("You are not allowed to downgrade this proposal.")
+
+    return wrapper
+
 
 def can_access_professionalskills(fn):
     """

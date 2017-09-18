@@ -9,24 +9,12 @@ from index.models import Track
 from proposals.models import Proposal
 from students.models import Application, Distribution
 from timeline.models import TimeSlot
-
+from general_model import GroupOptions
 
 class CapacityGroupAdministration(models.Model):
     """
     Model to set the administrative users for a capacity group.
     """
-    GroupOptions = (
-        ("EES", "Electrical Energy Systems"),
-        ("ECO", "Electro-Optical Communications"),
-        ("EPE", "Electromechanics and Power Electronics"),
-        ("ES", "Electronic Systems"),
-        ("MsM", "Mixed-signal Microelectronics"),
-        ("CS", "Control Systems"),
-        ("SPS", "Signal Processing Systems"),
-        ("PHI", "Photonic Integration"),
-        ("EM", "Electromagnetics")
-    )
-
     Group = models.CharField(max_length=3, choices=GroupOptions)
     Members = models.ManyToManyField(User, related_name='groupadministrations', blank=True)
 

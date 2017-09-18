@@ -26,10 +26,6 @@ if __name__=="__main__":
     django.setup()
 
     from django.contrib.auth.models import Group, User
-    from django.utils.encoding import force_bytes
-    from django.contrib.auth.tokens import default_token_generator
-    from django.utils.http import urlsafe_base64_encode
-    from general_mail import send_mail
 
     if os.path.isfile(filename):
         print('start')
@@ -53,13 +49,5 @@ if __name__=="__main__":
             g.is_staff = False
             g.groups.add(Group.objects.get(name="type1staff"))
             g.save()
-            context = {
-                'domain': "marketplace.ieeesb.nl",
-                'uid': urlsafe_base64_encode(force_bytes(g.pk)),
-                'user': g,
-                'token': default_token_generator.make_token(g),
-            }
-            send_mail("email/password_set_email_subject.txt", "email/password_newuser_set_email.html", context,
-                      "no-reply@ieeesb.nl", g.email, html_email_template_name="email/password_newuser_set_email.html")
         else:
             print("user exists!")

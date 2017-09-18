@@ -304,7 +304,7 @@ def respondFile(request, pk):
                     'status' : form.cleaned_data['Status'],
                     'explanation' : form.cleaned_data['Explanation'],
                     'type' : fileobj.Type.Name,
-                }, 'no-reply@ieeesb.nl', fileobj.Distribution.Student.email, 'email/prvresponse.html')
+                }, fileobj.Distribution.Student.email, 'email/prvresponse.html')
             form.save()
             return render(request, 'base.html', {
                 'Message' : 'Response saved!',

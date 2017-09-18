@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User, Group
 
+from general_model import GroupOptions
 from support.models import CapacityGroupAdministration
 from templates import widgets
 
@@ -33,5 +34,5 @@ class groupAdministrationForm(forms.Form):
         obj.save()
 
 
-    Group = forms.ChoiceField(choices=CapacityGroupAdministration.GroupOptions, widget=widgets.MetroSelect)
+    Group = forms.ChoiceField(choices=GroupOptions, widget=widgets.MetroSelect)
     AdministrationMembers = forms.ModelMultipleChoiceField(queryset=User.objects.none(), widget=widgets.MetroSelectMultiple, required=False)

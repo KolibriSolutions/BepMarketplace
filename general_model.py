@@ -95,4 +95,17 @@ def clean_text(text):
         return text
     except:
         return ''
-    
+
+
+# Capacity groups
+GroupOptions = (
+    ("EES", "Electrical Energy Systems"),
+    ("ECO", "Electro-Optical Communications"),
+    ("EPE", "Electromechanics and Power Electronics"),
+    ("ES", "Electronic Systems"),
+    ("MsM", "Mixed-signal Microelectronics"),
+    ("CS", "Control Systems"),
+    ("SPS", "Signal Processing Systems"),
+    ("PHI", "Photonic Integration"),
+    ("EM", "Electromagnetics")
+)

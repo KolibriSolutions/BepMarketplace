@@ -99,7 +99,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.media'
+                'django.template.context_processors.media',
+                'templates.context_processors.contactemail',
+                'templates.context_processors.domain',
             ],
         },
     },
@@ -154,17 +156,18 @@ CHANNEL_LAYERS = {
 }
 
 # Internationalization
-# https://docs.djangoproject.com/en/1.9/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'Europe/Amsterdam'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
+
+#the domain on which it is run
+DOMAIN = "https://bep.ele.tue.nl/"
+#email on which the team is reachable
+CONTACT_EMAIL = "bepmarketplace@tue.nl"
+#noreply address from wich to mail
+NOREPLY_EMAIL = "noreply@bep.ele.tue.nl"
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/download/'
@@ -190,7 +193,7 @@ MAX_NUM_APPLICATIONS = 5
 EMAIL_HOST = 'localhost'
 
 # Port for sending e-mail.
-EMAIL_PORT = 25
+EMAIL_PORT = 1025
 
 # Optional SMTP authentication information for EMAIL_HOST.
 EMAIL_HOST_USER = ''
@@ -210,6 +213,7 @@ ALLOWED_PROPOSAL_IMAGES = ['jpg', 'jpeg', 'png', 'bmp', 'gif']
 ALLOWED_PUBLIC_FILES = ['pdf','jpg', 'jpeg', 'png', 'bmp', 'gif','doc','docx','xls','xlsx','odt','ods','odp','ppt','pptx','tex','txt','rtf']
 ALLOWED_STUDENT_FILES = ALLOWED_PUBLIC_FILES
 
+STATIC_OBJECT_CACHE_DURATION = 60  # 1 minute
 #login security
 MAX_FAIL_LOGIN_NUM = 5
 LOCKOUT_TIME = 15*60

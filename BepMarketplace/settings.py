@@ -28,7 +28,7 @@ SECRET_KEY = SECRET_KEY_IMPORT
 DEBUG = False
 
 ALLOWED_HOSTS = ("*",)
-ADMINS = [("devteam", "marketplace@ieee.tue.nl")]
+ADMINS = [("devteam", "bepmarketplace@tue.nl")]
 
 # LOGIN_URL = "/login/"
 LOGIN_URL = '/saml2/login/'
@@ -107,7 +107,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.media'
+                'django.template.context_processors.media',
+                'templates.context_processors.contactemail',
+                'templates.context_processors.domain',
             ],
         },
     },
@@ -170,7 +172,7 @@ LOGGING = {
         'file': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
-            'filename': '/root/django.log',
+            'filename': '/home/django/django.log',
         },
         'mail_admins': {
             'level': 'ERROR',
@@ -209,6 +211,13 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
+#the domain on which it is run
+DOMAIN = "https://bep.ele.tue.nl"
+#email on which the team is reachable
+CONTACT_EMAIL = "bepmarketplace@tue.nl"
+#noreply address from wich to mail
+NOREPLY_EMAIL = "noreply@bep.ele.tue.nl"
+
 # path for media upload. Media download is not available on this path.
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/download/'
@@ -225,18 +234,17 @@ SENDFILE_URL = '/protected/'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 STATIC_URL = '/static/'
-STATIC_ROOT = '/root/BepMarketplace/templates/static/'
+STATIC_ROOT = '/home/django/templates/static/'
 
 
 # Host for sending e-mail.
-EMAIL_HOST = '192.168.1.4'
+EMAIL_HOST = 'localhost'
 # Port for sending e-mail.
 EMAIL_PORT = 25
 # Optional SMTP authentication information for EMAIL_HOST.
 EMAIL_HOST_USER = ''
 EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = False
-SERVER_EMAIL = "no-reply@ieeesb.nl"
 
 SESSION_COOKIE_AGE = 86400
 LOGIN_REDIRECT_URL = '/'
@@ -259,10 +267,9 @@ STATIC_OBJECT_CACHE_DURATION = 15*60  # 15 minutes.
 #login security
 MAX_FAIL_LOGIN_NUM = 5
 LOCKOUT_TIME = 15*60
-IPWARE_TRUSTED_PROXY_LIST = ['192.168.1.7']
+IPWARE_TRUSTED_PROXY_LIST = []
 
 #SAML
-DOMAIN = "https://marketplace.ieeesb.nl"
 SAML_CONFIG = {
   # full path to the xmlsec1 binary programm
   'xmlsec_binary': '/usr/bin/xmlsec1',
@@ -327,27 +334,27 @@ SAML_CONFIG = {
 
   # where the remote metadata is stored
   'metadata': {
-      'local': ['/root/saml/tuemetadata.xml'],
+      'local': ['/home/django/tuemetadata.xml'],
       },
 
   # set to 1 to output debugging information
   'debug': 0,
 
   # Signing
-  'key_file': '/root/saml/privkey.pem',  # private part
-  'cert_file': '/root/saml/cert.pem',  # public part
+  'key_file': '/home/django/certs/faraday.key',  # private part
+  'cert_file': '/home/django/certs/faraday_ele_tue_nl.crt',  # public part
 # Encryption
   'encryption_keypairs': [{
-      'key_file': '/root/saml/privkey.pem',  # private part
-      'cert_file': '/root/saml/cert.pem',  # public part
+      'key_file': '/home/django/certs/faraday.key',  # private part
+      'cert_file': '/home/django/certs/faraday_ele_tue_nl.crt',  # public part
   }],
 
   # own metadata settings
   'contact_person': [
       {'given_name': 'Frank',
        'sur_name': 'Boerman',
-       'company': 'IEEE sbe',
-       'email_address': 'marketplace@ieeesb.nl',
+       'company': 'ELE TU/e',
+       'email_address': CONTACT_EMAIL,
        'contact_type': 'technical'},
       {'given_name': 'Sjoerd',
        'sur_name': 'Hulshof',

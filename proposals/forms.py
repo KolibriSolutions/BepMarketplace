@@ -3,18 +3,14 @@ import re
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.auth.tokens import default_token_generator
-from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.images import get_image_dimensions
 from django.forms import ValidationError
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
 
 from general_form import clean_file_default, FileForm
-from general_mail import send_mail, mailPrivateStudent, mailStaff
+from general_mail import mailPrivateStudent, mailStaff
 from general_model import get_ext
-from general_view import get_grouptype, get_timeslot
+from general_view import get_grouptype
 from templates import widgets
 from tracking.models import ProposalStatusChange
 from .models import Proposal, ProposalImage, ProposalAttachment
@@ -74,18 +70,6 @@ def create_user_from_email(self, email, username, student=False):
     if not student:
         new_account.groups.add(get_grouptype("2u"))
     new_account.save()
-    current_site = get_current_site(self.request)
-    domain = current_site.domain
-    context = {
-        'domain': domain,
-        'uid': urlsafe_base64_encode(force_bytes(new_account.pk)),
-        'user': new_account,
-        'token': default_token_generator.make_token(new_account),
-    }
-    if not student:
-        send_mail("email/password_set_email_subject.txt", "email/password_newuser_set_email.html", context,
-              "no-reply@ieeesb.nl", new_account.email, html_email_template_name="email/password_newuser_set_email.html")
-
     return new_account
 
 class ProposalForm(forms.ModelForm):

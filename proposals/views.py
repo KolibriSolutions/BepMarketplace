@@ -8,10 +8,11 @@ from django.shortcuts import render
 from django.urls import reverse
 from render_block import render_block_to_string
 
-from BepMarketplace.decorators import group_required, can_edit_proposal, can_view_proposal
+from BepMarketplace.decorators import group_required, can_edit_proposal, can_view_proposal, can_downgrade_proposal
 from api.views import upgradeStatusApi, downgradeStatusApi
 from general_form import print_formset_errors
 from general_mail import mailAffectedUser, mailPrivateStudent
+from general_model import GroupOptions
 from general_view import createShareLink, get_timephase_number, get_distributions, get_all_proposals, get_grouptype, get_timeslot
 from index.models import Track
 from tracking.views import trackProposalVisit
@@ -115,15 +116,17 @@ def detailProposal(request, pk):
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
 def createProposal(request):
     """
-    Create a new proposal. Only for staff. Generating a new proposal is only allowed in the first timephases.
+    Create a new proposal. Only for staff. Generating a new proposal for this timeslot is only allowed in the first
+    timephase. In other timephases projects can only be generated for the next timeslot.
     
     :param request: 
     :return: 
     """
-    if get_timephase_number() != 1 and get_grouptype("3") not in request.user.groups.all():
-        raise PermissionDenied("Only in the \"Generating project proposals\" timephase it is allowed to create a new proposal")
+    #if get_timephase_number() != 1 and get_grouptype("3") not in request.user.groups.all():
+    #    raise PermissionDenied("Only in the \"Generating project proposals\" timephase it is allowed to create a new proposal")
     if request.method == 'POST':
         form = ProposalFormCreate(request.POST, request=request)
+        # TODO check timeslot is set correctly: in phase 1 for current year or later, else only for next year or later.
         if form.is_valid():
             prop = form.save()
             mailAffectedUser(request, prop)
@@ -135,6 +138,9 @@ def createProposal(request):
         init = {'ECTS': "15"}
         if get_grouptype("1") in request.user.groups.all():
             init["ResponsibleStaff"] = request.user.id
+        elif get_grouptype("2") in request.user.groups.all() or get_grouptype('2u'):
+            init["Assistants"] = [request.user.id]
+        #TODO init value for timeslot.
         form = ProposalFormCreate(request=request,initial=init)
     if get_timephase_number() == 1:
         return render(request, 'GenericForm.html', {'form':form,
@@ -142,7 +148,7 @@ def createProposal(request):
                                                 'buttontext': 'Create and go to next step'})
     else:
         return render(request, 'GenericForm.html', {'form':form,
-                                                'formtitle':'Create new Proposal (EXTENDED TIME)',
+                                                'formtitle':'Create new Proposal (For next year)',
                                                 'buttontext': 'Create and go to next step'})
 
 
@@ -157,6 +163,7 @@ def editProposal(request, pk):
     :return: 
     """
     obj = get_object_or_404(Proposal, pk=pk)
+    #TODO checks on timeslot
     if request.method == 'POST':
         form = ProposalFormEdit(request.POST, request.FILES, request=request, instance=obj)
         if form.is_valid():
@@ -169,7 +176,7 @@ def editProposal(request, pk):
             return render(request, "proposals/ProposalMessage.html", {"Message": "Proposal saved!", "Proposal": obj})
     else:
          form = ProposalFormEdit(request=request, instance=obj)
-    return render(request, 'GenericForm.html', {'form' : form, 'formtitle':'Edit Proposal', 'buttontext': 'Save'})
+    return render(request, 'GenericForm.html', {'form': form, 'formtitle': 'Edit Proposal', 'buttontext': 'Save'})
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
@@ -257,7 +264,8 @@ def askDeleteProposal(request, pk):
     """
     obj = get_object_or_404(Proposal, pk=pk)
     if obj.Status >= 3:
-        return render(request, "proposals/ProposalMessage.html", {"Message" : "This Proposal is already approved or public, it cannot be deleted", "Proposal" : obj})
+        return render(request, "proposals/ProposalMessage.html", {"Message" : "This Proposal is already approved or public, it cannot be deleted", "Proposal" : obj},
+                      status=403)
     form = "<a href="+reverse('proposals:deleteproposal', kwargs={"pk":int(pk)})+" class='button warning'><span class='mif-bin'></span>click here to DELETE</a></button></form>"
     return render(request, "proposals/ProposalMessage.html", {"Message": "Are you sure to delete? This cannot be undone " + form, "Proposal" : obj})
 
@@ -273,11 +281,12 @@ def deleteProposal(request, pk):
     """
     obj = get_object_or_404(Proposal, pk=pk)
     if obj.Status >= 3:
-        return render(request, "proposals/ProposalMessage.html", {"Message" : "Proposal is locked for editing", "Proposal" : obj})
+        return render(request, "proposals/ProposalMessage.html", {"Message" : "Proposal is locked for editing", "Proposal" : obj},
+                      status=403)
 
     if "HTTP_REFERER" in request.META:
         if (request.META["HTTP_REFERER"].split('/'))[-3] == "askdelete":
-            #make sure previous page is askdelete
+            # make sure previous page is askdelete
             title = obj.Title
             obj.delete()
             return render(request, "proposals/ProposalMessage.html", {"Message": "Proposal " + title + " is removed", "return" : ""})
@@ -304,7 +313,7 @@ def chooseEditProposal(request):
             if request.user == prop.ResponsibleStaff or request.user in prop.Assistants.all():
                 proposals.append(prop)
 
-    return render(request, 'proposals/ProposalsCustomList.html', {"proposals" : proposals})
+    return render(request, 'proposals/ProposalsCustomList.html', {"proposals": proposals})
 
 
 @login_required
@@ -318,10 +327,11 @@ def upgradeStatus(request, pk):
     """
     obj = get_object_or_404(Proposal, pk=pk)
     r = upgradeStatusApi(request, pk)
-    return render(request, "proposals/ProposalMessage.html", {"Message" : r.content, "Proposal":obj})
+    return render(request, "proposals/ProposalMessage.html", {"Message" : r.content, "Proposal":obj},
+                  status=r.status_code)
 
 
-@login_required
+@can_downgrade_proposal
 def downgradeStatusMessage(request, pk):
     """
     Downgrade the status of a proposal, and send the affected users (responsible and assistants) a mail that their 
@@ -341,14 +351,16 @@ def downgradeStatusMessage(request, pk):
                 notify = r.content.decode()
                 if message != '':
                     notify += "<br />With note: <br />" + str(message)
-                return render(request, "proposals/ProposalMessage.html", {"Message": notify, "Proposal": obj})
+                return render(request, "proposals/ProposalMessage.html", {"Message": notify, "Proposal": obj},
+                              status=r.status_code)
         else:
             form = ProposalDowngradeMessageForm(request=request)
             return render(request, 'GenericForm.html',
                       {'form': form, 'formtitle': 'Message for downgrade proposal '+obj.Title, 'buttontext': 'Downgrade and send message'})
     else:
         r = downgradeStatusApi(request, pk)
-        return render(request, "proposals/ProposalMessage.html", {"Message": r.content.decode(), "Proposal": obj})
+        return render(request, "proposals/ProposalMessage.html", {"Message": r.content.decode(), "Proposal": obj},
+                      status=r.status_code)
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified')
@@ -421,9 +433,7 @@ def getProposalStats(request, step=0):
     :return: 
     """
     if get_timephase_number() < 6:
-        return render(request, "base.html", {
-            "Message" : "Not yet available!"
-        })
+        raise PermissionDenied("Proposals statistics are only available from timephase 6 onwards.")
     step = int(step)
     allprops = get_all_proposals().filter(Status=4).order_by('-Title')
     proposals = []
@@ -497,9 +507,7 @@ def getProposalStatsGeneral(request, step=0):
     """
 
     if get_timephase_number() < 6:
-        return render(request, "base.html", {
-            "Message" : "Not yet available!"
-        })
+        raise PermissionDenied("Proposals statistics are only available from timephase 6 onwards.")
     step = int(step)
 
     if step == 0:
@@ -507,13 +515,13 @@ def getProposalStatsGeneral(request, step=0):
     elif step == 1:
         groupcount = []
 
-        for group in Proposal.GroupOptions:
+        for group in GroupOptions:
             groupcount.append(get_all_proposals().filter(Q(Status=4) & Q(Group=group[0])).distinct().count())
 
         return render(request, "proposals/ProposalStatsGeneral.html", {
             "proposalcount": get_all_proposals().filter(Status=4).count(),
             "groupcount": groupcount,
-            "groups" : [g[0] for g in Proposal.GroupOptions],
+            "groups" : [g[0] for g in GroupOptions],
             "step" : 1,
         })
     elif step == 2:

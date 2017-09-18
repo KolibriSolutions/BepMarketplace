@@ -18,22 +18,12 @@ def clean_publicfile_default(self):
 
 class ChooseMailingList(forms.Form):
     """List to choose what people to mail"""
-    lists = (
-        (1, 'All users'),
-        (2, 'Type1 staff'),
-        (3, 'Type2 staff'),
-        (4, 'Type2 staff unverified'),
-        (5, 'All type2 staff'),
-        (6, 'Type1 and all Type2 staff'),
-        (7, 'Staff with non finished proposal'),
-        (8, 'Type3 staff'),
-        (9, 'All students on marketplace'),
-        (10, 'Students on marketplace 10ECTS'),
-        (11, 'Students on marketplace 15ECTS'),
-        (12, 'Professors with no students'),
-        (13, 'Staff with distributed students'),
-    )
-    listtype = forms.ChoiceField(choices=lists, widget=widgets.MetroSelect)
+    def __init__(self, *args, **kwargs):
+        options = kwargs.pop('options')
+        super().__init__(*args, **kwargs)
+        for option in options:
+            self.fields['people_{}'.format(option[0])] = forms.BooleanField(widget=widgets.MetroCheckBox, label=option[1], required=False)
+
     subject = forms.CharField(widget=widgets.MetroTextInput, label='Subject: (leave empty for default)', required=False)
     message = forms.CharField(widget=widgets.MetroMultiTextInput, label="Message (check this twice):")
 

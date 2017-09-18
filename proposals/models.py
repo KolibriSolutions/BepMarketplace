@@ -8,20 +8,9 @@ from django.dispatch.dispatcher import receiver
 from general_model import file_delete_default, filename_default, clean_text, get_timeslot_id
 from index.models import Track
 from timeline.models import TimeSlot
-
+from general_model import GroupOptions
 
 class Proposal(models.Model):
-    GroupOptions = (
-        ("EES", "Electrical Energy Systems"),
-        ("ECO", "Electro-Optical Communications"),
-        ("EPE", "Electromechanics and Power Electronics"),
-        ("ES", "Electronic Systems"),
-        ("MsM", "Mixed-signal Microelectronics"),
-        ("CS", "Control Systems"),
-        ("SPS", "Signal Processing Systems"),
-        ("PHI", "Photonic Integration"),
-        ("EM", "Electromagnetics")
-    )
 
     StatusOptions = (
         (1, "Draft, awaiting completion by type 2 (assistant)"),

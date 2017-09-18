@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.db.models import Q
 from django.urls import reverse
 
-from BepMarketplace.settings import STATIC_OBJECT_CACHE_DURATION
+from django.conf import settings
 from index.models import Track
 from proposals.models import Proposal
 from students.models import Distribution
@@ -42,7 +42,7 @@ def get_timeslot():
         ts = TimeSlot.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now()))
         if not ts:
             return None
-        cache.set('timeslot', ts[0], STATIC_OBJECT_CACHE_DURATION)
+        cache.set('timeslot', ts[0], settings.STATIC_OBJECT_CACHE_DURATION)
         return ts[0]
 
 
@@ -61,7 +61,7 @@ def get_timephase():
         tp = TimePhase.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now()))
         if not tp:
             return None
-        cache.set('timephase', tp[0], STATIC_OBJECT_CACHE_DURATION)
+        cache.set('timephase', tp[0], settings.STATIC_OBJECT_CACHE_DURATION)
         return tp[0]
 
 
@@ -130,7 +130,7 @@ def get_all_proposals():
             return p
         else:
             p = Proposal.objects.filter(TimeSlot=get_timeslot()).distinct()
-            cache.set('all_proposals_objects', p, STATIC_OBJECT_CACHE_DURATION)
+            cache.set('all_proposals_objects', p, settings.STATIC_OBJECT_CACHE_DURATION)
             return p
     else:
         return Proposal.objects.filter(TimeSlot=get_timeslot()).distinct()
@@ -152,5 +152,5 @@ def get_grouptype(shortname):
         return gt
     else:
         gt = Group.objects.get(name=fullname)
-        cache.set("gt"+shortname, gt, STATIC_OBJECT_CACHE_DURATION)
+        cache.set("gt"+shortname, gt, settings.STATIC_OBJECT_CACHE_DURATION)
         return gt

@@ -197,7 +197,7 @@ def feedbackSubmit(request):
         feedback.save()
         send_mail("email/feedback_report_email_subject.txt", "email/feedback_report_email_created.html", {
             "report": feedback
-        }, "no-reply@ieeesb.nl", feedback.Reporter.email,
+        }, feedback.Reporter.email,
                   html_email_template_name="email/feedback_report_email_created.html")
         return render(request, "base.html", {
             "Message": "Feedback saved, thank you for taking the time to improve the system!"
@@ -227,7 +227,7 @@ def feedbackConfirm(request, pk):
     obj.save()
     send_mail("email/feedback_report_email_subject.txt", "email/feedback_report_email_statuschange.html", {
         "report": obj
-    }, "no-reply@ieeesb.nl", obj.Reporter.email,
+    }, obj.Reporter.email,
               html_email_template_name="email/feedback_report_email_statuschange.html")
 
     return render(request, "base.html", {
@@ -263,7 +263,7 @@ def feedbackClose(request, pk):
             send_mail("email/feedback_report_email_subject.txt", "email/feedback_report_email_statuschange.html", {
                 "report": obj,
                 "message": form.cleaned_data["message"],
-            }, "no-reply@ieeesb.nl", obj.Reporter.email,
+            }, obj.Reporter.email,
                       html_email_template_name="email/feedback_report_email_statuschange.html")
 
             return render(request, "base.html", {

@@ -10,9 +10,9 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from BepMarketplace.decorators import group_required, can_edit_proposal, superuser_required
+from BepMarketplace.decorators import group_required, can_edit_proposal, superuser_required, can_downgrade_proposal
 from general_mail import mailAffectedUser
-from general_view import get_timephase_number, get_all_proposals, get_grouptype
+from general_view import get_timephase_number, get_all_proposals, get_grouptype, get_timeslot
 from proposals.models import Proposal
 from support.models import CapacityGroupAdministration
 from tracking.models import ProposalStatusChange
@@ -70,16 +70,22 @@ def upgradeStatusApi(request, pk):
     """
     obj = get_object_or_404(Proposal, pk=pk)
 
-    if get_timephase_number() > 2:
-        return HttpResponse("Proposal frozen")
+    if obj.Status == 4:
+        return HttpResponse("Already at final stage", status=403)
 
-    if request.user in obj.Assistants.all() and obj.Status >= 2:
-        return HttpResponse("You are an assistant and not allowed to increase status further")
-    elif obj.Track.Head != request.user and obj.Status > 2 and not request.user.is_superuser:
-        return HttpResponse("Not allowed to publish as non track head")
+    elif get_timephase_number() > 2 and \
+                    obj.TimeSlot == get_timeslot() and \
+                    get_grouptype('3') not in request.user.groups.all():
+        return HttpResponse("Proposal frozen in this timeslot", status=403)
+
+    elif request.user in obj.Assistants.all() and obj.Status >= 2:
+        return HttpResponse("You are an assistant and not allowed to increase status further", status=403)
+    # Done in can_edit decorator
+    # elif obj.Track.Head != request.user and obj.Status > 2 and not get_grouptype('3') in request.user.groups.all():
+    #     return HttpResponse("Not allowed to publish as non track head", status=403)
+
     else:
-        if obj.Status == 4:
-            return HttpResponse("Already at final stage")
+
         obj.Status += 1
         obj.save()
         mailAffectedUser(request, obj)
@@ -105,7 +111,7 @@ def upgradeStatusApi(request, pk):
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
-@can_edit_proposal
+@can_downgrade_proposal
 def downgradeStatusApi(request, pk, message=''):
     """
     API call to decrease the status of a proposal.
@@ -116,38 +122,31 @@ def downgradeStatusApi(request, pk, message=''):
     :return: 
     """
     obj = get_object_or_404(Proposal, pk=pk)
+    # Status 2 always allowed
+    # Status 3: (timephase 1 responsible+trackhead) (timephase 2 only trackhead)
+    # Status 4: trackhead
+    obj.Status -= 1
+    obj.save()
+    mailAffectedUser(request, obj, message)
 
-    if get_timephase_number() > 2:
-        return HttpResponse("Proposal frozen")
+    notification = ProposalStatusChange()
+    notification.Subject = obj
+    notification.Message = message
+    notification.Actor = request.user
+    notification.StatusFrom = obj.Status + 1
+    notification.StatusTo = obj.Status
+    notification.save()
 
-    if request.user in obj.Assistants.all() and obj.Status > 2:
-        return HttpResponse("You are an assistant and not allowed to change status on this"
-                                                        " Proposal as its already out of your hands")
-    else:
-        if obj.Status == 1:
-            return HttpResponse("Already at first stage")
-        obj.Status -= 1
-        obj.save()
-        mailAffectedUser(request, obj, message)
+    #destroy the cache for this if the status went from 4->3
+    if obj.Status == 3:
+        if cache.has_key('listproposalsbodyhtml'):
+            cache.delete('listproposalsbodyhtml')
+        if cache.has_key('proposal_{}'.format(pk)):
+            cache.delete('proposal_{}'.format(pk))
+        if cache.has_key('proposaldetail{}'.format(pk)):
+            cache.delete('proposaldetail{}'.format(pk))
 
-        notification = ProposalStatusChange()
-        notification.Subject = obj
-        notification.Message = message
-        notification.Actor = request.user
-        notification.StatusFrom = obj.Status + 1
-        notification.StatusTo = obj.Status
-        notification.save()
-
-        #destroy the cache for this if the status went from 4->3
-        if obj.Status == 3:
-            if cache.has_key('listproposalsbodyhtml'):
-                cache.delete('listproposalsbodyhtml')
-            if cache.has_key('proposal_{}'.format(pk)):
-                cache.delete('proposal_{}'.format(pk))
-            if cache.has_key('proposaldetail{}'.format(pk)):
-                cache.delete('proposaldetail{}'.format(pk))
-
-        return HttpResponse(getStatStr(obj.Status))
+    return HttpResponse(getStatStr(obj.Status))
 
 
 @group_required('type3staff')

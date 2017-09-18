@@ -139,8 +139,8 @@ if __name__=="__main__":
     type2staff = Group.objects.get(name="type2staff")
     type3staff = Group.objects.get(name="type3staff")
 
-    profs = []
-    phds = []
+    profs = list(type1staff.user_set.all())
+    phds = list(type2staff.user_set.all())
 
     print("creating {} professors".format(NUMPROFS))
     for i in range(0, NUMPROFS):
@@ -154,7 +154,6 @@ if __name__=="__main__":
         except:
             print(str(i)+" not created")
 
-    phds = []
     print("creating {} phders".format(NUMPHDS))
     for i in range(0, NUMPHDS):
         try:
@@ -247,5 +246,6 @@ if __name__=="__main__":
                 p.Assistants.add(ass2)
                 phds.append(ass1)
             p.save()
+            print('{} created'.format(p))
         except:
             print(str(i)+"th proposal not created")

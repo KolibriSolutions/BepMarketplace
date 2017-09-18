@@ -9,6 +9,8 @@ from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
 from django.template import loader
 from django.utils.html import strip_tags
+from django.conf import settings
+from templates import context_processors
 
 from general_view import createShareLink, get_all_proposals
 from index.models import Track
@@ -16,10 +18,12 @@ from index.models import UserMeta
 
 
 def send_mail(subject_template_name, email_template_name,
-              context, from_email, to_email, html_email_template_name=None):
+              context, to_email, from_email=settings.NOREPLY_EMAIL, html_email_template_name=None):
     """
     Sends a django.core.mail.EmailMultiAlternatives to `to_email`.
     """
+    context.update(context_processors.domain(None))
+    context.update(context_processors.contactemail(None))
     if ".txt" in subject_template_name:
         subject = loader.render_to_string(subject_template_name, context)
     else:
@@ -86,7 +90,7 @@ def mailAffectedUser(request, proposal, message=''):
     }
     for e in emails:
         send_mail("email/action_required_email_subject.txt", "email/action_required_email.html", context,
-              "no-reply@ieeesb.nl", e, html_email_template_name="email/action_required_email.html")
+              e, html_email_template_name="email/action_required_email.html")
 
 
 def mailPrivateStudent(request, proposal, student, message=''):
@@ -109,7 +113,7 @@ def mailPrivateStudent(request, proposal, student, message=''):
         'sharelink' : createShareLink(request, proposal.id)
     }
     send_mail("email/private_student_mail_subject.txt", "email/private_student_email.html", context,
-              "no-reply@ieeesb.nl", email,
+              email,
               html_email_template_name="email/private_student_email.html")
 
 
@@ -132,8 +136,7 @@ def mailStaff(request, proposal, staff, message=''):
         'message'   : message,
     }
     send_mail("email/staff_change_mail_subject.txt", "email/staff_change_email.html", context,
-              "no-reply@ieeesb.nl", email,
-              html_email_template_name="email/staff_change_email.html")
+              email, html_email_template_name="email/staff_change_email.html")
 
 
 class EmailThreadMultipleTemplate(threading.Thread):
@@ -155,7 +158,7 @@ class EmailThreadMultipleTemplate(threading.Thread):
             }
             channels.Group('emailprogress').send({'text':json.dumps(package)})
             send_mail(mail['subject'], mail['template'], mail['context'],
-                      "no-reply@ieeesb.nl", mail['email'], html_email_template_name=mail['template'])
+                      mail['email'], html_email_template_name=mail['template'])
 
 
 class EmailThread(threading.Thread):
@@ -180,7 +183,7 @@ class EmailThread(threading.Thread):
             }
             channels.Group('emailprogress').send({'text':json.dumps(package)})
             send_mail(self.subject, self.message, self.context,
-                      "no-reply@ieeesb.nl", email, html_email_template_name=self.message)
+                      email, html_email_template_name=self.message)
 
 
 def MailTrackHeadsPending(stdout=False):
@@ -204,7 +207,7 @@ def MailTrackHeadsPending(stdout=False):
                     'Track': track,
                 }
                 send_mail("email/action_required_trackhead_email_subject.txt", "email/action_required_trackhead_email.html", context,
-                      "no-reply@ieeesb.nl", e, html_email_template_name="email/action_required_trackhead_email.html")
+                      e, html_email_template_name="email/action_required_trackhead_email.html")
                 if stdout:
                     print("Sending proposals: "+str(list(proposals)))
             else:
