@@ -1,0 +1,17 @@
+[Unit]
+Description=daphne service to run marketplace
+After=network.target
+After=postgresql.service
+After=nginx.service
+
+[Service]
+Type=simple
+RuntimeDirectory=daphne
+PIDFile=/run/daphne/pid
+User=root
+Group=root
+WorkingDirectory=/root/BepMarketplace
+ExecStart=/usr/bin/daphne -u /tmp/daphne.sock BepMarketplace.asgi:channel_layer
+ExecStop=/bin/kill -s TERM $MAINPID
+[Install]
+WantedBy=multi-user.target

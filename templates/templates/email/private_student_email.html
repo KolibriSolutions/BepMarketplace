@@ -1,0 +1,60 @@
+{% extends "email/base_email.html" %}
+
+{% block body %}
+A message from the BEP marketplace (<a href="https://{{ domain }}">https://{{ domain }}</a>):<br />
+    {{ message }}
+    <br />
+    You can can login to the BEP marketplace as soon as the it is open for students, this will be announced by email and on the BEP kick-off meeting.<br/>
+    You can view the proposal now on the marketplace via this <a href="{{ sharelink }}">temporary sharelink</a> (valid for seven days).
+    <br />
+    <table>
+    <tr>
+        <td>
+            Title
+        </td>
+        <td>
+            {{proposal.Title}}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Responsible staff
+        </td>
+        <td>
+            {{ proposal.ResponsibleStaff }}
+        </td>
+    </tr>
+        <tr>
+        <td>
+            Assistant(s) / supervisor(s)
+        </td>
+        <td>
+            {{ proposal.Assistants.all|unordered_list }}
+        </td>
+    </tr>
+        <tr>
+        <td>
+            Track
+        </td>
+        <td>
+            {{ proposal.Track}}
+        </td>
+    </tr>
+        <tr>
+        <td>
+            Capacity group
+        </td>
+        <td>
+            {{ proposal.Group }}
+        </td>
+    </tr>
+        <tr>
+        <td>
+            ECTS
+        </td>
+        <td>
+            {{ proposal.ECTS }}
+        </td>
+    </tr>
+    </table>
+{% endblock %}

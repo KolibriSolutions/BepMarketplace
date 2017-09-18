@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load custom_filters %}
+{% GetPhaseNumber as phasenumber %}
+{% block body %}
+    {% if bodyhtml %}
+        {% autoescape off %}
+            {{ bodyhtml }}
+        {% endautoescape %}
+    {% else %}
+        <div class="grid">
+            <div class="row cells3">
+                <div class="cell colspan2">
+                    <h1 style="margin-bottom: 0;" class="capitalize">{{ Proposal.Title }}</h1>
+                    <h1 style="margin-bottom: 0; margin-top: 0;" class="capitalize">
+                        <small>
+                            <a href="mailto:{{ Proposal.ResponsibleStaff.email }}">
+                                By {{ Proposal.ResponsibleStaff.get_full_name }}
+                            </a>
+                        </small>
+                    </h1>
+                    <h3 style="margin-top: 0;">
+                        <small>Part of {{ Proposal.Track.Name }}</small>
+                    </h3>
+                    {% if Proposal.images.all|length > 0 %}
+                        <div id="imageCarousel" class="carousel" data-role="carousel" data-height="300"
+                             data-controls="true" data-markers="false" data-auto="false">
+                            {% for image in Proposal.images.all %}
+                                <div class="slide">
+                                    <a href="{% url "download:proposalfile" "i" image.id %}" data-lightbox="lightbox1"
+                                       data-title="{{ image.Caption }}">
+                                        <img data-role="fitImage" data-format="fill" src="{% url "download:proposalfile" "i" image.id %}"
+                                             alt="{{ image.Caption }}"/>
+                                    </a>
+                                    <div class="imageCaption">
+                                        <h5>{{ image.Caption }}</h5>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div id="imageCarousel_thumbs" class="padding10 bg-grayLighter align-center">
+                            {% for image in Proposal.images.all %}
+                                <div class="thumb" data-index="{{ forloop.counter }}"><img src="{% url "download:proposalfile" "i" image.id %}"
+                                                                                           data-role="fitImage"
+                                                                                           data-format="fill"
+                                                                                           alt="{{ image.Caption }}">
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                    {% endif %}
+                    <h4>General description</h4>
+                    <p>{{ Proposal.GeneralDescription|linebreaksbr }}</p>
+                    <h4>Students task description</h4>
+                    <p>{{ Proposal.StudentsTaskDescription|linebreaksbr }}</p>
+                    {% if Proposal.attachments.all|length > 0 %}
+                        <h4>Attachments:</h4>
+                        {% for attachment in Proposal.attachments.all %}
+                            <a href="{% url 'download:proposalfile' 'a' attachment.id %}" class="command-button file-button">
+                                <span class="icon mif-file-pdf"></span>
+                                {{ attachment.Caption }}
+                                <small>{{ attachment.OriginalName }}</small>
+                            </a>
+                        {% endfor %}
+                    {% endif %}
+                    <br/><br/>
+
+
+                    <p>
+                        {% comment %} Normal edit buttons for staff {% endcomment %}
+                        {% if user|has_group:"any" %}
+                            {% if Editlock != False %}
+                                {{ Editlock }}
+                            {% else %}
+                                <br/>
+                                <a class="button primary" href="{% url 'proposals:edit' Proposal.id %}">
+                                    <span class="mif-pencil"></span>Edit data
+                                </a>
+                                <a class="button primary" href="{% url 'proposals:editfile' 'i' Proposal.id %}">
+                                    <span class="mif-images"></span>Edit images
+                                </a>
+                                <a class="button primary" href="{% url 'proposals:editfile' 'a' Proposal.id %}">
+                                    <span class="mif-file-pdf"></span>Edit attachments
+                                </a><br>
+                            {% endif %}
+                        {% endif %}
+                    </p>
+
+                    {% if not user|has_group:"any" %}
+                        {% comment %}
+                        Apply / retract buttons are inserted using a .format on the {} below.
+	                    {% endcomment %}
+                        {% if not user|has_group:"type4staff" and not Proposal.Private.all %}
+                            {}
+                        {% endif %}
+                    {% else %}
+                        {% if phasenumber < 3 and phasenumber > 0 %}
+                            {% if Proposal.Status == 1 %}
+                                {% include 'proposals/Proposal_include_upgradeButton.html' %}
+                            {% elif Proposal.Status == 2 %}
+                                {% if user|has_group:"type3staff" or user == Proposal.ResponsibleStaff or Proposal.Track.Head == request.user %}
+                                    {% include 'proposals/Proposal_include_upgradeButton.html' %}
+                                {% endif %}
+                                {% include 'proposals/Proposal_include_downgradeButton.html' %}
+                            {% elif Proposal.Status == 3 %}
+                                {% if Proposal.Track.Head == request.user or user|has_group:"type3staff" %}
+                                    {% include 'proposals/Proposal_include_upgradeButton.html' %}
+                                {% endif %}
+                                {% if user == Proposal.ResponsibleStaff or user|has_group:"type3staff" or Proposal.Track.Head == request.user %}
+                                    {% include 'proposals/Proposal_include_downgradeButton.html' %}
+                                {% endif %}
+                            {% elif Proposal.Status == 4 %}
+                                {% if Proposal.Track.Head == request.user or user|has_group:"type3staff" %}
+                                    {% include 'proposals/Proposal_include_downgradeButton.html' %}
+                                {% endif %}
+                            {% endif %}
+                            {% if Proposal.Status != 4 %}
+                                <br/><br/>
+                                <a href="{% url 'proposals:sharelink' Proposal.id %}" class="button primary">Get
+                                    Sharelink</a>
+                            {% endif %}
+                            {% if user|has_group:"type3staff" and Proposal.Status < 3 %}
+                                    <a class="button warning" href="{% url 'proposals:askdeleteproposal' Proposal.id %}">
+                                            <span class="mif-bin"></span>Delete</a>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+
+                <div class="cell">
+                    <table class="table">
+                        <tr>
+                            <td>Capacity group:</td>
+                            <td>{{ Proposal.get_Group_display }}</td>
+                        </tr>
+                        <tr>
+                            <td>Preferred ECTS:</td>
+                            <td>{{ Proposal.ECTS }}</td>
+                        </tr>
+                        <tr>
+                            <td>Assistants:</td>
+                            <td>
+                                {% if Proposal.Assistants.all %}
+                                    <ul>
+                                        {% for assistant in Proposal.Assistants.all %}
+                                            <li>
+                                                <a href="mailto:{{ assistant.email }}">
+                                                    {{ assistant.get_full_name }}
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Students needed:</td>
+                            <td>
+                                {% if Proposal.NumstudentsMin == Proposal.NumstudentsMax %}
+                                    {{ Proposal.NumstudentsMax }}
+                                {% else %}
+                                    {{ Proposal.NumstudentsMin }}-{{ Proposal.NumstudentsMax }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if Proposal.Track.Name == "Automotive" and proposal.Private is None %}
+                            <tr>
+                                <td>Warning</td>
+                                <td>Please note that AU students have priority over EE students for AU projects</td>
+                            </tr>
+                        {% endif %}
+                        {% if Proposal.Private.all %}
+                            <tr>
+                                <td>Private to:</td>
+                                <td>
+                                    <ul>
+                                        {% for a in Proposal.Private.all %}
+                                            <li>
+                                                {% if user|has_group:"any" %}<a href="mailto:{{ a.email }}">{% endif %}
+                                                {{ a.get_full_name }}
+                                                {% if user|has_group:"any" %}</a>{% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                            </tr>
+                        {% endif %}
+                        {% if Proposal.Status != 4 %}
+                            <tr>
+                                <td>Status:</td>
+                                <td>
+                                    <ol>{% for opt in Proposal.StatusOptions %}
+                                        <li class="{% if opt.0 == Proposal.Status %}text-accent fg-navy{% else %}text-secondary{% endif %}">{{ opt.1 }}</li>{% endfor %}
+                                    </ol>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Time slot (year):</td>
+                                <td>{{ Proposal.TimeSlot }}</td>
+                            </tr>
+                        {% endif %}
+                        {% if user|has_group:"type3staff" %}
+                            {% if applications %}
+                                <tr>
+                                    <td>Applications:</td>
+                                    <td>
+                                        <ul>
+                                            {% for application in applications %}
+                                                <li><span
+                                                        class='tag info studentApplicationPriority'>{{ application.Priority }}</span> {{ application.Student.get_full_name }}
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endif %}
+                    {% if distributions %}
+                                <tr>
+                                    <td>Distributions:</td>
+                                    <td>
+                                        <ul>
+                                            {% for d in distributions %}
+                                                <li>
+                                                    {{ d.Student.get_full_name }}
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    {% if user|has_group:"any" and Proposal.Status == 4 %}
+        Number of uniqueviews:
+        <div id="uniqueviewsnumber"></div>
+    {% endif %}
+{% endblock %}
+{% block stylesheets %}
+    <link href="{% static "css/lightbox.css" %}" rel="stylesheet">
+    <style>
+        .thumb {
+            background: white;
+            padding: 4px;
+            display: inline-block;
+            height: 2.375rem;
+            width: 2.375rem;
+            border: 1px transparent solid;
+            cursor: pointer;
+        }
+
+        #imageCarousel, #imageCarousel_thumbs {
+            max-width: 600px;
+        }
+
+        .imageCaption {
+            position: absolute;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
+            background-color: rgba(58, 58, 58, .8);
+            color: white;
+            padding: 5px;
+        }
+    </style>
+{% endblock %}
+{% block scripts %}
+
+    {{ block.super }}
+    <script src="{% static "js/lightbox.js" %}"></script>
+    <script>
+        $(document).ready(function () {
+            var icar = $('#imageCarousel').data('carousel');
+            var thumbs = $('#imageCarousel_thumbs > .thumb');
+            $.each(thumbs, function () {
+                var thumb = $(this), index = thumb.data('index') - 1;
+                thumb.on('click', function () {
+                    icar.slideTo(index);
+                });
+            });
+
+            {% if user|has_group:"any" and Proposal.Status == 4 %}
+                if (window.location.protocol == "https:") {
+                    window.socket = new WebSocket("wss://" + window.location.host + "/tracking/viewnumber/{{ Proposal.id }}/");
+                }
+                else {
+                    window.socket = new WebSocket("ws://" + window.location.host + "/tracking/viewnumber/{{ Proposal.id }}/");
+                }
+                window.socket.onmessage = function (e) {
+                    $("#uniqueviewsnumber").html(e.data);
+                };
+            {% endif %}
+        });
+
+
+    </script>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block body %}
+    <h1>Confirm application to proposal.</h1>
+    <p>
+        After you applied to this proposal you can retract your application till the end of the phase "Students choosing
+        projects".
+        After this deadline, it is no longer possible to apply to a proposal or retract an application.
+    </p>
+    <table class="table">
+        <tr>
+            <td>Name Proposal:</td>
+            <td>{{ proposal.Title }}</td>
+        </tr>
+        <tr>
+            <td>Responsible Teacher:</td>
+            <td>{{ proposal.ResponsibleStaff.get_full_name }}</td>
+        </tr>
+        <tr>
+            <td>Assistants:</td>
+            <td>
+                {% if proposal.Assistants.all %}
+                    <ul>
+                        {% for assistant in proposal.Assistants.all %}
+                            <li>
+                                {{ assistant.get_full_name }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    None
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            {#    <td><button class="button primary" onclick="Apply(this);">Apply</button></td>#}
+            <td><a href="{% url 'students:apply' proposal.id %}">
+                <button class="button primary">Apply</button>
+            </a></td>
+            <td></td>
+        </tr>
+    </table>
+{% endblock %}

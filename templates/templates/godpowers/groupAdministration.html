@@ -1,0 +1,34 @@
+{% extends "GenericForm.html" %}
+{% block scripts %}
+{{ block.super }}
+    <script>
+    $(document).ready(function() {
+        $.get("{% url 'api:getgroupadmins' %}EES/", function(data) {
+            var lst = JSON.parse(data);
+            if (lst.length === 0)
+            {
+                $("#id_AdministrationMembers").select2("val", [""]);
+            }
+            else {
+                $("#id_AdministrationMembers").select2("val", lst);
+                $("#id_AdministrationMembers").val(lst).trigger('change');
+            }
+        });
+
+        $("#id_Group").on("change", function () {
+            //console.log($(this).val());
+            $.get("{% url 'api:getgroupadmins' %}" + String($(this).val()), function(data) {
+                var lst = JSON.parse(data);
+                if (lst.length === 0)
+                {
+                    $("#id_AdministrationMembers").select2("val", [""]);
+                }
+                else {
+                    $("#id_AdministrationMembers").val(lst).trigger('change');
+                }
+            });
+        });
+
+    });
+    </script>
+{% endblock %}

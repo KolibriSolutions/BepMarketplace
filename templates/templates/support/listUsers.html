@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block body %}
+    {% if bodyhtml %}
+        {% autoescape off %}
+            {{ bodyhtml }}
+        {% endautoescape %}
+    {% else %}
+        <h1>List all users</h1>
+        <a href="{% url 'support:clearcacheuserlist' %}" class="button warning">Clear Cache</a>
+        <table class="table bordered hovered striped datatable">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Type<br/></th>
+                <th>Active<br/></th>
+                <th>Last login</th>
+                <th>Timeslots</th>
+                <th>Edit</th>
+                {% if user.is_superuser %}
+                    <th>Impersonate</th>
+                {% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for u in users %}
+                <tr>
+                    <td>{{ u.first_name }} {{ u.last_name }}</td>
+                    <td>{{ u.username }}</td>
+                    <td><a href="mailto:{{ u.email }}">{{ u.email }}</a></td>
+                    <td>
+                        {# in case a non-superuser has multiple groups, it is shown in the table but the dropdown filter fails to select it #}
+                        {% if u.is_superuser %}
+                            superuser
+                        {% else %}
+                            {% if u|has_group:'type1staff' %}
+                                type 1 staff
+                            {% endif %}
+                            {% if u|has_group:'type2staff' %}
+                                type 2 staff
+                            {% endif %}
+                            {% if u|has_group:'type2staffunverified' %}
+                                type 2 staff (unverified)
+                            {% endif %}
+                            {% if u|has_group:'type3staff' %}
+                                type 3 staff
+                            {% endif %}
+                            {% if u|has_group:'type4staff' %}
+                                type 4 staff
+                            {% endif %}
+                            {% if not u|has_group:'any' and not u|has_group:'type4staff' %}
+                                student (no groups)
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td data-sort="{{ u.last_login|yesno:"1,0" }}"><span
+                            class="mif-{{ u.last_login|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+                    <td data-sort="{{ u.last_login|date:"U" }}">{{ u.last_login|date:'H:i d-m-Y' }}</td>
+                    <td>
+                        <ul>
+                        {% for ts in u.usermeta.TimeSlot.all %}
+                            <li>{{ ts }}</li>
+                        {% endfor %}
+                        </ul>
+                    </td>
+                    {% if not u.is_superuser %}
+                        <td>
+                            {% if u|has_group:'type2staff' %}
+                                <a href="{% url 'support:upgradeuser' u.id %}" class="button primary"><span
+                                        class="mif-move-up"></span></a>
+                            {% elif u|has_group:'type2staffunverified' %}
+                                <a href="{% url 'support:upgradeuser' u.id %}" class="button primary"><span
+                                        class="mif-user-check"></span></a>
+                            {% elif u|has_group:'type1staff' %}
+                                <a href="{% url 'support:downgradeuser' u.id %}" class="button primary"><span
+                                        class="mif-move-down"></span></a>
+                            {% endif %}
+                            {% if u.groups.count == 0 %}
+                                <a href="{% url 'support:overruleusermeta' u.id %}" class="button primary">Edit</a>
+                            {% endif %}
+                        </td>
+
+                    {% else %}
+                        <td></td>
+                    {% endif %}
+                    {% if user.is_superuser %}
+                        <td><a href="{% url 'impersonate-start' u.id %}" class="button primary">Go</a></td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            var cols = [
+                null, //name
+                null, //uname
+                null, //mail
+                null, //type
+                null, //active
+                {"searchable": false},  //last login
+                null,  //timeslot
+                {"searchable": false},  //edit
+            {% if user.is_superuser %}
+                {"searchable": false}, //impersonate
+            {% endif %}
+            ];
+            var dropdownColumns = [3];
+            MPDataTable(cols, dropdownColumns);
+        });
+
+    </script>
+{% endblock %}

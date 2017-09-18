@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Feedback Reports</h1>
+    <table class="table striped hovered">
+        <thead>
+        <th>TimeStamp</th>
+        <th>Reporter</th>
+        <th>Url</th>
+        <th>Feedback</th>
+        <th>Status</th>
+        <th>Actions</th>
+        </thead>
+        {% for report in feedback_list %}
+            <tr>
+                <td>{{ report.Timestamp|date:"d-m-Y H:i:s" }}</td>
+                <td>{{ report.Reporter.get_full_name }}</td>
+                <td>{{ report.Url }}</td>
+                <td>{{ report.Feedback }}</td>
+                <td>{{ report.get_Status_display }}</td>
+                <td>
+                    {% if report.Status != 2 %}
+                        <a href="{% url 'index:feedbackconfirm' report.id %}">
+                            <button class="button info">Confirm</button>
+                        </a><br/>
+                    {% endif %}
+                    <a href="{% url 'index:feedbackclose' report.id %}">
+                        <button class="button success">Close</button>
+                    </a><br/>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

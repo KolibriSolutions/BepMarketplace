@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block body %}
+  <h1>{% block title %}{% trans "Disable Two-factor Authentication" %}{% endblock %}</h1>
+  <p>{% blocktrans %}You are about to disable two-factor authentication. This
+    compromises your account security, are you sure?{% endblocktrans %}</p>
+  <form method="post">
+    {% csrf_token %}
+    <label for="id_understand">Yes, I am sure:</label>
+      <label class="input-control checkbox">
+      <input id="id_understand" name="understand" type="checkbox" required />
+      <span class="check"></span>
+      </label>
+    <button class="button danger"
+            type="submit">{% trans "Disable" %}</button>
+  </form>
+    <a href="{% url 'two_factor:profile' %}" class="button">Back to profile</a>
+{% endblock %}

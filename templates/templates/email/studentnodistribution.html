@@ -1,0 +1,10 @@
+{% extends "email/base_email.html" %}
+
+{% block header %}
+Dear {{ student.get_full_name }},<br/>
+{% endblock %}
+
+{% block body %}
+You have not been assigned any projects because there was a problem with your enrollment.<br/>
+<b><u>Please email mister Hulshof (s.hulshof@tue.nl) immediately to resolve this.</u></b>
+{% endblock %}

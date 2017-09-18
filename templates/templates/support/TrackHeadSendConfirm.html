@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Mail Track Heads pending proposals</h1>
+    <table class="table striped bordered">
+    <thead>
+    <tr>
+        <th>track</th>
+        <th>email</th>
+        <th>pending count</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for track, info in trackstats.items %}
+    <tr>
+        <td>{{ track }}</td>
+        <td>{{ info.head }}</td>
+        <td>{{ info.pending }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+    <form action="" method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <table class="table" style="text-align:left;">
+            {{  form.as_table }}
+            <tr>
+                <td><button class="button success" type="submit">Confirm</button></td>
+            <td></td>
+            </tr>
+        </table>
+    </form>
+{% endblock %}

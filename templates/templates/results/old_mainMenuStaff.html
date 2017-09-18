@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block body %}
+<h1>Choose Student</h1>
+<table class="table">
+    <thead>
+        <tr><th>Student</th></tr>
+    </thead>
+    <tbody>
+    {% for distr in distrbutions %}
+        <tr><td><a class="button primary" href="{% url 'results:gradeformstaff' distr.id %}">{{ distr.Student.get_full_name }}</a> </td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

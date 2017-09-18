@@ -1,0 +1,25 @@
+{% block head %}
+Dear {{ supervisor.get_full_name }}
+{% endblock %}
+
+{% block body %}
+Distribution of projects on the Marketplace has finished. <br/>
+The results for you projects are listed below. If you think we made an error, please let us know <u>within a week</u>.
+<br/><br/>
+
+Projects for which you are assistant to:<br/>
+{% for project in projects %}
+    <i>{{ project }}</i>:<br/>
+    {% if project.distributions.count == 0 %}
+        <br/>Unfortunately no students have been distributed to this project.<br/><br/>
+    {% else %}
+        <ul>
+        {% for dist in project.distributions.all %}
+            <li><a href="mailto:{{ dist.Student.email }}">{{ dist.Student.get_full_name }}</a>({{ dist.Student.email }})</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+{% endfor %}
+<br/><br/>
+We will publish statistics about how your project did in the marketplace later this year.
+{% endblock %}

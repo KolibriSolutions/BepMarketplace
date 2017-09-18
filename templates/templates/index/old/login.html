@@ -1,0 +1,12 @@
+
+{% extends "base.html" %}
+{% block body %}
+<p>Please specify which type of user you are:</p>
+   <div class="bg-red padding10 margin10">
+    WARNING: This page is deprecated, please do not use it. Use the normal login button instead.
+   </div>
+    <a href={% url 'djangosaml2_custom:saml2_login' %}{{ get }}><button class="button primary" >SAML (please use this one)</button><br></a>
+    <a href="{%  url 'index:studentLogin' %}{{ get }}"><button class="button primary" >I am a student.</button><br></a>
+    <a href="{% url 'index:staffLogin' %}{{ get }}"><button class="button primary">I am a staff member.</button><br></a>
+    <a href="{% url 'two_factor:login' %}" class="button primary">I have two factor authentication (only for superusers)</a><br/>
+{%  endblock %}

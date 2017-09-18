@@ -1,0 +1,3 @@
+django-extensions
+pypiwin32
+django-debug-toolbar

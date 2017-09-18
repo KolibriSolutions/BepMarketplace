@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Student Login</h1>
+       <div class="bg-red padding10 margin10">
+    WARNING: This page is deprecated, please do not use it. Use the normal login button instead.
+   </div>
+    Please login with your TU/e s-number and password.
+    <form action="{% url 'index:studentLogin' %}{{ get }}" method="post">
+        {% csrf_token %}
+        <table class="table">
+            <tr>
+                <td style="width:30%;">
+                    {{ form.username.label }}
+                </td>
+                <td>
+                    {{ form.username.errors }}
+                    <div class="input-control modern text iconic">
+                        <input id="id_username" type="text" name="username">
+                        <span class="label">Your login</span>
+                        <span class="informer">Please enter your TU/e s-number</span>
+                        <span class="placeholder">s-number</span>
+                        <span class="icon mif-user"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td style="width:30%;">
+                    {{ form.password.label }}
+                </td>
+                <td>
+                    {{ form.password.errors }}
+                    <div class="input-control modern password iconic" data-role="input">
+                        <input id="id_password" type="password" name="password">
+                        <span class="label">Your password</span>
+                        <span class="informer">Please enter your TU/e password</span>
+                        <span class="placeholder">password</span>
+                        <span class="icon mif-lock"></span>
+                        <button class="button helper-button reveal"><span class="mif-looks"></span></button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Please check the box:</td>
+                <td> {{ form.capticha.errors }}
+                    {{ form.captcha }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button class="button success" type="submit">Login</button>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+    </form>
+
+{% endblock %}

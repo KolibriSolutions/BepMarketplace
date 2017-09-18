@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Unverified type2 accounts</h1>
+    <table class="table striped hovered">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Proposals</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for account in accounts %}
+            <tr id="{{ account.id }}">
+                <td>{{ account.get_full_name }}</td>
+                <td><a href="mailto:{{ account.email }}">{{ account.email }}</a></td>
+                <td>
+                    <ul>
+                        {% for proposal in account.proposals.all %}
+                            <li><a href="{% url 'proposals:details' proposal.id %}">{{ proposal.Title }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </td>
+                <td>
+                    <button class="button success" onclick="verify({{ account.id }}, this);">Verify</button>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        function verify(id, button) {
+            $.get("/api/verify/assistant/" + String(id), function (data) {
+                $.Notify({
+                    caption: 'Result',
+                    content: data,
+                    type: 'info'
+                });
+                $('#' + String(id)).remove();
+            });
+        }
+    </script>
+{% endblock %}

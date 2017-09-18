@@ -1,0 +1,7 @@
+{% extends "email/base_email.html" %}
+{% block body %}
+Message from the administration:<br/><br/>
+{% autoescape off %}
+{{  message|linebreaksbr }}
+{% endautoescape %}
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'email/base_email.html' %}
+
+{% block header %}
+Dear {{ student.get_full_name }},<br/><br/>
+{% endblock %}
+
+{% block body %}
+Congratulations, you have been distributed to the project <a href="https://marketplace.ieeesb.nl/{% url 'proposals:details' project.id %}">{{ project }}</a>.<br/>
+<br/>
+Please contact the supervisors of this project to start.<br/>
+If you think that this distribution is done in error, please notify us by email <u>within a week</u>. <br/>
+{% endblock %}

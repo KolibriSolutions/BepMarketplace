@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block body %}
+    <h1>Profile</h1>
+    <a href="{% url 'index:changesettings' %}" class="button primary">User Settings</a>
+    {% if user|has_group:"any" %}
+        {% if user.is_superuser %}
+            <!-- saml does not support 2fa-->
+            <a class="button success" href="{% url 'two_factor:profile' %}">Account Security Settings</a>
+        {% endif %}
+        {% if user|has_group:"type2staffunverified" and not user.is_superuser %}
+            <p><strong>
+                You have an unverified type2staff account.<br/>
+                Your type2staff account will be verified by the supportstaff or when a proposals made by you is approved
+                by the type1staff (Responsible professor).
+                This unverified status has no further implications.
+            </strong></p>
+        {% endif %}
+    {% endif %}
+
+    <h4>Personal</h4>
+    <table class="table striped">
+        <tr>
+            <td>Username:</td>
+            <td>{{ user.username }}</td>
+        </tr>
+        <tr>
+            <td>First and last name:</td>
+            <td>{{ user.get_full_name }}</td>
+        </tr>
+        <tr>
+            <td>Initials</td>
+            <td>{{ meta.Initials }}</td>
+        </tr>
+        <tr>
+            <td>Full name</td>
+            <td>{{ meta.Fullname }}</td>
+        </tr>
+        <tr>
+            <td>Email:</td>
+            <td>{{ user.email }}</td>
+        </tr>
+    </table>
+    <h4>User settings</h4>
+    <table class="table striped">
+        <tr>
+            <td>Suppress action required mails:</td>
+            <td><span class="mif-{{ SuppressStatusMails|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+        </tr>
+    </table>
+
+    {% if not student %}
+        <h4>Rights</h4>
+        <table class="table striped">
+            <tr>
+                <td>User can be head of a project (type 1):</td>
+                <td><span class="mif-{{ type1|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+            </tr>
+            <tr>
+                <td>User can be supervisor (type 2):</td>
+                <td>
+                    <span class="mif-{{ type2|yesno:"checkmark fg-green,cross fg-red" }}"></span>
+                    {% if type2 == "Unverified" %}
+                        (Unverified supervisor)
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>User is supporting staff (type 3):</td>
+                <td><span class="mif-{{ type3|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+            </tr>
+            <tr>
+                <td>User is group administration (type 4):</td>
+                <td><span class="mif-{{ type4|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+            </tr>
+            <tr>
+                <td>User is study advisor (type 5):</td>
+                <td><span class="mif-{{ type5|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+            </tr>
+            <tr>
+                <td>User is professional skills administration (type 6):</td>
+                <td><span class="mif-{{ type6|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+            </tr>
+            {% if tracks %}
+                <tr>
+                    <td>User is head of track:</td>
+                    <td>
+                        <ul>
+                            {% for track in tracks %}
+                                <li>{{ track }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+            {% endif %}
+            <tr>
+                <td>User is admin:</td>
+                <td><span class="mif-{{ user.is_staff|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+            </tr>
+            {% if user.is_superuser %}
+                <tr>
+                    <td>User is God:</td>
+                    <td><span class="mif-checkmark fg-green"></span></td>
+                </tr>
+            {% endif %}
+        </table>
+
+    {% else %}
+
+        <h4>Student Information</h4>
+        <table class="table striped">
+            <tr>
+                <td>Department</td>
+                <td>{{ meta.Department }}</td>
+            </tr>
+            <tr>
+                <td>Study</td>
+                <td>{{ meta.Study }}</td>
+            </tr>
+            <tr>
+                <td>Cohort</td>
+                <td>{{ meta.Cohort }}</td>
+            </tr>
+            <tr>
+                <td>Studentnumber</td>
+                <td>{{ meta.Studentnumber }}</td>
+            </tr>
+            <tr>
+                <td>ECTS</td>
+                <td>{% if meta.ECTS == 0 %}Not yet available{% else %}{{ meta.ECTS }}{% endif %}</td>
+            </tr>
+            <tr>
+                <td>Enrolled BEP (10 ECTS)</td>
+                <td><span class="mif-{{ meta.EnrolledBEP|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+            </tr>
+            <tr>
+                <td>Enrolled BEP extension (+5 ECTS)</td>
+                <td><span class="mif-{{ meta.EnrolledExt|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+            </tr>
+        </table>
+    {% endif %}
+{% endblock %}

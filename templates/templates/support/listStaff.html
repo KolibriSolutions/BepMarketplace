@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block body %}
+    <h1>List all staff</h1>
+    <h3>Only type1 and type2 staff, responsible staff and supervisors.</h3>
+    <a href="{% url "support:liststaffXls" %}" class="button primary">Export Excel</a>
+    <table class="table datatable striped">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type<br/></th>
+            <th>Proposals<br/></th>
+            <th>Proposals total<br/></th>
+            <th>Students<br/></th>
+            <th>Students total<br/></th>
+            <th>show<br/></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for u in staff %}
+            <tr>
+                {#  se.append([s, pt1, pt2, pts, dt1, dt2, dts])  #}
+                <td><a href="mailto:{{ u.user.email }}">{{ u.user.first_name }} {{ u.user.last_name }}</a></td>
+                <td>
+                    {% if u.user|has_group:'type1staff' %}
+                        type 1 staff
+                    {% endif %}
+                    {% if u.user|has_group:'type2staff' %}
+                        type 2 staff
+                    {% endif %}
+                    {% if u.user|has_group:'type2staffunverified' %}
+                        type 2 staff (unverified)
+                    {% endif %}
+                </td>
+                <td>
+                    Responsible: {{ u.pt1 }}<br/>
+                    Assistant: {{ u.pt2 }}
+                </td>
+                <td>
+                    {{ u.pts }}
+                </td>
+                <td>
+                    Responsible: {{ u.dt1 }}<br/>
+                    Assistant: {{ u.dt2 }}
+                </td>
+                <td>
+                    {{ u.dts }}
+                </td>
+                <td><a href="{% url "support:liststaffproposals" u.user.id %}" class="button primary">show proposals</a>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            var cols = [
+                null, //name
+                null, //type
+                {"searchable": false, "sortable": false}, //proposals both
+                null, //proposals
+                {"searchable": false, "sortable": false},  //distribution both
+                null, //distribution
+                {"searchable": false, "sortable": false} //button
+            ];
+            var dropdownColumns = [1];
+            MPDataTable(cols, dropdownColumns);
+        })
+    </script>
+{% endblock %}

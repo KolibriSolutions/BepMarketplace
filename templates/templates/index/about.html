@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block body %}
+
+    <div class="grid">
+        <div class="row cells4">
+            <div class="cell" style="text-align: center">
+                <object data="{% static "img/tuelogo.svg" %}" type="image/svg+xml" style="width:50%;"></object>
+                <br><br>
+                <object data="{% static "img/ieeesbelogo.svg" %}" style="width:90%;"></object>
+                <br><br>
+                <object data="{% static "img/sblogo.svg" %}" style="width:50%;"></object>
+            </div>
+            <div class="cell colspan3">
+                <h1>About</h1>
+                <p>
+                    The BEP marketplace is made by the BEP marketplace team: Frank Boerman and Jeroen van Oorschot.
+                    Paid for by <a href="https://www.tue.nl/en/university/departments/electrical-engineering/"> ELE
+                    faculty TU/e</a><br/>
+                    Sponsored by <a href="https://ieee.tue.nl/">IEEE Student Branch Eindhoven</a> and <a
+                        href="https://studentbody.nl/">StudentBody</a>.
+                </p>
+                <p>
+                <div class="cell place-left padding10"><a href="http://www.djangoproject.com/"><img
+                        src="https://www.djangoproject.com/m/img/badges/djangopowered126x54.gif" border="0"
+                        alt="Powered by Django." title="Powered by Django."/></a></div>
+                <div class="cell place-left padding10"><a href="http://metroui.org.ua/" title="MetroUI CSS">Build with
+                    MetroUI CSS</a></div>
+                <div class="cell place-left padding10"><a href="https://datatables.net/"
+                                                          title="Datatables">Datatables</a></div>
+                </p>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

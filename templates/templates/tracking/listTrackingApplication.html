@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>List of applications tracking</h1>
+    <table class="table datatable striped hovered">
+        <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>Type</th>
+            <th>Student</th>
+            <th>Proposal</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for tracking in trackinglist %}
+            <tr>
+                <td data-sort="{{ tracking.Timestamp|date:"U" }}">{{ tracking.Timestamp|date:"d-m-Y H:i:s" }}</td>
+                <td>{{ tracking.get_Type_display }}</td>
+                <td>{{ tracking.Student.get_full_name }}</td>
+                <td><a href="{% url 'proposals:details' tracking.Proposal_id %}">{{ tracking.Proposal }}</a></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            var cols= [
+                    null, //time
+                    null, //type
+                    null, //student
+                    null, //proposal
+                ];
+                var dropdownColumns = [1];
+                MPDataTable(cols, dropdownColumns);
+        });
+    </script>
+{% endblock %}

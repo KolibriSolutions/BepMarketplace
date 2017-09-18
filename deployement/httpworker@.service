@@ -1,0 +1,19 @@
+[Unit]
+Description=django worker that only servers http channels
+After=network.target
+StopWhenUnneeded=true
+
+[Service]
+Type=simple
+RuntimeDirectory=django
+PIDFile=/run/django/pid%I
+User=root
+Group=root
+WorkingDirectory=/root/BepMarketplace/
+ExecStart=/usr/bin/python manage.py runworker --only-channels=http.*
+ExecStop=/bin/kill -s TERM $MAINPID
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=httpworker.target

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Staff Login</h1>
+    If you have two factor authentication enabled you will be automatically redirected when trying to login.
+    <div class="bg-red padding10 margin10">
+    WARNING: This page is deprecated, please do not use it. Use the normal login button instead.
+   </div>
+    <div class="bg-red padding10 margin10">
+    WARNING: From now on it is only possible to login with emailadress. Login with username is not longer supported!
+    </div>
+
+    <form action="{% url 'index:staffLogin' %}{{ get }}" method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <table class="table">
+            <tr>
+                <td style="width:30%;">
+                    {{ form.username.label }}
+                </td>
+                <td>
+                    {{ form.username.errors }}
+                    <div class="input-control modern text iconic">
+                        <input id="id_username" type="text" name="username">
+                        <span class="label">Your email address</span>
+                        <span class="informer">Please enter your email address</span>
+                        <span class="placeholder">Email</span>
+                        <span class="icon mif-user"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td style="width:30%;">
+                    {{ form.password.label }}
+                </td>
+                <td>
+                    {{ form.password.errors }}
+                    <div class="input-control modern password iconic" data-role="input">
+                        <input id="id_password" type="password" name="password">
+                        <span class="label">Your password</span>
+                        <span class="informer">Please enter you password</span>
+                        <span class="placeholder">Input password</span>
+                        <span class="icon mif-lock"></span>
+                        <button class="button helper-button reveal"><span class="mif-looks"></span></button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button class="button success" type="submit">Login</button>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+    </form>
+    <tr>
+        <td>
+            <a href="{% url 'index:password_reset' %}">
+                <button class="button primary">Forgot Password</button>
+            </a>
+        </td>
+        <td></td>
+    </tr>
+    {% if phasenumber < 3 %}
+        <tr>
+            <td>
+                <a href="{% url 'index:registerType2User' %}">
+                    <button class="button primary">Register assistant account</button>
+                </a>
+            </td>
+            <td></td>
+        </tr>
+    {% endif %}
+
+{% endblock %}

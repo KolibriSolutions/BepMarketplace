@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Email Progress</h1>
+    <div class="progress large" data-role="progress" id="progressbar"></div>
+    <div style="border:1px solid black; height:1000px; overflow:scroll;" id="liveview"></div>
+
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            if (window.location.protocol == "https:") {
+                window.socket = new WebSocket("wss://" + window.location.host + "/support/mailprogress/");
+            }
+            else {
+                window.socket = new WebSocket("ws://" + window.location.host + "/support/mailprogress/");
+            }
+            window.socket.onmessage = function (e) {
+                console.log(e.data);
+                var pb = $("#progressbar").data('progress');
+                var info = JSON.parse(e.data);
+                document.getElementById('liveview').insertAdjacentHTML('afterbegin', info['email'] + "<br/>");
+                pb.set(info['progress']);
+            };
+        });
+    </script>
+{% endblock %}

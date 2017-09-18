@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% load custom_filters %}
+{% block body %}
+    <h1>Proposal Statistics Report (Personal)</h1>
+    {% if step == 0 %}
+        <h2>Introduction</h2>
+        Welcome to the statistics report of your proposals. Here you can see a breakdown of statistics for your proposals.<br/>
+        Please note that it is possible to have a large amount of applications but no distributed students. This means that those students were distributed to a project they had as a higher choice than yours.<br/>
+        <br/>
+        Visitor count is a "unique" count. This means that students are only at most counted once when they view your proposal. Staff members are not counted in this number.
+            Please note that due to privacy concerns we do not publish the details of which students viewed your proposal.<br/>
+        You can use the buttons on the bottom to navigate through the report.<br/>
+        <br/>
+        If you have any questions about the report do not hesitate to contact us at <a href="mailto:marketplace@ieee.tue.nl">marketplace@ieee.tue.nl</a>.<br/>
+        Kind regards,<br/>
+        The BEP Marketplace Team <br/>
+        <br/>
+        <a href="{% url 'proposals:stats' 1 %}" style="position:absolute;right:0;bottom:0;" class="button primary">Next</a>
+    {% elif step == 1 %}
+        <a class="button primary" style="left:0;" href="{% url 'proposals:stats' 0 %}">Previous</a>
+        <a class="button primary" style="position:absolute;right:0;" href="{% url 'proposals:stats' 2 %}">Next</a>
+        <h2>Overview Unique Visitor count</h2>
+        <div style="width:50%;float:left;">
+        <canvas id="myoChart"></canvas>
+        </div>
+        <div style="width:50%;float:right;">
+        <table class="table datatable hovered border bordered">
+        <thead>
+        <tr>
+            <th>Title</th><th>Visitor Count</th>
+        </tr>
+        </thead>
+        <tbody>
+            {% for data in tabledata %}
+                <tr><td><a href="{% url 'proposals:details' data.prop.id %}">{{ data.prop.Title|truncatechars:25 }}</a></td><td>{{ data.count }}</td></tr>
+            {% endfor %}
+        </tbody>
+        </table>
+        </div>
+
+    {% elif step == -1 %}
+    You have reached the end of the statistics report of this year. We hope you enjoyed it!<br/>
+    To see what the top 10 most successfull projects did you can view the General report <a  href="{% url 'proposals:statsgeneral' %}">here</a>.<br/>
+    We hope this data can be usesfull for writing future BEP's, if you have any questions about the data
+        please do not hesitate to contact us at <a href="mailto:marketplace@ieee.tue.nl">marketplace@ieee.tue.nl</a>.<br/>
+    <a href="{% url 'proposals:stats' %}" class="button primary">Read Again</a>
+    {% else %}
+        <a class="button primary" style="left:0;" href="{% url 'proposals:stats' step|add:"-1" %}">Previous</a>
+        <a class="button primary" style="position:absolute;right:0;" href="{% url 'proposals:stats' step|add:"1" %}">Next</a>
+        <h2><a href="{% url 'proposals:details' prop.id %}">{{ prop.Title }}</a></h2>
+        <div style="width:35%;float:left;">
+        <canvas id="mydChart"></canvas>
+        </div>
+        <div style="float:right;width:50%;">
+            Had total of <b>{{ visitors }}</b> unique student visitors.<br/>
+            Was distributed <b>{{ distributed }}</b> student(s).
+        <table class="table hovered border bordered">
+        <thead>
+        <tr>
+            <th>Student Pick</th><th>Count</th>
+        </tr>
+        </thead>
+            {% for data in applications %}
+            <tr><td>{{ forloop.counter }} pick</td><td><b>{{ data }}</b></td></tr>
+            {% endfor %}
+        </table>
+        </div>
+    {% endif %}
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.bundle.min.js"></script>
+    <script>
+    {% if step != 1 %}
+        new Chart($("#mydChart"), {
+        data: {
+            labels: ["1st pick", "2nd pick", "3rd pick", "4th pick", "5th pick"],
+            datasets: [{
+                {% autoescape off %}
+                data: {{ applications }},
+                {% endautoescape %}
+                backgroundColor: [
+                    "#FF6384",
+                    "#4BC0C0",
+                    "#FFCE56",
+                    "#36A2EB"
+                ],
+            }]
+        },
+        type: 'doughnut',
+        options: {
+            legend:{
+                "position" : "right"
+            }
+
+        }
+    });
+    {% else %}
+    new Chart($("#myoChart"), {
+        data: {
+            {% autoescape off %}
+            labels: {{ labels }},
+            {% endautoescape %}
+            datasets: [
+                {
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255,99,132,1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1,
+                    data: {{ counts }},
+                }
+            ]
+        },
+        type: 'horizontalBar',
+        options: {
+            legend: {
+                display: false
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
+    {% endif %}
+    $(document).ready(function () {
+        var options = {
+            "order": [[1, "desc"]],
+            "columns": [
+                null, //name
+                null, //count
+            ]
+        };
+        $('.datatable').DataTable(options);
+        //for datatables, do not sort the table when clicking a select.
+        $("th>select").click(function () {
+            return false;
+        })
+    });
+    </script>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<h1>Visitors Overview</h1>
+<table class="table striped hovered datatable">
+<thead>
+<tr>
+    <th>Proposal</th>
+    <th>Visitor Count</th>
+    <th>Actions</th>
+</tr>
+</thead>
+<tbody>
+{% for prop in props %}
+<tr>
+    <td><a href="{% url 'proposals:details' prop.Subject.id %}">{{ prop.Subject.Title }}</a></td>
+    <td>{{ prop.UniqueVisitors.count }}</td>
+    <td>
+        <div data-role="dialog" id="getvisitors{{ prop.id }}" class="padding20"
+        data-close-button="true"
+        data-href="{% url 'godpowers:getvisitors' prop.id %}"
+        data-width="600"></div>
+        <button class="button primary" onclick="metroDialog.open('#getvisitors{{ prop.id }}')">View Visitors</button>
+    </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+
+<script>
+    $(document).ready(function() {
+        var cols = [
+            null,
+            null,
+            null
+        ];
+        var dropdownColumns = [];
+        MPDataTable(cols, dropdownColumns);
+    });
+
+</script>
+{% endblock %}

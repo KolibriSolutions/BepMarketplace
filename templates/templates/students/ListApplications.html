@@ -1,0 +1,52 @@
+{# list own applications for students #}
+{% extends "base.html" %}
+{% block body %}
+    <h1>Applications</h1>
+    <p>Applications can be changed till the end of the phase "Students choosing projects"</p>
+    {% if user.personal_proposal.all %}
+        <p> There is a private proposal for you. Therefore you cannot apply to public proposals. Please check out your
+            proposal in the sidebar on the right.</p>
+    {% else %}
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Priority</th>
+                <th>Name</th>
+                <th>Responsible staff</th>
+                <th>Assistant(s)</th>
+                <th>Retract</th>
+            </tr>
+            </thead>
+            {% for appl in applications %}
+                <tr>
+                    <td>
+                        {{ appl.Priority }}
+                        {% if appl.Priority != 1 %}
+                            <a href="{% url 'students:prioUp' appl.id %}"><span class="mif-expand-less"></span></a>
+                        {% endif %}
+                        {% if appl.Priority != applications|length %}
+                            <a href="{% url 'students:prioDown' appl.id %}"><span class="mif-expand-more"></span></a>
+                        {% endif %}
+                    </td>
+                    <td><a href="{% url 'proposals:details' appl.Proposal.id %}">{{ appl.Proposal.Title }}</a></td>
+                    <td>{{ appl.Proposal.ResponsibleStaff.get_full_name }}</td>
+                    <td>
+                        <ul class="no-margin">
+                            {% for assistant in appl.Proposal.Assistants.all %}
+                                <li>
+                                    {{ assistant.get_full_name }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td>
+                        {# <a href="{% url 'students:detailapplication' appl.id %}"><button class="button primary">Details</button> </a> #}
+                        <a href="{% url 'students:retractapplication' appl.id %}">
+                            <button class="button danger">Retract</button>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+{% endblock %}

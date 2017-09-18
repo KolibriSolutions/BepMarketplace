@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Marketplace Statistics Overview</h1>
+    There are currently {{ proposalcount }} proposals entered and {{ usercount }} useraccounts registered.
+    {{ privatecount }} proposals are private to one or more students.<br/>
+    <h4>Breakdown per status:</h4>
+    <table class="table striped hovered bordered" style="width:40%;">
+        <thead>
+        <tr>
+            <th>Status</th>
+            <th>Number of proposals</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for count in statuscount %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ count }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <h4>Breakdown per group:</h4>
+    <table class="table striped hovered bordered" style="width:40%;">
+        <thead>
+        <tr>
+            <th>Group</th>
+            <th>Number of proposals</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for group, count in groupcount.items %}
+            <tr>
+                <td>{{ group }}</td>
+                <td>{{ count }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <h4>Breakdown per track:</h4>
+    <table class="table striped hovered bordered" style="width:40%;">
+        <thead>
+        <tr>
+            <th>Track</th>
+            <th>Number of proposals</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for track, count in trackcount.items %}
+            <tr>
+                <td>{{ track }}</td>
+                <td>{{ count }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock %}

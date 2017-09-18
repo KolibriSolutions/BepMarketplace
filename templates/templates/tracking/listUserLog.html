@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Users Log</h1>
+    <table class="table bordered striped hovered datatable">
+        <thead>
+        <tr>
+            <th>User<br/></th>
+            <th>Timestamp<br/></th>
+            <th>Page<br/></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for log in userlogs %}
+            <tr>
+                <td><a href="mailto:{{ log.Subject.email }}">{{ log.Subject.get_full_name }}</a></td>
+                <td data-sort="{{ log.Timestamp|date:"U" }}">{{ log.Timestamp|date:'H:i d-m-Y' }}</td>
+                <td>{{ log.Page }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+        //live search for proposals, using datatables jquery.
+        $(document).ready(function () {
+            var cols = [
+                null, //user
+                null, //time
+                null, //page
+            ];
+            var dropdownColumns = [0]
+            MPDataTable(cols, dropdownColumns);
+        });
+    </script>
+{% endblock %}

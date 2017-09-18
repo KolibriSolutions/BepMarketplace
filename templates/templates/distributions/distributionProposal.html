@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block body %}
+    <h1>{{ typename }}</h1>
+    <table class="table bordered hovered striped" id="disttable">
+        <thead>
+        <tr>
+            <th>Student</th>
+            <th>Cohort</th>
+            <th>ECTS</th>
+            <th>Project</th>
+            <th>Student Preference</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for distribution in distributions %}
+            <tr>
+                <td>{{ distribution.student }}</td>
+                <td>{{ distribution.student.usermeta.Cohort }}</td>
+                <td>{{ distribution.student.usermeta.ECTS }}</td>
+                <td><a href="{% url 'proposals:details' distribution.proposal.id %}">{{ distribution.proposal }}</a>
+                </td>
+                <td>{{ distribution.preference }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <h2>Confirm (this deletes all current distributions from current timeslot)</h2>
+    <form action="" method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <table class="table" style="text-align:left;">
+            {{ form.as_table }}
+            <input type="hidden" name="jsondata" value='{{ jsondata|safe }}'>
+            <tr>
+                <td>
+                    <button class="button success" type="submit">Confirm</button>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+    </form>
+    <h2>Stats</h2>
+    {% for key, value in stats.items %}
+        <h4>{{ key }}</h4>
+        <table class="table bordered striped">
+            <thead>
+            <tr>
+                <th>Preference</th>
+                <th>Percentage</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for stat in value %}
+                <tr>
+                    <td>{{ forloop.counter0 }}</td>
+                    <td>{{ stat }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+
+    <script>
+        $(document).ready(function () {
+
+            var options = {
+                "pageLength": 100,
+                'order': [[1, 'desc']],
+                "columns": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                ],
+                initComplete: function () {
+                    this.api().columns([]).every(function () {
+                        var column = this;
+                        var select = $('<select><option value=""></option></select>')
+                            .appendTo($(column.header()))
+                            .on('change', function () {
+                                var val = $.fn.dataTable.util.escapeRegex(
+                                    $(this).val()
+                                );
+                                column
+                                    .search(val ? '^' + val + '$' : '', true, false)
+                                    .draw();
+                            });
+
+                        column.data().unique().sort().each(function (d, j) {
+                            select.append('<option value="' + d + '">' + d + '</option>')
+                        });
+                    });
+                }
+            };
+            $('#disttable').DataTable(options);
+            //for datatables, do not sort the table when clicking a select.
+            $("th>select").click(function () {
+                return false;
+            })
+        });
+
+    </script>
+
+{% endblock %}

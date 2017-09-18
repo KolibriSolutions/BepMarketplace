@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Files list for {{ dist.Student.get_full_name }}</h1>
+    <table class="table bordered">
+        <thead>
+        <th></th>
+        <th>Caption</th>
+        <th>File</th>
+        <th>Type</th>
+        <th>Time</th>
+        <th>Deadline</th>
+        <th>SuperVisor Approval</th>
+        <th>SuperVisor Comments</th>
+        {% if respond %}
+            <th>Respond</th>
+        {% endif %}
+        </thead>
+        {% for file in files %}
+            <tr>
+                <td><span class="icon mif-file-{{ file.metro_icon }}"></span></td>
+                <td>{{ file.Caption }}</td>
+                <td><a href="{% url "download:studentfile" file.id %}">{{ file.OriginalName }}</a></td>
+                <td>{{ file.Type }}</td>
+                <td {% if file.TimeStamp.date <= file.Type.Deadline %} class="success"
+                                                                       {% else %}class="error"{% endif %}
+                                                                       data-sort="{{ file.TimeStamp|date:"U" }}">{{ file.TimeStamp }}</td>
+                <td {% if file.TimeStamp.date <= file.Type.Deadline %} class="success"
+                                                                       {% else %}class="error"{% endif %} >{{ file.Type.Deadline }}</td>
+                <td>
+                    {% if file.Type.CheckedBySupervisor %}
+                        {% if file.staffreponse.Status == 'V' or file.staffreponse.Status == 'G' %}
+                            {{ file.staffreponse.Status }}: <span class="mif-checkmark fg-green"></span>
+                        {% else %}
+                            {{ file.staffreponse.Status }}: <span class="mif-cross fg-red"></span>
+                        {% endif %}
+                    {% else %}
+                        No check needed
+                    {% endif %}
+                </td>
+                <td>
+                    {% if file.Type.CheckedBySupervisor %}
+                        {{ file.staffreponse.Explanation }}
+                    {% else %}
+                        No check needed
+                    {% endif %}
+                </td>
+                {% if respond %}
+                    {% if file.Type.CheckedBySupervisor %}
+                        <td><a href="{% url 'professionalskills:respondfile' file.id %}" class="button primary">Respond</a></td>
+                    {% else %}
+                        <td>-</td>
+                    {% endif %}
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

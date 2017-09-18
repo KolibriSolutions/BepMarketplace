@@ -1,0 +1,9 @@
+{% comment %} <span data-role="hint"
+    data-hint-background="bg-gray"
+    data-hint-color="fg-white"
+    data-hint-mode="2"
+    data-hint="Upgrade to status {{ Proposal.get_Status_display }}"
+    data-hint-position="top"
+>{% endcomment %}
+<a href="{% url 'proposals:upgradestatus' Proposal.id %}" class="button success">Upgrade to status {{ Proposal.Status|add:"1" }}</a>
+{# </span> #}

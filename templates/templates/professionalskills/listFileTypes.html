@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block body %}
+    <h1>Professional Skills</h1>
+    {% if not user|has_group:'any' %}{# for students #}
+        To hand in a prv you can upload files <a href="{% url 'students:addfile' %}">here</a>.<br/>
+        Your previous handins can be found <a href="{% url 'professionalskills:listownfiles' %}">here</a>.
+    {% elif user|has_group:"type6staff;type3staff" %}
+            <a href="{% url 'professionalskills:mailoverduestudents' %}" class="button primary">Mail Overdue
+                Students</a>
+            <a class="button primary" href="{% url 'professionalskills:printprvforms' %}">Print Prv Results</a>
+
+    {% endif %}
+    <table id="filetypetable" class="table datatable striped hovered">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Deadline</th>
+            <th>Description</th>
+            {% if user|has_group:'type6staff' %}
+                <th>Actions</th>
+            {% endif %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for filetype in filetypes %}
+            <tr>
+                <td>{{ filetype }}</td>
+                <td>{{ filetype.Deadline|date:'D d b' }}</td>
+                <td>{{ filetype.Description }}</td>
+                {% if user|has_group:'type3staff;type6staff' %}
+                    <td>
+                        <a href="{% url 'professionalskills:listfileoftype' filetype.id %}" class="button primary">Delivered</a>
+                        <a href="{% url 'professionalskills:listmissingoftype' filetype.id %}" class="button primary">Missing Students</a>
+                        <a href="{% url 'professionalskills:downloadall' filetype.id %}" class="button primary">Download All</a>
+                        <a href="{% url 'professionalskills:filetypeedit' filetype.id %}" class="button warning">Edit</a>
+                        <a href="{% url 'professionalskills:filetypedelete' filetype.id %}" class="button danger">Delete</a>
+                    </td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block body %}
+    <h1>Presentations planning</h1>
+    <a href="{% url "presentations:presentationsplanningxls" %}" class="button primary">Export Excel</a>
+    <a href="{% url "presentations:presentationscalendar" %}" class="button primary">View planning calendar</a>
+
+    <table class="table bordered hovered striped datatable">
+        <thead>
+        <tr>
+            <th>Type<br/></th>
+            <th>Student<br/></th>
+            <th>Project<br/></th>
+            <th>Responsible<br/></th>
+            <th>Supervisors<br/></th>
+            <th>Proposal - track<br/></th>
+            <th>Presentationset<br/></th>
+            <th>Room<br/></th>
+            <th>Begintime<br/></th>
+            <th>Duration<br/></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for set in sets %}
+            {% for slot in set.timeslots.all %}
+                {% with slot.Distribution as d %}
+                    <tr>
+                        <td>{{ slot.get_CustomType_display }}</td>
+                        {% if d %}
+                            <td>{{ d.Student.usermeta.Fullname }} ({{ d.Student.usermeta.Studentnumber }})</td>
+                            <td><a href="{% url "proposals:details" d.Proposal.pk %}">{{ d.Proposal.Title }}</a></td>
+                            <td>{{ d.Proposal.ResponsibleStaff }}</td>
+                            <td>
+                                <ul>{{ d.Proposal.Assistants.all|unordered_list }}</ul>
+                            </td>
+                            <td>{{ d.Proposal.Track }}</td>
+                        {% else %}
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        {% endif %}
+                        <td>{{ set.Track }} (set: {{ set.id }})</td>
+                        <td>
+                            {% if slot.CustomType == 1 %}
+                                {{ set.AssessmentRoom }}
+                            {% elif slot.CustomType == 2 %}
+                                --break--
+                            {% else %}
+                                {{ set.PresentationRoom }}
+                            {% endif %}
+                        </td>
+                        <td data-sort="{{ slot.DateTime|date:"U" }}">{{ slot.DateTime|date:"d-m-Y H:i:s" }}</td>
+                        <td>
+                            {{ slot.Duration }}{# a model function to calculate the duration. #}
+                        </td>
+                    </tr>
+                {% endwith %}
+            {% endfor %}
+        {% endfor %}
+        </tbody>
+    </table>
+    <br/>
+
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+        //live search for proposals, using datatables jquery.
+        $(document).ready(function () {
+            var cols = [
+                null, //Type<br /></th>
+                null, //Student<br /></th>
+                null, //Project<br /></th>
+                null, //Responsible<br /></t
+                null, //Supervisors<br /></t
+                null, //Proposal - track<br
+                null, //Presentation - track
+                null, //Room<br /></th>
+                null, //Begintime<br /></th>
+                null //Duration<br /></th>
+            ];
+            var dropdownColumns = [0, 2, 3, 5, 6, 7];
+            MPDataTable(cols, dropdownColumns);
+        });
+    </script>
+{% endblock %}

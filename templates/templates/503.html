@@ -1,0 +1,93 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="shortcut icon" type="image/png" href="{% static "/favicon.ico"%}" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>BEP Marketplace</title>
+    {% block head %}
+    <link href="{% static "css/metro.min.css" %}" rel="stylesheet">
+    <link href="{% static "css/metro-icons.min.css" %}" rel="stylesheet">
+    <link href="{% static "css/metro-responsive.min.css" %}" rel="stylesheet">
+    <link href="{% static "css/metro-schemes.min.css" %}" rel="stylesheet">
+    <link href="{% static "css/custom.css" %}" rel="stylesheet">
+    {% block stylesheets %}
+
+    {% endblock %}
+    {% endblock %}
+</head>
+<body {% block bodytag %}  {%endblock %}>
+<div id="wrapper">
+
+{% block menu %}
+<div class="app-bar" data-role="appbar">
+<div class="app-bar-element branding">BEP Marketplace</div>
+
+<ul class="app-bar-menu">
+    <li><a href="/"><span class="mif-home icon"></span>Home</a></li>
+    <li><a href="{% url 'index:about' %}"><span class="mif-info icon"></span>About</a></li>
+</ul>
+<div class="app-bar-pullbutton automatic"></div>
+<ul class="app-bar-menu place-right" data-flexdirection="reverse">
+
+</ul>
+</div>
+{% endblock %}
+<div id="content">
+<div class="grid">
+    <div class="row cells5">
+        {% block header %}
+
+        {% endblock %}
+    </div>
+    <div class="row cells5">
+        <div class="cell colspan4" id="cellContent">
+            {% block body %}
+
+            <div class="grid">
+            <div class="row cells4">
+                <div class="cell" style="text-align: center" id="cellLogos">
+                    <object data="{% static "img/tuelogo.svg" %}" type="image/svg+xml" style="width:50%;"></object><br><br>
+                    <object data="{% static "img/ieeesbelogo.svg" %}" style="width:90%;"></object><br><br>
+                    <object data="{% static "img/sblogo.svg" %}" style="width:50%;"></object>
+                </div>
+                <div class="cell colspan3">
+                We are currently in maintance mode. Please try again later.
+                </div>
+            </div>
+            </div>
+            {%  endblock %}
+        </div>
+        <div class="cell" id="cellSidebar">
+
+        </div>
+    </div>
+    <div class="row cells5">
+        {% block footer %}
+
+        {% endblock %}
+    </div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div class="place-left">
+
+</div>
+<div class="place-right text-small">
+    <div class="cell place-left padding10"><a href="http://www.djangoproject.com/"><img src="https://www.djangoproject.com/m/img/badges/djangosite80x15_grey.gif" border="0" alt="A Django site." title="A Django site." /></a></div>
+    <div class="cell place-left padding10"><a href="http://metroui.org/" title="MetroUI CSS">MetroUI CSS</a> </div>
+    <div class="cell place-left padding10" onclick="roll('li')">By: Frank Boerman & Jeroen van Oorschot 2016-2017</div>
+    <div class="cell place-left padding10">Currently deployed<span onclick="$('[class^=mif]').removeClass().addClass('icon mif-shit')">:</span></div>
+</div>
+</div>
+{% block scripts %}
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+    <script src="{%  static "js/metro.min.js" %}"></script>
+    <script src="{%  static "js/custom.js" %}"></script>
+{% endblock %}
+</body>
+</html>

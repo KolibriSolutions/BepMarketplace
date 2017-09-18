@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        function ToggleUp(proposalid, button) {
+            if ($(button).prop('checked')) {
+                if ($("#disappr_".concat(String(proposalid))).prop('checked')) {
+                    $("#disappr_".concat(String(proposalid))).prop('checked', false);
+                    $.get("/api/upgradestatus/" + String(proposalid));
+                }
+                $.get("/api/upgradestatus/" + String(proposalid), function (data) {
+                    $.Notify({
+                        caption: 'Result',
+                        content: data,
+                        type: 'info'
+                    })
+                });
+            }
+            else {
+                $.get("/api/downgradestatus/" + String(proposalid), function (data) {
+                    $.Notify({
+                        caption: 'Result',
+                        content: data,
+                        type: 'info'
+                    })
+                });
+            }
+        }
+        /*
+         function ToggleDown(proposalid, button)
+         {
+         if($(button).prop('checked')) {
+         if($("#appr_".concat(String(proposalid))).prop('checked'))
+         {
+         $("#appr_".concat(String(proposalid))).prop('checked', false);
+         $.get("/api/downgradestatus/" + String(proposalid));
+         }
+         $.get("/api/downgradestatus/" + String(proposalid), function(data){
+         $.Notify({
+         caption:'Result',
+         content: data,
+         type:'info'
+         })
+         });
+         }
+         else
+         {
+         $.get("/api/upgradestatus/" + String(proposalid), function(data){
+         $.Notify({
+         caption:'Result',
+         content: data,
+         type:'info'
+         })
+         });
+         }
+         }
+         */
+    </script>
+{% endblock %}
+
+{% block body %}
+    <h1>Pending proposals</h1>
+    <table class="table striped hovered bordered">
+        <thead>
+        <tr>
+            <th>Title</th>
+            <th>Responsible Staff</th>
+            <th>Approve</th>
+            <th>Disapprove</th>
+        </tr>
+        </thead>
+        {% for proposal in proposals %}
+            <tr>
+                <td><a href="{% url 'proposals:details' proposal.id %}" class="capitalize">{{ proposal.Title }}</a></td>
+                <td>{{ proposal.ResponsibleStaff.first_name }} {{ proposal.ResponsibleStaff.last_name }}</td>
+                <td>
+                    <label class="switch">
+                        <input id="appr_{{ proposal.id }}" type="checkbox" onclick="ToggleUp({{ proposal.id }}, this);">
+                        <span class="check"></span>
+                    </label>
+                </td>
+                <td>
+                    <!--<label class="switch">
+    <input id="disappr_{{ proposal.id }}" type="checkbox" onclick="ToggleDown({{ proposal.id }}, this);">
+    <span class="check"></span>
+</label>-->
+                    <a href="{% url 'proposals:downgradestatusmessage' proposal.id %}">
+                        <button class="button danger">Downgrade status</button>
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

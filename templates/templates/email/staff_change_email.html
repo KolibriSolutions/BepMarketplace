@@ -1,0 +1,59 @@
+{% extends "email/base_email.html" %}
+
+{% block body %}
+A message from the BEP marketplace (<a href="https://{{ domain }}">https://{{ domain }}</a>):<br />
+    {{ message }}
+    <br />
+    <table>
+    <tr>
+        <td>
+            Title
+        </td>
+        <td>
+            {{proposal.Title}}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Responsible staff
+        </td>
+        <td>
+            {{ proposal.ResponsibleStaff }}
+        </td>
+    </tr>
+        <tr>
+        <td>
+            Assistant(s) / supervisor(s)
+        </td>
+        <td>
+            {{ proposal.Assistants.all|unordered_list }}
+        </td>
+    </tr>
+        <tr>
+        <td>
+            Track
+        </td>
+        <td>
+            {{ proposal.Track}}
+        </td>
+    </tr>
+        <tr>
+        <td>
+            Capacity group
+        </td>
+        <td>
+            {{ proposal.Group }}
+        </td>
+    </tr>
+        <tr>
+        <td>
+            ECTS
+        </td>
+        <td>
+            {{ proposal.ECTS }}
+        </td>
+    </tr>
+    </table>
+    <br />
+    Please login to the BEP marketplace to see all your proposals.
+{% endblock %}

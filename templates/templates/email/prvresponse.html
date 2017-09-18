@@ -1,0 +1,14 @@
+{% extends "email/base_email.html" %}
+
+{% block header %}
+Dear {{ student.get_full_name }},<br/><br/>
+{% endblock %}
+
+{% block body %}
+Your supervisor has responded to your prv {{ type }}.<br/>
+Status has changed to {% if status == 'G' or status == 'V' %}<font color="green">{{ status }}</font>{% else %}<font color="red">Insufficient</font>{% endif %}<br/>
+Comment from your supervisor:<br/>
+{{ explanation }}<br/><br/>
+If you disagree with this please contact your supervisor. If you have any problems with the prv's please contact Sonia Gomez Puente.
+<br/><br/>
+{% endblock %}

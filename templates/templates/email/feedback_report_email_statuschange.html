@@ -1,0 +1,9 @@
+{% extends "email/base_email.html" %}
+{% block body %}
+The status of your feedback report about {{ report.Url }} (id: {{ report.id }}) has changed to "{{ report.get_Status_display }}".
+    <p>Your feedback was: <i>{{ report.Feedback }}</i></p>
+    {% if message %}
+<br/>Message from the developer team:<br/>
+{{ message|linebreaksbr }}
+{% endif %}
+{% endblock %}

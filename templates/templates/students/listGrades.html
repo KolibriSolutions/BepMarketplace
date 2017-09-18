@@ -1,0 +1,46 @@
+{# not used anymore #}
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block body %}
+    <h1>All grades of {{ d.Student.first_name }} {{ d.Student.last_name }} ({{ d.Student.pk }}) on
+        project {{ d.Proposal }}</h1>
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <table class="table bordered hovered striped" id="gradetable">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Weight (%)</th>
+                <th>Grade</th>
+            </tr>
+            </thead>
+            <tfoot>
+            <tr>
+                <th>Total</th>
+                <th>100%</th>
+                <th>{{ d.TotalGrade }}</th>
+            </tr>
+            </tfoot>
+            <tbody>
+            {% for t in res %}
+                <tr>
+                    <td>{{ t.Type.Name }}</td>
+                    <td>{{ t.Type.Weight }}%</td>
+                    <td><input type="number" min="0" max="10" maxlength="4" step="0.1" value="{{ t.Grade }}"
+                               name="g{{ t.Type.id }}"/></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <p>
+            <button class="button info" type="reset"><span class="mif-add"></span>Undo changes</button>
+            </a>
+            <button class="button success" type="submit">Save</button>
+        </p>
+    </form>
+    <a href="{% url 'proposals:details' d.Proposal.id %}">
+        <button class="button primary">View proposal</button>
+    </a>
+{% endblock %}

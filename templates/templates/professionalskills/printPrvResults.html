@@ -1,0 +1,48 @@
+{% load staticfiles %}
+<html>
+<head>
+    <title>bprvresults</title>
+<style>
+    table {
+        border-collapse:collapse;
+        border: 1px solid #ccc;
+    }
+td, th {
+    font-size:11px; line-height:13px;
+    border: 1px solid #666666;
+    vertical-align:top; padding:5px;
+    text-align: left;
+}
+</style>
+</head>
+<body>
+
+{% for page in pages %}
+<h1>Professional Skills for {{ page.student.get_full_name }}</h1>
+<h2>Project: {{ page.proposal }}</h2>
+<h3>Supervisor: {{ page.proposal.ResponsibleStaff.get_full_name }}</h3>
+<table class="table border bordered" style="width:50%;">
+<thead>
+<tr>
+    <th>Prv</th>
+    <th>Response</th>
+</tr>
+</thead>
+<tbody>
+{% for f in page.files %}
+<tr>
+<td>{{ f.File.Type }}</td>
+<td>{{ f.Status }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<br/>
+    <h1>Signed by {{ page.proposal.ResponsibleStaff.get_full_name }} at Assessment: {{ page.time|date:"H:i D d F Y" }} in {{ page.room }}</h1>
+<div>
+    <pdf:nextpage />
+</div>
+{% endfor %}
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+[Unit]
+Description=django worker that only servers websocket channels
+After=network.target
+StopWhenUnneeded=true
+
+[Service]
+Type=simple
+RuntimeDirectory=django
+PIDFile=/run/django/wspid%I
+User=root
+Group=root
+WorkingDirectory=/root/BepMarketplace/
+ExecStart=/usr/bin/python manage.py runworker --only-channels=websocket.*
+ExecStop=/bin/kill -s TERM $MAINPID
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=websocketworker.target

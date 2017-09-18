@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block body %}
+    <h1>All files of type {{ type }}</h1>
+    <h3>Has deadline {{ type.Deadline|date:'D d b' }}</h3>
+    <table id="filetable" class="table bordered striped">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Name</th>
+            <th>Caption</th>
+            <th>Time</th>
+            <th>Student</th>
+            <th>Supervisors Email</th>
+            <th>Supervisor Approval</th>
+            <th>Approval Timestamp</th>
+            <th>Supervisor comments</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for file in files %}
+            <tr>
+                <td><span class="icon mif-file-{{ file.metro_icon }}"></span></td>
+                <td><a href="{% url "download:studentfile" file.id %}">{{ file.OriginalName }}</a></td>
+                <td>{{ file.Caption }}</td>
+                <td {% if file.TimeStamp.date <= type.Deadline %} class="success" {% else %}class="error"{% endif %}
+                                                                  data-sort="{{ file.TimeStamp|date:"U" }}">{{ file.TimeStamp }}</td>
+                <td {% if file.TimeStamp.date <= type.Deadline %} class="success"
+                                                                  {% else %}class="error"{% endif %} >{{ file.Distribution.Student.get_full_name }}</td>
+                <td>
+                    {{ file.Distribution.Proposal.ResponsibleStaff.email }}<br/>
+                    {% for ass in file.Distribution.Proposal.Assistants.all %}
+                        {{ ass.email }}
+                    {% endfor %}
+                </td>
+                <td>
+                    {% if file.Type.CheckedBySupervisor %}
+                        {% if file.staffreponse.Status == 'V' or file.staffreponse.Status == 'G' %}
+                            {{ file.staffreponse.Status }}: <span class="mif-checkmark fg-green"></span>
+                        {% else %}
+                            {{ file.staffreponse.Status }}: <span class="mif-cross fg-red"></span>
+                        {% endif %}
+                    {% else %}
+                        No check needed
+                    {% endif %}
+                </td>
+                <td>
+                    {% if file.Type.CheckedBySupervisor %}
+                        {{ file.staffreponse.TimestampLastEdited }}
+                    {% else %}
+                        No check needed
+                    {% endif %}
+                </td>
+                <td>
+                    {% if file.Type.CheckedBySupervisor %}
+                        {{ file.staffreponse.Explanation }}
+                    {% else %}
+                        No check needed
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            var options = {
+                "pageLength": 100,
+                "order": [],
+                "columns": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                ],
+                initComplete: function () {
+                    this.api().columns([]).every(function () {
+                        var column = this;
+                        var select = $('<select><option value=""></option></select>')
+                            .appendTo($(column.header()))
+                            .on('change', function () {
+                                var val = $.fn.dataTable.util.escapeRegex(
+                                    $(this).val()
+                                );
+                                column
+                                    .search(val ? '^' + val + '$' : '', true, false)
+                                    .draw();
+                            });
+
+                        column.data().unique().sort().each(function (d, j) {
+                            select.append('<option value="' + d + '">' + d + '</option>')
+                        });
+                    });
+                }
+            };
+            $('#filetable').DataTable(options);
+            //for datatables, do not sort the table when clicking a select.
+            $("th>select").click(function () {
+                return false;
+            })
+        });
+    </script>
+{% endblock %}

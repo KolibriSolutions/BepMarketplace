@@ -1,0 +1,380 @@
+{% load staticfiles %}
+{% load custom_filters %}
+{% GetPhaseNumber as phasenumber %}
+
+<!--base-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="shortcut icon" href="{% static "/favicon.ico" %}"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>BEP Marketplace</title>
+    {% block head %}
+        <link href="{% static "css/metro.min.css" %}" rel="stylesheet">
+        <link href="{% static "css/metro-icons.min.css" %}" rel="stylesheet">
+        <link href="{% static "css/metro-responsive.min.css" %}" rel="stylesheet">
+        <link href="{% static "css/metro-schemes.min.css" %}" rel="stylesheet">
+        <link href="{% static "css/custom.css" %}" rel="stylesheet">
+
+        {% block stylesheets %}
+
+        {% endblock %}
+    {% endblock %}
+</head>
+<body {% block bodytag %}  {% endblock %}>
+
+<div id="wrapper">
+    {% block menu %}
+        <div class="app-bar" data-role="appbar">
+            <div class="app-bar-element branding">BEP Marketplace</div>
+
+            <ul class="app-bar-menu">
+                <li><a href="/"><span class="mif-home icon"></span>Home</a></li>
+                {% if user.is_authenticated %}
+                    {% if  user|has_group:"any" %}
+                        <li><a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Proposals</a>
+                            <ul class="d-menu" data-role="dropdown">
+                                <li><a href="{% url 'proposals:list' %}">All published proposals</a></li>
+                                {% if phasenumber == 1 or user|has_group:'type3staff' %}
+                                    <li><a href="{% url 'proposals:create' %}">Create new proposal</a></li>
+                                {% endif %}
+                                <li><a href="{% url 'proposals:chooseedit' %}">{% if user|has_group:'type3staff' %}All
+                                    proposals{% else %}My proposals{% endif %}</a></li>
+                                {% if not user|has_group:'type3staff' and phasenumber < 3 %}
+                                    <li><a href="{% url 'proposals:pending' %}">My pending proposals</a></li>
+                                {% endif %}
+                                {% if user|has_group:"type4staff" and not user.is_superuser %}
+                                    <li><a href="{% url 'support:listgroupproposals' %}">My group proposals</a></li>
+                                {% endif %}
+                                {% if user|is_trackhead and not user.is_superuser %}
+                                    <li><a href="{% url 'proposals:listtrackproposals' %}">My track proposals</a></li>
+                                {% endif %}
+                                {% if phasenumber > 5 %}
+                                    <li>
+                                        <a href="#" class="dropdown-toggle">Statistics</a>
+                                        <ul class="d-menu" data-role="dropdown">
+                                            <li><a href="{% url 'proposals:statsgeneral' %}">General Report</a></li>
+                                            <li><a href="{% url 'proposals:stats' %}">Personal Report</a></li>
+                                        </ul>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        {% if user|has_group:"type3staff" %}
+                            {% if phasenumber > 2 and phasenumber < 5 %}
+                                <li>
+                                    <a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Distribution</a>
+                                    <ul class="d-menu" data-role="dropdown">
+                                        {% if phasenumber == 4 %}
+                                            <li>
+                                                <a href="#" class="dropdown-toggle">Distribute Automatically</a>
+                                                <ul class="d-menu" data-role="dropdown">
+                                                    <li><a href="{% url 'distributions:distributeproposal' 1 %}">Old Way</a>
+                                                    </li>
+                                                    <li><a href="{% url 'distributions:distributeproposal' 2 %}">New Way</a>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                            <li><a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
+                                                Manually</a></li>
+                                        {% endif %}
+                                        <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">List all</a></li>
+                                    </ul>
+                                </li>
+                            {% else %}
+                                <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">
+                                    <span class="mif-mail-read icon"></span>Distributions</a>
+                                </li>
+                            {% endif %}
+                            {% if phasenumber > 4 %}
+                                <li>
+                                    <a href="" class="dropdown-toggle"><span class="mif-file-powerpoint icon"></span>Presentations</a>
+                                    <ul class="d-menu" data-role="dropdown">
+                                        <li><a href="{% url 'presentations:presentationswizardstep1' %}">Step1 Options</a></li>
+                                        <li><a href="{% url 'presentations:presentationswizardstep2' %}">Step2 add/edit
+                                            Rooms</a></li>
+                                        <li><a href="{% url 'presentations:presentationswizardstep3' %}">Step3 add/edit
+                                            Presentation sets</a></li>
+                                        <li><a href="{% url 'presentations:presentationswizardstep4' %}">Step4 Presentations
+                                            planning</a></li>
+                                        <li><a href="{% url 'presentations:presentationsplanning' %}">List presentations
+                                            table</a></li>
+                                        <li><a href="{% url 'presentations:presentationscalendar' %}">Presentations calendar</a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            {% endif %}
+                            <li>
+                                <a href="" class="dropdown-toggle"><span class="mif-stack2 icon"></span>Support</a>
+                                <ul class="d-menu" data-role="dropdown">
+                                    <li>
+                                        <a href="#" class="dropdown-toggle">Lists</a>
+                                        <ul class="d-menu" data-role="dropdown">
+                                            <li><a href="{% url 'support:listusers' %}">All Users</a></li>
+                                            {% comment %}
+                                            temporary disabled waiting for osiris integration
+                                            <li><a href="{% url 'support:liststudentsldap' %}">All Students</a></li>
+                                            {% endcomment %}
+                                            <li><a href="{% url 'support:privateproposals' %}">All Private Proposals</a>
+                                            </li>
+                                            <li><a href="{% url 'support:liststaff' %}">All Staff</a></li>
+                                        </ul>
+                                    </li>
+                                    <li><a href="{% url 'support:mailinglist' %}">Mailing List</a></li>
+                                    <li><a href="{% url 'support:stats' %}">Stats</a></li>
+                                    {% if phasenumber == 2 %}
+                                        <li><a href="{% url 'support:mailtrackheads' %}">Mail Track Heads</a></li>
+                                    {% endif %}
+                                    {% if phasenumber < 6 %}
+                                        <li><a href="{% url 'support:ectsform' %}">Students ECTS</a></li>
+                                    {% endif %}
+                                    {% if phasenumber < 7 %}
+                                        <li><a href="{% url 'support:contentpolicy' %}">Content Policy
+                                            Violations</a></li>
+                                    {% endif %}
+                                    <li><a href="{% url 'support:verifyassistants' %}">Verify assistants</a></li>
+                                    <li>
+                                        <a href="" class="dropdown-toggle">Public files</a>
+                                        <ul class="d-menu" data-role="dropdown">
+                                            <li><a href="{% url 'support:addfile' %}">Add public file</a></li>
+                                            <li><a href="{% url 'support:editfiles' %}">Edit public files</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            {# staff except type3/6 #}
+                            {% if phasenumber > 5 %}
+                                <li><!--for staff except type3-->
+                                    <a href="{% url 'presentations:presentationscalendar' %}"><span
+                                            class="mif-file-powerpoint icon"></span>Presentations</a>
+                                </li>
+                            {% endif %}
+                        {% endif %}
+                        {% isThereTimeslot as timeslotpresent %}
+                        {% if phasenumber > 3 or phasenumber < 0 and timeslotpresent %}
+                            <li><a href="{% url 'support:liststudents' %}"><span class="mif-users icon"></span>Students{% if phasenumber > 6 or phasenumber < 0 %} & Grades{% endif %}</a>
+                            </li>
+                        {% endif %}
+                    {% elif user|has_group:"type4staff" %}
+                        <li><a href="{% url 'support:listgroupproposals' %}">My group proposals</a></li>
+                    {% else %}
+                        <li><a href="{% url 'proposals:list' %}"><span class="mif-mail-read icon"></span>Proposals</a>
+                        </li>
+                        {% if not user|has_group:'type5staff' %}
+                            {% if phasenumber < 5 %}
+                                <li><a href="{% url 'students:listapplications' %}"><span
+                                        class="mif-stack2 icon"></span>Applications</a></li>
+                            {% endif %}
+                            {% if phasenumber > 5 %}
+                                <li>
+                                    <a href="" class="dropdown-toggle"><span
+                                            class="mif-files-empty icon"></span>Files</a>
+                                    <ul class="d-menu" data-role="dropdown">
+                                        <li><a href="{% url 'professionalskills:listownfiles' %}">List files</a></li>
+                                        <li><a href="{% url 'students:addfile' %}">Add file</a></li>
+                                        <li><a href="{% url 'students:editfiles' %}">Edit files</a></li>
+                                    </ul>
+                                </li>
+                                <li><!--for students-->
+                                    <a href="{% url 'presentations:presentationscalendar' %}"><span
+                                            class="mif-file-powerpoint icon"></span>Presentations</a>
+                                </li>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                    {% if user|has_group:'type3staff;type6staff' %}
+                        <li>
+                            <a href="#" class="dropdown-toggle"><span class="mif-widgets icon"></span>Professional
+                                Skills</a>
+                            <ul class="d-menu" data-role="dropdown">
+                                <li><a href="{% url 'professionalskills:filetypelist' %}">All</a></li>
+                                <li><a href="{% url 'professionalskills:filetypecreate' %}">Create New</a></li>
+                            </ul>
+                        </li>
+                    {% elif phasenumber > 5 %}
+                        <li><a href="{% url 'professionalskills:filetypelist' %}"><span class="mif-widgets icon"></span>Professional
+                            Skills</a></li>
+                    {% endif %}
+                    {% if user.is_superuser %}
+                        <li>
+                            <a href="" class="dropdown-toggle"><span class="mif-wrench mif-ani-spanner"></span>GodPowers</a>
+                            <ul class="d-menu" data-role="dropdown">
+                                <li><a href="{% url 'index:feedbacklist' %}">Feedback Reports</a></li>
+                                <li>
+                                    <a href="#" class="dropdown-toggle">Tracking</a>
+                                    <ul class="d-menu" data-role="dropdown">
+                                        <li><a href="{% url 'godpowers:visitorsmenu' %}">Students List</a></li>
+                                        <li><a href="{% url 'godpowers:visitorsproposalsoverview' %}">Visitors
+                                            Overview</a></li>
+                                        <li><a href="{% url 'tracking:statuslist' %}">Status change tracking</a></li>
+                                        <li><a href="{% url 'tracking:listuserlog' %}">User log</a></li>
+                                        <li><a href="{% url 'tracking:applicationlist' %}">Application tracking</a></li>
+                                        <li><a href="{% url 'tracking:livestreamer' %}">Live Streamer</a></li>
+                                    </ul>
+                                </li>
+                                <li><a href="{% url 'godpowers:clearcache' %}">Clear Cache</a></li>
+                                <li><a href="{% url 'godpowers:groupadministration' %}">Group Administration</a></li>
+                                <li><a href="{% url 'godpowers:sessionlist' %}">Session List</a></li>
+
+                                <li><a href="/admin/">Django admin</a></li>
+                            </ul>
+                        </li>
+                    {% endif %}
+                {% endif %}
+                <li><a href="{% url 'index:about' %}"><span class="mif-info icon"></span>About</a></li>
+            </ul>
+            <div class="app-bar-pullbutton automatic"></div>
+            <ul class="app-bar-menu place-right" data-flexdirection="reverse">
+                <li>{% GetSlot %}</li>
+                {% if user.is_authenticated %}
+                    <li><a href="{% url 'index:profile' %}"><span class="mif-user icon"></span>{{ user }} Profile</a>
+                    </li>
+                    <li><a href="{% url 'index:logout' %}"><span class="mif-vpn-lock icon"></span>Logout</a></li>
+                {% else %}
+                    <li><a href="{% url 'djangosaml2_custom:saml2_login' %}"><span class="mif-vpn-lock icon"></span>Login</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    {% endblock %}
+    <div id="content">
+        <div class="grid">
+            <div class="row cells5">
+                {% block header %}
+
+                {% endblock %}
+            </div>
+            <div class="row cells5">
+                <div class="cell colspan4" id="cellContent">
+                    {% block body %}
+                        {% if Message %}
+                            {% autoescape off %}
+                                <p>{{ Message }}</p>
+                            {% endautoescape %}
+                        {% endif %}
+                        {% if return %}
+                            {% if returnget %}
+                                <a href="{% url return returnget %}">
+                            {% else %}
+                                <a href="{% url return %}">
+                            {% endif %}
+                        <button class="button primary">Return</button></a>
+                        {% endif %}
+                    {% endblock %}
+                </div>
+                <div class="cell" id="cellSidebar">
+                    {% GetBroadcastStatus user as status %}
+                    {% if status %}
+                        <div class="panel">
+                            <div class="heading" style="font-size: 100%;">
+                                <span class="title">Announcements</span>
+                            </div>
+                            <div class="content" style="font-size: 110%;">
+                                {% GetBroadcast user %}
+                            </div>
+                        </div>
+                        <br>
+                    {% endif %}
+                    <p>Current phase: {% GetPhase %}</p>
+                    {% if user.is_authenticated %}
+                        {% if user|has_group:"type1staff;type2staff;type2staffunverified" %}
+                            {% if phasenumber < 3 %}
+                                <p>
+                                    Pending proposals: {% getPending user %}
+                                </p>
+                            {% elif phasenumber > 5 %}
+                                {% GetPresentationStaff user %}
+                            {% endif %}
+                        {% endif %}
+                        {% if user|has_group:"type2staffunverified" and not user.is_superuser %}
+                            <p><strong>
+                                You have an unverified type2staff account.<br/>
+                                Your type2staff account will be verified by the supportstaff or when a proposals made by
+                                you is approved by the type1staff (Responsible professor).
+                                This unverified status has no further implications.
+                            </strong></p>
+                        {% endif %}
+
+                        {% if user.personal_proposal.all %}
+                            <p>
+                                {% if user.personal_proposal.all|length_is:"1" %}
+                                    There is a personal (private) proposal for you. You can view all proposals in the
+                                    "proposals" menu but you don't have to do anything with it.
+                                {% else %}
+                                    There are multiple private proposals for you. Please contact the support staff to
+                                    remove you from one.
+                                {% endif %}
+                                <br/>
+                                {% for p in user.personal_proposal.all %}
+                                    <a href="{% url 'proposals:details' p.pk %} "
+                                       class="button primary">{{ p.Title|truncatechars:30 }}</a>
+                                    <br/>
+                                {% endfor %}
+                            </p>
+                        {% endif %}
+
+                        {% if phasenumber > 4 %}
+                            {% if user.distributions.count %}
+                                {# only students #}
+                                {% GetDistribution user %}
+                                {% if phasenumber == 5 %}
+                                    If you do not agree with your distribution, please contact the support staff.
+                                {% else %} {# phase 6 or 7 #}
+                                    {% GetPresentationStudent user %}
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                        {% if user.is_impersonate %}
+                            <p>
+                                <strong>Impersonating user {{ request.user }} as {{ request.impersonator }}</strong>
+                                <br/>
+                                <a href="{% url 'impersonate-stop' %}" class="button primary">Stop impersonating</a>
+                            </p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row cells5">
+                {% block footer %}
+
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+<div id="footer">
+    <div class="place-left">
+        {% if request.user.is_authenticated %}
+            <form method="post" action="{% url 'index:feedbackForm' %}">
+                {% csrf_token %}
+                <input type="hidden" id="id_Reporter" name="id_Reporter" value="{{ request.user.id }}">
+                <input type="hidden" id="id_Url" name="id_Url" value="{{ request.path }}">
+                <button class="button primary">Feedback</button>
+            </form>
+        {% endif %}
+    </div>
+    <div class="place-right text-small">
+        <!--    <div class="cell place-left padding10"><a href="http://www.djangoproject.com/"><img src="https://www.djangoproject.com/m/img/badges/djangosite80x15_grey.gif" border="0" alt="A Django site." title="A Django site." /></a></div>
+            <div class="cell place-left padding10"><a href="http://metroui.org/" title="MetroUI CSS">MetroUI CSS</a> </div> -->
+        <div class="cell place-left padding10" onclick="roll('li')">By: Frank Boerman & Jeroen van Oorschot 2016-2017
+        </div>
+        <div class="cell place-left padding10">Currently deployed<span
+                onclick="$('[class^=mif]').removeClass().addClass('icon mif-shit')">:</span> {% GetHash %}</div>
+    </div>
+</div>
+{% block scripts %}
+
+    <script src="{% static "js/jquery-3.2.1.min.js" %}"></script>
+    <script src="{% static "js/datatables.min.js" %}"></script>
+    <script src="{% static "js/dataTables.responsive.min.js" %}"></script>
+    <script src="{% static "js/dataTables.buttons.min.js" %}"></script>
+    <script src="{% static "js/buttons.html5.min.js" %}"></script>
+
+    <script src="{% static "js/datatable.js" %}"></script>
+    <script src="{% static "js/metro.min.js" %}"></script>
+    <script src="{% static "js/custom.js" %}"></script>
+{% endblock %}
+</body>
+</html>

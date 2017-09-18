@@ -1,0 +1,6 @@
+{% extends "email/base_email.html" %}
+{% block body %}
+This is a confirmation that you have submitted a feedback report about {{ report.Url }} (id: {{ report.id }}). <br/>
+    <p>Your feedback is: <i>{{ report.Feedback }}</i></p>
+Thank you for taking the time to improve our system! You will be notified when the developer team has reviewed your ticket.
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>List of Status changes</h1>
+    <table id="statustable" class="table datatable striped hovered">
+        <thead>
+        <tr>
+            <th>
+                Timestamp<br/>
+            </th>
+            <th>
+                Proposal<br/>
+            </th>
+            <th>
+                User<br/>
+            </th>
+            <th>
+                From Status<br/>
+            </th>
+            <th>
+                To Status<br/>
+            </th>
+            <th>
+                Message<br/>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for track in trackings %}
+            <tr>
+                <td data-sort="{{ track.Timestamp|date:"U" }}">
+                    {{ track.Timestamp|date:"d-m-Y H:i:s" }}
+                </td>
+                <td>
+                    <a class="capitalize"
+                       href="{% url 'proposals:details' track.Subject.id %}">{{ track.Subject.Title }}</a>
+                </td>
+                <td>
+                    {{ track.Actor.get_full_name }}
+                </td>
+                <td>
+                    {{ track.StatusFrom }}
+                </td>
+                <td>
+                    {{ track.StatusTo }}
+                </td>
+                <td>
+                    {{ track.Message }}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            var cols= [
+                    null, //time
+                    null, //proposal
+                    null, //user
+                    null, //from
+                    null, //to
+                    null,  //message
+                ];
+                var dropdownColumns = [2, 3, 4];
+                MPDataTable(cols, dropdownColumns);
+        });
+    </script>
+{% endblock %}

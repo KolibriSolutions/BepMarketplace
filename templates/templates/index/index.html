@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% load staticfiles %}
+{% block body %}
+
+    <div class="grid">
+        <div class="row cells4">
+            <div class="cell" style="text-align: center" id="cellLogos">
+                <object data="{% static "img/tuelogo.svg" %}" type="image/svg+xml" style="width:50%;"></object>
+                <br><br>
+                <object data="{% static "img/ieeesbelogo.svg" %}" style="width:100%;"></object>
+                <br><br>
+                <object data="{% static "img/sblogo.svg" %}" style="width:30%;"></object>
+            </div>
+            <div class="cell colspan3">
+                <h1>Bachelor Final Project Marketplace</h1>
+                <h4>Hello and welcome to the marketplace!</h4>
+                <p>At this moment we are in timephase <i>"{% GetPhase %}"</i> in timeslot <i>{% GetSlot %}</i></p>
+
+                {% if user.is_authenticated %}
+                    {{ info }}
+                {% else %}
+                    Please start by <a href="{% url 'djangosaml2_custom:saml2_login' %}" class="button primary">logging in</a>
+                    {% if phasenumber < 3 %}
+                        After logging in, you can be granted staff access. With staff access it is possible to create and edit proposals.
+                    {% endif %}
+                {% endif %}
+                <br/>
+                {% if user.is_authenticated %}
+                    The next phase starts in:<br/>
+                    <div class="countdown" data-role="countdown" data-days="{{ countdownDays }}"
+                         data-hours="{{ countdownHours }}" data-minutes="{{ countdownMinutes }}"></div>
+                    <h4>Help and explanation (click on a title to open)</h4>
+                    {% if user|has_group:"type1staff;type2staff;type3staff;type4staff" %} {# staff manual #}
+                        <div class="accordion" data-role="accordion">
+                            <div class="frame">
+                                <div class="heading">Accounts</div>
+                                <div class="content">
+                                    If you can see this, you are already logged in.
+                                    <h5>Permissions</h5>
+                                    <p>
+                                        To see which type staff you are in the system click 'Profile' in the right top
+                                        corner.<br/>
+                                        These are the permissions:
+                                    </p>
+                                    <table class="table striped border">
+                                        <tr>
+                                            <th>Permission</th>
+                                            <th>Type 1 staff</th>
+                                            <th>Type 2 staff</th>
+                                            <th>Type 3 staff</th>
+                                        </tr>
+                                        <tr>
+                                            <td>Create and edit proposals</td>
+                                            <td>yes</td>
+                                            <td>yes</td>
+                                            <td>yes</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Responsible for proposal</td>
+                                            <td>yes</td>
+                                            <td>no</td>
+                                            <td>no</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Set a proposal private to a student</td>
+                                            <td>yes</td>
+                                            <td>yes</td>
+                                            <td>yes</td>
+                                        </tr>
+                                        <tr>
+                                            <td>See all students that applied</td>
+                                            <td>no</td>
+                                            <td>no</td>
+                                            <td>yes</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Edit student distribution</td>
+                                            <td>no</td>
+                                            <td>no</td>
+                                            <td>yes</td>
+                                        </tr>
+                                        <tr>
+                                            <td>See distributions of own proposals</td>
+                                            <td>yes</td>
+                                            <td>yes</td>
+                                            <td>yes</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Input student grades</td>
+                                            <td>yes</td>
+                                            <td>no</td>
+                                            <td>yes</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Delete grades</td>
+                                            <td>no</td>
+                                            <td>no</td>
+                                            <td>yes</td>
+                                        </tr>
+                                    </table>
+
+                                    <h5>Account creation</h5>
+                                    <p>
+                                        Account creation is a one time process. The system has a three types of
+                                        accounts, type1, type2 and type3 staff. type1 is a responsible for a proposal,
+                                        type2 is an assistant or supervisor and type3 is a support person. Example of
+                                        type1staff is a professor, example of type 2 staff is a PhD'er. Track heads (for
+                                        AU, C&amp;C, SSS and CW) are type 1 staff but have additional rights within the
+                                        system.<br/>
+
+                                        The type3staff is for the support staff such as at this moment Suzanne
+                                        Kuijlaars. This is for administrative purposes.</p>
+                                    <p>
+
+                                        The BEP marketplace team will create accounts on the marketplace with
+                                        appropriate privileges for the type1 staff members. These staff members will
+                                        receive an email with a link to set a password to their account. Password reset
+                                        via email is supported.<br/>
+                                        Type2staff, assistant, can make their own account using the register account
+                                        button on the website. After the account is created, the type2staff can create
+                                        proposals. The type2staff account is verified by the support staff (type3staff)
+                                        or when a proposal is made by the type2staff member is approved by the
+                                        type1staff (Responsible professor).
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="frame">
+                                <div class="heading">Time phases</div>
+                                <div class="content">
+                                    To organize the BEP projects, the system is divided in a few phases. The current
+                                    phase can be seen in the sidebar on the left.
+                                    <ul>
+                                        <li>Generating Project Proposals<br/> Proposals are created and added to the
+                                            system following the procedure set out in section below.
+                                        </li>
+                                        <li>Project Quality Check <br/> Track heads go through all proposals and approve
+                                            or disapprove proposals. Please note that they can already start doing this
+                                            earlier, but in this phase no new proposals can be added.
+                                        </li>
+                                        <li>Students Choosing Projects<br/>Students can apply to proposals. Only the
+                                            support staff (type 3) can see these applications.
+                                        </li>
+                                        <li>Distribution of Proposals<br/>Projects are automatically distributed across
+                                            all students. This is checked by support staff and can be manually adjusted.
+                                        </li>
+                                        <li>Gather and Process Objections<br/> Short period to gather objections from
+                                            students to their distributions. These have to be within reason. Support
+                                            staff will handle this and can manually adjust distribution where needed.
+                                        </li>
+                                        <li>Execution of projects<br/>The actual doing of projects for 6 months.</li>
+                                        <li>Presentation of Results<br/>The students present their results, hand in
+                                            their papers and are graded. These grades will be entered into the
+                                            marketplace system and presented to support staff. Students cannot see these
+                                            grades.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="frame">
+                                <div class="heading">Proposals</div>
+                                <div class="content">
+                                    Type 1 and 2 staff members create proposals, student apply to them. Type 3 staff
+                                    distributes students over the proposals.
+                                    <p>
+                                        A proposal goes through a three step procedure and can be in four types of
+                                        status:
+                                    </p>
+                                    <ol>
+                                        <li>Draft, awaiting completion by type 2 (assistant)<br/>This is only applicable
+                                            if a type1staff (responsible) has created the proposal
+                                        </li>
+                                        <li>Draft, awaiting approval by type 1 (responsible)<br/>If a type2staff
+                                            (assistant) creates a proposal, it has this state immediately.
+                                        </li>
+                                        <li>Final draft, awaiting approval track head</li>
+                                        <li>Active proposal<br/>Active proposal, all proposals in the phase 'Students
+                                            Choosing Projects' have this status.
+                                        </li>
+                                    </ol>
+
+                                    <p>
+                                        This corresponds to the following procedure:
+                                    </p>
+                                    <ul>
+                                        <li>Type1staff creates a proposal and fills in initial information. Also adds
+                                            assistants. Increases the status when a type2staff member can continue.
+                                        </li>
+                                        <li>Type2staff refines an existing proposal OR type2staff creates the proposal.
+                                            Bumps the status when ready.
+                                        </li>
+                                        <li>Type1staff reviews the proposal. If the type1staff approves the proposal,
+                                            the status is increased. Then automatically all assistant-accounts
+                                            (type2staff) of the proposal are verified.
+                                        </li>
+                                        <li>Track head reviews the proposal. If the track head approves it bumps the
+                                            status. The proposal is now published on the public listing (unless its
+                                            private, see next section). The public proposals are visible to all staff
+                                            members. In a later time phase the public proposals will also be visible for
+                                            students.
+                                        </li>
+                                    </ul>
+                                    <p>
+                                        At the approval steps the status can be set back to indicate it has been
+                                        disapproved. Relevant staff members will be notified by email for status change
+                                        if action is required from that staff member. After a proposal has reached the
+                                        "Active proposal" status it can only be unlisted or edited by a type3staff.
+                                    </p>
+                                    <p>
+                                        A proposal has the following fields:
+                                    </p>
+                                    <ul>
+                                        <li>Title</li>
+                                        <li>Responsible staff <br/>Usually the professor that creates the proposal</li>
+                                        <li>Supervisors / assistants<br/>The staff member(s) helping the responsible,
+                                            for instance a PhD'er
+                                        </li>
+                                        <li>Track<br/>Which track the project belongs to (AU, C&amp;C, SSS or CW)</li>
+                                        <li>Group<br/>Which research group the project belongs to</li>
+                                        <li>ECTS<br/>Whether the project is 10 or 15 ECTS</li>
+                                        <li>Private<br/>In case the project is private, which student the project is
+                                            for.
+                                        </li>
+                                        <li>Minimum/maximum number of students</li>
+                                        <li>General description<br/> A general description of the project</li>
+                                        <li>Students task description<br/>A description of the tasks that the students
+                                            will do.
+                                        </li>
+                                        <li>Images<br/>These can be added after creation, using the 'upload images'
+                                            button.
+                                        </li>
+                                    </ul>
+
+                                    <h5>Private Proposals</h5>
+                                    <p>
+                                        It is possible for students to organize their own BEP project with for example a
+                                        student team or company. To accommodate this it is possible to make a proposal
+                                        private. A private proposal will always be distributed to the person it is
+                                        private too. Furthermore it is not publicly listed even when at "Active
+                                        Proposal" state. It is only visible to the assigned student and all involved
+                                        staff members plus the track head. For all other things the procedure for a
+                                        private proposal is exactly the same as normal ones. This means that students
+                                        have to find a type1staff member first. This is the responsibility of the
+                                        student.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="frame">
+                                <div class="heading">Applications and distribution</div>
+                                <div class="content">
+                                    <p>
+                                        In the phase "Students choosing projects" students can apply to proposals. A
+                                        student can make only a few applications, with a decreasing priority. Only
+                                        type3staff can view these applications.
+                                    </p>
+                                    <p>
+                                        Then in the phase "Distribution of Proposals" an automatic system helped by a
+                                        type3staff the proposals are distributed based on the applications and
+                                        priorities.
+                                    </p>
+                                    <p>
+                                        After possible resolving of objections, distributions are fixed. From this
+                                        moment on type 1 and type 2 staff can see the distributions.
+                                        This is when students start the projects.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="frame">
+                                <div class="heading">Grading</div>
+                                <div class="content">
+                                    In the final phase, "Presentation of results", staff members can set grades for
+                                    their proposals. Type 3 staff can see all grades and enter them into the TU/e
+                                    grading system. Students cannot see these grades.
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}{# student manual #}
+                        <div class="accordion" data-role="accordion">
+                            <div class="frame">
+                                <div class="heading">Proposals and applications</div>
+                                <div class="content">
+                                    Click on the proposal button to view all proposals (projects) you can do this year.
+                                    <br/>
+                                    When you see an interesting proposal, click the "apply" button to apply to the
+                                    proposal. Only the administrative support staff can see these.
+                                    <br/>
+                                    You can make a few applications, with decreasing priority. Click "Applications" in
+                                    the top menu to view your applications and change their priority. It is possible to
+                                    retract your application before the deadline.
+                                    <p>
+                                        The system is divided in a few timephases, these can be viewed in the sidebar on
+                                        the right. The phases are:
+                                    </p>
+                                    <ul>
+                                        <li>Students Choosing Projects<br/>Students can apply to proposals. Only the
+                                            support staff can see these applications. As this phase is finished, your
+                                            applications are fixed.
+                                        </li>
+                                        <li>Distribution of Proposals<br/> Projects are automatically distributed across
+                                            all students. This is checked by support staff and can be manually adjusted.
+                                        </li>
+                                        <li>Gather and Process Objections<br/>Short period to gather objections from
+                                            students to their distributions. If you do not agree with the project
+                                            distribution, you can contact Suzanne Kuijlaars, as she might make manual
+                                            changes to the distribution.
+                                        </li>
+                                        <li>Execution of projects<br/>The actual doing of projects for 6 months.</li>
+                                        <li>Presentation of Results<br/>The students present their results, hand in
+                                            their papers and are graded. These grades will be entered into the
+                                            marketplace system by staff and presented to support staff.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="frame">
+                                <div class="heading">Custom (own) project</div>
+                                <div class="content">
+                                    <p>
+                                        It is possible for students to organize their own BEP project with for example a
+                                        student team or company.
+                                        To do this, you have to find a professor who can be your supervisor. The
+                                        professor can then enter the proposal in the system and keep the proposal
+                                        private for you. It will be distributed to you automatically and no one else can
+                                        see the proposal.
+                                        It is only visible to the assigned student and all involved staff members plus
+                                        the track head.
+                                        <b>It is the responsibility of the student to find a type 1 staff member
+                                            (professor) to put the proposal in the system</b>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="frame">
+                                <div class="heading">Grading</div>
+                                <div class="content">
+                                    Support staff will put grades in the system, but you can't see them. Your grade will
+                                    be visible via Oase or Canvas.
+                                </div>
+                            </div>
+
+                        </div>
+
+                    {% endif %}
+
+                    <h4>Public files:</h4>
+                    {% if files.all|length > 0 %}
+                        <ul style="list-style-type: none">
+                            {% for file in files.all %}
+                                <li>
+                                    <a href="{% url "download:publicfile" file.id %}" class="command-button file-button">
+                                        <span class="icon mif-file-{{ file.metro_icon }}"></span>
+                                        {{ file.Caption }}
+                                        <small>{{ file.OriginalName }}</small>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        No public files yet
+                    {% endif %}
+                {% endif %}
+                <br/>
+            </div>
+        </div>
+    </div>
+{% endblock %}

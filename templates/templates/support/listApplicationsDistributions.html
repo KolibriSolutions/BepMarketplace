@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% GetPhaseNumber as phasenumber %}
+{% block body %}
+    {% if phasenumber < 5 %}
+        <h1>Proposals with applications and distributions</h1>
+    {% else %}
+        <h1>Projects and their distributions</h1>
+    {% endif %}
+    <a href="{% url "support:SupportListDistributionsXls" %}" class="button primary">Export Excel</a>
+    {% if phasenumber == 4 or phasenumber == 5 %}
+        <a href="{% url 'distributions:maildistributions' %}" class="button warning">Mail distributions to students</a>
+    {% endif %}
+    {% include "distributions/Support_include_table.html" %}
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+        //live search for proposals, using datatables jquery.
+        $(document).ready(function () {
+            var cols = [
+                null, //name
+                null, //trac
+                null, //group
+                null, //responsible
+                {% if phasenumber < 5 %}
+                    {"searchable": false}, //nrof students
+                    null, //interested
+                {% else %}
+                    null, //assistants
+                {% endif %}
+                null //chosen
+            ];
+            var dropdownColumns = [1, 2, 3];
+            MPDataTable(cols, dropdownColumns);
+
+            //search if student is clicked
+            $(".application-student-click, .private-student-click, .distributed-student-click").click(function (data) {
+                var std = $(this).data("student");
+                //dt is the global variable holding the datatable
+                dt.search(std).draw()
+            })
+        });
+    </script>
+{% endblock %}
+
