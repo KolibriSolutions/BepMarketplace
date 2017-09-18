@@ -1,13 +1,13 @@
 /**
- * Created by Jeroen 2016-2018, Marketplaces ELE.
- * general function for all datatables, including copy and csv export.
+ * Created by Jeroen 2016-2018, Marketplaces ELE. Kolibri Solutions
+ * General init script for all datatables, including copy and csv export.
  * make sure your table has the class ".datatable"
  */
 
-var options;    // datatable options. global
+var options;    // datatable options. global to preserve on re-init (for responsive change).
 var dt;         // used to dynamic update the datatable from local code.
-//var table;
 var responsive = (window.innerWidth < 1000); //init value for responsive or not responsive table layout.
+
 /**
  * Function to transform all tables with class '.datatable' to a DataTable.
  * Features on top of default DataTables:
@@ -17,14 +17,17 @@ var responsive = (window.innerWidth < 1000); //init value for responsive or not 
  * - Export valid URLs to CSV/Copy by prepending the domain before exporting
  * - Add extra buttons with 'extraButtons'
  * - Responsive view for small screens
+ * - Use with normal datatables-options using the customOptions argument
  * @param cols array of options for each column. At least a Null array with a null for each column.
  * @param dropdownColumns array of column indices. Each column index in this array gets a dropdown select.
  * @param exportColumns array of columns, or Column selector. Included columns are used for the export to csv/copy.
  * @param extraButtons extra buttons from DataTables.Buttons to include above the table.
+ * @param customOptions custom DataTables options to extend the default options with.
  * @constructor
  */
-var MPDataTable = function (cols, dropdownColumns, exportColumns, extraButtons) {
-    //definition of the buttons
+
+var MPDataTable = function (cols, dropdownColumns, exportColumns, extraButtons, customOptions) {
+    //definition of the buttons. All these buttons are overriden (removed) if customOptions['buttons'] is set.
     var buttonCommon = {
         //function to strip the dropdowns of the headers, to not show the dropdown values in the csv/copy
         exportOptions: {
@@ -76,15 +79,15 @@ var MPDataTable = function (cols, dropdownColumns, exportColumns, extraButtons) 
     // https://datatables.net/extensions/buttons/examples/html5/outputFormat-function.html
     // the buttons to show above the table. Uses 'buttonCommon' to clean the copy/csv output.
     var buttons = [
+        //first button
         $.extend(true, {}, buttonCommon, {
             extend: 'copyHtml5'
         }),
+        //second button
         $.extend(true, {}, buttonCommon, {
             extend: 'csvHtml5'
         })
     ];
-    // possible extra buttons, for instance show/hide columns toggles
-    buttons.push(extraButtons);
 
     //make responsive enable/disable button on narrow screens.
     if (window.innerWidth < 1000) {
@@ -94,6 +97,7 @@ var MPDataTable = function (cols, dropdownColumns, exportColumns, extraButtons) 
                 dt.destroy();
                 responsive = !responsive;
                 options.responsive = responsive;
+                //third button
                 options.buttons[2].text = responsive ? "Disable responsive view" : "Enable responsive view";
                 dt = table.DataTable(options);
                 if (options.responsive) {
@@ -104,7 +108,11 @@ var MPDataTable = function (cols, dropdownColumns, exportColumns, extraButtons) 
             }
         })
     }
-    //default options. Global var for other functions to modify them.
+
+    //add the optional extrabuttons to the buttons.
+    buttons.push(extraButtons);
+
+    //Default options.
     options = {
         //default page length
         "pageLength": 100,
@@ -176,8 +184,11 @@ var MPDataTable = function (cols, dropdownColumns, exportColumns, extraButtons) 
         }
     };
 
+    //Extends the options that are passed in the argument. When conflicting, the options from the arguments are used.
+    $.extend(options, customOptions);
+
     // executed on load of the page.
-    // set custom sort options from url GET params
+    // set custom sort options from url GET params, overrides previously set options.
     var i;
     options["searchCols"] = [];
     //make null array for the dropdowncolumns options

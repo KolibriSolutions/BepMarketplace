@@ -98,6 +98,7 @@ def GetSlot():
         return "No TimeSlot Currently"
     return str(ts)
 
+
 @register.simple_tag
 def isThereTimeslot():
     ts = get_timeslot()
@@ -105,6 +106,7 @@ def isThereTimeslot():
         return True
     else:
         return False
+
 
 @register.simple_tag
 def GetBroadcast(user):
@@ -165,9 +167,11 @@ def GetEndDate():
     """
     The last date in this timeslot, used in the datetimepicker to give a maximum date to select.
     """
-    timeslot = get_timeslot()
-    return timeslot.End
-
+    ts = get_timeslot()
+    if ts:
+        return ts.End
+    else:
+        return ''
 
 @register.simple_tag
 def GetPresentationStudent(user):

@@ -3,13 +3,16 @@ import uuid
 from datetime import datetime
 from django.db.models import Q
 from timeline.models import TimeSlot
-
+from django.core.exceptions import PermissionDenied
 
 def get_timeslot_id():
     """
     default timeslot for any model connected to timeslot. Not imported from general_view because circular dependencies.
     """
-    return TimeSlot.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now()))[0].id
+    try:
+        return TimeSlot.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now()))[0].id
+    except:
+        raise PermissionDenied("This is not possible, as there is no timeslot.")
 
 
 def get_ext(filename):

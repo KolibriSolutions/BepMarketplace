@@ -1,6 +1,10 @@
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from os import urandom
+from hashlib import sha256
+from datetime import date
+import hmac
 
 from proposals.models import Proposal
 from general_model import clean_text
@@ -47,3 +51,20 @@ class ApplicationTracking(models.Model):
     Student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applicationtrackings')
     Timestamp = models.DateTimeField(auto_now_add=True)
     Type = models.CharField(max_length=1, choices=typechoices)
+
+def generate_key(length=64):
+    return hmac.new(urandom(length), digestmod=sha256).hexdigest()
+
+class TelemetryKey(models.Model):
+    Created = models.DateTimeField(auto_now_add=True)
+    ValidUntil = models.DateField(blank=True, null=True)
+    Key = models.CharField(max_length=64, unique=True, default=generate_key)
+
+    def is_valid(self):
+        if self.ValidUntil is None:
+            return True
+        else:
+            return date.today() <= self.ValidUntil
+
+    def __str__(self):
+        return 'Telemetry Access Key {}'.format(self.id)

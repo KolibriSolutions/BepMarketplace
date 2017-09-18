@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -11,6 +12,13 @@ class TimeSlot(models.Model):
 
     def __str__(self):
         return self.Name
+
+    def clean(self):
+        if self.Begin > self.End:
+            raise ValidationError("End date should be larger than begin date")
+
+    class Meta:
+        ordering = ["Begin"]
 
 
 class TimePhase(models.Model):
@@ -35,3 +43,16 @@ class TimePhase(models.Model):
 
     def __str__(self):
         return self.Types[self.Description - 1][1] + " in " + str(self.Timeslot)
+
+    def clean(self):
+        if self.Begin > self.End:
+            raise ValidationError("End date should be larger than begin date")
+        if not (self.Timeslot.Begin <= self.Begin <= self.Timeslot.End):
+            raise ValidationError("Begin date should be in timeslot {}".format(self.Timeslot))
+        if not (self.Timeslot.Begin <= self.End <= self.Timeslot.End):
+            raise ValidationError("End date should be in timeslot {}".format(self.Timeslot))
+        if self.Timeslot.timephases.filter(Description=self.Description).exists():
+            raise ValidationError("Timeslot {} already has timephase {}".format(self.Timeslot, self.Description))
+
+    class Meta:
+        ordering = ['Timeslot', 'Begin']
