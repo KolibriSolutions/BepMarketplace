@@ -227,9 +227,12 @@ class ProposalViewsTest(TestCase):
         # The timeslot used for testing proposal of current timeslot
         self.ts = TimeSlot(Begin=datetime.now(), End=datetime.now()+timedelta(days=3), Name='thisyear')
         self.ts.save()
-        # The timeslot used for testing proposal of other timeslot
-        self.ots = TimeSlot(Begin=datetime.now()-timedelta(days=5), End=datetime.now()-timedelta(days=3), Name='lastyear')
-        self.ots.save()
+        # The timeslot used for testing proposal of next timeslot
+        self.nts = TimeSlot(Begin=datetime.now()+timedelta(days=5), End=datetime.now()+timedelta(days=8), Name='nextyear')
+        self.nts.save()
+        # The timeslot used for testing proposal of previous timeslot
+        self.pts = TimeSlot(Begin=datetime.now()-timedelta(days=5), End=datetime.now()-timedelta(days=3), Name='prevyear')
+        self.pts.save()
         # The timephase used for testing. The Description is changed every test.
         self.tp = TimePhase(Begin=datetime.now(), End=datetime.now()+timedelta(days=3), Timeslot=self.ts, Description=1 )
         self.tp.save()
@@ -244,6 +247,7 @@ class ProposalViewsTest(TestCase):
                                  Status=1,
                                  ECTS=15,
                                  Track=t,
+                                 TimeSlot=self.ts,
         )
 
         self.proposal.save()
@@ -262,6 +266,7 @@ class ProposalViewsTest(TestCase):
                                  Status=1,
                                  ECTS=15,
                                  Track=t,
+                                TimeSlot=self.ts,
         )
         self.privateproposal.save()
         self.ppriv = self.privateproposal.id
@@ -334,9 +339,8 @@ class ProposalViewsTest(TestCase):
                 info['exception'] = "no 403"
         except Exception as e:
             response_code = 500
-            if self.debug:
-                print("Error: {}".format(e))
-                traceback.print_exc(file=sys.stdout)
+            print("Error: {}".format(e))
+            traceback.print_exc(file=sys.stdout)
 
         self.assertEqual(response_code, expected,
                          msg='Expected status code {} but got {} for {} info: {}.'

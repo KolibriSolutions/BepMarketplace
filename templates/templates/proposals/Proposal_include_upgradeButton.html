@@ -5,5 +5,5 @@
     data-hint="Upgrade to status {{ Proposal.get_Status_display }}"
     data-hint-position="top"
 >{% endcomment %}
-<a href="{% url 'proposals:upgradestatus' Proposal.id %}" class="button success">Upgrade to status {{ Proposal.Status|add:"1" }}</a>
+<a href="{% url 'proposals:upgradestatus' proposal.id %}" class="button success">Upgrade to status {{ proposal.Status|add:"1" }}</a>
 {# </span> #}

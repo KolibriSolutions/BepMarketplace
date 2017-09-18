@@ -52,7 +52,8 @@ class TimePhase(models.Model):
         if not (self.Timeslot.Begin <= self.End <= self.Timeslot.End):
             raise ValidationError("End date should be in timeslot {}".format(self.Timeslot))
         if self.Timeslot.timephases.filter(Description=self.Description).exists():
-            raise ValidationError("Timeslot {} already has timephase {}".format(self.Timeslot, self.Description))
+            if self.Timeslot.timephases.get(Description=self.Description) != self:
+                raise ValidationError("Timeslot {} already has timephase {}".format(self.Timeslot, self.Description))
 
     class Meta:
         ordering = ['Timeslot', 'Begin']

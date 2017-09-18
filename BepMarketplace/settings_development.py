@@ -58,7 +58,6 @@ INSTALLED_APPS = [
     'openpyxl',
     'django_extensions',
     'impersonate',
-    'maintenancemode',
     'channels',
     'sendfile',
     'django_otp',
@@ -79,7 +78,6 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'impersonate.middleware.ImpersonateMiddleware',
-    'maintenancemode.middleware.MaintenanceModeMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'htmlmin.middleware.HtmlMinifyMiddleware',
     'htmlmin.middleware.MarkRequestMiddleware',
@@ -163,12 +161,13 @@ USE_L10N = True
 USE_TZ = True
 
 #the domain on which it is run
-DOMAIN = "https://bep.ele.tue.nl/"
+DOMAIN = "http://localhost"
 #email on which the team is reachable
 CONTACT_EMAIL = "bepmarketplace@tue.nl"
 #noreply address from wich to mail
 NOREPLY_EMAIL = "noreply@bep.ele.tue.nl"
-
+NAME_CODE = "BEPMarketplace"
+NAME_PRETTY = "BEP marketplace"
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/download/'
 
@@ -206,7 +205,6 @@ IMPERSONATE_REQUIRE_SUPERUSER = True
 IMPERSONATE_DISABLE_LOGGING = True
 MAXAGESHARELINK = 60*60*24*7
 EMAILREGEXCHECK = "(^[a-zA-Z0-9]{1}[a-zA-Z0-9_.+-~]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
-MAINTENANCE_MODE = False
 MAX_UPLOAD_SIZE = 10*1024*1024 #10MB
 ALLOWED_PROPOSAL_ATTACHEMENTS = ['pdf']
 ALLOWED_PROPOSAL_IMAGES = ['jpg', 'jpeg', 'png', 'bmp', 'gif']

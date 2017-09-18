@@ -55,7 +55,7 @@ def viewShareLink(request, token):
             "Message" : "Invalid token in link!"
         })
     obj = get_object_or_404(Proposal, pk=pk)
-    return render(request, "proposals/ProposalDetail.html", {"Proposal" : obj})
+    return render(request, "proposals/ProposalDetail.html", {"proposal" : obj})
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
@@ -72,6 +72,9 @@ def upgradeStatusApi(request, pk):
 
     if obj.Status == 4:
         return HttpResponse("Already at final stage", status=403)
+
+    if obj.Status == 3 and obj.nextyear():
+        return HttpResponse("Cannot publish proposal for future timeslot", status=403)
 
     elif get_timephase_number() > 2 and \
                     obj.TimeSlot == get_timeslot() and \

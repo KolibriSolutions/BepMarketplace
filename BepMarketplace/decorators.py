@@ -153,6 +153,9 @@ def can_edit_proposal(fn):
                     login_url='index:login',
                     redirect_field_name='next',)
 
+        if prop.prevyear():
+            raise PermissionDenied("This is an old proposal. Changing history is not allowed.")
+
         # support staf or superusers are always allowed to edit
         if get_grouptype("3") in request.user.groups.all() or request.user.is_superuser:
             return fn(*args, **kw)
@@ -171,9 +174,9 @@ def can_edit_proposal(fn):
             if get_timephase_number() > 2 and not get_grouptype("3") in request.user.groups.all():
                 raise PermissionDenied("No editing allowed anymore, not right time phase")
 
-            # track heads are allowed to edit in the create and check phase
-            if prop.Track.Head == request.user:
-                return fn(*args, **kw)
+        # track heads are allowed to edit in the create and check phase
+        if prop.Track.Head == request.user:
+            return fn(*args, **kw)
 
         # if status is either 1 or 2 and user is assistant edit is allowed in create+check timephase
         if prop.Status < 3 and (request.user in prop.Assistants.all() or prop.ResponsibleStaff == request.user):
@@ -210,6 +213,9 @@ def can_downgrade_proposal(fn):
                 next=page,
                 login_url='index:login',
                 redirect_field_name='next', )
+
+        if prop.prevyear():
+            raise PermissionDenied("This is an old proposal. Changing history is not allowed.")
 
         if prop.Status == 1:
             raise PermissionDenied("Already at first stage.")

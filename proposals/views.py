@@ -13,7 +13,7 @@ from api.views import upgradeStatusApi, downgradeStatusApi
 from general_form import print_formset_errors
 from general_mail import mailAffectedUser, mailPrivateStudent
 from general_model import GroupOptions
-from general_view import createShareLink, get_timephase_number, get_distributions, get_all_proposals, get_grouptype, get_timeslot
+from general_view import createShareLink, get_timephase_number, get_distributions, get_all_proposals, get_grouptype
 from index.models import Track
 from tracking.views import trackProposalVisit
 from .cacheprop import getProp, updatePropCache
@@ -71,7 +71,7 @@ def detailProposal(request, pk):
         # get proposal from cache, or put in cache
         cdata = cache.get("proposaldetail{}".format(pk))
         if cdata is None:
-            data = {"Proposal": prop,
+            data = {"proposal": prop,
                     "user": request.user
                     }
             cdata = render_block_to_string("proposals/ProposalDetail.html", 'body', data)
@@ -82,17 +82,18 @@ def detailProposal(request, pk):
 
     # if staff:
     else:
-        data = {"Proposal": prop}
+        data = {"proposal": prop}
         data["Editlock"] = "Editing not possible"
-        if prop.Status == 4:  # published proposal.
-            if request.user in prop.Assistants.all() or prop.ResponsibleStaff == request.user:
+        if prop.Status == 4:  # published proposal in this timeslot
+            if not prop.prevyear() and (request.user in prop.Assistants.all()
+                                 or prop.ResponsibleStaff == request.user):
                 data["Editlock"] =\
                     "To edit, first downgrade the proposal or ask your track head (" + prop.Track.Head.get_full_name() + ") to do so."
             if get_grouptype("3") in request.user.groups.all() and get_timephase_number() > 2:  # support staff can see applications
                 data['applications'] = prop.applications.all()
             if get_timephase_number() >= 4:  # responsible / assistants can see distributions in distribution phase
                 data['distributions'] = get_distributions(request.user).filter(Proposal=prop)
-        else:  # not published proposal, status 1, 2, and 3
+        elif not prop.prevyear():  # not published proposal, status 1, 2, and 3 and from this timeslot
             # support staf or superusers are always allowed to edit, in any timephase as long as proposal is not published
             if get_grouptype("3") in request.user.groups.all():
                 data["Editlock"] = False
@@ -122,11 +123,8 @@ def createProposal(request):
     :param request: 
     :return: 
     """
-    #if get_timephase_number() != 1 and get_grouptype("3") not in request.user.groups.all():
-    #    raise PermissionDenied("Only in the \"Generating project proposals\" timephase it is allowed to create a new proposal")
     if request.method == 'POST':
         form = ProposalFormCreate(request.POST, request=request)
-        # TODO check timeslot is set correctly: in phase 1 for current year or later, else only for next year or later.
         if form.is_valid():
             prop = form.save()
             mailAffectedUser(request, prop)
@@ -140,7 +138,6 @@ def createProposal(request):
             init["ResponsibleStaff"] = request.user.id
         elif get_grouptype("2") in request.user.groups.all() or get_grouptype('2u'):
             init["Assistants"] = [request.user.id]
-        #TODO init value for timeslot.
         form = ProposalFormCreate(request=request,initial=init)
     if get_timephase_number() == 1:
         return render(request, 'GenericForm.html', {'form':form,
@@ -148,7 +145,7 @@ def createProposal(request):
                                                 'buttontext': 'Create and go to next step'})
     else:
         return render(request, 'GenericForm.html', {'form':form,
-                                                'formtitle':'Create new Proposal (For next year)',
+                                                'formtitle':'Create new Proposal (For next timeslot)',
                                                 'buttontext': 'Create and go to next step'})
 
 
@@ -177,6 +174,40 @@ def editProposal(request, pk):
     else:
          form = ProposalFormEdit(request=request, instance=obj)
     return render(request, 'GenericForm.html', {'form': form, 'formtitle': 'Edit Proposal', 'buttontext': 'Save'})
+
+
+@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
+@can_view_proposal
+def copyProposal(request, pk):
+    """
+    Copy a proposal from a previous timeslot. Only for staff that is allowed to see the proposal to copy.
+
+    :param request:
+    :return:
+    """
+
+    if request.method == 'POST':
+        form = ProposalFormCreate(request.POST, request=request)
+        if form.is_valid():
+            prop = form.save()
+            mailAffectedUser(request, prop)
+            if prop.Private.all():
+                for std in prop.Private.all():
+                    mailPrivateStudent(request, prop, std, "A private proposal was created for you.")
+            return render(request, "proposals/ProposalMessage.html", {"Message": "Proposal created!", "Proposal": prop})
+    else:
+        oldproposal = get_object_or_404(Proposal, pk=pk)
+        oldproposal.id = None
+        # Assistants and privates are removed, because m2m is not copied in this way.
+        form = ProposalFormCreate(request=request, instance=oldproposal)
+    if get_timephase_number() == 1:
+        return render(request, 'GenericForm.html', {'form': form,
+                                                    'formtitle': 'Edit copied proposal',
+                                                    'buttontext': 'Create and go to next step'})
+    else:
+        return render(request, 'GenericForm.html', {'form': form,
+                                                    'formtitle': 'Edit copied proposal (For next timeslot)',
+                                                    'buttontext': 'Create and go to next step'})
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')

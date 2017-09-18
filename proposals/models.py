@@ -9,8 +9,13 @@ from general_model import file_delete_default, filename_default, clean_text, get
 from index.models import Track
 from timeline.models import TimeSlot
 from general_model import GroupOptions
+from datetime import datetime
+
 
 class Proposal(models.Model):
+    """
+    A project proposal for a student.
+    """
 
     StatusOptions = (
         (1, "Draft, awaiting completion by type 2 (assistant)"),
@@ -19,7 +24,7 @@ class Proposal(models.Model):
         (4, "Active proposal"),
     )
 
-    Title = models.CharField(max_length=100, unique=True)
+    Title = models.CharField(max_length=100)
     ResponsibleStaff = models.ForeignKey(User, on_delete=models.PROTECT, related_name='proposalsresponsible')
     Group = models.CharField(max_length=3, choices=GroupOptions)
     NumstudentsMin = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(10)])
@@ -31,13 +36,35 @@ class Proposal(models.Model):
     Private = models.ManyToManyField(User, blank=True, related_name='personal_proposal')
     Assistants = models.ManyToManyField(User, related_name='proposals', blank=True)
     Status = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(4)], choices=StatusOptions)
-    TimeSlot = models.ForeignKey(TimeSlot, default=get_timeslot_id, related_name='proposals', blank=False, on_delete=models.PROTECT)
+    TimeSlot = models.ForeignKey(TimeSlot, related_name='proposals', null=True, blank=True, on_delete=models.PROTECT)
 
     def __str__(self):
         return self.Title + " from " + self.ResponsibleStaff.username
 
     def nDistributions(self):
         return int(self.distributions.count())
+
+    def prevyear(self):
+        """
+        Whether this proposal is from a previous timeslot. Proposals without timeslot are future proposals.
+        :return:
+        """
+        if self.TimeSlot:
+            if self.TimeSlot.End <= datetime.now().date():
+                return True
+        return False
+
+    def nextyear(self):
+        """
+        Whether this proposal is for the future. Proposals without timeslot are future proposals.
+        :return:
+        """
+        if not self.TimeSlot:  # anywhere in the future
+            return True
+        elif self.TimeSlot.Begin > datetime.now().date():
+            return True
+        else:
+            return False
 
     def clean(self):
         self.Title = clean_text(self.Title)

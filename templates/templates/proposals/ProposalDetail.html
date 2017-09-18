@@ -11,21 +11,21 @@
         <div class="grid">
             <div class="row cells3">
                 <div class="cell colspan2">
-                    <h1 style="margin-bottom: 0;" class="capitalize">{{ Proposal.Title }}</h1>
+                    <h1 style="margin-bottom: 0;" class="capitalize">{{ proposal.Title }}</h1>
                     <h1 style="margin-bottom: 0; margin-top: 0;" class="capitalize">
                         <small>
-                            <a href="mailto:{{ Proposal.ResponsibleStaff.email }}">
-                                By {{ Proposal.ResponsibleStaff.get_full_name }}
+                            <a href="mailto:{{ proposal.ResponsibleStaff.email }}">
+                                By {{ proposal.ResponsibleStaff.get_full_name }}
                             </a>
                         </small>
                     </h1>
                     <h3 style="margin-top: 0;">
-                        <small>Part of {{ Proposal.Track.Name }}</small>
+                        <small>Part of {{ proposal.Track.Name }}</small>
                     </h3>
-                    {% if Proposal.images.all|length > 0 %}
+                    {% if proposal.images.all|length > 0 %}
                         <div id="imageCarousel" class="carousel" data-role="carousel" data-height="300"
                              data-controls="true" data-markers="false" data-auto="false">
-                            {% for image in Proposal.images.all %}
+                            {% for image in proposal.images.all %}
                                 <div class="slide">
                                     <a href="{% url "download:proposalfile" "i" image.id %}" data-lightbox="lightbox1"
                                        data-title="{{ image.Caption }}">
@@ -39,7 +39,7 @@
                             {% endfor %}
                         </div>
                         <div id="imageCarousel_thumbs" class="padding10 bg-grayLighter align-center">
-                            {% for image in Proposal.images.all %}
+                            {% for image in proposal.images.all %}
                                 <div class="thumb" data-index="{{ forloop.counter }}"><img src="{% url "download:proposalfile" "i" image.id %}"
                                                                                            data-role="fitImage"
                                                                                            data-format="fill"
@@ -50,12 +50,12 @@
 
                     {% endif %}
                     <h4>General description</h4>
-                    <p>{{ Proposal.GeneralDescription|linebreaksbr }}</p>
+                    <p>{{ proposal.GeneralDescription|linebreaksbr }}</p>
                     <h4>Students task description</h4>
-                    <p>{{ Proposal.StudentsTaskDescription|linebreaksbr }}</p>
-                    {% if Proposal.attachments.all|length > 0 %}
+                    <p>{{ proposal.StudentsTaskDescription|linebreaksbr }}</p>
+                    {% if proposal.attachments.all|length > 0 %}
                         <h4>Attachments:</h4>
-                        {% for attachment in Proposal.attachments.all %}
+                        {% for attachment in proposal.attachments.all %}
                             <a href="{% url 'download:proposalfile' 'a' attachment.id %}" class="command-button file-button">
                                 <span class="icon mif-file-pdf"></span>
                                 {{ attachment.Caption }}
@@ -73,16 +73,22 @@
                                 {{ Editlock }}
                             {% else %}
                                 <br/>
-                                <a class="button primary" href="{% url 'proposals:edit' Proposal.id %}">
-                                    <span class="mif-pencil"></span>Edit data
-                                </a>
-                                <a class="button primary" href="{% url 'proposals:editfile' 'i' Proposal.id %}">
-                                    <span class="mif-images"></span>Edit images
-                                </a>
-                                <a class="button primary" href="{% url 'proposals:editfile' 'a' Proposal.id %}">
-                                    <span class="mif-file-pdf"></span>Edit attachments
-                                </a><br>
+                                    <a class="button primary" href="{% url 'proposals:edit' proposal.id %}">
+                                        <span class="mif-pencil"></span>Edit data
+                                    </a>
+                                    <a class="button primary" href="{% url 'proposals:editfile' 'i' proposal.id %}">
+                                        <span class="mif-images"></span>Edit images
+                                    </a>
+                                    <a class="button primary" href="{% url 'proposals:editfile' 'a' proposal.id %}">
+                                        <span class="mif-file-pdf"></span>Edit attachments
+                                    </a>
+
+                                <br>
                             {% endif %}
+                            {# show "copy to current timeslot" button for proposals of previous timeslots.#}
+                            <a class="button primary" href="{% url 'proposals:copy' proposal.id %}">
+                                <span class="mif-versions"></span>Copy
+                            </a>
                         {% endif %}
                     </p>
 
@@ -90,37 +96,37 @@
                         {% comment %}
                         Apply / retract buttons are inserted using a .format on the {} below.
 	                    {% endcomment %}
-                        {% if not user|has_group:"type4staff" and not Proposal.Private.all %}
+                        {% if not user|has_group:"type4staff" and not proposal.Private.all %}
                             {}
                         {% endif %}
                     {% else %}
                         {% if phasenumber < 3 and phasenumber > 0 %}
-                            {% if Proposal.Status == 1 %}
+                            {% if proposal.Status == 1 %}
                                 {% include 'proposals/Proposal_include_upgradeButton.html' %}
-                            {% elif Proposal.Status == 2 %}
-                                {% if user|has_group:"type3staff" or user == Proposal.ResponsibleStaff or Proposal.Track.Head == request.user %}
+                            {% elif proposal.Status == 2 %}
+                                {% if user|has_group:"type3staff" or user == proposal.ResponsibleStaff or proposal.Track.Head == request.user %}
                                     {% include 'proposals/Proposal_include_upgradeButton.html' %}
                                 {% endif %}
                                 {% include 'proposals/Proposal_include_downgradeButton.html' %}
-                            {% elif Proposal.Status == 3 %}
-                                {% if Proposal.Track.Head == request.user or user|has_group:"type3staff" %}
+                            {% elif proposal.Status == 3 %}
+                                {% if proposal.Track.Head == request.user or user|has_group:"type3staff" %}
                                     {% include 'proposals/Proposal_include_upgradeButton.html' %}
                                 {% endif %}
-                                {% if user == Proposal.ResponsibleStaff or user|has_group:"type3staff" or Proposal.Track.Head == request.user %}
+                                {% if user == proposal.ResponsibleStaff or user|has_group:"type3staff" or proposal.Track.Head == request.user %}
                                     {% include 'proposals/Proposal_include_downgradeButton.html' %}
                                 {% endif %}
-                            {% elif Proposal.Status == 4 %}
-                                {% if Proposal.Track.Head == request.user or user|has_group:"type3staff" %}
+                            {% elif proposal.Status == 4 %}
+                                {% if proposal.Track.Head == request.user or user|has_group:"type3staff" %}
                                     {% include 'proposals/Proposal_include_downgradeButton.html' %}
                                 {% endif %}
                             {% endif %}
-                            {% if Proposal.Status != 4 %}
+                            {% if proposal.Status != 4 %}
                                 <br/><br/>
-                                <a href="{% url 'proposals:sharelink' Proposal.id %}" class="button primary">Get
+                                <a href="{% url 'proposals:sharelink' proposal.id %}" class="button primary">Get
                                     Sharelink</a>
                             {% endif %}
-                            {% if user|has_group:"type3staff" and Proposal.Status < 3 %}
-                                    <a class="button warning" href="{% url 'proposals:askdeleteproposal' Proposal.id %}">
+                            {% if user|has_group:"type3staff" and proposal.Status < 3 %}
+                                    <a class="button warning" href="{% url 'proposals:askdeleteproposal' proposal.id %}">
                                             <span class="mif-bin"></span>Delete</a>
                             {% endif %}
                         {% endif %}
@@ -132,18 +138,18 @@
                     <table class="table">
                         <tr>
                             <td>Capacity group:</td>
-                            <td>{{ Proposal.get_Group_display }}</td>
+                            <td>{{ proposal.get_Group_display }}</td>
                         </tr>
                         <tr>
                             <td>Preferred ECTS:</td>
-                            <td>{{ Proposal.ECTS }}</td>
+                            <td>{{ proposal.ECTS }}</td>
                         </tr>
                         <tr>
                             <td>Assistants:</td>
                             <td>
-                                {% if Proposal.Assistants.all %}
+                                {% if proposal.Assistants.all %}
                                     <ul>
-                                        {% for assistant in Proposal.Assistants.all %}
+                                        {% for assistant in proposal.Assistants.all %}
                                             <li>
                                                 <a href="mailto:{{ assistant.email }}">
                                                     {{ assistant.get_full_name }}
@@ -159,25 +165,25 @@
                         <tr>
                             <td>Students needed:</td>
                             <td>
-                                {% if Proposal.NumstudentsMin == Proposal.NumstudentsMax %}
-                                    {{ Proposal.NumstudentsMax }}
+                                {% if proposal.NumstudentsMin == proposal.NumstudentsMax %}
+                                    {{ proposal.NumstudentsMax }}
                                 {% else %}
-                                    {{ Proposal.NumstudentsMin }}-{{ Proposal.NumstudentsMax }}
+                                    {{ proposal.NumstudentsMin }}-{{ proposal.NumstudentsMax }}
                                 {% endif %}
                             </td>
                         </tr>
-                        {% if Proposal.Track.Name == "Automotive" and proposal.Private is None %}
+                        {% if proposal.Track.Name == "Automotive" and proposal.Private is None %}
                             <tr>
                                 <td>Warning</td>
                                 <td>Please note that AU students have priority over EE students for AU projects</td>
                             </tr>
                         {% endif %}
-                        {% if Proposal.Private.all %}
+                        {% if proposal.Private.all %}
                             <tr>
                                 <td>Private to:</td>
                                 <td>
                                     <ul>
-                                        {% for a in Proposal.Private.all %}
+                                        {% for a in proposal.Private.all %}
                                             <li>
                                                 {% if user|has_group:"any" %}<a href="mailto:{{ a.email }}">{% endif %}
                                                 {{ a.get_full_name }}
@@ -188,18 +194,18 @@
                                 </td>
                             </tr>
                         {% endif %}
-                        {% if Proposal.Status != 4 %}
+                        {% if proposal.Status != 4 %}
                             <tr>
                                 <td>Status:</td>
                                 <td>
-                                    <ol>{% for opt in Proposal.StatusOptions %}
-                                        <li class="{% if opt.0 == Proposal.Status %}text-accent fg-navy{% else %}text-secondary{% endif %}">{{ opt.1 }}</li>{% endfor %}
+                                    <ol>{% for opt in proposal.StatusOptions %}
+                                        <li class="{% if opt.0 == proposal.Status %}text-accent fg-navy{% else %}text-secondary{% endif %}">{{ opt.1 }}</li>{% endfor %}
                                     </ol>
                                 </td>
                             </tr>
                             <tr>
                                 <td>Time slot (year):</td>
-                                <td>{{ Proposal.TimeSlot }}</td>
+                                <td>{{ proposal.TimeSlot|default:"Future" }}</td>
                             </tr>
                         {% endif %}
                         {% if user|has_group:"type3staff" %}
@@ -237,7 +243,7 @@
             </div>
         </div>
     {% endif %}
-    {% if user|has_group:"any" and Proposal.Status == 4 %}
+    {% if user|has_group:"any" and proposal.Status == 4 %}
         Number of uniqueviews:
         <div id="uniqueviewsnumber"></div>
     {% endif %}
@@ -285,12 +291,12 @@
                 });
             });
 
-            {% if user|has_group:"any" and Proposal.Status == 4 %}
+            {% if user|has_group:"any" and proposal.Status == 4 %}
                 if (window.location.protocol == "https:") {
-                    window.socket = new WebSocket("wss://" + window.location.host + "/tracking/viewnumber/{{ Proposal.id }}/");
+                    window.socket = new WebSocket("wss://" + window.location.host + "/tracking/viewnumber/{{ proposal.id }}/");
                 }
                 else {
-                    window.socket = new WebSocket("ws://" + window.location.host + "/tracking/viewnumber/{{ Proposal.id }}/");
+                    window.socket = new WebSocket("ws://" + window.location.host + "/tracking/viewnumber/{{ proposal.id }}/");
                 }
                 window.socket.onmessage = function (e) {
                     $("#uniqueviewsnumber").html(e.data);

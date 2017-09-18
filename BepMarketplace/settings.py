@@ -62,7 +62,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'openpyxl',
     'impersonate',
-    'maintenancemode',
     'channels',
     'sendfile',
     'django_otp',
@@ -82,7 +81,6 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'impersonate.middleware.ImpersonateMiddleware',
-    'maintenancemode.middleware.MaintenanceModeMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'htmlmin.middleware.HtmlMinifyMiddleware',
     'htmlmin.middleware.MarkRequestMiddleware',
@@ -217,7 +215,9 @@ DOMAIN = "https://bep.ele.tue.nl"
 CONTACT_EMAIL = "bepmarketplace@tue.nl"
 #noreply address from wich to mail
 NOREPLY_EMAIL = "noreply@bep.ele.tue.nl"
-
+FROM_EMAIL_ADDRESS = NOREPLY_EMAIL
+NAME_CODE = "BepMarketplace"
+NAME_PRETTY = "BEP marketplace"
 # path for media upload. Media download is not available on this path.
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/download/'
@@ -250,7 +250,6 @@ SESSION_COOKIE_AGE = 86400
 LOGIN_REDIRECT_URL = '/'
 IMPERSONATE_REQUIRE_SUPERUSER = True
 IMPERSONATE_DISABLE_LOGGING = True
-MAINTENANCE_MODE = False
 
 # General settings for the BEPs.
 MAX_NUM_APPLICATIONS = 5

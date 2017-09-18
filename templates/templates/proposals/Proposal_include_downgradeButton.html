@@ -5,6 +5,6 @@
     data-hint="Downgrade to status {{ Proposal.get_Status_display }}"
     data-hint-position="top"
 >{% endcomment %}
-<a href="{% url 'proposals:downgradestatusmessage' Proposal.id %}" class="button danger">Downgrade to
-    status {{ Proposal.Status|add:"-1" }}</a>
+<a href="{% url 'proposals:downgradestatusmessage' proposal.id %}" class="button danger">Downgrade to
+    status {{ proposal.Status|add:"-1" }}</a>
 {# </span> #}

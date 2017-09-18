@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 
 from django import forms
 from django.conf import settings
@@ -8,10 +9,11 @@ from django.core.files.images import get_image_dimensions
 from django.forms import ValidationError
 
 from general_form import clean_file_default, FileForm
-from general_mail import mailPrivateStudent, mailStaff
+from general_mail import mailPrivateStudent, mail_proposal_single
 from general_model import get_ext
-from general_view import get_grouptype
+from general_view import get_grouptype, get_timephase_number, get_timeslot
 from templates import widgets
+from timeline.models import TimeSlot
 from tracking.models import ProposalStatusChange
 from .models import Proposal, ProposalImage, ProposalAttachment
 
@@ -20,6 +22,7 @@ mailPattern = re.compile(settings.EMAILREGEXCHECK)
 #minimal image dimensions.
 minw = 30
 minh = 30
+
 
 def clean_image_default(self):
     picture = clean_file_default(self)
@@ -42,6 +45,7 @@ def clean_attachment_default(self):
     if get_ext(file.name) not in settings.ALLOWED_PROPOSAL_ATTACHEMENTS:
         raise ValidationError("This filetype is not allowed. Allowed types: "+str(settings.ALLOWED_PROPOSAL_ATTACHEMENTS))
     return file
+
 
 def get_or_create_user_email(self, email, username, student):
     try:
@@ -72,15 +76,48 @@ def create_user_from_email(self, email, username, student=False):
     new_account.save()
     return new_account
 
+
 class ProposalForm(forms.ModelForm):
+    addAssistantsEmail = forms.CharField(label='Extra assistants (email, one per line)',
+                                         widget=widgets.MetroMultiTextInput,
+                                         required=False)
+    addPrivatesEmail = forms.CharField(label='Private students (email, one per line)',
+                                       widget=widgets.MetroMultiTextInput,
+                                       required=False)
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         self.fields['ResponsibleStaff'].queryset = get_grouptype("1").user_set.all()
+        self.fields['Assistants'].queryset = get_grouptype("2").user_set.all() | \
+                                             get_grouptype("2u").user_set.all() | \
+                                             get_grouptype("1").user_set.all()
+        self.fields['addAssistantsEmail'].widget.attrs['placeholder'] = "Add assistant via email address"
+        self.fields['addPrivatesEmail'].widget.attrs['placeholder'] = "Add private student via email address"
+
+        if get_timephase_number() == 1:
+            self.fields['TimeSlot'].queryset = TimeSlot.objects.filter(End__gt=datetime.now())
+            self.fields['TimeSlot'].initial = get_timeslot()
+        else:
+            self.fields['TimeSlot'].queryset = TimeSlot.objects.filter(Begin__gt=datetime.now())
 
     class Meta:
         model = Proposal
-        fields = {}
+        fields = ['Title',
+                  'ResponsibleStaff',
+                  'Assistants',
+                  'addAssistantsEmail',
+                  'Track',
+                  'Group',
+                  'ECTS',
+                  'NumstudentsMin',
+                  'NumstudentsMax',
+                  'GeneralDescription',
+                  'StudentsTaskDescription',
+                  'TimeSlot',
+                  'addPrivatesEmail'
+                  ]
+
         labels = {
             'ResponsibleStaff': "Responsible staff",
             'ECTS': "Preferred ECTS",
@@ -88,211 +125,190 @@ class ProposalForm(forms.ModelForm):
             'NumstudentsMax': "Maximum number of students",
             'GeneralDescription': "General description",
             'StudentsTaskDescription': "Students task description",
+            'TimeSlot': 'Timeslot (year)',
+            'Private': 'Change private students',
         }
         widgets = {
             'Title': widgets.MetroTextInput,
+            'ResponsibleStaff': widgets.MetroSelect,
+            'Assistants': widgets.MetroSelectMultiple,
+            'Track': widgets.MetroSelect,
+            'Group': widgets.MetroSelect,
+            'ECTS': widgets.MetroSelect,
+            'NumstudentsMin': widgets.MetroNumberInputInteger,
+            'NumstudentsMax': widgets.MetroNumberInputInteger,
             'GeneralDescription': widgets.MetroMultiTextInput,
             'StudentsTaskDescription': widgets.MetroMultiTextInput,
-            'Group': widgets.MetroSelect,
-            'ResponsibleStaff': widgets.MetroSelect,
-            'ECTS': widgets.MetroSelect,
-            'Track': widgets.MetroSelect,
-            'Assistants': widgets.MetroSelectMultiple,
+            'TimeSlot': widgets.MetroSelect,
             'Private': widgets.MetroSelectMultiple
         }
 
     def clean(self):
         cleaned_data = super().clean()
+        # validate min and max students
         min = cleaned_data.get("NumstudentsMin")
         max = cleaned_data.get("NumstudentsMax")
         if min and max:
             if min > max:
                 raise ValidationError("Minimum number of students cannot be higher than maximum.")
-            return cleaned_data
-        raise ValidationError("Min or max number of students cannot be empty")
+        else:
+            raise ValidationError("Min or max number of students cannot be empty")
+        return cleaned_data
 
-    def save(self, commit=True):
-        self.instance.save()
-        return self.instance
-
-
-class ProposalFormEdit(ProposalForm):
-    addAssistantEmail = forms.CharField(label='Add an assistant (email)', widget=widgets.MetroTextInput,
-                                        required=False)
-    addPrivateEmail = forms.CharField(label='Add an private student (email)', widget=widgets.MetroTextInput,
-                                        required=False)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['addAssistantEmail'].widget.attrs['placeholder'] = "Add another assistant (email address)"
-        self.fields['addPrivateEmail'].widget.attrs['placeholder'] = "Add another private student (email address)"
-        self.fields['Assistants'].queryset = get_grouptype("2").user_set.all() | \
-                                             get_grouptype("2u").user_set.all() | \
-                                             get_grouptype("1").user_set.all()
-        self.fields['Private'].queryset = User.objects.filter(groups=None)
-
-    def save(self, commit=True):
-        if commit:
-            if 'Assistants' in self.changed_data:
-                #assistant removed via dropdown
-                for ass in self.instance.Assistants.all():
-                    if ass not in self.cleaned_data['Assistants']:
-                        self.instance.Assistants.remove(ass)
-                        mailStaff(self.request, self.instance, ass, "You were removed as supervisor from:")
-                #new assistant added via dropdown
-                for ass in self.cleaned_data['Assistants']:
-                    if ass == self.instance.ResponsibleStaff:
-                        #prevent responsible staff to add himself as assistant
-                        continue
-                    if ass not in self.instance.Assistants.all():
-                        self.instance.Assistants.add(ass)
-                        mailStaff(self.request, self.instance, ass, "You were added as supervisor to:")
-
-            if 'Private' in self.changed_data:
-                # private student removed via dropdown
-                for std in self.instance.Private.all():
-                    if std not in self.cleaned_data['Private']:
-                        self.instance.Private.remove(std)
-                        mailPrivateStudent(self.request, self.instance, std, "You were removed from your private proposal. If this is unexpected, please contact your supervisor or responsible staff member." )
-                # new private student added via dropdown
-                for std in self.cleaned_data['Private']:
-                    if std not in self.instance.Private.all():
-                        self.instance.Private.add(std)
-                        #no email, because student gets update email in views.py on edit
-
-            # add extra assistant
-            if self.cleaned_data['addAssistantEmail'] != '' and self.cleaned_data['addAssistantEmail'] is not None:
-                email = self.cleaned_data['addAssistantEmail']
-                email = email.strip().lower()
-                username = email.split('@')[0].replace('.', '')
-                new_account = get_or_create_user_email(self, email, username, False)
-                if new_account:
-                    self.instance.Assistants.add(new_account)
-                    mailStaff(self.request, self.instance, new_account, "You were added as supervisor to:")
-
-            #add extra private student
-            if self.cleaned_data['addPrivateEmail'] != '' and self.cleaned_data['addPrivateEmail'] is not None:
-                email = self.cleaned_data['addPrivateEmail']
-                email = email.strip().lower()
-                username = "student-" + email.split('@')[0].replace('.', '')
-                new_account = get_or_create_user_email(self, email, username, True)
-                if new_account:
-                    self.instance.Private.add(new_account)
-                    #no mail here, only in views.py
-            if self.instance.Assistants.count() == 0 and self.instance.Status == 1:
-                self.instance.Status = 2
-            super().save(commit=True)
-            self.instance.save()
-        return self.instance
-
-    class Meta(ProposalForm.Meta):
-        fields = ['Title', 'ResponsibleStaff', 'Assistants', 'addAssistantEmail', 'Track', 'Group', 'ECTS',
-                  'Private','addPrivateEmail', 'NumstudentsMin',
-                  'NumstudentsMax', 'GeneralDescription',
-                  'StudentsTaskDescription']
-
-    def clean_addAssistantEmail(self):
-        data = self.cleaned_data['addAssistantEmail']
+    def clean_addAssistantsEmail(self):
+        data = self.cleaned_data['addAssistantsEmail']
         if data == '' or data is None:
             return data
-        email = data.strip().lower()
-        if not mailPattern.match(email):
-            raise forms.ValidationError("Invalid email address: This should be one TU/e email address")
-        domain = email.split('@')[1]
-        domain_list = ["tue.nl"]
-        if domain not in domain_list:
-            raise forms.ValidationError("Please only enter *@tue.nl email addresses")
+        for email in data.split('\n'):
+            email = email.lower().strip('\r').strip()
+            if not mailPattern.match(email):
+                raise forms.ValidationError(
+                    "Invalid email address ({}): Every line should contain one valid email address".format(email))
+            domain = email.split('@')[1]
+            domain_list = ["tue.nl", ]
+            if domain not in domain_list:
+                raise forms.ValidationError("Please only enter *@tue.nl email addresses")
         return data
 
-    def clean_addPrivateEmail(self):
-        data = self.cleaned_data['addPrivateEmail']
+    def clean_addPrivatesEmail(self):
+        data = self.cleaned_data['addPrivatesEmail']
         if data == '' or data is None:
             return data
-        email = data.strip().lower()
-        if not mailPattern.match(email):
-            raise forms.ValidationError("Invalid email address: This should be one TU/e email address")
-        domain = email.strip().split('@')[1]
-        domain_list = ["student.tue.nl"]
-        if domain not in domain_list:
-            raise forms.ValidationError("Please only enter *@student.tue.nl email addresses")
+        for email in data.split('\n'):
+            email = email.lower().strip('\r').strip()
+            if not mailPattern.match(email):
+                raise forms.ValidationError(
+                    "Invalid email address ({}): Every line should contain one valid email address".format(email))
+            domain = email.split('@')[1]
+            domain_list = ["student.tue.nl"]
+            if domain not in domain_list:
+                raise forms.ValidationError("Please only enter *@student.tue.nl email addresses")
         return data
 
-
-class ProposalFormCreate(ProposalForm):
-    assistantsEmail = forms.CharField(label='Assistants email (one per line)', widget=widgets.MetroMultiTextInput, required=False)
-    privateEmail = forms.CharField(label='Private student email (one per line)', widget=widgets.MetroMultiTextInput,
-                                      required=False)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['assistantsEmail'].widget.attrs['placeholder'] = "Add one email address of an assistant per line"
-        self.fields['privateEmail'].widget.attrs['placeholder'] = "Add one email address of a private student per line"
+    def clean_Assistants(self):
+        # Prevent the supervisor of this project to be added as assistant.
+        assistants = self.cleaned_data['Assistants']
+        responsible = self.cleaned_data['ResponsibleStaff']
+        if assistants == '' or assistants is None:
+            return None
+        for ass in assistants:
+            if ass == responsible:
+                raise ValidationError("The responsible staff cannot be assistant of the same proposal.")
+        return assistants
 
     def save(self, commit=True):
         if commit:
             super().save(commit=True)
-            # add assistants to proposal
-            if self.cleaned_data['assistantsEmail'] != '' and self.cleaned_data['assistantsEmail'] is not None:
-                for email in self.cleaned_data['assistantsEmail'].split('\n'):
+            # add assistants to proposal via email
+            if self.cleaned_data['addAssistantsEmail'] != '' and self.cleaned_data['addAssistantsEmail'] is not None:
+                for email in self.cleaned_data['addAssistantsEmail'].split('\n'):
                     email = email.strip('\r').strip().lower()
                     username = email.split('@')[0].replace('.', '')
                     new_account = get_or_create_user_email(self, email, username, False)
-                    if new_account:
+                    if new_account and new_account not in self.instance.Assistants.all():
                         self.instance.Assistants.add(new_account)
-            if self.cleaned_data['privateEmail'] != '' and self.cleaned_data['privateEmail'] is not None:
-                for email in self.cleaned_data['privateEmail'].split('\n'):
+                        mail_proposal_single(self.request, self.instance, new_account, "You were added as assistant to:")
+
+            # add private students to proposal via email
+            if self.cleaned_data['addPrivatesEmail'] != '' and self.cleaned_data['addPrivatesEmail'] is not None:
+                for email in self.cleaned_data['addPrivatesEmail'].split('\n'):
                     email = email.strip('\r').strip().lower()
                     username = "student-" + email.split('@')[0].replace('.', '')
                     new_account = get_or_create_user_email(self, email, username, True)
                     if new_account:
                         self.instance.Private.add(new_account)
+                        # Mailing the private student is done in the view.
 
-            # if type2 created this proposal
-            if get_grouptype("2")in self.request.user.groups.all() or \
-                get_grouptype("2u") in self.request.user.groups.all():
-                self.instance.Assistants.add(self.request.user)
-                self.instance.Status = 2
-            else:
-                self.instance.Status = 1
-            # if there are no assistants attached go to status 2
-            if self.instance.Assistants.count() == 0:
+            # if no assistants, set to status 2
+            if self.instance.Assistants.count() == 0 and self.instance.Status == 1:
                 self.instance.Status = 2
 
+        self.instance.save()
+        return self.instance
+
+
+class ProposalFormEdit(ProposalForm):
+    """
+    Add the field to remove private students for the editform.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['Private'].queryset = User.objects.filter(groups=None)
+        # memorize responsible to be able to mail them if needed
+        self.oldResponsibleStaff = self.instance.ResponsibleStaff
+
+    #TODO clean, check on twice same title in one timeslot
+
+    def save(self, commit=True):
+        if commit:
+            if 'Assistants' in self.changed_data:
+                # assistant removed via dropdown
+                for ass in self.instance.Assistants.all():
+                    if ass not in self.cleaned_data['Assistants']:
+                        mail_proposal_single(self.request, self.instance, ass, "You were removed as assistant from:")
+                # new assistant added via dropdown
+                for ass in self.cleaned_data['Assistants']:
+                    if ass not in self.instance.Assistants.all():
+                        mail_proposal_single(self.request, self.instance, ass, "You were added as assistant to:")
+
+            if 'Private' in self.changed_data:
+                # private student removed via dropdown
+                for std in self.instance.Private.all():
+                    if std not in self.cleaned_data['Private']:
+                        # self.instance.Private.remove(std)
+                        mailPrivateStudent(self.request, self.instance, std, "You were removed from your private proposal. If this is unexpected, please contact your supervisor or responsible staff member." )
+                # new private student added via dropdown
+                # for std in self.cleaned_data['Private']:
+                #     if std not in self.instance.Private.all():
+                        # self.instance.Private.add(std)
+                        # no email, because student gets update email in views.py on edit
+
+            if 'ResponsibleStaff' in self.changed_data:
+                if self.instance.ResponsibleStaff != self.oldResponsibleStaff:
+                    mail_proposal_single(self.request, self.instance, self.oldResponsibleStaff,
+                                         "You were removed as responsible staff from:")
+                    mail_proposal_single(self.request, self.instance, self.instance.ResponsibleStaff,
+                                         "You were added as responsible staff to:")
+            # only save here, because old data is needed to determine changed privates.
+            super().save(commit=True)
             self.instance.save()
         return self.instance
 
     class Meta(ProposalForm.Meta):
-        fields = ['Title', 'ResponsibleStaff', 'assistantsEmail', 'Track', 'Group', 'ECTS', 'privateEmail', 'NumstudentsMin',
-                  'NumstudentsMax', 'GeneralDescription',
-                  'StudentsTaskDescription']
+        fields= ProposalForm.Meta.fields + ['Private']
+        pass
 
-    def clean_assistantsEmail(self):
-        data = self.cleaned_data['assistantsEmail']
-        if data == '' or data is None:
-            return data
-        for email in data.split('\n'):
-            email = email.lower()
-            if not mailPattern.match(email.strip('\r')):
-                raise forms.ValidationError("Invalid email address: Every line should contain one TU/e email address")
-            domain = email.strip('\r').split('@')[1]
-            domain_list = ["tue.nl",]
-            if domain not in domain_list:
-                raise forms.ValidationError("Please only enter *@tue.nl email addresses")
-        return data
 
-    def clean_privateEmail(self):
-        data = self.cleaned_data['privateEmail']
-        if data == '' or data is None:
-            return data
-        for email in data.split('\n'):
-            email = email.lower()
-            if not mailPattern.match(email.strip('\r')):
-                raise forms.ValidationError("Invalid email address: Every line should contain one TU/e email address")
-            domain = email.strip('\r').split('@')[1]
-            domain_list = ["student.tue.nl"]
-            if domain not in domain_list:
-                raise forms.ValidationError("Please only enter *@student.tue.nl email addresses")
-        return data
+class ProposalFormCreate(ProposalForm):
+    """
+    Also set the status based on who made the proposal.
+    """
+    def clean(self):
+        cleaned_data = super().clean()
+        # Title should be unique within one timeslot.
+        title = cleaned_data.get('Title')
+        try:
+            p = Proposal.objects.filter(TimeSlot=self.cleaned_data['TimeSlot'])
+        except:
+            p = Proposal.objects.filter(TimeSlot__isnull=True)
+        if p.filter(Title__iexact=title).exists():
+            raise ValidationError("A proposal with this title already exists in this timeslot")
+
+    def save(self, commit=True):
+        if commit:
+            super().save(commit=True)
+            # if type2 created this proposal
+            if get_grouptype("2")in self.request.user.groups.all() or \
+                get_grouptype("2u") in self.request.user.groups.all():
+                self.instance.Assistants.add(self.request.user)  # in case assistant forgets to add itself
+                self.instance.Status = 2
+            else:
+                self.instance.Status = 1
+            # if there are no assistants attached go to status 2
+            if not self.instance.Assistants.exists():
+                self.instance.Status = 2
+            self.instance.save()
+        return self.instance
 
 
 class ProposalImageFormAdd(FileForm):

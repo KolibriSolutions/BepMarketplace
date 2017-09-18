@@ -10,6 +10,7 @@ urlpatterns = [
     url(r'^editfile/(?P<ty>[a-z]{1})/(?P<pk>[0-9]+)/$', views.editFile, name='editfile'),
     url(r'^edit/$', views.chooseEditProposal, name='chooseedit'),
     url(r'^edit/(?P<pk>[0-9]+)/$', views.editProposal, name='edit'),
+    url(r'^copy/(?P<pk>[0-9]+)/$', views.copyProposal, name='copy'),
     url(r'^details/(?P<pk>[0-9]+)/$', views.detailProposal, name='details'),
     url(r'^upgradestatus/(?P<pk>[0-9]+)/$', views.upgradeStatus, name='upgradestatus'),
     #url(r'^downgradestatus/(?P<pk>[0-9]+)/$', views.downgradeStatus, name='downgradestatus'),

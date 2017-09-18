@@ -22,12 +22,20 @@ def send_mail(subject_template_name, email_template_name,
     """
     Sends a django.core.mail.EmailMultiAlternatives to `to_email`.
     """
+    #TODO decide wether to use context_processors or context['..'], now both are used. (And do the same for mastermarket)
     context.update(context_processors.domain(None))
     context.update(context_processors.contactemail(None))
     if ".txt" in subject_template_name:
         subject = loader.render_to_string(subject_template_name, context)
     else:
         subject = subject_template_name
+
+    from_email = settings.NOREPLY_EMAIL
+    context['email'] = settings.CONTACT_EMAIL
+    context['domain'] = settings.DOMAIN
+    context['name'] = settings.NAME_PRETTY
+    context['toemail'] = to_email
+
     # Email subject *must not* contain newlines
     subject = ''.join(subject.splitlines())
     body = loader.render_to_string(email_template_name, context)
@@ -117,21 +125,18 @@ def mailPrivateStudent(request, proposal, student, message=''):
               html_email_template_name="email/private_student_email.html")
 
 
-def mailStaff(request, proposal, staff, message=''):
+def mail_proposal_single(request, proposal, staff, message=''):
     """
-    mail all staff with a given message.
+    mail a staff member with a given message about a project.
 
     :param request:
-    :param proposal: The proposal to mail about
-    :param staff: The staff that gets the mail for this proposal
+    :param project: The project to mail about
+    :param staff: The staff that gets the mail for this project
     :param message: message string
     :return:
     """
     email = staff.email
-    current_site = get_current_site(request)
-    domain = current_site.domain
     context = {
-        'domain'    : domain,
         'proposal'  : proposal,
         'message'   : message,
     }

@@ -27,7 +27,7 @@
     <tbody>
 {% for proposal in proposals %}
         <tr>
-            <td>{{ proposal.TimeSlot }}</td>
+            <td>{{ proposal.TimeSlot|default:"Future" }}</td>
             <td><a href="{% url 'proposals:details' proposal.id %}" class="capitalize">{{ proposal.Title }}</a></td>
             <td>{{ proposal.Track }}</td>
         <td>{{ proposal.Group }}</td>
@@ -54,14 +54,22 @@
             </td>
         {% endif %}
             <td>
-            {# show distribution in phase 5 and larger (from gather objections onwards)#}
-            {% if phasenumber < 5 and phasenumber > 0 %}
+            {# type3 can delete old proposals, no edit as history cannot be changed #}
+            {% if proposal.prevyear %}
+                {% if user|has_group:"type3staff"  %}
+                    {% if proposal.Status < 3 %}
+                        <a href="{% url 'proposals:askdeleteproposal' proposal.id %}" class="button warning"><span class="mif-bin"></span>Delete</a>
+                    {% endif %}
+                {% endif %}
+            {% else %}
+                {# show edit buttons for proposals of this year in lower timephases  #}
+                {% if phasenumber < 5 %}
                     <a href="{% url 'proposals:details' proposal.id %}" class="button primary">View</a>
-                    {% if phasenumber < 3 and request.user|has_group:"any" %}
+                    {% if phasenumber < 3 %}
                         {% if proposal.Status <= 2 or proposal.Track.Head == request.user and proposal.Status == 3 or user|has_group:"type3staff" and proposal.Status == 3 %}
-                            <a href="{% url 'proposals:edit' proposal.id %}" class="button info"><span class="mif-pencil"></span>Edit data</a>
-                            <a href="{% url 'proposals:editfile' 'i' proposal.id %}" class="button info"><span class="mif-images"></span>Edit images</a>
-                            <a href="{% url 'proposals:editfile' 'a' proposal.id %}" class="button info"><span class="mif-file-pdf"></span>Edit attachments</a>
+                            <a class="button primary" href="{% url 'proposals:edit' proposal.id %}">
+                                <span class="mif-pencil"></span>Edit data
+                            </a>
                             {% if user|has_group:"type3staff"  %}
                                 {% if proposal.Status < 3 %}
                                     <a href="{% url 'proposals:askdeleteproposal' proposal.id %}" class="button warning"><span class="mif-bin"></span>Delete</a>
@@ -69,7 +77,8 @@
                             {% endif %}
                         {% endif %}
                     {% endif %}
-            {% else %}
+                {# Proposals of this year in phase 5 or later #}
+                {% else %}
                     <ul>
                     {% for dist in proposal.distributions.all %}
                         <li>
@@ -77,7 +86,12 @@
                         </li>
                     {% endfor %}
                     </ul>
+                {% endif %}
             {% endif %}
+            {# show "copy" button for proposals #}
+            <a class="button primary" href="{% url 'proposals:copy' proposal.id %}">
+                <span class="mif-versions"></span>Copy
+            </a>
             </td>
         </tr>
 {% endfor %}

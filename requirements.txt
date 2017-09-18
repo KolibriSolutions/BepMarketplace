@@ -2,7 +2,6 @@ django
 pillow
 openpyxl
 django-impersonate
-django-maintenancemode
 django-render-block
 django-redis
 channels

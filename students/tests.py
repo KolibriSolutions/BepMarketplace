@@ -139,9 +139,26 @@ class StudentsViewsTest(ProposalViewsTest):
         if self.debug:
             print("Testing proposal apply")
         info['type'] = 'apply'
-        self.proposal.TimeSlot = self.ots
+        self.proposal.TimeSlot = self.pts
         self.proposal.save()
-        self.privateproposal.TimeSlot = self.ots
+        self.privateproposal.TimeSlot = self.pts
+        self.privateproposal.save()
+        for phase in range(1, 8):
+            self.tp.Description = phase
+            self.tp.save()
+            if self.debug:
+                print('Apply other timeslot, phase {}'.format(phase))
+            info['phase'] = str(phase)
+            # this code matrix has forbidden everywhere (because apply is not possible for other timeslot)
+            for page, status in code_phase124567:
+                self.loop_user_status(app+page[0], status, info, kw=page[1])
+
+        if self.debug:
+            print("Testing proposal apply")
+        info['type'] = 'apply'
+        self.proposal.TimeSlot = self.nts
+        self.proposal.save()
+        self.privateproposal.TimeSlot = self.nts
         self.privateproposal.save()
         for phase in range(1, 8):
             self.tp.Description = phase
