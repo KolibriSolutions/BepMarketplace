@@ -10,7 +10,7 @@ from django.db.models import Q
 from django.forms import modelformset_factory
 from django.shortcuts import get_object_or_404, render, redirect
 
-from BepMarketplace.decorators import can_view_proposal, phase3_only, student_only
+from BepMarketplace.decorators import can_view_proposal, can_apply, student_only
 from professionalskills.models import StudentFile
 from proposals.cacheprop import getProp
 from proposals.models import Proposal
@@ -34,7 +34,7 @@ def listApplications(request):
 
 
 @login_required
-@phase3_only
+@can_apply
 def prioUp(request, application_id):
     """
     Increase the priority of an application of a student.
@@ -63,7 +63,7 @@ def prioUp(request, application_id):
 
 
 @login_required
-@phase3_only
+@can_apply
 def prioDown(request, application_id):
     """
     Decrease the priority of an application of a student.
@@ -98,7 +98,7 @@ def prioDown(request, application_id):
 
 
 @login_required
-@phase3_only
+@can_apply
 def retractApplication(request, application_id):
     """
     Let a user un-apply / retract an application.
@@ -133,8 +133,7 @@ def retractApplication(request, application_id):
 
 
 @can_view_proposal
-@phase3_only
-@student_only()
+@can_apply
 def applyToProposal(request, pk):
     """
     Let a user apply to a proposal. Called after confirmapply.
@@ -143,10 +142,9 @@ def applyToProposal(request, pk):
     :param pk: id of a proposal.
     """
     prop = getProp(pk)
-    if request.user.personal_proposal.exists():
-        return render(request, "base.html", context={
-            "Message": "You cannot apply because there is a private proposal for you.",
-        })
+    if prop.Status < 4:
+        raise PermissionDenied("This proposal is not public, application is not possible.")
+
     if request.user.applications.count() >= settings.MAX_NUM_APPLICATIONS:
         return render(request, "base.html", context={
                 "Message" : "already at max ammount of applied proposals<br>"
@@ -188,8 +186,7 @@ def applyToProposal(request, pk):
 
 
 @can_view_proposal
-@phase3_only
-@student_only()
+@can_apply
 def confirmApplication(request, pk):
     """
     After a student presses apply on a proposal, he/she has to confirm the application on this page.
@@ -198,15 +195,10 @@ def confirmApplication(request, pk):
     :param request:
     :param pk: id of the proposal
     """
-    if request.user.personal_proposal.exists():
-        return render(request, "base.html", context={
-            "Message": "You cannot apply because there is a private proposal for you.",
-        })
-    if request.user.groups.count() != 0:
-        return render(request, "base.html", {"Message":"Only students can apply"})
     prop = getProp(pk)
-    if prop.Status < 4 or prop.Private.count() > 0:
-        raise PermissionDenied("Didn't think so, nice try")
+    if prop.Status < 4:
+        raise PermissionDenied("This proposal is not public, application is not possible.")
+
     if Application.objects.filter(Q(Proposal=prop) & Q(Student=request.user)).exists():
         return render(request, "base.html", context={
             "Message" : "You already applied to this proposal.",
@@ -228,9 +220,6 @@ def addFile(request):
     """
     if get_timephase_number() < 6:
         raise PermissionDenied("Student files are not available in this phase")
-
-    if request.user.groups.exists():
-        raise PermissionDenied("Only for students")
 
     dist = get_object_or_404(Distribution, Student=request.user)
 

@@ -60,7 +60,7 @@ def detailProposal(request, pk):
         if get_timephase_number() != 3:  # phase 3 is for students choosing projects.
             button = ''
         else:
-            button = '<a href="{}"><button class="button {}">{}</button></a>'
+            button = '<a href="{}" class="button {}">{}</a>'
             if request.user.applications.filter(Proposal=prop).exists():  # if user has applied to this proposal
                 button = button.format(reverse('students:retractapplication',
                                                args=[request.user.applications.filter(Proposal=prop)[0].id]), 'danger',

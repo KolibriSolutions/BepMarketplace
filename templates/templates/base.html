@@ -190,7 +190,9 @@
                                 Skills</a>
                             <ul class="d-menu" data-role="dropdown">
                                 <li><a href="{% url 'professionalskills:filetypelist' %}">All</a></li>
-                                <li><a href="{% url 'professionalskills:filetypecreate' %}">Create New</a></li>
+                                {%  if user|has_group:'type6staff' %}
+                                    <li><a href="{% url 'professionalskills:filetypecreate' %}">Create New</a></li>
+                                {% endif %}
                             </ul>
                         </li>
                     {% elif phasenumber > 5 %}

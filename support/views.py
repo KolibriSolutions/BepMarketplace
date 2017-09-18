@@ -16,7 +16,7 @@ from general_form import ConfirmForm
 from general_mail import EmailThread
 from general_view import get_distributions, get_all_students, get_timephase_number, get_all_staff, get_all_proposals, get_grouptype, get_timeslot
 from index.models import Track, UserMeta
-from proposals.models import Proposal
+from general_model import GroupOptions
 from results.models import GradeCategory
 from support import check_content_policy
 from .forms import ChooseMailingList, FileAddForm, FileEditForm, OverRuleUserMetaForm
@@ -537,7 +537,7 @@ def stats(request):
         get_all_proposals().filter(Status=4).count()
     ]
 
-    for group in Proposal.GroupOptions:
+    for group in GroupOptions:
         groupcount[group[0]] = get_all_proposals().filter(Group=group[0]).count()
 
     for track in Track.objects.all():

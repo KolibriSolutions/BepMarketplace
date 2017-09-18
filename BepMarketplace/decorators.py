@@ -54,16 +54,17 @@ def superuser_required():
 
 def student_only():
     """
-    Test if a user is a student. A student is a user with 0 groups.
+    Test if a user is a student. A student is a user with 0 groups. Students are not allowed in first timephases
 
     :return: 
     """
     def is_student(u):
         if u.is_authenticated():
-            if not u.groups.exists():
-                return True
-            else:
-                raise PermissionDenied("Only for students")
+            if u.groups.exists():
+                raise PermissionDenied("This page is only available for students.")
+            if get_timephase_number() < 3:
+                raise PermissionDenied("The system is not yet open for students.")
+            return True
         return False
 
     return user_passes_test(
@@ -115,12 +116,12 @@ def can_view_proposal(fn):
 
         # if project is published, non private and its the right time phase
         if prop.Status == 4 \
-                and (not prop.Private.exists() or request.user in prop.Private.all())\
-                and prop.TimeSlot == get_timeslot():
+                and (not prop.Private.exists() or request.user in prop.Private.all()):
             # students only in timephase after 2
-            if (not request.user.groups.exists()) and get_timephase_number() > 2:
+            if (not request.user.groups.exists()) and get_timephase_number() > 2 \
+               and prop.TimeSlot == get_timeslot():
                 return fn(*args, **kw)
-            # else staff members are allowed to view
+            # else staff members are allowed to view in all timeslots and timephases
             if request.user.groups.exists():
                 return fn(*args, **kw)
 
@@ -273,16 +274,27 @@ def can_access_professionalskills(fn):
     return wrapper
 
 
-def phase3_only(fn):
+def can_apply(fn):
     """
-    Test if the system is in timephase 3.
+    Test if a student can apply or retract; The system is in timephase 3, user is a student and proposal is nonprivate.
     
     :param fn: 
     :return: 
     """
     def wrapper(*args, **kw):
+        request = args[0]
         if get_timephase_number() != 3:
             raise PermissionDenied("Not correct timephase!")
+        if request.user.groups.exists():
+            raise PermissionDenied("Only students can apply to proposals")
+        if request.user.personal_proposal.exists():
+            raise PermissionDenied("You cannot apply/retract because there is a private proposal for you.")
+        if 'pk' in kw:
+            pk = int(kw['pk'])
+            prop = get_object_or_404(Proposal, pk=pk)
+            if prop.Private.exists():
+                raise PermissionDenied("This proposal is private. It is already assigned.")
+
         return fn(*args, **kw)
     return wrapper
 
