@@ -3,7 +3,6 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from general_model import clean_text, get_timeslot_id
 from timeline.models import TimeSlot
-
 class Track(models.Model):
     """
     Stores the tracks for EE. Like SSS, CW, C&C en Automotive.
@@ -75,5 +74,18 @@ class UserMeta(models.Model):
     EnrolledExt = models.BooleanField(default=False)
     Overruled = models.BooleanField(default=False)
     TimeSlot = models.ManyToManyField(TimeSlot, default=get_timeslot_id)
+    def __str__(self):
+        return str(self.User)
+
+class Term(models.Model):
+    Text = models.TextField()
+
+    def __str__(self):
+        return "Term {}".format(self.id)
+
+class UserAcceptedTerms(models.Model):
+    User = models.OneToOneField(User, on_delete=models.CASCADE, related_name='termsaccepted')
+    Stamp = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
         return str(self.User)

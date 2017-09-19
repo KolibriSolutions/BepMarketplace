@@ -16,6 +16,7 @@ xhtml2pdf>=0.2b1
 django-htmlmin
 pytz
 websocket-client
+django-ipware
 
 Sphinx
 

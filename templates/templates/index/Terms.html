@@ -1,0 +1,11 @@
+{% extends 'GenericForm.html' %}
+
+{% block body %}
+    <h1>Terms of Services</h1>
+    <ul>
+        {% for term in terms %}
+            <li>{{ term.Text }}</li>
+        {% endfor %}
+    </ul>
+    {{ block.super }}
+{% endblock %}

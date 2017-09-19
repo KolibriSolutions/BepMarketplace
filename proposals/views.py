@@ -13,7 +13,7 @@ from api.views import upgradeStatusApi, downgradeStatusApi
 from general_form import print_formset_errors
 from general_mail import mailAffectedUser, mailPrivateStudent
 from general_model import GroupOptions
-from general_view import createShareLink, get_timephase_number, get_distributions, get_all_proposals, get_grouptype
+from general_view import createShareLink, get_timephase_number, get_distributions, get_all_proposals, get_grouptype, get_timeslot
 from index.models import Track
 from tracking.views import trackProposalVisit
 from .cacheprop import getProp, updatePropCache
@@ -26,9 +26,9 @@ from .models import Proposal, ProposalImage, ProposalAttachment
 def listProposals(request):
     """
     List all the public (=type4 & not-private) proposals. This is the overview for students to choose a proposal from.
-    
-    :param request: 
-    :return: 
+
+    :param request:
+    :return:
     """
     bodyhtml = cache.get('listproposalsbodyhtml')
     if bodyhtml is None:
@@ -42,15 +42,15 @@ def listProposals(request):
 def detailProposal(request, pk):
     """
     Detailview page for a given proposal. Displays all information for the proposal. Used for students to choose a
-    proposal from, and for staff to check. For staff it shows edit and up/downgrade buttons. For students it shows a 
+    proposal from, and for staff to check. For staff it shows edit and up/downgrade buttons. For students it shows a
     apply or retract button.
     The proposal is cached after the create phase (phase>4). The apply/retract button is not cached but inserted using
     a .format(). Proposals are not cached for staff
-    Private proposals don't have a apply/retract button, because the template doesn't have the {} in it then. 
-    
-    :param request: 
-    :param pk: pk of the proposal 
-    :return: 
+    Private proposals don't have a apply/retract button, because the template doesn't have the {} in it then.
+
+    :param request:
+    :param pk: pk of the proposal
+    :return:
     """
     prop = getProp(pk)
 
@@ -119,9 +119,9 @@ def createProposal(request):
     """
     Create a new proposal. Only for staff. Generating a new proposal for this timeslot is only allowed in the first
     timephase. In other timephases projects can only be generated for the next timeslot.
-    
-    :param request: 
-    :return: 
+
+    :param request:
+    :return:
     """
     if request.method == 'POST':
         form = ProposalFormCreate(request.POST, request=request)
@@ -154,10 +154,10 @@ def createProposal(request):
 def editProposal(request, pk):
     """
     Edit a given proposal. Only for staff that is allowed to edit the proposal. Timeslot cannot be changed here.
-    
-    :param request: 
-    :param pk: pk of the proposal to edit. 
-    :return: 
+
+    :param request:
+    :param pk: pk of the proposal to edit.
+    :return:
     """
     obj = get_object_or_404(Proposal, pk=pk)
     #TODO checks on timeslot
@@ -198,6 +198,7 @@ def copyProposal(request, pk):
     else:
         oldproposal = get_object_or_404(Proposal, pk=pk)
         oldproposal.id = None
+        oldproposal.TimeSlot = get_timeslot()
         # Assistants and privates are removed, because m2m is not copied in this way.
         form = ProposalFormCreate(request=request, instance=oldproposal)
     if get_timephase_number() == 1:
@@ -214,13 +215,13 @@ def copyProposal(request, pk):
 @can_edit_proposal
 def addFile(request, pk, ty):
     """
-    Add a file of type ty to a proposal. The type can be an image or a file (usually pdf). The image is shown in an 
+    Add a file of type ty to a proposal. The type can be an image or a file (usually pdf). The image is shown in an
     image slider, an attachement is shown as a download button.
-    
-    :param request: 
-    :param pk: pk of the proposal 
+
+    :param request:
+    :param pk: pk of the proposal
     :param ty: type of file to add. i for image, a for attachment
-    :return: 
+    :return:
     """
     obj = get_object_or_404(Proposal, pk=pk)
     if ty == "i":
@@ -249,11 +250,11 @@ def addFile(request, pk, ty):
 def editFile(request, pk, ty):
     """
     Edit a file of a proposal.
-    
-    :param request: 
+
+    :param request:
     :param pk: pk of the proposal to edit file of
     :param ty: type of file to edit, either i for image or a for attachement
-    :return: 
+    :return:
     """
     obj = get_object_or_404(Proposal, pk=pk)
     if ty == "i":
@@ -286,12 +287,12 @@ def editFile(request, pk, ty):
 @group_required('type3staff')
 def askDeleteProposal(request, pk):
     """
-    A confirmform for type3staff to delete a proposal. Regular staff cannot delete a proposal, as this should not 
+    A confirmform for type3staff to delete a proposal. Regular staff cannot delete a proposal, as this should not
     happen. Public (=status4) proposals cannot be deleted.
-    
-    :param request: 
-    :param pk: pk of proposal to delete. 
-    :return: 
+
+    :param request:
+    :param pk: pk of proposal to delete.
+    :return:
     """
     obj = get_object_or_404(Proposal, pk=pk)
     if obj.Status >= 3:
@@ -305,10 +306,10 @@ def askDeleteProposal(request, pk):
 def deleteProposal(request, pk):
     """
     Really delete a proposal. This can only be called by type3staff after going to the confirm delete page.
-    
-    :param request: 
-    :param pk: pk of the proposal to delete 
-    :return: 
+
+    :param request:
+    :param pk: pk of the proposal to delete
+    :return:
     """
     obj = get_object_or_404(Proposal, pk=pk)
     if obj.Status >= 3:
@@ -327,11 +328,11 @@ def deleteProposal(request, pk):
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
 def chooseEditProposal(request):
     """
-    This lists all proposals that the given user has something to do with. Either a responsible or assistant. For 
+    This lists all proposals that the given user has something to do with. Either a responsible or assistant. For
     Type3staff this lists all proposals. This is the ussual view for staff to view their proposals.
-    
-    :param request: 
-    :return: 
+
+    :param request:
+    :return:
     """
     # show projects from all timeslots, filtering through datatables.
     allprops = Proposal.objects.all()
@@ -351,10 +352,10 @@ def chooseEditProposal(request):
 def upgradeStatus(request, pk):
     """
     Upgrade the status of a given proposal.
-    
-    :param request: 
-    :param pk: pk of the proposal to upgrade 
-    :return: 
+
+    :param request:
+    :param pk: pk of the proposal to upgrade
+    :return:
     """
     obj = get_object_or_404(Proposal, pk=pk)
     r = upgradeStatusApi(request, pk)
@@ -365,12 +366,12 @@ def upgradeStatus(request, pk):
 @can_downgrade_proposal
 def downgradeStatusMessage(request, pk):
     """
-    Downgrade the status of a proposal, and send the affected users (responsible and assistants) a mail that their 
+    Downgrade the status of a proposal, and send the affected users (responsible and assistants) a mail that their
     proposal is downgraded in status. Mailing is done via mailaffecteduser via downgradestatusApi.
-    
-    :param request: 
+
+    :param request:
     :param pk: pk of the proposal to downgrade
-    :return: 
+    :return:
     """
     obj = get_object_or_404(Proposal, pk=pk)
     if request.user == obj.ResponsibleStaff or request.user == obj.Track.Head:
@@ -398,9 +399,9 @@ def downgradeStatusMessage(request, pk):
 def pending(request):
     """
     Get and show the pending proposals for a given user.
-    
-    :param request: 
-    :return: 
+
+    :param request:
+    :return:
     """
     props = []
     if get_grouptype("2")in request.user.groups.all() or get_grouptype("2u") in request.user.groups.all():
@@ -418,8 +419,8 @@ def listTrackProposals(request):
     """
     List all proposals of the track that the user is head of.
 
-    :param request: 
-    :return: 
+    :param request:
+    :return:
     """
     if not Track.objects.filter(Head=request.user).exists():
         raise PermissionDenied("This page is only for track heads.")
@@ -435,12 +436,12 @@ def listTrackProposals(request):
 @can_edit_proposal
 def getShareLink(request, pk):
     """
-    Get a sharelink for a given proposal. This link is a public view link for a proposal-detailpage for when the 
+    Get a sharelink for a given proposal. This link is a public view link for a proposal-detailpage for when the
     proposal is not yet public.
 
-    :param request: 
-    :param pk: Proposal pk to get sharelink for  
-    :return: 
+    :param request:
+    :param pk: Proposal pk to get sharelink for
+    :return:
     """
     link = createShareLink(request, pk)
     return render(request, "base.html", {
@@ -458,10 +459,10 @@ def getProposalStats(request, step=0):
     """
     Gives an overview of the statistics of the proposals of the user. These include the ammount of visitors and applications.
     This is only for timephase 5 and later
-    
+
     :param request:
     :param step: integer, which step of the wizard view you want to see, supplied via URI
-    :return: 
+    :return:
     """
     if get_timephase_number() < 6:
         raise PermissionDenied("Proposals statistics are only available from timephase 6 onwards.")
@@ -531,10 +532,10 @@ def getProposalStatsGeneral(request, step=0):
     """
     Provides report of general statistics, this is breakdown per group etc and the top10 of proposals on the marketplace.
     Only for timephase  5 and 6
-    
-    :param request: 
+
+    :param request:
     :param step: integer, which step of the wizard view you want to see, supplied via URI
-    :return: 
+    :return:
     """
 
     if get_timephase_number() < 6:

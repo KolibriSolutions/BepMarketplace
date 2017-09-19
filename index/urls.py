@@ -18,4 +18,5 @@ urlpatterns = [
     url(r'^feedback/close/(?P<pk>[0-9]+)/$', views.feedbackClose, name='feedbackclose'),
     url(r'^about/$', views.about, name='about'),
     url(r'^changesettings/$', views.changeSettings, name='changesettings'),
+    url(r'^terms/$', views.termsform, name='termsaccept'),
 ]

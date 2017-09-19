@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from pytz import utc
 from django.utils.deprecation import MiddlewareMixin
+from ipware.ip import get_real_ip
 
 class TelemetryMiddleware(MiddlewareMixin):
 
@@ -26,8 +27,7 @@ class TelemetryMiddleware(MiddlewareMixin):
         channels.Group('telemetry').send({'text' : json.dumps({
             'path'          : request.path,
             'status_code'   : response.status_code,
-            'ip'            : request.META.get('X-Real-IP'),
-            'host'          : request.META.get('X-Forwarded-Host'),
+            'ip'            : get_real_ip(request),
             'method'        : request.method,
             'user'          : request.user.username,
             'timestamp'     : int(datetime.utcnow().replace(tzinfo=utc).timestamp()),

@@ -16,14 +16,15 @@ from general_mail import send_mail
 from general_view import get_timephase, get_timephase_number, get_timeslot
 from support.models import PublicFile
 from .forms import *
-from .models import FeedbackReport, Track, UserMeta
+from .models import FeedbackReport, Track, UserMeta, Term, UserAcceptedTerms
+from general_form import ConfirmForm
 
 
 def make_get(get):
     """
     Creates the get string for the login functions, to keep the redirect page after logging in
     An optional get string inside the redirect (usually for storing datatables sort options) is percent-urlencoded
-    
+
     :param get: a url to encode.
     """
     p = get.find("?")
@@ -73,11 +74,11 @@ def gotoNextOrHome(request):
 
 def index(request):
     """
-    The index page, home page, for all users. This displays a simple help string based on the timephase and an 
+    The index page, home page, for all users. This displays a simple help string based on the timephase and an
     extensive help text (supplied in the template).
-    
-    :param request: 
-    :return: render of the index page. 
+
+    :param request:
+    :return: render of the index page.
     """
     files = PublicFile.objects.filter(TimeSlot=get_timeslot())
     ph = get_timephase_number()
@@ -364,6 +365,32 @@ def changeSettings(request):
         "buttontext": "Save"
     })
 
+@login_required
+def termsform(request):
+    try:
+        obj = request.user.termsaccepted
+        if obj.Stamp <= datetime.now():
+            return HttpResponseRedirect('/')
+    except:
+        pass
+
+    if request.method == 'POST':
+        form = ConfirmForm(request.POST)
+        if form.is_valid():
+            obj = UserAcceptedTerms(User=request.user)
+            obj.save()
+            return HttpResponseRedirect('/')
+    else:
+        form = ConfirmForm()
+
+    return render(request, 'index/Terms.html', {
+        'form' : form,
+        'formtitle' : 'I have read and accepted the Terms of Services',
+        'buttontext' : 'Confirm',
+        'terms' : Term.objects.all()
+    })
+
+
 
 def error400(request):
     """
@@ -416,7 +443,7 @@ def error500(request):
 def about(request):
     """
     About page
-    
+
     :param request:
     :return:
     """

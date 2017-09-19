@@ -81,7 +81,8 @@ MIDDLEWARE_CLASSES = [
     'django_otp.middleware.OTPMiddleware',
     'htmlmin.middleware.HtmlMinifyMiddleware',
     'htmlmin.middleware.MarkRequestMiddleware',
-    'tracking.middleware.TelemetryMiddleware'
+    'tracking.middleware.TelemetryMiddleware',
+    'index.middleware.TermsMiddleware'
 ]
 
 ROOT_URLCONF = 'BepMarketplace.urls'
