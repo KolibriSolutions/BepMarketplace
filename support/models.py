@@ -51,12 +51,11 @@ class PublicFile(models.Model):
         return str(self.OriginalName) + " - " + str(self.Caption)
 
     def save(self, *args, **kwargs):
-        self.OriginalName = self.File.name
         # remove old image if this is a changed image
         try:
             this_old = PublicFile.objects.get(id=self.id)
             if this_old.File != self.File:
-                this_old.File.delete()
+                this_old.File.delete(save=False)
         except:  # new image object
             pass
         super(PublicFile, self).save(*args, **kwargs)

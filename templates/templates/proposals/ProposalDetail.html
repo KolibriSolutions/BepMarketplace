@@ -58,7 +58,7 @@
                         {% for attachment in proposal.attachments.all %}
                             <a href="{% url 'download:proposalfile' 'a' attachment.id %}" class="command-button file-button">
                                 <span class="icon mif-file-pdf"></span>
-                                {{ attachment.Caption }}
+                                {% if attachment.Caption %}{{ attachment.Caption }}{% else %}Attachment {{ forloop.counter }}{% endif %}
                                 <small>{{ attachment.OriginalName }}</small>
                             </a>
                         {% endfor %}
@@ -215,8 +215,16 @@
                                     <td>
                                         <ul>
                                             {% for application in applications %}
-                                                <li><span
-                                                        class='tag info studentApplicationPriority'>{{ application.Priority }}</span> {{ application.Student.get_full_name }}
+                                                <li>
+                                                    <span data-role="hint"
+                                                        data-hint-background="bg-gray"
+                                                        data-hint-color="fg-white"
+                                                        data-hint-mode="2"
+                                                        data-hint="This student has applied to this project with priority {{ application.Priority }}">
+                                                    <span
+                                                        class='tag info studentApplicationPriority'>{{ application.Priority }}
+                                                    </span></span>
+                                                    {{ application.Student.get_full_name }}
                                                 </li>
                                             {% endfor %}
                                         </ul>

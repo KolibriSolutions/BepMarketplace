@@ -52,8 +52,10 @@ class ApplicationTracking(models.Model):
     Timestamp = models.DateTimeField(auto_now_add=True)
     Type = models.CharField(max_length=1, choices=typechoices)
 
+
 def generate_key(length=64):
     return hmac.new(urandom(length), digestmod=sha256).hexdigest()
+
 
 class TelemetryKey(models.Model):
     Created = models.DateTimeField(auto_now_add=True)

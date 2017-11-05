@@ -54,18 +54,15 @@ class StudentFile(models.Model):
     def __str__(self):
         return self.OriginalName + " - " + self.Caption
 
-
     def metro_icon(self):
         return metro_icon_default(self)
 
     def save(self, *args, **kwargs):
-        # save original name before it is overwritten
-        self.OriginalName = self.File.name
         # remove old image if this is a changed image
         try:
             this_old = StudentFile.objects.get(id=self.id)
             if this_old.File != self.File:
-                this_old.File.delete()
+                this_old.File.delete(save=False)
         except: # new image object
             pass
         super(StudentFile, self).save(*args, **kwargs)

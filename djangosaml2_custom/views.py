@@ -44,13 +44,8 @@ def set_attributes(user, attributes):
     # these attributes don't always exist
     try:
         meta.Initials = attributes["Initials"][0]
-        preposition = meta.Fullname.split(".")[-1].strip()
-        last_name = attributes["urn:mace:dir:attribute-def:sn"][0]
-        if len(preposition) > 1:
-            user.last_name = preposition + " " + last_name
-        else:
-            user.last_name = last_name
-        user.first_name = attributes["urn:mace:dir:attribute-def:givenName"][0]
+        user.last_name = attributes["urn:mace:dir:attribute-def:sn"][0]
+        user.first_name = attributes["urn:mace:dir:attribute-def:givenName"][0].split(' ')[0]  # take first if multiple.
     except:
         user.last_name = meta.Fullname
 

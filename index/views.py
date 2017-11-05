@@ -400,7 +400,7 @@ def error400(request):
     :return:
     """
     return render(request, "base.html", status=400, context={
-        "Message":"Your browser send an invalid request. Please have a look at the <a href=\"/\">homepage</a>"
+        "Message": "Your browser send an invalid request. Please have a look at the <a href=\"/\">homepage</a>"
     })
 
 
@@ -412,7 +412,7 @@ def error404(request):
     :return:
     """
     return render(request, "base.html", status=404, context={
-        "Message":"The page you are looking for does not exist. Please have a look at the <a href=\"/\">homepage</a>"
+        "Message": "The page you are looking for does not exist. Please have a look at the <a href=\"/\">homepage</a>"
     })
 
 
@@ -433,9 +433,9 @@ def error500(request):
     :param request:
     :return:
     """
-    return render(request, "base.html", status=500, context={
+    return render(request, "50x.html", status=500, context={
         "Message" : "Something went wrong in the server. The BEP marketplace team has been automatically notified. </br>"
-                    "Please help them by sending an email to <a href=\"mailto:marketplace@ieee.tue.nl?subject=BugReport\">marketplace@ieee.tue.nl</a> with more information what you were trying to do. <br/>"
+                    "Please help them by sending an email to <a href=\"mailto:bepmarketplace@tue.nl?subject=BugReport\">bepmarketplace@tue.nl</a> with more information what you were trying to do. <br/>"
                     "Thanks in advance!"
     })
 

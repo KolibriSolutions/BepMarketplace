@@ -260,6 +260,8 @@ MAX_UPLOAD_SIZE = 10*1024*1024 #10MB
 ALLOWED_PROPOSAL_ATTACHEMENTS = ['pdf']
 ALLOWED_PROPOSAL_IMAGES = ['jpg', 'jpeg', 'png', 'bmp', 'gif']
 ALLOWED_PUBLIC_FILES = ['pdf','jpg', 'jpeg', 'png', 'bmp', 'gif','doc','docx','xls','xlsx','odt','ods','odp','ppt','pptx','tex','txt','rtf']
+ALLOWED_STUDENT_FILES = ALLOWED_PUBLIC_FILES
+ALLOWED_PROPOSAL_ASSISTANT_DOMAINS = ["tue.nl", ]
 
 # How long to cache models that are assumed static. (Group types, timeslots, timphases)
 STATIC_OBJECT_CACHE_DURATION = 15*60  # 15 minutes.

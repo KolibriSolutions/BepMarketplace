@@ -11,7 +11,7 @@ from django.urls import reverse
 
 import general_excel
 from BepMarketplace.decorators import group_required
-from general_form import print_formset_errors
+#from general_form import print_formset_errors
 from general_view import get_timephase_number, get_grouptype
 from index.models import Track
 from students.models import Distribution
@@ -81,10 +81,7 @@ def presentationswizardstep2(request):
             formset.save()
             return render(request, "base.html", {"Message": "Rooms saved!  <br />\
             <a class='button success' href='"+reverse("presentations:presentationswizardstep3")+"'>Go to next step</a> <a class='button primary' href='"+reverse("presentations:presentationswizardstep2")+"'>Add more rooms</a>"})
-        return render(request, "base.html",
-                      {"Message": "Error in saving rooms: "+print_formset_errors(formset.errors)})
-    else:
-        return render(request, 'GenericForm.html', {'formset': formset, 'formtitle': "Presentations step 2; Rooms for presentations & assessments", 'buttontext': 'Save and go to step 3'})
+    return render(request, 'GenericForm.html', {'formset': formset, 'formtitle': "Presentations step 2; Rooms for presentations & assessments", 'buttontext': 'Save and go to step 3'})
 
 
 @group_required("type3staff")
@@ -117,10 +114,7 @@ def presentationswizardstep3(request):
             return render(request, "base.html", {"Message": "Sets saved! <br />\
             If there were already presentations planned and you changed the durations, please recalculate the timings in 'step 4' and re-save the presentations! <br /> \
              <a class='button success' href='"+reverse("presentations:presentationswizardstep4")+"'>Go to final step</a> <a class='button primary' href='"+reverse("presentations:presentationswizardstep3")+"'>Make more sets</a>"})
-        return render(request, "base.html",
-                      {"Message": "Error in saving sets: "+print_formset_errors(formset.errors)})
-    else:
-        return render(request, 'GenericForm.html', {'formset': formset, 'formtitle': "Presentations step 3; Generate presentations sets", 'buttontext': 'Save and go to step 4'})
+    return render(request, 'GenericForm.html', {'formset': formset, 'formtitle': "Presentations step 3; Generate presentations sets", 'buttontext': 'Save and go to step 4'})
 
 
 @group_required("type3staff")

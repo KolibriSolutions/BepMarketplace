@@ -25,6 +25,12 @@
 <body {% block bodytag %}  {% endblock %}>
 
 <div id="wrapper">
+    {# This conditional comment is support until IE9. Newer IE won't see it. #}
+    <!--[if IE]>
+        <div style="background: #e00; text-align: center; position: absolute; top: 5em; height:7em; left:20%; right:20%; color: #FFF; z-index:1000; padding: 5px;">
+        <b>Your browser is not compatible with this website. Please update your browser or use another browser.</b>
+        </div>
+        <![endif]-->
     {% block menu %}
         <div class="app-bar" data-role="appbar">
             <div class="app-bar-element branding">BEP Marketplace</div>
@@ -70,16 +76,19 @@
                                             <li>
                                                 <a href="#" class="dropdown-toggle">Distribute Automatically</a>
                                                 <ul class="d-menu" data-role="dropdown">
-                                                    <li><a href="{% url 'distributions:distributeproposal' 1 %}">Old Way</a>
+                                                    <li><a href="{% url 'distributions:distributeproposal' 1 %}">Old
+                                                        Way</a>
                                                     </li>
-                                                    <li><a href="{% url 'distributions:distributeproposal' 2 %}">New Way</a>
+                                                    <li><a href="{% url 'distributions:distributeproposal' 2 %}">New
+                                                        Way</a>
                                                     </li>
                                                 </ul>
                                             </li>
                                             <li><a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
                                                 Manually</a></li>
                                         {% endif %}
-                                        <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">List all</a></li>
+                                        <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">List
+                                            all</a></li>
                                     </ul>
                                 </li>
                             {% else %}
@@ -91,16 +100,19 @@
                                 <li>
                                     <a href="" class="dropdown-toggle"><span class="mif-file-powerpoint icon"></span>Presentations</a>
                                     <ul class="d-menu" data-role="dropdown">
-                                        <li><a href="{% url 'presentations:presentationswizardstep1' %}">Step1 Options</a></li>
+                                        <li><a href="{% url 'presentations:presentationswizardstep1' %}">Step1
+                                            Options</a></li>
                                         <li><a href="{% url 'presentations:presentationswizardstep2' %}">Step2 add/edit
                                             Rooms</a></li>
                                         <li><a href="{% url 'presentations:presentationswizardstep3' %}">Step3 add/edit
                                             Presentation sets</a></li>
-                                        <li><a href="{% url 'presentations:presentationswizardstep4' %}">Step4 Presentations
+                                        <li><a href="{% url 'presentations:presentationswizardstep4' %}">Step4
+                                            Presentations
                                             planning</a></li>
                                         <li><a href="{% url 'presentations:presentationsplanning' %}">List presentations
                                             table</a></li>
-                                        <li><a href="{% url 'presentations:presentationscalendar' %}">Presentations calendar</a>
+                                        <li><a href="{% url 'presentations:presentationscalendar' %}">Presentations
+                                            calendar</a>
                                         </li>
                                     </ul>
                                 </li>
@@ -154,7 +166,8 @@
                         {% endif %}
                         {% isThereTimeslot as timeslotpresent %}
                         {% if phasenumber > 3 or phasenumber < 0 and timeslotpresent %}
-                            <li><a href="{% url 'support:liststudents' %}"><span class="mif-users icon"></span>Students{% if phasenumber > 6 or phasenumber < 0 %} & Grades{% endif %}</a>
+                            <li><a href="{% url 'support:liststudents' %}"><span class="mif-users icon"></span>Students
+                                {% if phasenumber > 6 or phasenumber < 0 %} & Grades{% endif %}</a>
                             </li>
                         {% endif %}
                     {% elif user|has_group:"type4staff" %}
@@ -190,7 +203,7 @@
                                 Skills</a>
                             <ul class="d-menu" data-role="dropdown">
                                 <li><a href="{% url 'professionalskills:filetypelist' %}">All</a></li>
-                                {%  if user|has_group:'type6staff' %}
+                                {% if user|has_group:'type6staff' %}
                                     <li><a href="{% url 'professionalskills:filetypecreate' %}">Create New</a></li>
                                 {% endif %}
                             </ul>
@@ -358,8 +371,6 @@
         {% endif %}
     </div>
     <div class="place-right text-small">
-        <!--    <div class="cell place-left padding10"><a href="http://www.djangoproject.com/"><img src="https://www.djangoproject.com/m/img/badges/djangosite80x15_grey.gif" border="0" alt="A Django site." title="A Django site." /></a></div>
-            <div class="cell place-left padding10"><a href="http://metroui.org/" title="MetroUI CSS">MetroUI CSS</a> </div> -->
         <div class="cell place-left padding10" onclick="roll('li')">By: Frank Boerman & Jeroen van Oorschot 2016-2017
         </div>
         <div class="cell place-left padding10">Currently deployed<span

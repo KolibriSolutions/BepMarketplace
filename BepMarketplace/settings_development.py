@@ -211,6 +211,7 @@ ALLOWED_PROPOSAL_ATTACHEMENTS = ['pdf']
 ALLOWED_PROPOSAL_IMAGES = ['jpg', 'jpeg', 'png', 'bmp', 'gif']
 ALLOWED_PUBLIC_FILES = ['pdf','jpg', 'jpeg', 'png', 'bmp', 'gif','doc','docx','xls','xlsx','odt','ods','odp','ppt','pptx','tex','txt','rtf']
 ALLOWED_STUDENT_FILES = ALLOWED_PUBLIC_FILES
+ALLOWED_PROPOSAL_ASSISTANT_DOMAINS = ["tue.nl", ]
 
 STATIC_OBJECT_CACHE_DURATION = 60  # 1 minute
 #login security

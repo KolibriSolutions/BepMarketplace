@@ -10,10 +10,10 @@ from render_block import render_block_to_string
 
 from BepMarketplace.decorators import group_required, can_edit_proposal, can_view_proposal, can_downgrade_proposal
 from api.views import upgradeStatusApi, downgradeStatusApi
-from general_form import print_formset_errors
 from general_mail import mailAffectedUser, mailPrivateStudent
 from general_model import GroupOptions
-from general_view import createShareLink, get_timephase_number, get_distributions, get_all_proposals, get_grouptype, get_timeslot
+from general_view import createShareLink, get_timephase_number, get_distributions, get_all_proposals, get_grouptype, \
+    get_timeslot
 from index.models import Track
 from tracking.views import trackProposalVisit
 from .cacheprop import getProp, updatePropCache
@@ -153,14 +153,13 @@ def createProposal(request):
 @can_edit_proposal
 def editProposal(request, pk):
     """
-    Edit a given proposal. Only for staff that is allowed to edit the proposal. Timeslot cannot be changed here.
+    Edit a given proposal. Only for staff that is allowed to edit the proposal. Timeslot validation is handled in form.
 
     :param request:
     :param pk: pk of the proposal to edit.
     :return:
     """
     obj = get_object_or_404(Proposal, pk=pk)
-    #TODO checks on timeslot
     if request.method == 'POST':
         form = ProposalFormEdit(request.POST, request.FILES, request=request, instance=obj)
         if form.is_valid():
@@ -185,11 +184,11 @@ def copyProposal(request, pk):
     :param request:
     :return:
     """
-
     if request.method == 'POST':
         form = ProposalFormCreate(request.POST, request=request)
         if form.is_valid():
             prop = form.save()
+
             mailAffectedUser(request, prop)
             if prop.Private.all():
                 for std in prop.Private.all():
@@ -198,7 +197,9 @@ def copyProposal(request, pk):
     else:
         oldproposal = get_object_or_404(Proposal, pk=pk)
         oldproposal.id = None
+        # default timeslot. Overridden by form if this is not in phase 1.
         oldproposal.TimeSlot = get_timeslot()
+
         # Assistants and privates are removed, because m2m is not copied in this way.
         form = ProposalFormCreate(request=request, instance=oldproposal)
     if get_timephase_number() == 1:
@@ -278,10 +279,7 @@ def editFile(request, pk, ty):
         if formset.is_valid():
             formset.save()
             return render(request, "proposals/ProposalMessage.html", {"Message": "File changes saved!", "Proposal" : obj})
-        return render(request, "proposals/ProposalMessage.html",
-                      {"Message": "Error occurred during editing files: "+print_formset_errors(formset.errors), "Proposal": obj})
-    else:
-        return render(request, 'GenericForm.html', {'formset': formset, 'formtitle': 'All ' + ty + 's in Proposal '+obj.Title, "Proposal": obj.pk, 'buttontext': 'Save changes'})
+    return render(request, 'GenericForm.html', {'formset': formset, 'formtitle': 'All ' + ty + 's in Proposal '+obj.Title, "Proposal": obj.pk, 'buttontext': 'Save changes'})
 
 
 @group_required('type3staff')

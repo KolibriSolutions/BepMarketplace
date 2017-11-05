@@ -3,63 +3,130 @@
 {% load custom_filters %}
 {% block stylesheets %}
     <link href="{% static "css/jquery.datetimepicker.css" %}" rel="stylesheet">
+
 {% endblock %}
 {% block body %}
-{% if formtitle %}
-<h1>{{ formtitle }}</h1>
-{%  endif %}
-{% if title %}
-<h1>{{ title }}</h1>
-{% endif %}
-<form action="{% if actionlink %}{%  url actionlink %}{% endif %}" method="post" enctype="multipart/form-data" novalidate>
-    {% csrf_token %}
-<table class="table" style="text-align:left;">
-{% if formset %}
-    {{ formset.management_form }}
-    {% for form in formset %}
-        {{  form.as_table }}
-        <tr><th><hr /></th><td><hr /></td></tr>
-    {% endfor %}
-{% else %}
-    {{ form.as_table }}
-{% endif %}
-<tr><td>
-    <button class="button success" type="submit">{% if buttontext %}{{ buttontext }}{% else %}Go{% endif %}</button>
-    {%  if  Proposal %}
-        <a href="{% url "proposals:addfile" 'i' Proposal %}" class="button primary"><span class="mif-image"></span>Add image to proposal</a>
-        <a href="{% url "proposals:addfile" 'a' Proposal %}" class="button primary"><span class="mif-file-pdf"></span>Add attachments to proposal</a><br/><br/>
-        <a href="{% url 'proposals:details' Proposal %}" class="button primary">Back</a>
+    {% if formtitle %}
+        <h1>{{ formtitle }}</h1>
     {% endif %}
+    {% if title %}
+        <h1>{{ title }}</h1>
+    {% endif %}
+    {% block formheader %}
+    {% endblock %}
+    <form action="{% if actionlink %}{% url actionlink %}{% endif %}" method="post" enctype="multipart/form-data"
+          novalidate>
+        {% csrf_token %}
+        <table class="table">
+            {% if formset %}
+                {% if formset.errors %}
+                    <div class="panel alert">
+                        <div class="heading">
+                            <span class="title">Formset validation errors:</span>
+                        </div>
+                        <div class="content padding5">
+                            <ul>
+                                {% for error in formset.errors %}
+                                    {% if error %}
+                                        <li>
+                                            Entry {{ forloop.counter }}:
+                                            {{ error }}
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                {% endif %}
+                {{ formset.management_form }}
+                {% for form in formset %}
+                    {% include 'GenericForm_include_fields.html' %}
+                    <tr>
+                        <th>
+                            <hr/>
+                        </th>
+                        <td>
+                            <hr/>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                {# show errors #}
+                <tr>
+                    {% if form.errors %}
+                        <div class="panel alert">
+                            <div class="heading">
+                                <span class="title">Form validation errors:</span>
+                            </div>
+                            <div class="content padding5">
+                                <ul>
+                                    {% for field in form.visible_fields %}
+                                        {% if field.errors %}
+                                            <li>
+                                                {{ field.label }}
+                                                <ul>
+                                                    {{ field.errors|unordered_list }}
+                                                </ul>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% for error in form.non_field_errors %}
+                                        <li>
+                                            {{ error }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    {% endif %}
+                </tr>
+                {% include 'GenericForm_include_fields.html' %}
+            {% endif %}
+            <tr>
+                <td>
+                    <button class="button success" type="submit">
+                        {% if buttontext %}{{ buttontext }}{% else %}Go{% endif %}
+                    </button>
+                    {# On a proposal attachement/images edit form, show the buttons to add a image/attachement #}
+                    {% if  Proposal %}
+                        <a href="{% url "proposals:addfile" 'i' Proposal %}" class="button primary"><span
+                                class="mif-image"></span>Add image to proposal</a>
+                        <a href="{% url "proposals:addfile" 'a' Proposal %}" class="button primary"><span
+                                class="mif-file-pdf"></span>Add attachments to proposal</a><br/><br/>
+                        <a href="{% url 'proposals:details' Proposal %}" class="button primary">Back</a>
+                    {% endif %}
 
-</td><td></td></tr>
-</table>
-</form>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+    </form>
 {% endblock %}
 {% block scripts %}
-{{ block.super }}
+    {{ block.super }}
     <script src="{% static "js/php-date-formatter.min.js" %}"></script>
     <script src="{% static "js/jquery.datetimepicker.full.min.js" %}"></script>
-    <script src="{%  static "js/select2.min.js" %}"></script>
+    <script src="{% static "js/select2.min.js" %}"></script>
     <script type="text/javascript">
-        $(function(){
+        $(function () {
             $(".select2-tag-enable").select2({
                 minimumResultsForSearch: 6
             });
             $.datetimepicker.setLocale('en');
             $('.metrotimepicker').datetimepicker({
-                datepicker:false,
-                format:'H:i',
+                datepicker: false,
+                format: 'H:i',
                 step: 5
             });
             $('.metrodatetimepicker').datetimepicker({
-                format:'Y-m-d H:i',
+                format: 'Y-m-d H:i',
                 step: 5,
                 minDate: '-1970-01-02', // yesterday
                 maxDate: '{% GetEndDate %}'//last date in this timeslot
             });
             $('.metrodatepicker').datetimepicker({
-                timepicker:false,
-                format:'Y-m-d',
+                timepicker: false,
+                format: 'Y-m-d',
                 minDate: '-1970-01-02', // yesterday
                 maxDate: '{% GetEndDate %}' //last date in this timeslot
             });

@@ -165,9 +165,9 @@ class ProposalForm(forms.ModelForm):
                 raise forms.ValidationError(
                     "Invalid email address ({}): Every line should contain one valid email address".format(email))
             domain = email.split('@')[1]
-            domain_list = ["tue.nl", ]
-            if domain not in domain_list:
-                raise forms.ValidationError("Please only enter *@tue.nl email addresses")
+            if domain not in settings.ALLOWED_PROPOSAL_ASSISTANT_DOMAINS:
+                raise forms.ValidationError("This email domain is not allowed. Allowed domains: {}".
+                                        format(settings.ALLOWED_PROPOSAL_ASSISTANT_DOMAINS))
         return data
 
     def clean_addPrivatesEmail(self):
@@ -188,7 +188,10 @@ class ProposalForm(forms.ModelForm):
     def clean_Assistants(self):
         # Prevent the supervisor of this project to be added as assistant.
         assistants = self.cleaned_data['Assistants']
-        responsible = self.cleaned_data['ResponsibleStaff']
+        try:
+            responsible = self.cleaned_data['ResponsibleStaff']
+        except:
+            raise ValidationError("The responsible staff is missing.")
         if assistants == '' or assistants is None:
             return None
         for ass in assistants:
@@ -199,7 +202,8 @@ class ProposalForm(forms.ModelForm):
     def save(self, commit=True):
         if commit:
             super().save(commit=True)
-            # add assistants to proposal via email
+            # add assistants to proposal via email.
+            # These assistants will get an (extra) email, because they don't know marketplace yet.
             if self.cleaned_data['addAssistantsEmail'] != '' and self.cleaned_data['addAssistantsEmail'] is not None:
                 for email in self.cleaned_data['addAssistantsEmail'].split('\n'):
                     email = email.strip('\r').strip().lower()
@@ -237,7 +241,20 @@ class ProposalFormEdit(ProposalForm):
         # memorize responsible to be able to mail them if needed
         self.oldResponsibleStaff = self.instance.ResponsibleStaff
 
-    #TODO clean, check on twice same title in one timeslot
+    def clean(self):
+        cleaned_data = super().clean()
+        # Title should be unique within one timeslot.
+        title = cleaned_data.get('Title')
+        try:
+            p = Proposal.objects.filter(TimeSlot=self.cleaned_data['TimeSlot'])
+        except:
+            p = Proposal.objects.filter(TimeSlot__isnull=True)
+        p=p.filter(Title__iexact=title)
+        if p.exists():
+            for conflict_or_self in p:
+                if conflict_or_self.id != self.instance.id:
+                    raise ValidationError("A proposal with this title already exists in this timeslot")
+        return cleaned_data
 
     def save(self, commit=True):
         if commit:
@@ -293,6 +310,7 @@ class ProposalFormCreate(ProposalForm):
             p = Proposal.objects.filter(TimeSlot__isnull=True)
         if p.filter(Title__iexact=title).exists():
             raise ValidationError("A proposal with this title already exists in this timeslot")
+        return cleaned_data
 
     def save(self, commit=True):
         if commit:
@@ -301,9 +319,6 @@ class ProposalFormCreate(ProposalForm):
             if get_grouptype("2")in self.request.user.groups.all() or \
                 get_grouptype("2u") in self.request.user.groups.all():
                 self.instance.Assistants.add(self.request.user)  # in case assistant forgets to add itself
-                self.instance.Status = 2
-            else:
-                self.instance.Status = 1
             # if there are no assistants attached go to status 2
             if not self.instance.Assistants.exists():
                 self.instance.Status = 2
@@ -314,6 +329,7 @@ class ProposalFormCreate(ProposalForm):
 class ProposalImageFormAdd(FileForm):
     class Meta(FileForm.Meta):
         model = ProposalImage
+
     def clean_File(self):
         return clean_image_default(self)
 
@@ -322,6 +338,7 @@ class ProposalImageFormEdit(FileForm):
     class Meta(FileForm.Meta):
         model = ProposalImage
         widgets = {'Caption': widgets.MetroTextInput}
+
     def clean_File(self):
         return clean_image_default(self)
 
@@ -329,6 +346,7 @@ class ProposalImageFormEdit(FileForm):
 class ProposalAttachmentFormAdd(FileForm):
     class Meta(FileForm.Meta):
         model = ProposalAttachment
+
     def clean_File(self):
         return clean_attachment_default(self)
 
@@ -337,15 +355,12 @@ class ProposalAttachmentFormEdit(FileForm):
     class Meta(FileForm.Meta):
         model = ProposalAttachment
         widgets = {'Caption': widgets.MetroTextInput}
+
     def clean_File(self):
         return clean_attachment_default(self)
 
 
 class ProposalDowngradeMessageForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
-        super().__init__(*args, **kwargs)
-
     class Meta:
         model = ProposalStatusChange
         fields = ['Message']

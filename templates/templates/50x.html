@@ -54,11 +54,9 @@
                                     <br><br>
                                 </div>
                                 <div class="cell colspan3">
-                                    The CSRF verification failed. This can happen because you used an old (cached)
-                                    version of this page, or if you have disabled cookies.
-                                    <br/>
-                                    It is usually fixed by reloading the page (f5 or ctrl+f5) or by restarting your
-                                    internet browser. If the problem persists please contact the support staff.
+                                    {% autoescape off %}
+                                        {{ reason }}
+                                    {% endautoescape %}
                                 </div>
                             </div>
                         </div>

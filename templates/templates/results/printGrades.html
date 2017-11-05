@@ -1,44 +1,62 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 {% block body %}
-{% if final %}
-<div class="bg-darkRed fg-white padding10 margin10">
-Grades are already printed/downloaded once and thus finalized. Editing is disabled.
-</div>
-{% else %}
-<div class="bg-cyan fg-white padding10 margin10">
-Please check if everything is listed correct here. <u>Once printed/downloaded the system no longer accepts changes!</u><br/>
-Scroll to bottom for the print button to get the pdf or printable webpage.
-</div>
-{% endif %}
-<a class="button primary" href="{% url 'results:gradeformstaff' dstr.id %}">Go back to editing</a>
-{% block report %}
-    <h1>Results for <i>{{ dstr.Student.get_full_name }}</i> for project <i>{{ dstr.Proposal.Title }}</i></h1>
-    <h3>Responsible Staffmember: {{ dstr.Proposal.ResponsibleStaff.get_full_name }}</h3>
-    <h3>Aditional supervisors:</h3>
-    <ul>
-    {% for assistant in dstr.Proposal.Assistants.all %}
-    <li>{{ assistant.get_full_name }}</li>
-    {% endfor %}
-    </ul>
-    <h3>Grades per Category:</h3>
-    <table class="table border bordered" style="width:100%;">
-    {% for cat in catresults %}
-    <tr><td colspan="2"><h3>{{ cat.Category }}</h3></td></tr>
-    <tr><td colspan="2"><b>Comments: </b>{{ cat.Comments }}</td> </tr>
-    <tr><td style="width:50%;"><b>Grade:</b></td><td>{{ cat.Grade }}</td></tr>
-    <tr><td colspan="2"><h4>Aspects:</h4></td></tr>
-    {% for aspect in cat.aspectresults.all %}
-        <tr><td style="width:50%;"><i>{{ aspect.CategoryAspect.Name }}</i></td><td><i>{{ aspect.get_Grade_display }}</i></td></tr>
-    {% endfor %}
-    {% endfor %}
-    </table>
-    <h3>Final Grade</h3>
-    <table class="table border bordered" style="width:100%;">
-    <tr><td style="width:50%;"><h1><b>Grade:</b> {{ finalgrade }}</h1></td><td rowspan="2"></td></tr>
-    <tr><td>Signature:</td></tr>
-    </table>
-{% endblock %}
-<a href="{% url 'results:gradefinal' dstr.id 2 %}" class="button primary">Download Pdf</a><br/>
-<a href="{% url 'results:gradefinal' dstr.id 1 %}" class="button primary">Printable Page</a>
+    {% if final %}
+        <div class="bg-darkRed fg-white padding10 margin10">
+            Grades are already printed/downloaded once and thus finalized. Editing is disabled.
+        </div>
+    {% else %}
+        <div class="bg-cyan fg-white padding10 margin10">
+            Please check if everything is listed correct here. <u>Once printed/downloaded the system no longer accepts
+            changes!</u><br/>
+            Scroll to bottom for the print button to get the pdf or printable webpage.
+        </div>
+    {% endif %}
+    <a class="button primary" href="{% url 'results:gradeformstaff' dstr.id %}">Go back to editing</a>
+    {% block report %}
+        <h1>Results for <i>{{ dstr.Student.get_full_name }}</i> for project <i>{{ dstr.Proposal.Title }}</i></h1>
+        <h3>Responsible Staffmember: {{ dstr.Proposal.ResponsibleStaff.get_full_name }}</h3>
+        <h3>Aditional supervisors:</h3>
+        <ul>
+            {% for assistant in dstr.Proposal.Assistants.all %}
+                <li>{{ assistant.get_full_name }}</li>
+            {% endfor %}
+        </ul>
+        <h3>Grades per Category:</h3>
+        <table class="table border bordered" style="width:100%;">
+            {% for cat in catresults %}
+                <tr>
+                    <td colspan="2"><h3>{{ cat.Category }}</h3></td>
+                </tr>
+                <tr>
+                    <td colspan="2"><b>Comments: </b>{{ cat.Comments }}</td>
+                </tr>
+                <tr>
+                    <td style="width:50%;"><b>Grade:</b></td>
+                    <td>{{ cat.Grade }}</td>
+                </tr>
+                <tr>
+                    <td colspan="2"><h4>Aspects:</h4></td>
+                </tr>
+                {% for aspect in cat.aspectresults.all %}
+                    <tr>
+                        <td style="width:50%;"><i>{{ aspect.CategoryAspect.Name }}</i></td>
+                        <td><i>{{ aspect.get_Grade_display }}</i></td>
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+        </table>
+        <h3>Final Grade</h3>
+        <table class="table border bordered" style="width:100%;">
+            <tr>
+                <td style="width:50%;"><h1><b>Grade:</b> {{ finalgrade }}</h1></td>
+                <td rowspan="2"></td>
+            </tr>
+            <tr>
+                <td>Signature:</td>
+            </tr>
+        </table>
+    {% endblock %}
+    <a href="{% url 'results:gradefinal' dstr.id 2 %}" class="button primary">Download Pdf</a><br/>
+    <a href="{% url 'results:gradefinal' dstr.id 1 %}" class="button primary">Printable Page</a>
 {% endblock %}

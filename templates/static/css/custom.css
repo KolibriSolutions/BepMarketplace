@@ -1,40 +1,43 @@
 /*Extra spacing for inline images*/
 [class*=" mif-"], [class^="mif-"] {
-    transform: translate(-2px, -4px);
+    transform: translate(-2px, 0);
 }
 
-html,body {
-height:100%;
-margin:0;
+html, body {
+    height: 100%;
+    margin: 0;
 }
 
 #wrapper {
-  min-height:100%;
+    min-height: 100%;
 }
 
 #content {
-  overflow:auto;
-  padding-bottom:50px;
+    overflow: auto;
+    padding-bottom: 50px;
     margin: 0px 2%;
 }
 
 #footer {
-  position:fixed;
-  margin-top:-50px;
-  height:50px;
-  clear:both;
-  bottom:0;
-  left:0;
-  right:0;
-  background-color: white;
-  /*always show footer on top*/
-  z-index: 1000;
+    position: fixed;
+    margin-top: -50px;
+    height: 50px;
+    clear: both;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    /*always show footer on top*/
+    z-index: 1000;
 }
 
-
 @keyframes roll {
-    from { transform: rotate(0deg) }
-    to   { transform: rotate(360deg) }
+    from {
+        transform: rotate(0deg)
+    }
+    to {
+        transform: rotate(360deg)
+    }
 }
 
 .roll {
@@ -43,38 +46,57 @@ margin:0;
     animation-iteration-count: 1;
 }
 
-@media screen and (max-width: 700px){
-    div#cellLogos{
-        display:none;
+@media screen and (max-width: 700px) {
+    div#cellLogos {
+        display: none;
     }
 }
-/*hide multi select inputs as they are replace by select2 plugin*/
-.select2-tag-enable{
-    visibility: hidden;
-    height: 0px!important;
-    padding: 0px !important;
+
+.capitalize {
+    text-transform: capitalize;
 }
 
-.capitalize{
-  text-transform: capitalize;
+/*hide multi select inputs as they are replace by select2 plugin*/
+.select2-tag-enable {
+    visibility: hidden;
+    height: 0px !important;
+    padding: 0px !important;
 }
 
 /*margin around dropdown filters in datatables*/
 /*needed because are placed in header instead of footer*/
-th>select{
-    margin:5px;
+th > select {
+    margin: 5px;
 }
-/*make inputs wide*/
-.input-control{
-    width:90%!important;
+
+/*make inputs wide, and override max width of metro */
+.input-control {
+    width: 90% !important;
+    height: 100% !important;
+}
+
+/*All table headers (also form labels) should be aligned left.*/
+th {
+    text-align: left;
+}
+
+/* Validation error input fields are given an div with 'input-error-wrapper'. The input in this div gets a red border.
+ Normally this would be done by setting the 'error' class on div.input-control, but widgets are static.
+ */
+.input-error-wrapper > .input-control input,
+.input-error-wrapper > .input-control select,
+.input-error-wrapper > .input-control textarea,
+.input-error-wrapper > .input-control .select2-selection {
+    border: 1px solid #ce352c;
 }
 
 /*custom missing colors*/
 /*menu bar blue, navy*/
-.fg-navy{
+.fg-navy {
     color: #0072c6;
 }
-.bg-navy{
+
+.bg-navy {
     background-color: #0072c6;
 }
 
@@ -82,32 +104,32 @@ th>select{
 .dataTables_wrapper {
     overflow-x: auto;
 }
+
 .datatable {
     overflow-x: auto;
 }
+
 /*lineheight of metroui sucks, */
-p{
+p {
     line-height: normal;
 }
 
-.clickable{
+.clickable {
     cursor: pointer;
 }
 
-td.success
-{
+td.success {
     background-color: green;
     color: white;
 }
 
-td.error
-{
+td.error {
     background-color: #ce352c;
     color: white;
 }
 
 /*styling for the download file buttons*/
-.file-button{
+.file-button {
     background: lightblue;
     min-height: 2em;
 }

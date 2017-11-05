@@ -73,6 +73,9 @@ class Proposal(models.Model):
 
 
 class ProposalFile(models.Model):
+    """
+    Abstract base class for any object attached to a proposal. Used for images and attachements.
+    """
     def make_upload_path(instance, filename):
         filenameNew =  filename_default(filename)
         return 'proposal_{0}/{1}'.format(instance.Proposal.pk,filenameNew)
@@ -84,10 +87,6 @@ class ProposalFile(models.Model):
 
     def __str__(self):
         return self.Proposal.Title + " " + self.Caption
-
-    def save(self, *args, **kwargs):
-        self.OriginalName = self.File.name
-        super(ProposalFile, self).save(*args, **kwargs)
 
     def clean(self):
         self.Caption = clean_text(self.Caption)
@@ -102,7 +101,7 @@ class ProposalImage(ProposalFile):
         try:
             this_old = ProposalImage.objects.get(id=self.id)
             if this_old.File != self.File:
-                this_old.File.delete()
+                this_old.File.delete(save=False)
         except: #new image object
             pass
         super(ProposalImage, self).save(*args, **kwargs)
@@ -117,7 +116,7 @@ class ProposalAttachment(ProposalFile):
         try:
             this_old = ProposalAttachment.objects.get(id=self.id)
             if this_old.File != self.File:
-                this_old.File.delete()
+                this_old.File.delete(save=False)
         except:  # new image object
             pass
         super(ProposalAttachment, self).save(*args, **kwargs)
