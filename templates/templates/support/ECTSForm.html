@@ -52,7 +52,7 @@
             }
 
             window.socket.onmessage = function (e) {
-                data = JSON.parse(e.data);
+                var data = JSON.parse(e.data);
                 $.Notify({
                     caption: data.student,
                     content: data.info + (data.type == "alert" ? " Please refresh the page (f5)" : ''),
@@ -60,7 +60,7 @@
                 });
             };
             $('.input-ects').on("input", function () {
-                data = JSON.stringify({
+                var data = JSON.stringify({
                     'std': parseInt(this.getAttribute("data-student")),
                     'ects': parseInt(this.value)
                 });

@@ -1,9 +1,9 @@
+from django.contrib.auth.models import Group
 from two_factor.views.core import LoginView, SetupView
 from two_factor.views.profile import DisableView
-from two_factor.forms import *
-from .forms import *
+
 from tracking.models import UserLogin
-from django.contrib.auth.models import Group
+from .forms import *
 
 
 class TwoFactorLoginView(LoginView):

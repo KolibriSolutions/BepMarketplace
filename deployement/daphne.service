@@ -8,10 +8,10 @@ After=nginx.service
 Type=simple
 RuntimeDirectory=daphne
 PIDFile=/run/daphne/pid
-User=root
-Group=root
-WorkingDirectory=/root/BepMarketplace
-ExecStart=/usr/bin/daphne -u /tmp/daphne.sock BepMarketplace.asgi:channel_layer
+User=django
+Group=django
+WorkingDirectory=/home/django/BepMarketplaceELE
+ExecStart=/usr/local/bin/daphne -u /tmp/daphne.sock BepMarketplace.asgi:channel_layer
 ExecStop=/bin/kill -s TERM $MAINPID
 [Install]
 WantedBy=multi-user.target

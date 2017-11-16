@@ -25,6 +25,12 @@ minh = 30
 
 
 def clean_image_default(self):
+    """
+    Check whether an uploaded image is valid and has right dimensions
+
+    :param self:
+    :return:
+    """
     picture = clean_file_default(self)
     if get_ext(picture.name) not in settings.ALLOWED_PROPOSAL_IMAGES:
         raise ValidationError("This filetype is not allowed. Allowed types: "+str(settings.ALLOWED_PROPOSAL_IMAGES))
@@ -41,6 +47,13 @@ def clean_image_default(self):
 
 
 def clean_attachment_default(self):
+    """
+    Check whether an attachment is valid
+
+    :param self:
+    :return:
+    """
+
     file = clean_file_default(self)
     if get_ext(file.name) not in settings.ALLOWED_PROPOSAL_ATTACHEMENTS:
         raise ValidationError("This filetype is not allowed. Allowed types: "+str(settings.ALLOWED_PROPOSAL_ATTACHEMENTS))
@@ -48,6 +61,15 @@ def clean_attachment_default(self):
 
 
 def get_or_create_user_email(self, email, username, student):
+    """
+    Get or create a user account
+
+    :param self:
+    :param email: emailaddress of the user to find
+    :param username: username of the user to find
+    :param student: whether the user is a student
+    :return: a useraccount, either an existing or a newly created account
+    """
     try:
         # try both email and username
         try:
@@ -63,6 +85,15 @@ def get_or_create_user_email(self, email, username, student):
 
 
 def create_user_from_email(self, email, username, student=False):
+    """
+    Create a new user based on its email address. This user is updated with a real username as soon as the person logs in for the first time.
+
+    :param self:
+    :param email: emailaddres
+    :param username: username to create, usually a part of the emailaddress
+    :param student: whether the users is a student. If false, user is added to the assistants group
+    :return: THe created user account
+    """
     parts = email.split('@')[0].split('.')
     if parts[-1].isdigit():
         parts.pop()
@@ -78,6 +109,9 @@ def create_user_from_email(self, email, username, student=False):
 
 
 class ProposalForm(forms.ModelForm):
+    """
+    Form to create a proposal
+    """
     addAssistantsEmail = forms.CharField(label='Extra assistants (email, one per line)',
                                          widget=widgets.MetroMultiTextInput,
                                          required=False)
@@ -146,10 +180,10 @@ class ProposalForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         # validate min and max students
-        min = cleaned_data.get("NumstudentsMin")
-        max = cleaned_data.get("NumstudentsMax")
-        if min and max:
-            if min > max:
+        mins = cleaned_data.get("NumstudentsMin")
+        maxs = cleaned_data.get("NumstudentsMax")
+        if mins and maxs:
+            if mins > maxs:
                 raise ValidationError("Minimum number of students cannot be higher than maximum.")
         else:
             raise ValidationError("Min or max number of students cannot be empty")
@@ -187,7 +221,7 @@ class ProposalForm(forms.ModelForm):
 
     def clean_Assistants(self):
         # Prevent the supervisor of this project to be added as assistant.
-        assistants = self.cleaned_data['Assistants']
+        assistants = list(self.cleaned_data['Assistants'])
         try:
             responsible = self.cleaned_data['ResponsibleStaff']
         except:
@@ -326,7 +360,7 @@ class ProposalFormCreate(ProposalForm):
         return self.instance
 
 
-class ProposalImageFormAdd(FileForm):
+class ProposalImageForm(FileForm):
     class Meta(FileForm.Meta):
         model = ProposalImage
 
@@ -334,27 +368,9 @@ class ProposalImageFormAdd(FileForm):
         return clean_image_default(self)
 
 
-class ProposalImageFormEdit(FileForm):
-    class Meta(FileForm.Meta):
-        model = ProposalImage
-        widgets = {'Caption': widgets.MetroTextInput}
-
-    def clean_File(self):
-        return clean_image_default(self)
-
-
-class ProposalAttachmentFormAdd(FileForm):
+class ProposalAttachmentForm(FileForm):
     class Meta(FileForm.Meta):
         model = ProposalAttachment
-
-    def clean_File(self):
-        return clean_attachment_default(self)
-
-
-class ProposalAttachmentFormEdit(FileForm):
-    class Meta(FileForm.Meta):
-        model = ProposalAttachment
-        widgets = {'Caption': widgets.MetroTextInput}
 
     def clean_File(self):
         return clean_attachment_default(self)

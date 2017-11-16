@@ -1,4 +1,4 @@
-from channels.routing import route, include
+from channels.routing import include
 
 channel_routing = [
     include('tracking.routing.channel_routing', path=r'^/tracking/'),

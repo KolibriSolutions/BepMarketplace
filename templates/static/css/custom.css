@@ -15,7 +15,7 @@ html, body {
 #content {
     overflow: auto;
     padding-bottom: 50px;
-    margin: 0px 2%;
+    margin: 0 2%;
 }
 
 #footer {
@@ -56,11 +56,14 @@ html, body {
     text-transform: capitalize;
 }
 
-/*hide multi select inputs as they are replace by select2 plugin*/
-.select2-tag-enable {
+/*!*hide multi select inputs as they are replace by select2 plugin
+    This is done here, because the default select2 css is not included.
+*!*/
+.select2-tag-enable ,
+.select2-hidden-accessible{
     visibility: hidden;
-    height: 0px !important;
-    padding: 0px !important;
+    height: 0 !important;
+    padding: 0 !important;
 }
 
 /*margin around dropdown filters in datatables*/
@@ -72,7 +75,10 @@ th > select {
 /*make inputs wide, and override max width of metro */
 .input-control {
     width: 90% !important;
-    height: 100% !important;
+}
+/*full height select2 dropdowns, for multiple select*/
+.input-control.select{
+    height: 100%;
 }
 
 /*All table headers (also form labels) should be aligned left.*/
@@ -132,4 +138,15 @@ td.error {
 .file-button {
     background: lightblue;
     min-height: 2em;
+}
+
+/* double scroll tables*/
+
+.double-scroll>div{
+    width: 100%;
+    overflow: visible;
+}
+.double-scroll{
+    overflow-x: scroll;
+
 }

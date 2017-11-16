@@ -22,4 +22,4 @@ var kelly_colors = [
     "#593315", // Deep Yellowish Brown
     "#F13A13", // Vivid Reddish Orange
     "#232C16" // Dark Olive Green
-]
+];

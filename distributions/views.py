@@ -2,7 +2,6 @@ import json
 from datetime import datetime
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponse
@@ -13,7 +12,6 @@ from general_form import ConfirmForm
 from general_mail import EmailThreadMultipleTemplate
 from general_view import get_all_students, get_timeslot, get_timephase_number, get_all_staff, get_all_proposals
 from proposals.cacheprop import getProp
-from proposals.models import Proposal
 from students.models import Application, Distribution
 from timeline.models import TimeSlot
 from . import distribution
@@ -173,7 +171,7 @@ def mailDistributions(request):
                         'subject'   : 'BEP Marketplace Distribution',
                         'context'   : {
                             'supervisor' : usr,
-                            'projects'   : usr.proposals.all(),
+                            'projects'   : usr.proposals.filter(TimeSlot=get_timeslot()).distinct(),
                         }
                     })
                 if usr.proposalsresponsible.count() > 0:
@@ -183,7 +181,7 @@ def mailDistributions(request):
                         'subject'   : 'BEP Marketplace Distribution',
                         'context'   : {
                             'supervisor': usr,
-                            'projects': usr.proposalsresponsible.all(),
+                            'projects': usr.proposalsresponsible.filter(TimeSlot=get_timeslot()).distinct(),
                         }
                     })
 
@@ -211,13 +209,13 @@ def mailDistributions(request):
 
 
 @group_required('type3staff')
-def proposalOfDistribution(request, type):
+def proposalOfDistribution(request, dtype):
     """
     After automatic distribution, this pages shows how good the automatic distribution is. At this point a type3staff
      member can choose to apply the distributions. Later, this distribution can be edited using manual distributions.
 
     :param request:
-    :param type:
+    :param dtype: which type automatic distribution is used.
     :return:
     """
     if get_timephase_number() < 4 or get_timephase_number() > 5:
@@ -265,9 +263,9 @@ def proposalOfDistribution(request, type):
     else:
         form = ConfirmForm()
         # run the algorithms
-        if int(type) == 1:
+        if int(dtype) == 1:
             distobjs = distribution.CalculateFromStudent()
-        elif int(type) == 2:
+        elif int(dtype) == 2:
             distobjs = distribution.CalculateFromProjects()
         else:
             return render(request, 'base.html', {'Message': 'invalid type'})
@@ -304,9 +302,9 @@ def proposalOfDistribution(request, type):
             except:
                 stats[k].append(0)
 
-    if int(type) == 1:
+    if int(dtype) == 1:
         typename = 'Calculated old way'
-    elif int(type) == 2:
+    elif int(dtype) == 2:
         typename = 'Calculated new way'
     else:
         typename = 'invalid'

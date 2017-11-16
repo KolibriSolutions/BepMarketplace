@@ -6,7 +6,6 @@
 
 var options;    // datatable options. global to preserve on re-init (for responsive change).
 var dt;         // used to dynamic update the datatable from local code.
-var responsive = (window.innerWidth < 1000); //init value for responsive or not responsive table layout.
 
 /**
  * Function to transform all tables with class '.datatable' to a DataTable.
@@ -62,7 +61,7 @@ var MPDataTable = function (cols, dropdownColumns, exportColumns, extraButtons, 
                                 return txt.slice(0, -3);
                             } else {
                                 //normal text, make sure commas are removed.
-                                return obj.text().trim();
+                                return obj.text().trim().replace(/;/g, ',');
                             }
                         }
                     }else{
@@ -85,30 +84,10 @@ var MPDataTable = function (cols, dropdownColumns, exportColumns, extraButtons, 
         }),
         //second button
         $.extend(true, {}, buttonCommon, {
-            extend: 'csvHtml5'
+            extend: 'csvHtml5',
+            fieldSeparator: ';'
         })
     ];
-
-    //make responsive enable/disable button on narrow screens.
-    if (window.innerWidth < 1000) {
-        buttons.push({
-            "text": responsive ? "Disable responsive view" : "Enable responsive view",
-            "action": function () {
-                dt.destroy();
-                responsive = !responsive;
-                options.responsive = responsive;
-                //third button
-                options.buttons[2].text = responsive ? "Disable responsive view" : "Enable responsive view";
-                dt = table.DataTable(options);
-                if (options.responsive) {
-                    table.addClass("responsive");
-                } else {
-                    table.removeClass("responsive");
-                }
-            }
-        })
-    }
-
     //add the optional extrabuttons to the buttons.
     buttons.push(extraButtons);
 
@@ -119,7 +98,7 @@ var MPDataTable = function (cols, dropdownColumns, exportColumns, extraButtons, 
         //order for the dt items to appear
         "dom": 'Blfrtip',
         //responsive table layout
-        "responsive": responsive,
+        "responsive": false,
         //custom buttons on top of the table
         "buttons": buttons,
         //function to store settings in uri

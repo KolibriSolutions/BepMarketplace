@@ -3,7 +3,7 @@
 {% load custom_filters %}
 {% block stylesheets %}
     <link href="{% static "css/jquery.datetimepicker.css" %}" rel="stylesheet">
-
+    <link href="{% static "css/lightbox.css" %}" rel="stylesheet">
 {% endblock %}
 {% block body %}
     {% if formtitle %}
@@ -101,16 +101,20 @@
             </tr>
         </table>
     </form>
+    {{ form.media }}
+    <div>Fields marked with <span class="fg-red text-bold"> * </span> are required.</div>
 {% endblock %}
 {% block scripts %}
     {{ block.super }}
     <script src="{% static "js/php-date-formatter.min.js" %}"></script>
     <script src="{% static "js/jquery.datetimepicker.full.min.js" %}"></script>
     <script src="{% static "js/select2.min.js" %}"></script>
+    <script src="{% static "js/lightbox.js" %}"></script> {# for image form image preview #}
     <script type="text/javascript">
         $(function () {
             $(".select2-tag-enable").select2({
-                minimumResultsForSearch: 6
+                minimumResultsForSearch: 6,
+                width: '100%',
             });
             $.datetimepicker.setLocale('en');
             $('.metrotimepicker').datetimepicker({

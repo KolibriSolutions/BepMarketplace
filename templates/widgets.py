@@ -98,3 +98,30 @@ class MetroFileInput(FileInput):
     input_type = 'file'
     needs_multipart_form = True
     template_name = 'widgets/file.html'
+
+    def is_initial(self, value):
+        """
+        Return whether value is considered to be initial value.
+        """
+        return bool(value and getattr(value, 'url', False))
+
+    def format_value(self, value):
+        """
+        Return the file object if it has a defined url attribute.
+        """
+        if self.is_initial(value):
+            return value
+
+    def is_image(self, value):
+        if self.is_initial(value):
+            if value.field.__class__.__name__ == 'ImageField':
+                return True
+        return False
+
+    def get_context(self, name, value, attrs):
+        context = super(MetroFileInput, self).get_context(name, value, attrs)
+        context['widget'].update({
+            'is_initial': self.is_initial(value),
+            'is_image': self.is_image(value),
+        })
+        return context

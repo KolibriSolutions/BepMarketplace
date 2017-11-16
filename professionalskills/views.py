@@ -156,10 +156,10 @@ def listFilePerType(request, pk):
     """
 
 
-    type = get_object_or_404(FileType, pk=pk)
+    ftype = get_object_or_404(FileType, pk=pk)
     return render(request, 'professionalskills/listFilesOfType.html', {
-        'type' : type,
-        'files' : StudentFile.objects.filter(Type=type)
+        'type' : ftype,
+        'files' : StudentFile.objects.filter(Type=ftype)
     })
 
 
@@ -177,14 +177,14 @@ def listMissingPerType(request, pk):
         raise PermissionDenied("Student files are not available in this phase")
 
 
-    type = get_object_or_404(FileType, pk=pk)
+    ftype = get_object_or_404(FileType, pk=pk)
     failStudents = []
     for dist in get_distributions(request.user):
-        if dist.files.filter(Type=type).count() == 0:
+        if dist.files.filter(Type=ftype).count() == 0:
             failStudents.append(dist)
-    failStudents.sort(key=lambda dist: str(dist.Student.last_name))
+    failStudents.sort(key=lambda d: str(d.Student.last_name))
     return render(request, 'professionalskills/listFailStudents.html', {
-        'type' : type,
+        'type' : ftype,
         'distributions' : failStudents,
     })
 
@@ -197,6 +197,7 @@ def listStudentFiles(request, pk):
     Used for the student self, for his supervisor, responsible, trackhead and for support staff.
     
     :param request:
+    :param pk: id of distribution
     :return:
     """
 
@@ -237,11 +238,11 @@ def mailOverDueStudents(request):
             mails = []
             for dist in get_distributions(request.user):
                 missingtypes = []
-                for type in FileType.objects.all():
-                    if type.Deadline >= datetime.today().date():
+                for ftype in FileType.objects.all():
+                    if ftype.Deadline >= datetime.today().date():
                         continue  # only mail if the deadline has passed.
-                    if dist.files.filter(Type=type).count() == 0:
-                        missingtypes.append(type)
+                    if dist.files.filter(Type=ftype).count() == 0:
+                        missingtypes.append(ftype)
                 if len(missingtypes) > 0:
                     mails.append({
                         'template' : 'email/overdueprvstudent.html',

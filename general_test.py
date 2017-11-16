@@ -1,22 +1,21 @@
 import re
+import re
 import sys
 import traceback
 from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth import login, logout
-from django.contrib.auth.models import Group
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.sessions.models import Session
 from django.http import HttpRequest
-from django.test import Client
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.module_loading import import_module
 
 from general_model import GroupOptions
-from index.models import UserMeta
+from index.models import UserMeta, UserAcceptedTerms
 from proposals.models import Proposal
 from support.models import Track
 from timeline.models import TimeSlot, TimePhase
@@ -79,33 +78,45 @@ class ViewsTest(TestCase):
         u.save()
         u.groups.add(self.g1)
         u.save()
+        ua = UserAcceptedTerms(User=u)
+        ua.save()
         self.users['prof0'] = u
 
         u = User(username='phd0')
         u.save()
         u.groups.add(self.g2)
         u.save()
+        ua = UserAcceptedTerms(User=u)
+        ua.save()
         self.users['phd0'] = u
 
         u = User(username='phd1u')
         u.save()
         u.groups.add(self.g2u)
         u.save()
+        ua = UserAcceptedTerms(User=u)
+        ua.save()
         self.users['phd1u'] = u
 
         u = User(username='suzanne')
         u.save()
         u.groups.add(self.g3)
         u.save()
+        ua = UserAcceptedTerms(User=u)
+        ua.save()
         self.users['suzanne'] = u
 
         u = User(username='god')
         u.is_superuser = True
         u.save()
+        ua = UserAcceptedTerms(User=u)
+        ua.save()
         self.users['god'] = u
 
         u = User(username='student0')
         u.save()
+        ua = UserAcceptedTerms(User=u)
+        ua.save()
         self.users['student0'] = u
 
     def _test_views(self, views):
@@ -153,7 +164,8 @@ class ViewsTest(TestCase):
         """
         Find all links in a response and check if they return status 200.
 
-        :param response:
+        :param user: the user to test
+        :param sourceurl: the page which is parsed to test the links on the page.
         :return:
         """
         self.client.login_user(user)
@@ -215,6 +227,8 @@ class ProposalViewsTest(TestCase):
             u.save()
             self.users[n] = u
             m = UserMeta(User=u)
+            ua = UserAcceptedTerms(User=u)
+            ua.save()
             m.save()
         # Track for the proposal, with trackhead t-h
         th = User.objects.get(username='t-h')
@@ -281,6 +295,7 @@ class ProposalViewsTest(TestCase):
 
         :param view: name of the page, for reverse view
         :param status: array of http status that is expected for each user
+        :param info: Dict with info about the current test. Used for debugging and logging.
         :param kw: keyword args for the given view.
         :return:
         """
@@ -316,7 +331,7 @@ class ProposalViewsTest(TestCase):
 
         :param view: a view to test
         :param expected: the expected response code
-        :param user: a username of the used user. Only used for debug output
+        :param info: Dict with info about the current test. Used for debugging and logging.
         :param kw: kwargs for the view func
         :return:
         """

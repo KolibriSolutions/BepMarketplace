@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invalid request</title>
+</head>
+<body>
+<div id="wrapper">
+    {# This conditional comment is support until IE9. Newer IE won't see it. #}
+    <!--[if IE]>
+        <div style="background: #e00; text-align: center; position: absolute; top: 5em; height:7em; left:20%; right:20%; color: #FFF; z-index:1000; padding: 5px;">
+        <b>Your browser is not compatible with this website. Please update your browser or use another browser.</b>
+        </div>
+        <![endif]-->
+        <h1>Invalid Request (HTTP 400)</h1>
+        <p>
+            Your browser send an invalid request (HTTP 400). The request is aborted.
+            <br />
+            This could be because you tried to access this website using the wrong hostname.
+        </p>
+        <p>
+            Kolibri Solutions
+        </p>
+    </div>
+
+</body>
+</html>

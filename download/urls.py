@@ -9,13 +9,14 @@ reguuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}.[A-z]{1,
 
 urlpatterns = [
     # public files
-    url(r'publicfile/(?P<fileid>[0-9]+)$', views.PublicFiles, name='publicfile'), #new
+    url(r'publicfile/(?P<fileid>[0-9]+)$', views.PublicFiles, name='publicfile'),  # by object-id
+    url(r'public_files/(?P<timeslot>[0-9]+)/(?P<fileid>'+reguuid+')$', views.PublicFiles, name='public_files'),  # uri
 
     # proposal attachements
-    url(r'proposalfile/(?P<ty>[a-z]{1})/(?P<fileid>[0-9]+)$', views.ProposalFiles, name='proposalfile'), #new
-    url(r'proposal_(?P<proposalid>[0-9]+)/(?P<fileid>'+reguuid+')$', views.ProposalFiles, name='proposal_files'), #old
+    url(r'proposalfile/(?P<ty>[a-z])/(?P<fileid>[0-9]+)$', views.ProposalFiles, name='proposalfile'),  # object-id
+    url(r'proposal_(?P<proposalid>[0-9]+)/(?P<fileid>'+reguuid+')$', views.ProposalFiles, name='proposal_files'),  # uri
 
     # student files (professionalskills)
-    url(r'studentfile/(?P<fileid>[0-9]+)$', views.StudentFiles, name='studentfile'), #new
-    url(r'dist_(?P<distid>[0-9]+)/(?P<fileid>' + reguuid + ')$', views.StudentFiles, name='student_files'), #old
+    url(r'studentfile/(?P<fileid>[0-9]+)$', views.StudentFiles, name='studentfile'),  # object-id
+    url(r'dist_(?P<distid>[0-9]+)/(?P<fileid>' + reguuid + ')$', views.StudentFiles, name='student_files'),  # uri
 ]

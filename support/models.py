@@ -31,13 +31,13 @@ class PublicFile(models.Model):
     """
     def make_upload_path(instance, filename):
         """
-        Upload path for a public file. Stored in /media/public_files/{timeslot-name}/{uuid.ext}
+        Upload path for a public file. Stored in /media/public_files/{timeslot-id}/{uuid.ext}
 
         :param filename:
         :return:
         """
         filenameNew = filename_default(filename)
-        return 'public_files/{0}/{1}'.format(get_timeslot().Name, filenameNew)
+        return 'public_files/{0}/{1}'.format(str(get_timeslot().id), filenameNew)
 
     Caption = models.CharField(max_length=200, blank=True, null=True)
     OriginalName = models.CharField(max_length=200, blank=True, null=True)

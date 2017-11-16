@@ -41,14 +41,14 @@ def file_delete_default(sender, instance, **kwargs):
         print("Error in removing the file. Only the object will be removed.")
 
 
-def metro_icon_default(object):
+def metro_icon_default(fobject):
     """
     Gives an icon name from metro ui icon font based on the extension of the filename.
     
-    :param object: file object 
+    :param fobject: file object 
     :return: icon name
     """
-    extension = get_ext(object.File.name)
+    extension = get_ext(fobject.File.name)
     if extension == 'pdf':
         return 'pdf'
     elif extension in ['doc', 'docx', 'odf','rtf']:
@@ -95,6 +95,8 @@ def clean_text(text):
 
         # convert non breaking spaces to regular spaces
         text = re.sub(nbsp, ' ', text)
+        # convert curly braces to straight braces (prevents messing with django variables)
+        text = text.replace('{', '[').replace('}', ']')
         return text
     except:
         return ''

@@ -14,18 +14,18 @@ def clean_studentfile_default(self):
     :return:
     """
     try:
-        type = get_object_or_404(FileType, pk=self.data['Type'])
+        ftype = get_object_or_404(FileType, pk=self.data['Type'])
     except:
         raise ValidationError("Please select a file type from the dropdown list.")
     file = clean_file_default(self)
-    if get_ext(file.name) not in type.get_allowed_extensions():
-        raise ValidationError("This file extension is not allowed. Allowed extensions: "+str(type.get_allowed_extensions()))
+    if get_ext(file.name) not in ftype.get_allowed_extensions():
+        raise ValidationError("This file extension is not allowed. Allowed extensions: "+str(ftype.get_allowed_extensions()))
     return file
 
 
-class FileAddForm(FileForm):
+class StudentFileForm(FileForm):
     """
-    Upload a studentfile
+    Upload or edit a studentfile
     """
     class Meta(FileForm.Meta):
         fields = ['File', 'Caption', 'Type']
@@ -33,22 +33,6 @@ class FileAddForm(FileForm):
            'File': widgets.MetroFileInput,
            'Caption': widgets.MetroTextInput,
            'Type': widgets.MetroSelect
-        }
-
-    def clean_File(self):
-        return clean_studentfile_default(self)
-
-
-class FileEditForm(FileForm):
-    """
-    Edit a previously uploaded studentfile.
-    """
-    class Meta(FileForm.Meta):
-        fields = ['File', 'Caption','Type']
-        widgets = {
-            # The custom file widget doesn't work for edit, so use the default.
-            'Caption': widgets.MetroTextInput,
-            'Type'  : widgets.MetroSelect
         }
 
     def clean_File(self):

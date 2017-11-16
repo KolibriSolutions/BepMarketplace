@@ -145,10 +145,10 @@ def presentationswizardstep4(request):
         for slot in PresentationTimeSlot.objects.filter(Presentations__PresentationOptions__TimeSlot=get_timeslot()):
             slot.delete()
         #generate new
-        for set in distobjs:
-#            print(set)
-            setID = set[0]
-            for slot in set[1]:
+        for dset in distobjs:
+#            print(dset)
+            setID = dset[0]
+            for slot in dset[1]:
                 slotObj = PresentationTimeSlot()
                 slotObj.DateTime = datetime.fromtimestamp(slot['DateTime'])
                 if slot['CustomType']:

@@ -19,7 +19,7 @@ from index.models import Track, UserMeta
 from general_model import GroupOptions
 from results.models import GradeCategory
 from support import check_content_policy
-from .forms import ChooseMailingList, FileAddForm, FileEditForm, OverRuleUserMetaForm
+from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm
 from .models import CapacityGroupAdministration, PublicFile
 
 
@@ -593,7 +593,7 @@ def addFile(request):
     """
     user = request.user
     if request.method == 'POST':
-        form = FileAddForm(request.POST, request.FILES, request=request)
+        form = PublicFileForm(request.POST, request.FILES, request=request)
         if form.is_valid():
             file = form.save(commit=False)
             file.User = user
@@ -601,7 +601,7 @@ def addFile(request):
             return render(request, "base.html",
                           {"Message": "File uploaded!", "return": "index:index"})
     else:
-        form = FileAddForm(request=request)
+        form = PublicFileForm(request=request)
     return render(request, 'GenericForm.html',
                   {'form': form, 'formtitle': 'Upload a public file ', 'buttontext': 'Save'})
 
@@ -615,7 +615,7 @@ def editFiles(request):
     
     :param request:
     """
-    formSet = modelformset_factory(PublicFile, form=FileEditForm, can_delete=True, extra=0)
+    formSet = modelformset_factory(PublicFile, form=PublicFileForm, can_delete=True, extra=0)
     qu = PublicFile.objects.filter(TimeSlot=get_timeslot())
     formset = formSet(queryset=qu)
 

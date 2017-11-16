@@ -201,16 +201,16 @@ def listPresentationsXls(sets):
     wb = Workbook()
     wb.remove_sheet(wb.active)
     wss = []
-    for set in sets:
-        tit=str(set.id)+" ("+set.Track.Name+")"
+    for pset in sets:
+        tit=str(pset.id)+" ("+pset.Track.Name+")"
         ws= wb.create_sheet(title=tit)
         wss.append(ws)
-        ws['C1'] = timezone.localtime(set.DateTime).date().strftime("%A %d %B %Y")
-        ws['C3'] = "Track: " + set.Track.Name
-        ws['C4'] = "Track head: " + set.Track.Head.get_full_name()
+        ws['C1'] = timezone.localtime(pset.DateTime).date().strftime("%A %d %B %Y")
+        ws['C3'] = "Track: " + pset.Track.Name
+        ws['C4'] = "Track head: " + pset.Track.Head.get_full_name()
         ws['C5'] = "Exported on: " + timestamp()
-        ws['C6'] = "Presentation room: " + set.PresentationRoom.Name
-        ws['C7'] = "Assessment room: " + set.AssessmentRoom.Name
+        ws['C6'] = "Presentation room: " + pset.PresentationRoom.Name
+        ws['C7'] = "Assessment room: " + pset.AssessmentRoom.Name
         ws['C8'] = ''
         ws['C1'].style = 'Headline 2'
         # courses span two columns
@@ -232,7 +232,7 @@ def listPresentationsXls(sets):
         for col in ['A','B','C','D','E','F','G','H','I','J','K']:
             ws[col+'9'].style = 'Headline 3'
 
-        for slot in set.timeslots.all():
+        for slot in pset.timeslots.all():
             if slot.CustomType:
                 row = [slot.get_CustomType_display(), '', '', '', '', '', '', '', '']
             else:

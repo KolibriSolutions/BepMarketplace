@@ -82,6 +82,7 @@ def index(request):
     """
     files = PublicFile.objects.filter(TimeSlot=get_timeslot())
     ph = get_timephase_number()
+    info = ''
     if request.user.groups.exists():
         if ph <= 2:
             info = "Please use the Proposals menu to create, edit or approve proposals."
@@ -311,7 +312,7 @@ def profile(request):
         else:
             type2 = False
 
-        vars = {
+        pvars = {
             "student": False,
             "type1": groups.filter(name="type1staff").exists(),
             "type2": type2,
@@ -322,14 +323,14 @@ def profile(request):
             "SuppressStatusMails": meta.SuppressStatusMails,
         }
         if tracks.count() > 0:
-            vars["tracks"] = tracks
+            pvars["tracks"] = tracks
     else:
-        vars = {
+        pvars = {
             "student": True,
             "meta": meta,
             "SuppressStatusMails": meta.SuppressStatusMails,
         }
-    return render(request, "index/profile.html", vars)
+    return render(request, "index/profile.html", pvars)
 
 
 @login_required
@@ -391,17 +392,14 @@ def termsform(request):
     })
 
 
-
 def error400(request):
     """
-    http 400 page
+    http 400 page, for instance wrong hostname
 
     :param request:
     :return:
     """
-    return render(request, "base.html", status=400, context={
-        "Message": "Your browser send an invalid request. Please have a look at the <a href=\"/\">homepage</a>"
-    })
+    return render(request, "400.html", status=400)
 
 
 def error404(request):
@@ -421,6 +419,7 @@ def error403(request, exception):
     http 403 page
 
     :param request:
+    :param exception: Reason why this page is forbidden.
     :return:
     """
     return render(request, "403.html", status=403, context={"exception": exception})
@@ -434,7 +433,7 @@ def error500(request):
     :return:
     """
     return render(request, "50x.html", status=500, context={
-        "Message" : "Something went wrong in the server. The BEP marketplace team has been automatically notified. </br>"
+        "reason": "Something went wrong in the server. The BEP marketplace team has been automatically notified. </br>"
                     "Please help them by sending an email to <a href=\"mailto:bepmarketplace@tue.nl?subject=BugReport\">bepmarketplace@tue.nl</a> with more information what you were trying to do. <br/>"
                     "Thanks in advance!"
     })

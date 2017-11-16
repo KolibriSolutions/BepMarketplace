@@ -56,7 +56,8 @@
                     {% if proposal.attachments.all|length > 0 %}
                         <h4>Attachments:</h4>
                         {% for attachment in proposal.attachments.all %}
-                            <a href="{% url 'download:proposalfile' 'a' attachment.id %}" class="command-button file-button">
+                            <a href="{% url 'download:proposalfile' 'a' attachment.id %}"
+                               class="command-button file-button" download>
                                 <span class="icon mif-file-pdf"></span>
                                 {% if attachment.Caption %}{{ attachment.Caption }}{% else %}Attachment {{ forloop.counter }}{% endif %}
                                 <small>{{ attachment.OriginalName }}</small>
@@ -275,9 +276,9 @@
 
         .imageCaption {
             position: absolute;
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background-color: rgba(58, 58, 58, .8);
             color: white;
             padding: 5px;

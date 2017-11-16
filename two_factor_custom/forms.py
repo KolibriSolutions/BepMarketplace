@@ -1,8 +1,8 @@
 from django.contrib.auth.forms import AuthenticationForm
-from templates import widgets
-from two_factor.utils import totp_digits
-from django import forms
 from two_factor.forms import *
+
+from templates import widgets
+
 
 class TwoFactorAuthTokenForm(AuthenticationTokenForm):
     otp_token = forms.IntegerField(widget=widgets.MetroNumberInput, label="Token", min_value=1,

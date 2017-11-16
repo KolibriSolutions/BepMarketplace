@@ -1,12 +1,11 @@
 from random import shuffle
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.db.models import Q
 
-from index.models import Track
-from proposals.models import Proposal
 from general_view import get_all_students, get_all_proposals
+from index.models import Track
+
 
 # Automatic distribution of proposals.
 

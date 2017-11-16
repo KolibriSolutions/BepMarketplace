@@ -1,1 +1,16 @@
-<div class="input-control file" data-role="input">{% include "widgets/input.html" %}<button class="button"><span class="mif-folder"></span></button> </div>
+{% if widget.is_initial %}Currently:
+    <a href="{{ widget.value.url }}"
+            {% if widget.is_image %}
+                data-lightbox="lightbox1"
+                data-title="{{ widget.value.instance.OriginalName }}"
+            {% else %}
+                download
+            {% endif %}>
+        {{ widget.value.instance.OriginalName|default:"File" }}
+    </a>
+<br/>
+Change:{% endif %}
+<div class="input-control file" data-role="input">
+    {% include "widgets/input.html" %}
+    <button class="button"><span class="mif-folder"></span></button>
+</div>

@@ -27,9 +27,9 @@ if __name__=="__main__":
 
     from django.contrib.auth.models import Group, User
 
+    newusers = []
     if os.path.isfile(filename):
         print('start')
-        newusers = []
         with open(filename,newline='') as csvfile:
             spamreader = csv.reader(csvfile, delimiter=';')
             for row in spamreader:

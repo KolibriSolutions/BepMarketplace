@@ -342,9 +342,11 @@
                         <ul style="list-style-type: none">
                             {% for file in files.all %}
                                 <li>
-                                    <a href="{% url "download:publicfile" file.id %}" class="command-button file-button">
+                                    <a href="{% url "download:publicfile" file.id %}"
+                                       class="command-button file-button" about>
                                         <span class="icon mif-file-{{ file.metro_icon }}"></span>
-                                        {{ file.Caption }}
+                                        {% if attachment.Caption %}{{ attachment.Caption }}{% else %}Attachment
+                                          {{ forloop.counter }}{% endif %}
                                         <small>{{ file.OriginalName }}</small>
                                     </a>
                                 </li>

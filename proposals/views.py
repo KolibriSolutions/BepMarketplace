@@ -17,8 +17,8 @@ from general_view import createShareLink, get_timephase_number, get_distribution
 from index.models import Track
 from tracking.views import trackProposalVisit
 from .cacheprop import getProp, updatePropCache
-from .forms import ProposalFormEdit, ProposalFormCreate, ProposalImageFormAdd, ProposalImageFormEdit, \
-    ProposalDowngradeMessageForm, ProposalAttachmentFormAdd, ProposalAttachmentFormEdit
+from .forms import ProposalFormEdit, ProposalFormCreate, ProposalImageForm, ProposalDowngradeMessageForm, \
+    ProposalAttachmentForm
 from .models import Proposal, ProposalImage, ProposalAttachment
 
 
@@ -181,6 +181,7 @@ def copyProposal(request, pk):
     """
     Copy a proposal from a previous timeslot. Only for staff that is allowed to see the proposal to copy.
 
+    :param pk: the id of proposal to copy
     :param request:
     :return:
     """
@@ -227,10 +228,10 @@ def addFile(request, pk, ty):
     obj = get_object_or_404(Proposal, pk=pk)
     if ty == "i":
         ty = "image"
-        form = ProposalImageFormAdd
+        form = ProposalImageForm
     elif ty == "a":
         ty = "attachment"
-        form = ProposalAttachmentFormAdd
+        form = ProposalAttachmentForm
     else:
         raise PermissionDenied("Invalid type supplied")
 
@@ -261,11 +262,11 @@ def editFile(request, pk, ty):
     if ty == "i":
         ty = "image"
         model = ProposalImage
-        form = ProposalImageFormEdit
+        form = ProposalImageForm
     elif ty == "a":
         ty = "attachment"
         model = ProposalAttachment
-        form = ProposalAttachmentFormEdit
+        form = ProposalAttachmentForm
     else:
         raise PermissionDenied("Invalid type supplied")
 
@@ -374,7 +375,7 @@ def downgradeStatusMessage(request, pk):
     obj = get_object_or_404(Proposal, pk=pk)
     if request.user == obj.ResponsibleStaff or request.user == obj.Track.Head:
         if request.method == "POST":
-            form = ProposalDowngradeMessageForm(request.POST, request=request)
+            form = ProposalDowngradeMessageForm(request.POST) # , request=request
             if form.is_valid():
                 message = form.cleaned_data['Message']
                 r = downgradeStatusApi(request, pk, message)
@@ -384,7 +385,7 @@ def downgradeStatusMessage(request, pk):
                 return render(request, "proposals/ProposalMessage.html", {"Message": notify, "Proposal": obj},
                               status=r.status_code)
         else:
-            form = ProposalDowngradeMessageForm(request=request)
+            form = ProposalDowngradeMessageForm()  # request=request
             return render(request, 'GenericForm.html',
                       {'form': form, 'formtitle': 'Message for downgrade proposal '+obj.Title, 'buttontext': 'Downgrade and send message'})
     else:

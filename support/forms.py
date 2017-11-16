@@ -28,20 +28,10 @@ class ChooseMailingList(forms.Form):
     message = forms.CharField(widget=widgets.MetroMultiTextInput, label="Message (check this twice):")
 
 
-class FileAddForm(FileForm):
+class PublicFileForm(FileForm):
     """Form to add a public file"""
     class Meta(FileForm.Meta):
         model = PublicFile
-
-    def clean_File(self):
-        return clean_publicfile_default(self)
-
-
-class FileEditForm(FileForm):
-    """Form to edit public file"""
-    class Meta(FileForm.Meta):
-        model = PublicFile
-        widgets = {'Caption': widgets.MetroTextInput}
 
     def clean_File(self):
         return clean_publicfile_default(self)

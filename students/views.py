@@ -16,7 +16,7 @@ from proposals.cacheprop import getProp
 from proposals.models import Proposal
 from general_view import get_timephase_number
 from tracking.models import ApplicationTracking
-from .forms import FileAddForm, FileEditForm
+from .forms import StudentFileForm
 from .models import Application
 from students.models import Distribution
 
@@ -224,7 +224,7 @@ def addFile(request):
     dist = get_object_or_404(Distribution, Student=request.user)
 
     if request.method == 'POST':
-        form = FileAddForm(request.POST, request.FILES, request=request)
+        form = StudentFileForm(request.POST, request.FILES, request=request)
         if form.is_valid():
             file = form.save(commit=False)
             file.Distribution = dist
@@ -232,7 +232,7 @@ def addFile(request):
             return render(request, "base.html",
                           {"Message": "File uploaded!", "return": "professionalskills:listownfiles"})
     else:
-        form = FileAddForm(request=request)
+        form = StudentFileForm(request=request)
     return render(request, 'GenericForm.html',
                   {'form': form, 'formtitle': 'Upload a file ', 'buttontext': 'Save'})
 
@@ -254,7 +254,7 @@ def editFiles(request):
 
     dist = get_object_or_404(Distribution, Student=request.user)
 
-    formSet = modelformset_factory(StudentFile, form=FileEditForm, can_delete=True, extra=0)
+    formSet = modelformset_factory(StudentFile, form=StudentFileForm, can_delete=True, extra=0)
     qu = StudentFile.objects.filter(Distribution=dist)
     formset = formSet(queryset=qu)
 

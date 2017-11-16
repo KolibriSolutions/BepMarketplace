@@ -10,8 +10,8 @@ def clean_file_default(self):
     """
     A check for an uploaded file. Checks filesize.
 
-    :param self: 
-    :return: 
+    :param self:
+    :return:
     """
     file = self.cleaned_data.get("File")
     if not file:

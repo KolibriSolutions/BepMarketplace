@@ -10,6 +10,7 @@ from general_view import get_grouptype
 from professionalskills.models import StudentFile
 from proposals.models import ProposalAttachment, ProposalImage
 from support.models import PublicFile
+from timeline.models import TimeSlot
 
 """
 Uploads go to /media/ directory
@@ -19,21 +20,22 @@ or as a primary key of the object the file belongs to (new way). Used in all tem
 """
 
 @login_required
-def PublicFiles(request, fileid):
+def PublicFiles(request, fileid, timeslot=None):
     """
     Public files, uploaded by type3, viewable on index.html, model in support-app
-    Cannot be viewed via edit-files, because access via URL is not supported. Only access via file id.
+
     :param request: 
     :param fileid: The ID of the public file to download.
+    :param timeslot: The timeslot id, used if the file is accessed by URI. This corresponds to the directory name.
     :return: file download
     """
-    #first try PK, then filename
-    #try:
-    #    obj = PublicFile.objects.get(id=fileid)
-    #except:
-    #    obj = get_object_or_404(PublicFile, File='public_files/'+fileid)
-
-    obj = get_object_or_404(PublicFile, id=fileid)
+    # first try PK, then filename
+    try:
+        obj = PublicFile.objects.get(id=fileid)
+    except:
+        # find by filename, used for edit widget for public file edit.
+        ts = get_object_or_404(TimeSlot, id=timeslot)
+        obj = get_object_or_404(PublicFile, File='public_files/'+str(ts.id)+'/'+fileid)
     return sendfile(request, obj.File.path, attachment=True, attachment_filename=obj.OriginalName)
 
 
@@ -49,6 +51,7 @@ def ProposalFiles(request, fileid, proposalid=None, ty=None):
    
     :param request:
     :param fileid: id of the proposal file.
+    :param proposalid: id of the proposal, corresponds to directory name appendix.
     :param ty: type, image or attachement
     :return: file download
     """

@@ -4,13 +4,12 @@ from math import floor
 from time import sleep
 
 import channels
+from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
 from django.template import loader
 from django.utils.html import strip_tags
-from django.conf import settings
-from templates import context_processors
 
 from general_view import createShareLink, get_all_proposals
 from index.models import Track
@@ -18,24 +17,20 @@ from index.models import UserMeta
 
 
 def send_mail(subject_template_name, email_template_name,
-              context, to_email, from_email=settings.NOREPLY_EMAIL, html_email_template_name=None):
+              context, to_email, html_email_template_name=None):
     """
     Sends a django.core.mail.EmailMultiAlternatives to `to_email`.
     """
-    #TODO decide wether to use context_processors or context['..'], now both are used. (And do the same for mastermarket)
-    context.update(context_processors.domain(None))
-    context.update(context_processors.contactemail(None))
     if ".txt" in subject_template_name:
         subject = loader.render_to_string(subject_template_name, context)
     else:
         subject = subject_template_name
 
-    from_email = settings.NOREPLY_EMAIL
+    from_email = settings.FROM_EMAIL_ADDRESS
     context['email'] = settings.CONTACT_EMAIL
     context['domain'] = settings.DOMAIN
     context['name'] = settings.NAME_PRETTY
     context['toemail'] = to_email
-
     # Email subject *must not* contain newlines
     subject = ''.join(subject.splitlines())
     body = loader.render_to_string(email_template_name, context)
@@ -130,7 +125,7 @@ def mail_proposal_single(request, proposal, staff, message=''):
     mail a staff member with a given message about a project.
 
     :param request:
-    :param project: The project to mail about
+    :param proposal: The proposal to mail about
     :param staff: The staff that gets the mail for this project
     :param message: message string
     :return:

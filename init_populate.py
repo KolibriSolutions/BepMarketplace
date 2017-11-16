@@ -216,8 +216,8 @@ if __name__=="__main__":
         except:
             print("no track created")
 
-    def flip(p):
-        return True if random.random() < p else False
+    def flip(x):
+        return True if random.random() < x else False
 
     print("creating proposals")
     for i in range(0, NUMPROPOSALS):

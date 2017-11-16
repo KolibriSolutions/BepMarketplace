@@ -55,24 +55,24 @@ mailPattern = re.compile(settings.EMAILREGEXCHECK)
 #
 #         return data
 
-
-class RegistrationForm(forms.Form):
-    username = forms.CharField(label='UserName:', max_length=100, min_length=2, widget=widgets.MetroTextInput)
-    firstname = forms.CharField(label='First Name:', max_length=100, min_length=1, widget=widgets.MetroTextInput)
-    lastname = forms.CharField(label='Last Name:', max_length=100, min_length=1, widget=widgets.MetroTextInput)
-    email = forms.EmailField(label='Email Address:', widget=widgets.MetroEmailInput)
-    backendlogin = forms.BooleanField(label='Backend Login Enabled:', widget=widgets.MetroCheckBox, required=False,
-                                      initial=False)
-    group = forms.ChoiceField(label='Type Staff:', widget=widgets.MetroSelect)
-
-    def __init__(self, groups=[], *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['group'].choices = groups
-
-
-class ProfileEditForm(forms.Form):
-    firstname = forms.CharField(max_length=255, widget=widgets.MetroTextInput)
-    lastname = forms.CharField(max_length=255, widget=widgets.MetroTextInput)
+#
+# class RegistrationForm(forms.Form):
+#     username = forms.CharField(label='UserName:', max_length=100, min_length=2, widget=widgets.MetroTextInput)
+#     firstname = forms.CharField(label='First Name:', max_length=100, min_length=1, widget=widgets.MetroTextInput)
+#     lastname = forms.CharField(label='Last Name:', max_length=100, min_length=1, widget=widgets.MetroTextInput)
+#     email = forms.EmailField(label='Email Address:', widget=widgets.MetroEmailInput)
+#     backendlogin = forms.BooleanField(label='Backend Login Enabled:', widget=widgets.MetroCheckBox, required=False,
+#                                       initial=False)
+#     group = forms.ChoiceField(label='Type Staff:', widget=widgets.MetroSelect)
+#
+#     def __init__(self, groups=[], *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.fields['group'].choices = groups
+#
+#
+# class ProfileEditForm(forms.Form):
+#     firstname = forms.CharField(max_length=255, widget=widgets.MetroTextInput)
+#     lastname = forms.CharField(max_length=255, widget=widgets.MetroTextInput)
 
 
 class FeedbackForm(forms.ModelForm):

@@ -7,10 +7,10 @@ StopWhenUnneeded=true
 Type=simple
 RuntimeDirectory=django
 PIDFile=/run/django/pid%I
-User=root
-Group=root
-WorkingDirectory=/root/BepMarketplace/
-ExecStart=/usr/bin/python manage.py runworker --only-channels=http.*
+User=django
+Group=django
+WorkingDirectory=/home/django/BepMarketplaceELE/
+ExecStart=/usr/bin/python3 manage.py runworker --only-channels=http.*
 ExecStop=/bin/kill -s TERM $MAINPID
 Restart=always
 RestartSec=10
