@@ -28,6 +28,9 @@ def presentationswizardstep1(request):
     :param request: 
     :return: 
     """
+    if get_timephase_number() <= 4:
+        raise PermissionDenied("Projects are not yet distributed.")
+
     ts = get_timeslot()
     try:
         options = ts.presentationoptions
@@ -68,6 +71,9 @@ def presentationswizardstep2(request):
     :param request:
     :return:
     """
+    if get_timephase_number() <= 4:
+        raise PermissionDenied("Projects are not yet distributed.")
+
     ts = get_timeslot()
     if not hasattr(ts, 'presentationoptions'):
         return render(request, "base.html", {"Message": "There are no presentation options yet, please <a class='button success' href='"+reverse("presentations:presentationswizardstep1")+"'>go back to step 1</a>"})
@@ -94,6 +100,9 @@ def presentationswizardstep3(request):
     :param request:
     :return:
     """
+    if get_timephase_number() <= 4:
+        raise PermissionDenied("Projects are not yet distributed.")
+
     ts = get_timeslot()
     if not hasattr(ts, 'presentationoptions'):
         return render(request, "base.html", {"Message": "There are no presentation options yet, please <a class='button success' href='"+reverse("presentations:presentationswizardstep1")+"'>go back to step 1</a>"})
@@ -128,6 +137,8 @@ def presentationswizardstep4(request):
     :param request:
     :return:
     """
+    if get_timephase_number() <= 4:
+        raise PermissionDenied("Projects are not yet distributed.")
 
     ts = get_timeslot()
     if not hasattr(ts, 'presentationoptions'):
@@ -178,6 +189,9 @@ def presentationsPlanning(request):
     :param request:
     :return:
     """
+    if get_timephase_number() <= 4:
+        raise PermissionDenied("Projects are not yet distributed.")
+
     sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=get_timeslot())
     if not sets:
         return render(request, "base.html", {"Message": "There is nothing planned yet. Please plan the presentations first."})
@@ -192,6 +206,18 @@ def presentationsPlanningXls(request):
     :param request:
     :return: xlsx file
     """
+    if get_timephase_number() <= 4:
+        raise PermissionDenied("Projects are not yet distributed.")
+
+    if get_timephase_number() != 7:
+        if get_grouptype("3") not in request.user.groups.all():
+            try:
+                public = get_timeslot().presentationoptions.Public
+            except:
+                return render(request, 'base.html', {'Message': 'The Presentations are not yet planned.'})
+            if not public:
+                return render(request, 'base.html', {'Message': 'The Presentationsplanning is not yet public'})
+
     sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=get_timeslot())
     if not sets:
         return render(request, "base.html",
@@ -211,14 +237,18 @@ def presentationsCalendar(request):
     :param request:
     :return:
     """
+
+    if get_timephase_number() <= 4:
+        raise PermissionDenied("Projects are not yet distributed.")
+
     if get_timephase_number() != 7:
         if get_grouptype("3") not in request.user.groups.all():
             try:
                 public = get_timeslot().presentationoptions.Public
             except:
-                raise PermissionDenied("Presentations are not yet planned.")
+                return render(request, 'base.html', {'Message': 'The Presentations are not yet planned.'})
             if not public:
-                raise PermissionDenied("Presentationsview is not yet open for public")
+                return render(request, 'base.html', {'Message': 'The Presentationsplanning is not yet public'})
 
     ts = get_timeslot()
     sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts).order_by('DateTime')

@@ -23,8 +23,18 @@ from general_view import get_grouptype
 from BepMarketplace.decorators import can_access_professionalskills
 
 
-@group_required('type3staff', 'type3staff')
+@group_required('type3staff', 'type6staff')
 def downloadAll(request, pk):
+    """
+    Download all files for a given filetype
+
+    :param request:
+    :param pk: id of the filetype
+    :return:
+    """
+    if get_timephase_number() < 5:
+        raise PermissionDenied('Students are not yet distributed to projects.')
+
     ftype = get_object_or_404(FileType, pk=pk)
 
     in_memory = BytesIO()
@@ -44,7 +54,7 @@ def downloadAll(request, pk):
     return response
 
 
-@group_required('type6staff')
+@group_required('type3staff', 'type6staff')
 def createFileType(request):
     """
     Create a file type that can be used for any professional skill hand-in document.
@@ -70,7 +80,7 @@ def createFileType(request):
     })
 
 
-@group_required('type6staff')
+@group_required('type3staff', 'type6staff')
 def editFileType(request, pk):
     """
     Edit a file type.
@@ -98,7 +108,7 @@ def editFileType(request, pk):
     })
 
 
-@group_required('type6staff')
+@group_required('type3staff', 'type6staff')
 def deleteFileType(request, pk):
     """
     Delete a file type.
@@ -138,7 +148,6 @@ def listFileType(request):
     :return:
     """
 
-
     ts = TimeSlot.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now()))
     return render(request, 'professionalskills/listFileTypes.html', {
         'filetypes' : FileType.objects.filter(TimeSlot=ts)
@@ -154,7 +163,8 @@ def listFilePerType(request, pk):
     :param pk: filetype to show delivered files for
     :return:
     """
-
+    if get_timephase_number() < 5:
+        raise PermissionDenied('Students are not yet distributed to projects.')
 
     ftype = get_object_or_404(FileType, pk=pk)
     return render(request, 'professionalskills/listFilesOfType.html', {
@@ -175,7 +185,6 @@ def listMissingPerType(request, pk):
 
     if get_timephase_number() < 5:
         raise PermissionDenied("Student files are not available in this phase")
-
 
     ftype = get_object_or_404(FileType, pk=pk)
     failStudents = []
@@ -200,7 +209,8 @@ def listStudentFiles(request, pk):
     :param pk: id of distribution
     :return:
     """
-
+    if get_timephase_number() < 5:
+        raise PermissionDenied("Student files are not available in this phase")
 
     dist = get_object_or_404(Distribution, pk=pk)
     respondrights = False
@@ -210,7 +220,7 @@ def listStudentFiles(request, pk):
         or request.user == dist.Proposal.ResponsibleStaff\
         or request.user == dist.Proposal.Track.Head:
         respondrights = True
-    elif get_grouptype("3") in request.user.groups.all() or Group.objects.get(name='type6staff') in request.user.groups.all():
+    elif get_grouptype("3") in request.user.groups.all() or get_grouptype('6') in request.user.groups.all():
         pass
     else:
         raise PermissionDenied("You are not allowed to view these files")
@@ -220,7 +230,7 @@ def listStudentFiles(request, pk):
     return render(request, "professionalskills/listFiles.html", {"dist": dist, "files": files, "respond" : respondrights})
 
 
-@group_required('type6staff', 'type3staff')
+@group_required('type3staff', 'type6staff')
 def mailOverDueStudents(request):
     """
     Mail students that didn't handin file before the deadline
@@ -229,9 +239,8 @@ def mailOverDueStudents(request):
     :return:
     """
     if get_timephase_number() < 6:
-        return render(request, 'base.html', {
-            'Message': 'Mailing students for PRVs is not possible in this timephase',
-        })
+        raise PermissionDenied('Mailing students for PRVs is not possible in this timephase')
+
     if request.method == "POST":
         form = ConfirmForm(request.POST)
         if form.is_valid():
@@ -272,7 +281,7 @@ def mailOverDueStudents(request):
 @can_access_professionalskills
 def respondFile(request, pk):
     """
-
+    Form to let a staff member give a response to a students file.
 
     :param request:
     :param pk:
@@ -325,6 +334,9 @@ def listOwnFiles(request):
     """
     Shows the list of files of a student. Files are attached to distributions-objects.
     This function calls the general file list function listStudentFiles with this student as argument.
+
+    :param request:
+    :return:
     """
 
     if get_timephase_number() < 5:
@@ -334,8 +346,17 @@ def listOwnFiles(request):
     return listStudentFiles(request, dist.pk)
 
 
-@group_required('type6staff', 'type3staff')
+@group_required('type3staff', 'type6staff')
 def printPrvForms(request):
+    """
+    Export PDF of all distributed students
+
+    :param request:
+    :return:
+    """
+    if get_timephase_number() < 5:
+        raise PermissionDenied('Students are not yet distributed to projects.')
+
     template = get_template('professionalskills/printPrvResults.html')
     pages = []
     for dstr in Distribution.objects.all():

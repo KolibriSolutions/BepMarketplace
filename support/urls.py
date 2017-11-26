@@ -30,6 +30,7 @@ urlpatterns = [
     url(r'^liststudents/$', views.listStudents, name='liststudents'),
     url(r'^liststudentsxls/$', views.listStudentsXls, name='liststudentsXls'),
     url(r'^listgroupproposals/$', views.listGroupProposals, name='listgroupproposals'),
+    url(r'^listproposals/studyadvisor/$', views.listProposalsAdvisor, name='listproposalsadvisor'),
     # url(r'^liststudentsldap/$', views.listStudentsLdap, name='liststudentsldap'),# might be re-introduced when OSIRIS link is finished.
     # url(r'^clearcacheallstudentslist/$', views.clearCacheAllStudentsList, name='clearcacheallstudentslist'),
 

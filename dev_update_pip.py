@@ -1,3 +1,6 @@
+"""
+script to update all pip packages.
+"""
 import pip
 from subprocess import call
 

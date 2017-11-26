@@ -28,45 +28,47 @@
 {% for proposal in proposals %}
         <tr>
             <td>
-            {# type3 can delete old proposals, no edit as history cannot be changed #}
-            {% if proposal.prevyear %}
-                {% if user|has_group:"type3staff"  %}
-                    {% if proposal.Status < 3 %}
-                        <a href="{% url 'proposals:askdeleteproposal' proposal.id %}" class="button warning">Delete</a>
+            {% if not user|has_group:"type5staff" or user.is_superuser %}
+                {# type3 can delete old proposals, no edit as history cannot be changed #}
+                {% if proposal.prevyear %}
+                    {% if user|has_group:"type3staff"  %}
+                        {% if proposal.Status < 3 %}
+                            <a href="{% url 'proposals:askdeleteproposal' proposal.id %}" class="button warning">Delete</a>
+                        {% endif %}
                     {% endif %}
-                {% endif %}
-            {% else %}
-                {# show edit buttons for proposals of this year in lower timephases  #}
-                {% if phasenumber < 5 %}
-                    <a href="{% url 'proposals:details' proposal.id %}" class="button primary">View</a>
-                    {% if phasenumber < 3 %}
-                        {% if proposal.Status <= 2 or proposal.Track.Head == request.user and proposal.Status == 3 or user|has_group:"type3staff" and proposal.Status == 3 %}
-                            <a class="button primary" href="{% url 'proposals:edit' proposal.id %}">
-                                Edit data
-                            </a>
-                            {% if user|has_group:"type3staff"  %}
-                                {% if proposal.Status < 3 %}
-                                    <a href="{% url 'proposals:askdeleteproposal' proposal.id %}" class="button warning">Delete</a>
+                {% else %}
+                    {# show edit buttons for proposals of this year in lower timephases  #}
+                    {% if phasenumber < 5 %}
+                        <a href="{% url 'proposals:details' proposal.id %}" class="button primary">View</a>
+                        {% if phasenumber < 3 %}
+                            {% if proposal.Status <= 2 or proposal.Track.Head == request.user and proposal.Status == 3 or user|has_group:"type3staff" and proposal.Status == 3 %}
+                                <a class="button primary" href="{% url 'proposals:edit' proposal.id %}">
+                                    Edit data
+                                </a>
+                                {% if user|has_group:"type3staff"  %}
+                                    {% if proposal.Status < 3 %}
+                                        <a href="{% url 'proposals:askdeleteproposal' proposal.id %}" class="button warning">Delete</a>
+                                    {% endif %}
                                 {% endif %}
                             {% endif %}
                         {% endif %}
+                    {# Proposals of this year in phase 5 or later #}
+                    {% else %}
+                        <ul>
+                        {% for dist in proposal.distributions.all %}
+                            <li>
+                                {{ dist.Student.get_full_name }} ({{ dist.Student.usermeta.Studentnumber }})
+                            </li>
+                        {% endfor %}
+                        </ul>
                     {% endif %}
-                {# Proposals of this year in phase 5 or later #}
-                {% else %}
-                    <ul>
-                    {% for dist in proposal.distributions.all %}
-                        <li>
-                            {{ dist.Student.get_full_name }} ({{ dist.Student.usermeta.Studentnumber }})
-                        </li>
-                    {% endfor %}
-                    </ul>
                 {% endif %}
-            {% endif %}
-            {# show "copy" button for proposals #}
-            {% if proposal.prevyear %}
-            <a class="button primary" href="{% url 'proposals:copy' proposal.id %}">
-                Copy
-            </a>
+                {# show "copy" button for proposals #}
+                {% if proposal.prevyear %}
+                <a class="button primary" href="{% url 'proposals:copy' proposal.id %}">
+                    Copy
+                </a>
+                {% endif %}
             {% endif %}
             </td>
             <td>{{ proposal.TimeSlot|default:"Future" }}</td>
@@ -115,7 +117,7 @@
             {% if private %} null, {% endif %}
                 { "searchable": false }  //buttons / distributions
         ];
-        var dropdownColumns = [0,1,2,3];
+        var dropdownColumns = [1,2,3,4];
         MPDataTable(cols, dropdownColumns, [], [], {"order" : [[2, "asc"]]});
     });
     </script>  {% endblock %}

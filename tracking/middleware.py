@@ -6,9 +6,18 @@ from django.utils.deprecation import MiddlewareMixin
 from ipware.ip import get_real_ip
 
 class TelemetryMiddleware(MiddlewareMixin):
-
+    """
+    Middleware to track users activity.
+    It sends the users information to a seperate systemd service to log the data.
+    """
     def process_response(self, request, response):
 
+        """
+
+        :param request:
+        :param response:
+        :return:
+        """
         try:
             try:#only exists when impersonate is active, crashes if no try except is used
                 if request.user.is_impersonate:

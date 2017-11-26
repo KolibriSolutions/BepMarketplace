@@ -34,25 +34,10 @@
                         {# in case a non-superuser has multiple groups, it is shown in the table but the dropdown filter fails to select it #}
                         {% if u.is_superuser %}
                             superuser
+                        {% elif u.groups.exists %}
+                            {{ u.groups.all|join:" & " }}
                         {% else %}
-                            {% if u|has_group:'type1staff' %}
-                                type 1 staff
-                            {% endif %}
-                            {% if u|has_group:'type2staff' %}
-                                type 2 staff
-                            {% endif %}
-                            {% if u|has_group:'type2staffunverified' %}
-                                type 2 staff (unverified)
-                            {% endif %}
-                            {% if u|has_group:'type3staff' %}
-                                type 3 staff
-                            {% endif %}
-                            {% if u|has_group:'type4staff' %}
-                                type 4 staff
-                            {% endif %}
-                            {% if not u|has_group:'any' and not u|has_group:'type4staff' %}
-                                student (no groups)
-                            {% endif %}
+                            student (no groups)
                         {% endif %}
                     </td>
                     <td data-sort="{{ u.last_login|yesno:"1,0" }}"><span

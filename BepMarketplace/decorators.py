@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
 from general_view import get_timephase_number, get_grouptype, get_timeslot
@@ -13,7 +14,7 @@ def group_required(*group_names):
     """
     Check whether a user (django-user) is in a given set of django groups. Gives True if in any of the specified groups.
     
-    :param group_names: 
+    :param group_names:
     :return: 
     """
     def in_groups(u):
@@ -107,13 +108,6 @@ def can_view_proposal(fn):
                 or prop.Track.Head == request.user:
             return fn(*args, **kw)
 
-        # user is secretary (type4) and its the right group
-        adms = CapacityGroupAdministration.objects.filter(Members__id=request.user.id)
-        if len(adms) > 0:
-            for ad in adms:
-                if ad.Group == prop.Group:
-                    return fn(*args, **kw)
-
         # if project is published, non private and its the right time phase
         if prop.Status == 4 \
                 and (not prop.Private.exists() or request.user in prop.Private.all()):
@@ -124,6 +118,10 @@ def can_view_proposal(fn):
             # else staff members are allowed to view in all timeslots and timephases
             if request.user.groups.exists():
                 return fn(*args, **kw)
+
+        # user is secretary (type4) and its the right group
+        if CapacityGroupAdministration.objects.filter(Q(Members__in=[request.user]) & Q(Group=prop.Group)).exists():
+            return fn(*args, **kw)
 
         raise PermissionDenied("You are not allowed to view this proposal page.")
 
@@ -271,8 +269,11 @@ def can_access_professionalskills(fn):
 
     def wrapper(*args, **kw):
         request = args[0]
-
-        if get_timephase_number() < 5 and get_grouptype("3") not in request.user.groups.all():
+        # type 3 and 6 can always view professionalskills.
+        # Everyone can view it in phase 5 and later.
+        if get_timephase_number() < 5 and \
+                        get_grouptype("3") not in request.user.groups.all() and \
+                        get_grouptype("6") not in request.user.groups.all():
             raise PermissionDenied("Student files are not available in this phase")
 
         return fn(*args, **kw)

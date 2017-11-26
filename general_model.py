@@ -1,3 +1,6 @@
+"""
+General functions mostly used in models (models.py)
+"""
 import re
 import uuid
 from datetime import datetime

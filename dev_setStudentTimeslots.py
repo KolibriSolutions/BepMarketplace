@@ -1,3 +1,6 @@
+"""
+Give students a timeslot. Used for init populations.
+"""
 import django
 import argparse
 import sys

@@ -12,6 +12,7 @@ from django.urls import reverse
 
 from BepMarketplace.decorators import group_required, can_edit_proposal, superuser_required, can_downgrade_proposal
 from general_mail import mailAffectedUser
+from general_model import GroupOptions
 from general_view import get_timephase_number, get_all_proposals, get_grouptype, get_timeslot
 from proposals.models import Proposal
 from support.models import CapacityGroupAdministration
@@ -162,11 +163,11 @@ def verifyAssistant(request, pk):
     :return: 
     """
     account = get_object_or_404(User, pk=pk)
-    account_group = User.groups.through.objects.get(user=account)
 
     if get_grouptype("2u") not in account.groups.all():
         return HttpResponse("This account is already verified")
 
+    account_group = User.groups.through.objects.get(user=account)
     account_group.group = get_grouptype("2")
     account_group.save()
 
@@ -204,7 +205,7 @@ def getPublishedListPerGroup(request):
     """
     data = {}
 
-    for group in Proposal.GroupOptions:
+    for group in GroupOptions:
         data[group[0]] = {
             "name"      : group[0],
             "projects"  : [prop.id for prop in get_all_proposals().filter(Q(Status=4) & Q(Group=group[0]) & Q(Private__isnull=True))]
@@ -239,8 +240,8 @@ def getPublishedDetail(request, pk):
     :return: 
     """
     prop = get_object_or_404(Proposal, pk=pk)
-    if prop.Status != 4 or prop.Private.count() != 0:
-        return HttpResponse("Not allowed")
+    if prop.Status != 4 or prop.Private.exists():
+        return HttpResponse("Not allowed", status=403)
     return JsonResponse({
         "id" : prop.id,
         "detaillink" : reverse("proposals:details", args=[prop.id]),

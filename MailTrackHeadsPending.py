@@ -1,6 +1,8 @@
+"""
+Mail all trackheads with the proposal that they have to check. (All pending proposals)
+This script can be used to automatically mail track heads in (for instance) a cron job.
+"""
 from general_mail import MailTrackHeadsPending
-# Mail all trackheads with the proposal that they have to check. (All pending proposals)
-# This script can be used to automatically mail track heads in (for instance) a cron job.
 
 if __name__ == '__main__':
     import django

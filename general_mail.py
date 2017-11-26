@@ -1,3 +1,6 @@
+"""
+General functions, used for mailing
+"""
 import json
 import threading
 from math import floor
@@ -148,6 +151,9 @@ class EmailThreadMultipleTemplate(threading.Thread):
         super().__init__()
 
     def run(self):
+        """
+
+        """
         sleep(5)
         for i, mail in enumerate(self.mails):
             if mail is None or mail == '':
@@ -173,6 +179,9 @@ class EmailThread(threading.Thread):
         super().__init__()
 
     def run(self):
+        """
+
+        """
         sleep(5)
         for i, email in enumerate(self.emails):
             if email is None or email == '':

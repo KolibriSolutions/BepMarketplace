@@ -77,9 +77,9 @@ def visitorsMenu(request):
 def clearCache(request):
     """
     Clear the full REDIS cache
-    
-    :param request: 
-    :return: 
+
+    :param request:
+    :return:
     """
     cache.clear()
     return render(request, "base.html", {"Message":"Cache cleared!"})
@@ -98,7 +98,7 @@ def groupAdministration(request):
             form.save()
             return render(request, "base.html", {
                 "Message" : "Group administration updated",
-                "return"  : "index:groupadministration",
+                "return"  : "godpowers:groupadministration",
             })
     else:
         form = groupAdministrationForm()
@@ -114,7 +114,7 @@ def groupAdministration(request):
 def sessionList(request):
     """
     List all active sessions (logged in users) with the possibility to kill a session (logout the user)
-    
+
     :param request:
     """
     sessions = Session.objects.filter(expire_date__gte=timezone.now())
@@ -152,7 +152,7 @@ def init_session(session_key):
 def killSession(request, pk):
     """
     Kill a session of a user. Usually called from the sessionList page.
-    
+
     :param request:
     :param pk: id of the user to kill session for
     """

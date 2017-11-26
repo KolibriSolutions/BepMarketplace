@@ -1,11 +1,13 @@
+"""
+Import type1 users from csv file. Used to initialy create users for professors to give them type1staff status.
+
+"""
 import argparse
 import csv
 import os.path
 import sys
 
 import django
-
-# Import type1 users from csv file. Used to initialy create users for professors to give them type1staff status.
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Load type1 from csv")

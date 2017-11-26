@@ -1,24 +1,25 @@
 from django.urls import reverse
 
-from general_test import ViewsTest
+from general_test import ProposalViewsTest
 
 
-class GodpowersViewsTest(ViewsTest):
+class DownloadViewsTest(ProposalViewsTest):
     def setUp(self):
-        self.app = 'godpowers'
+        self.app = 'download'
         super().setUp()
 
     def test_view_status(self):
-        # godpowers are not tested, so this should return forbidden for every normal user.
         codes_phase1234567 = [
-            [['visitorsproposalsoverview', None], self.p_forbidden],
-            [['visitoroverview', {'pk':0}], self.p_forbidden],
-            [['visitorsmenu', None], self.p_forbidden],
-            [['clearcache', None], self.p_forbidden],
-            [['groupadministration', None], self.p_forbidden],
-            [['getvisitors', {'pk': 0}], self.p_forbidden],
-            [['sessionlist', None], self.p_forbidden],
-            [['killsession', {'pk':0}], self.p_forbidden],
+            [['publicfile', {'fileid': 0}], self.p_404],
+            [['public_files', {'fileid': '9b73c48b-e05f-4e08-9db5-c8100119f673.pdf', 'timeslot': 0}], self.p_404],
+
+            # proposal attachements
+            [['proposalfile', {'ty':'a', 'fileid':0}], self.p_404],
+            [['proposal_files', {'proposalid': 0, 'fileid': '9b73c48b-e05f-4e08-9db5-c8100119f673.pdf'}], self.p_404],
+
+            # student files (professionalskills)
+            [['studentfile', {'fileid': 0}], self.p_404],
+            [['student_files', {'distid': 0, 'fileid': '9b73c48b-e05f-4e08-9db5-c8100119f673.pdf'}], self.p_404],
         ]
         # not logged in users. Ignore status, only use the views column of permission matrix.
         # Status should be 302 always.

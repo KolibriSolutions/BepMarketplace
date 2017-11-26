@@ -14,9 +14,10 @@ import general_mail
 from BepMarketplace.decorators import group_required
 from general_form import ConfirmForm
 from general_mail import EmailThread
-from general_view import get_distributions, get_all_students, get_timephase_number, get_all_staff, get_all_proposals, get_grouptype, get_timeslot
-from index.models import Track, UserMeta
 from general_model import GroupOptions
+from general_view import get_distributions, get_all_students, get_timephase_number, get_all_staff, get_all_proposals, \
+    get_grouptype, get_timeslot
+from index.models import Track, UserMeta
 from results.models import GradeCategory
 from support import check_content_policy
 from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm
@@ -78,6 +79,11 @@ def supportListDistributionsXls(request):
 #        (11, 'all students on marketplace 15ects'),
 @group_required('type3staff')
 def mailinglist(request):
+    """
+
+    :param request:
+    :return:
+    """
     options = (
         ('all', 'All users'),
         ('type1', 'Type1 staff'),
@@ -183,9 +189,9 @@ def mailinglist(request):
 def mailTrackHeads(request):
     """
     Mail all track heads with their todo actions
-    
-    :param request: 
-    :return: 
+
+    :param request:
+    :return:
     """
     if get_timephase_number() > 2:
         return render(request, "base.html", {"Message" : "Only possible in first two phases"})
@@ -234,6 +240,12 @@ def listUsers(request):
 
 @group_required('type3staff')
 def usermetaOverrule(request, pk):
+    """
+
+    :param request:
+    :param pk:
+    :return:
+    """
     usr = get_object_or_404(User, pk=pk)
     obj = get_object_or_404(UserMeta, pk=usr.usermeta.id)
     if request.method == "POST":
@@ -264,6 +276,11 @@ def listStaff(request):
     :return:
     """
     def nint(nr):
+        """
+
+        :param nr:
+        :return:
+        """
         if nr is None:
             return 0
         else:
@@ -327,8 +344,8 @@ def listStudents(request):
         if get_timephase_number() < 4:
             raise PermissionDenied("Students are not yet distributed")
         if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
-            raise PermissionDenied(
-                "When the phase 'Distribution of projects' is finished, you can view your students here.")
+            return render(request, "base.html", {'Message':
+                               "When the phase 'Distribution of projects' is finished, you can view your students here."})
 
     cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
 
@@ -353,11 +370,15 @@ def listStudentsXls(request):
 
     :param request:
     """
-    if get_timephase_number() < 4:
-        raise PermissionDenied("Students are not yet distributed")
-    if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
-        raise PermissionDenied(
-            "When the phase 'Distribution of projects' is finished, you can view your students here.")
+    if get_timephase_number() < 0:
+        if get_timeslot() is None:
+            raise PermissionDenied("System is closed.")
+    else:
+        if get_timephase_number() < 4:
+            raise PermissionDenied("Students are not yet distributed")
+        if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
+            return render(request, "base.html", {'Message':
+                               "When the phase 'Distribution of projects' is finished, you can view your students here."})
 
     typ = GradeCategory.objects.filter(TimeSlot=get_timeslot())
     des = get_distributions(request.user)
@@ -387,25 +408,37 @@ def verifyAssistants(request):
 def listGroupProposals(request):
     """
     List all proposals of a group.
-    
-    :param request: 
-    :return: 
+
+    :param request:
+    :return:
     """
     obj = get_object_or_404(CapacityGroupAdministration, Members__id = request.user.id)
-    props = get_all_proposals().filter(Group=obj.Group)
+    props = get_all_proposals(old=True).filter(Group=obj.Group)
     return render(request, "proposals/ProposalsCustomList.html", {
         "proposals" : props,
         "title"     : "Proposals of My Group"
     })
 
+@group_required('type5staff')
+def listProposalsAdvisor(request):
+    """
+    List all proposals for the studyadvisor, so includes old and private ones
+
+    :param request:
+    :return:
+    """
+    return render(request, "proposals/ProposalsCustomList.html", {
+        "proposals" : get_all_proposals(old=True),
+        "title" : "All proposals in system"
+    })
 
 @group_required('type3staff', 'type6staff')
 def listPrivateProposals(request):
     """
     List all private proposals.
-    
-    :param request: 
-    :return: 
+
+    :param request:
+    :return:
     """
     props = get_all_proposals().filter(Private__isnull=False).distinct()
     return render(request, "proposals/ProposalsCustomList.html", {
@@ -419,10 +452,10 @@ def listPrivateProposals(request):
 def upgradeUser(request, pk):
     """
     Upgrade a user from type2staff to type1staff
-    
-    :param request: 
-    :param pk: id of the user. 
-    :return: 
+
+    :param request:
+    :param pk: id of the user.
+    :return:
     """
     usr = get_object_or_404(User, pk=pk)
 
@@ -479,10 +512,10 @@ def upgradeUser(request, pk):
 def downgradeUser(request, pk):
     """
     Change a user from type1staff to type2staff
-    
-    :param request: 
-    :param pk: id of the staff user. 
-    :return: 
+
+    :param request:
+    :param pk: id of the staff user.
+    :return:
     """
     usr = get_object_or_404(User, pk=pk)
 
@@ -523,10 +556,10 @@ def downgradeUser(request, pk):
 @group_required('type3staff')
 def stats(request):
     """
-    Statistics about number of proposals, with breakdown per group. 
-    
-    :param request: 
-    :return: 
+    Statistics about number of proposals, with breakdown per group.
+
+    :param request:
+    :return:
     """
     groupcount = {}
     trackcount = {}
@@ -558,7 +591,7 @@ def contentpolicy(request):
     """
     List of proposal description/assignment texts that do not met the expected text.
     Example of a policy violation is an email address in a proposal description.
-    
+
     :param request:
     """
     data = {
@@ -573,7 +606,7 @@ def ECTSForm(request):
     """
     Form to fill in the ECTS of students, this is done by administration staff.
     ECTS are used for the automatic distribution. ECTS changes are send using websockets to consumers.py
-    
+
     :param request:
     """
     stds = get_all_students()
@@ -586,10 +619,10 @@ def ECTSForm(request):
 @group_required('type3staff')
 def addFile(request):
     """
-    Upload a public file. These files will be visible on the index page after login.    
-    
-    :param request: 
-    :return: 
+    Upload a public file. These files will be visible on the index page after login.
+
+    :param request:
+    :return:
     """
     user = request.user
     if request.method == 'POST':
@@ -612,7 +645,7 @@ def editFiles(request):
     """
     Edit public files. Only for supportstaff
     These files are shown on the homepage for every logged in user.
-    
+
     :param request:
     """
     formSet = modelformset_factory(PublicFile, form=PublicFileForm, can_delete=True, extra=0)

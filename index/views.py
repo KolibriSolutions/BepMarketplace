@@ -366,8 +366,15 @@ def changeSettings(request):
         "buttontext": "Save"
     })
 
+
 @login_required
 def termsform(request):
+    """
+    Form for a user to accept the terms of use.
+
+    :param request:
+    :return:
+    """
     try:
         obj = request.user.termsaccepted
         if obj.Stamp <= datetime.now():

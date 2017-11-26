@@ -1,3 +1,6 @@
+"""
+Create semirandom usermeta for users. Used for init populate dev environment.
+"""
 import argparse
 import django
 import sys

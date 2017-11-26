@@ -11,6 +11,11 @@ from django.conf import settings
 #     }
 
 def debugsetting(request):
+    """
+
+    :param request:
+    :return:
+    """
     return {
         'DEBUG' : settings.DEBUG
     }

@@ -1,3 +1,6 @@
+"""
+Export groups and tracks.
+"""
 import os
 import django
 os.environ['DJANGO_SETTINGS_MODULE'] = 'BepMarketplace.settings_development'

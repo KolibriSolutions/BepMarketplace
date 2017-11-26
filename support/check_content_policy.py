@@ -1,4 +1,9 @@
 def regexTest(stdout=False):
+    """
+
+    :param stdout:
+    :return:
+    """
     from proposals.models import Proposal
     import re
     results = []
@@ -27,6 +32,11 @@ def regexTest(stdout=False):
 
 
 def diffTest(stdout=False):
+    """
+
+    :param stdout:
+    :return:
+    """
     import difflib
     from general_view import get_all_proposals
     # diff checks

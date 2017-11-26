@@ -6,6 +6,12 @@ import json
 import os
 
 def on_message(ws, message):
+    """
+
+    :param ws:
+    :param message:
+    :return:
+    """
     try:
         data = json.loads(message)
     except:
@@ -17,12 +23,25 @@ def on_message(ws, message):
     print(message)
 
 def on_error(ws, error):
+    """
+
+    :param ws:
+    :param error:
+    """
     print(error)
 
 def on_close(ws):
+    """
+
+    :param ws:
+    """
     print("### Connection closed ###")
 
 def on_open(ws):
+    """
+
+    :param ws:
+    """
     print("### Connection opened ###")
     # def run(*args):
     #     threading.Thread(target=run, args=()).start()

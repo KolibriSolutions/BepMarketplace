@@ -94,6 +94,7 @@ Table of contents
     results/home
     students/home
     support/home
+    telemetry_cli/home
     templates/home
     timeline/home
     tracking/home
@@ -103,6 +104,7 @@ Table of contents
     general_form
     general_mail
     general_model
+    general_test
     general_view
     MailTrackHeadsPending
     init_importType1

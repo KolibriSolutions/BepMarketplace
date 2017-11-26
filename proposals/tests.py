@@ -1,7 +1,4 @@
-# Create your tests here.
-
 from django.contrib.auth.models import User
-
 from django.urls import reverse
 
 from general_test import ViewsTest, ProposalViewsTest
@@ -15,6 +12,10 @@ class ProposalViewsTest(ProposalViewsTest):
     All tests for proposal views
 
     """
+    def setUp(self):
+        self.app = 'proposals'
+        super().setUp()
+
     def test_view_status(self):
         """
         Test all views for their http statuscode from the proposals app for a list of usertypes.
@@ -25,45 +26,27 @@ class ProposalViewsTest(ProposalViewsTest):
 
         :return:
         """
-
+        s = self
         # setup environment
-        self.setup()
-        app = 'proposals:'
         # expected results:
-        # r=random, t=this(for this proposal)
-        # s=student, p=private-student, r=responsible, a=assistant, n = assistant_not_verified t=trackhead, u=support
-        # matrix with different types of permissions, set for each user of the array self.usernames
-
-        #  usernames = ['r-3', 'r-s' 't-p', 'r-1', 't-1', 'r-2',   't-2',  't-u',  'r-h',  't-h']
-        forbidden =    [403,   403,   403,   403,    403,    403,    403,    403,     403,    403]  # no one
-        allowed =      [200,   200,   200,   200,    200,    200,    200,    200,     200,    200]  # everyone
-        private =      [200,   403,   200,   403,    200,    403,    200,    200,     403,    200]  # private proposal view status 4
-        staff =        [200,   403,   403,   200,    200,    200,    200,    200,     200,    200]  # all staff
-        all_this =     [200,   403,   403,   403,    200,    403,    200,    200,     403,    200]  # staff of this proposal
-        no_assistant = [200,   403,   403,   403,    200,    403,    403,    403,     403,    200]  # staff of this proposal except assistants
-        support =      [200,   403,   403,   403,    403,    403,    403,    403,     403,    403]  # only type3staff (support)
-        trackhead =    [200,   403,   403,   403,    403,    403,    403,    403,     403,    200]  # trackhead of proposal, support
-        track =        [403,   403,   403,   403,    403,    403,    403,    403,     200,    200]  # any trackhead
-        pending =      [403,   403,   403,   200,    200,    200,    200,    200,     200,    200]  # staff with pending proposals
-
         # Use the above-defined matrix of permissions to set permissions for some pages.
         code_general_phase12345 = [
-            [['list'],                       [allowed]],
-            [['create'],                     [staff]],
-            [['chooseedit'],                 [staff]],
-            [['pending'],                    [pending]],
-            [['stats'],                      [forbidden]],
-            [['statsgeneral'],               [forbidden]],
-            [['listtrackproposals'],          [track]]
+            [['list', None],                       [s.p_allowed]],
+            [['create', None],                     [s.p_staff_prop]],
+            [['chooseedit', None],                 [s.p_staff_prop]],
+            [['pending', None],                    [s.p_pending]],
+            [['stats', None],                      [s.p_forbidden]],
+            [['statsgeneral', None],               [s.p_forbidden]],
+            [['listtrackproposals', None],          [s.p_track]]
         ]
         code_general_phase67 =  [
-            [['list'],                       [allowed]],
-            [['create'],                     [staff]],
-            [['chooseedit'],                 [staff]],
-            [['pending'],                    [pending]],
-            [['stats'],                      [staff]],
-            [['statsgeneral'],               [staff]],
-            [['listtrackproposals'],          [track]]
+            [['list', None],                       [s.p_allowed]],
+            [['create', None],                     [s.p_staff_prop]],
+            [['chooseedit', None],                 [s.p_staff_prop]],
+            [['pending', None],                    [s.p_pending]],
+            [['stats', None],                      [s.p_staff_prop]],
+            [['statsgeneral', None],               [s.p_staff_prop]],
+            [['listtrackproposals', None],          [s.p_track]]
         ]
 
         # These permissions are for a given proposal, which is active in this timeslot (this year).
@@ -78,268 +61,209 @@ class ProposalViewsTest(ProposalViewsTest):
         # TimePhase 1, generating projects and 2 quality check
         # reverse name of page to test, and the kw.       Status 1        Status 2,        Status 3,        Status 4
         code_phase1 = [
-            [['addfile', {'ty': 'i', 'pk': self.p}],     [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['addfile', {'ty': 'a', 'pk': self.p}],     [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['editfile', {'ty': 'i', 'pk': self.p}],    [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['editfile', {'ty': 'a', 'pk': self.p}],    [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['edit', {'pk': self.p}],                   [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['copy', {'pk': self.p}],                   [all_this  ,     all_this       , all_this     ,   staff    ]],
-            [['details', {'pk': self.p}],                [all_this  ,     all_this       , all_this     ,   staff    ]],
-            [['details', {'pk': self.ppriv}],            [all_this  ,     all_this       , all_this     ,   all_this ]],
-            [['copy', {'pk': self.ppriv}],               [all_this  ,     all_this       , all_this     ,   all_this ]],
-            [['upgradestatus', {'pk': self.p}],          [all_this  ,     no_assistant   , trackhead    ,   forbidden]],
-            [['downgradestatusmessage', {'pk': self.p}], [forbidden ,     all_this       , no_assistant ,   trackhead]],
-            [['deleteproposal', {'pk': self.p}],         [forbidden ,     forbidden      , forbidden    ,   forbidden]],
-            [['askdeleteproposal', {'pk': self.p}],      [support   ,     support        , forbidden    ,   forbidden]],
-            [['sharelink', {'pk': self.p}],              [all_this  ,     all_this       , trackhead    ,   support  ]],
+            [['addfile', {'ty': 'i', 'pk': s.p}],     [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['addfile', {'ty': 'a', 'pk': s.p}],     [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['editfile', {'ty': 'i', 'pk': s.p}],    [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['editfile', {'ty': 'a', 'pk': s.p}],    [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['edit', {'pk': s.p}],                   [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['copy', {'pk': s.p}],                   [s.p_all_this  ,     s.p_all_this       , s.p_all_this     ,   s.p_staff_prop    ]],
+            [['details', {'pk': s.p}],                [s.p_all_this_view,       s.p_all_this_view       , s.p_all_this_view     ,   s.p_staff    ]],
+            [['details', {'pk': s.ppriv}],            [s.p_all_this_view,       s.p_all_this_view       , s.p_all_this_view     ,   s.p_all_this_view ]],
+            [['copy', {'pk': s.ppriv}],               [s.p_all_this  ,     s.p_all_this       , s.p_all_this     ,   s.p_all_this ]],
+            [['upgradestatus', {'pk': s.p}],          [s.p_all_this  ,     s.p_no_assistant   , s.p_trackhead    ,   s.p_forbidden]],
+            [['downgradestatusmessage', {'pk': s.p}], [s.p_forbidden ,     s.p_all_this       , s.p_no_assistant ,   s.p_trackhead]],
+            [['deleteproposal', {'pk': s.p}],         [s.p_forbidden ,     s.p_forbidden      , s.p_forbidden    ,   s.p_forbidden]],
+            [['askdeleteproposal', {'pk': s.p}],      [s.p_support   ,     s.p_support        , s.p_forbidden    ,   s.p_forbidden]],
+            [['sharelink', {'pk': s.p}],              [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
         ]
         code_phase2 = [
-            [['addfile', {'ty': 'i', 'pk': self.p}],     [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['addfile', {'ty': 'a', 'pk': self.p}],     [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['editfile', {'ty': 'i', 'pk': self.p}],    [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['editfile', {'ty': 'a', 'pk': self.p}],    [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['edit', {'pk': self.p}],                   [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['copy', {'pk': self.p}],                   [all_this  ,     all_this       , all_this    ,   staff  ]],
-            [['details', {'pk': self.p}],                [all_this  ,     all_this       , all_this     ,   staff    ]],
-            [['details', {'pk': self.ppriv}],            [all_this  ,     all_this       , all_this     ,   all_this ]],
-            [['copy', {'pk': self.ppriv}],               [all_this  ,     all_this       , all_this     ,   all_this ]],
-            [['upgradestatus', {'pk': self.p}],          [all_this  ,     no_assistant   , trackhead    ,   forbidden]],
-            [['downgradestatusmessage', {'pk': self.p}], [forbidden ,     all_this       , trackhead    ,   trackhead]],
-            [['deleteproposal', {'pk': self.p}],         [forbidden ,     forbidden      , forbidden    ,   forbidden]],
-            [['askdeleteproposal', {'pk': self.p}],      [support   ,     support        , forbidden    ,   forbidden]],
-            [['sharelink', {'pk': self.p}],              [all_this  ,     all_this       , trackhead    ,   support  ]],
+            [['addfile', {'ty': 'i', 'pk': s.p}],     [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['addfile', {'ty': 'a', 'pk': s.p}],     [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['editfile', {'ty': 'i', 'pk': s.p}],    [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['editfile', {'ty': 'a', 'pk': s.p}],    [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['edit', {'pk': s.p}],                   [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['copy', {'pk': s.p}],                   [s.p_all_this  ,     s.p_all_this       , s.p_all_this    ,   s.p_staff_prop  ]],
+            [['details', {'pk': s.p}],                [s.p_all_this_view  ,     s.p_all_this_view       , s.p_all_this_view     ,   s.p_staff    ]],
+            [['details', {'pk': s.ppriv}],            [s.p_all_this_view  ,     s.p_all_this_view       , s.p_all_this_view     ,   s.p_all_this_view ]],
+            [['copy', {'pk': s.ppriv}],               [s.p_all_this  ,     s.p_all_this       , s.p_all_this     ,   s.p_all_this ]],
+            [['upgradestatus', {'pk': s.p}],          [s.p_all_this  ,     s.p_no_assistant   , s.p_trackhead    ,   s.p_forbidden]],
+            [['downgradestatusmessage', {'pk': s.p}], [s.p_forbidden ,     s.p_all_this       , s.p_trackhead    ,   s.p_trackhead]],
+            [['deleteproposal', {'pk': s.p}],         [s.p_forbidden ,     s.p_forbidden      , s.p_forbidden    ,   s.p_forbidden]],
+            [['askdeleteproposal', {'pk': s.p}],      [s.p_support   ,     s.p_support        , s.p_forbidden    ,   s.p_forbidden]],
+            [['sharelink', {'pk': s.p}],              [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
         ]
         # TimePhase 3 and later
         code_phase34567 = [
-            [['addfile', {'ty': 'i', 'pk': self.p}],     [support       , support         ,support        , support  ]],
-            [['addfile', {'ty': 'a', 'pk': self.p}],     [support       , support         ,support        , support  ]],
-            [['editfile', {'ty': 'i', 'pk': self.p}],    [support       , support         ,support        , support  ]],
-            [['editfile', {'ty': 'a', 'pk': self.p}],    [support       , support         ,support        , support  ]],
-            [['edit', {'pk': self.p}],                   [support       , support         ,support        , support  ]],
-            [['copy', {'pk': self.p}],                   [all_this       , all_this       ,all_this       , staff  ]],
-            [['details', {'pk': self.p}],                [all_this      , all_this        ,all_this       , allowed  ]],
-            [['details', {'pk': self.ppriv}],            [all_this      , all_this        ,all_this       , private  ]],
-            [['copy', {'pk': self.ppriv}],               [all_this      , all_this        ,all_this       , all_this  ]],
-            [['upgradestatus', {'pk': self.p}],          [support       , support         ,support        , forbidden]],
-            [['downgradestatusmessage', {'pk': self.p}], [forbidden     , support         ,support        , support  ]],
-            [['deleteproposal', {'pk': self.p}],         [forbidden     , forbidden       ,forbidden      , forbidden]],
-            [['askdeleteproposal', {'pk': self.p}],      [support       , support         ,forbidden      , forbidden]],
-            [['sharelink', {'pk': self.p}],              [support       , support         ,support        , support  ]],
+            [['addfile', {'ty': 'i', 'pk': s.p}],     [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],
+            [['addfile', {'ty': 'a', 'pk': s.p}],     [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],
+            [['editfile', {'ty': 'i', 'pk': s.p}],    [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],
+            [['editfile', {'ty': 'a', 'pk': s.p}],    [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],
+            [['edit', {'pk': s.p}],                   [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],
+            [['copy', {'pk': s.p}],                   [s.p_all_this       , s.p_all_this       ,s.p_all_this       , s.p_staff_prop  ]],
+            [['details', {'pk': s.p}],                [s.p_all_this_view      , s.p_all_this_view        ,s.p_all_this_view       , s.p_allowed  ]],
+            [['details', {'pk': s.ppriv}],            [s.p_all_this_view      , s.p_all_this_view        ,s.p_all_this_view       , s.p_private  ]],
+            [['copy', {'pk': s.ppriv}],               [s.p_all_this      , s.p_all_this        ,s.p_all_this       , s.p_all_this  ]],
+            [['upgradestatus', {'pk': s.p}],          [s.p_support       , s.p_support         ,s.p_support        , s.p_forbidden]],
+            [['downgradestatusmessage', {'pk': s.p}], [s.p_forbidden     , s.p_support         ,s.p_support        , s.p_support  ]],
+            [['deleteproposal', {'pk': s.p}],         [s.p_forbidden     , s.p_forbidden       ,s.p_forbidden      , s.p_forbidden]],
+            [['askdeleteproposal', {'pk': s.p}],      [s.p_support       , s.p_support         ,s.p_forbidden      , s.p_forbidden]],
+            [['sharelink', {'pk': s.p}],              [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],
         ]
         code_next_ts = [
-            [['addfile', {'ty': 'i', 'pk': self.p}],     [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['addfile', {'ty': 'a', 'pk': self.p}],     [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['editfile', {'ty': 'i', 'pk': self.p}],    [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['editfile', {'ty': 'a', 'pk': self.p}],    [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['edit', {'pk': self.p}],                   [all_this  ,     all_this       , trackhead    ,   support  ]],
-            [['copy', {'pk': self.p}],                   [all_this  ,     all_this       , all_this     ,   staff  ]],
-            [['details', {'pk': self.p}],                [all_this  ,     all_this       , all_this     ,   staff    ]],
-            [['details', {'pk': self.ppriv}],            [all_this  ,     all_this       , all_this     ,   all_this ]],
-            [['copy', {'pk': self.ppriv}],               [all_this  ,     all_this       , all_this     ,   all_this ]],
-            [['upgradestatus', {'pk': self.p}],          [all_this  ,     no_assistant   , forbidden    ,   forbidden]],
-            [['downgradestatusmessage', {'pk': self.p}], [forbidden ,     all_this       , no_assistant ,   trackhead]],
-            [['deleteproposal', {'pk': self.p}],         [forbidden ,     forbidden      , forbidden    ,   forbidden]],
-            [['askdeleteproposal', {'pk': self.p}],      [support   ,     support        , forbidden    ,   forbidden]],
-            [['sharelink', {'pk': self.p}],              [all_this  ,     all_this       , trackhead    ,   support  ]],
+            [['addfile', {'ty': 'i', 'pk': s.p}],     [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['addfile', {'ty': 'a', 'pk': s.p}],     [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['editfile', {'ty': 'i', 'pk': s.p}],    [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['editfile', {'ty': 'a', 'pk': s.p}],    [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['edit', {'pk': s.p}],                   [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
+            [['copy', {'pk': s.p}],                   [s.p_all_this  ,     s.p_all_this       , s.p_all_this     ,   s.p_staff_prop  ]],
+            [['details', {'pk': s.p}],                [s.p_all_this_view  ,     s.p_all_this_view       , s.p_all_this_view     ,   s.p_staff    ]],
+            [['details', {'pk': s.ppriv}],            [s.p_all_this_view  ,     s.p_all_this_view       , s.p_all_this_view     ,   s.p_all_this_view ]],
+            [['copy', {'pk': s.ppriv}],               [s.p_all_this  ,     s.p_all_this       , s.p_all_this     ,   s.p_all_this ]],
+            [['upgradestatus', {'pk': s.p}],          [s.p_all_this  ,     s.p_no_assistant   , s.p_forbidden    ,   s.p_forbidden]],
+            [['downgradestatusmessage', {'pk': s.p}], [s.p_forbidden ,     s.p_all_this       , s.p_no_assistant ,   s.p_trackhead]],
+            [['deleteproposal', {'pk': s.p}],         [s.p_forbidden ,     s.p_forbidden      , s.p_forbidden    ,   s.p_forbidden]],
+            [['askdeleteproposal', {'pk': s.p}],      [s.p_support   ,     s.p_support        , s.p_forbidden    ,   s.p_forbidden]],
+            [['sharelink', {'pk': s.p}],              [s.p_all_this  ,     s.p_all_this       , s.p_trackhead    ,   s.p_support  ]],
         ]
         code_prev_ts = [
-            [['addfile', {'ty': 'i', 'pk': self.p}],     [forbidden       , forbidden         ,forbidden        , forbidden  ]],
-            [['addfile', {'ty': 'a', 'pk': self.p}],     [forbidden       , forbidden         ,forbidden        , forbidden  ]],
-            [['editfile', {'ty': 'i', 'pk': self.p}],    [forbidden       , forbidden         ,forbidden        , forbidden  ]],
-            [['editfile', {'ty': 'a', 'pk': self.p}],    [forbidden       , forbidden         ,forbidden        , forbidden  ]],
-            [['edit', {'pk': self.p}],                   [forbidden       , forbidden         ,forbidden        , forbidden  ]],
-            [['copy', {'pk': self.p}],                   [all_this        , all_this          ,all_this         , staff  ]],
-            [['details', {'pk': self.p}],                [all_this        , all_this          ,all_this         , staff  ]],
-            [['details', {'pk': self.ppriv}],            [all_this        , all_this          ,all_this         , all_this  ]],
-            [['copy', {'pk': self.ppriv}],               [all_this        , all_this          ,all_this         , all_this  ]],
-            [['upgradestatus', {'pk': self.p}],          [forbidden       , forbidden         ,forbidden        , forbidden]],
-            [['downgradestatusmessage', {'pk': self.p}], [forbidden       , forbidden         ,forbidden        , forbidden  ]],
-            [['deleteproposal', {'pk': self.p}],         [forbidden       , forbidden         ,forbidden        , forbidden]],
-            [['askdeleteproposal', {'pk': self.p}],      [support         , support           ,forbidden        , forbidden]],
-            [['sharelink', {'pk': self.p}],              [forbidden       , forbidden         ,forbidden        , forbidden  ]],
+            [['addfile', {'ty': 'i', 'pk': s.p}],     [s.p_forbidden       , s.p_forbidden         ,s.p_forbidden        , s.p_forbidden  ]],
+            [['addfile', {'ty': 'a', 'pk': s.p}],     [s.p_forbidden       , s.p_forbidden         ,s.p_forbidden        , s.p_forbidden  ]],
+            [['editfile', {'ty': 'i', 'pk': s.p}],    [s.p_forbidden       , s.p_forbidden         ,s.p_forbidden        , s.p_forbidden  ]],
+            [['editfile', {'ty': 'a', 'pk': s.p}],    [s.p_forbidden       , s.p_forbidden         ,s.p_forbidden        , s.p_forbidden  ]],
+            [['edit', {'pk': s.p}],                   [s.p_forbidden       , s.p_forbidden         ,s.p_forbidden        , s.p_forbidden  ]],
+            [['copy', {'pk': s.p}],                   [s.p_all_this        , s.p_all_this          ,s.p_all_this         , s.p_staff_prop  ]],
+            [['details', {'pk': s.p}],                [s.p_all_this_view        , s.p_all_this_view          ,s.p_all_this_view         , s.p_staff ]],
+            [['details', {'pk': s.ppriv}],            [s.p_all_this_view        , s.p_all_this_view          ,s.p_all_this_view         , s.p_all_this_view  ]],
+            [['copy', {'pk': s.ppriv}],               [s.p_all_this        , s.p_all_this          ,s.p_all_this         , s.p_all_this  ]],
+            [['upgradestatus', {'pk': s.p}],          [s.p_forbidden       , s.p_forbidden         ,s.p_forbidden        , s.p_forbidden]],
+            [['downgradestatusmessage', {'pk': s.p}], [s.p_forbidden       , s.p_forbidden         ,s.p_forbidden        , s.p_forbidden  ]],
+            [['deleteproposal', {'pk': s.p}],         [s.p_forbidden       , s.p_forbidden         ,s.p_forbidden        , s.p_forbidden]],
+            [['askdeleteproposal', {'pk': s.p}],      [s.p_support         , s.p_support           ,s.p_forbidden        , s.p_forbidden]],
+            [['sharelink', {'pk': s.p}],              [s.p_forbidden       , s.p_forbidden         ,s.p_forbidden        , s.p_forbidden  ]],
         ]
-        self.status = 1
-        # info object with debug info if assertion fails
-        info = {}
+        s.status = 1
         # not logged in users. Ignore status, only use the views column of permission matrix.
         # Status should be 302 always.
-        if self.debug:
-            print("not logged in users")
-        info['type'] = 'not logged in'
+        self.info['type'] = 'not logged in'
         for page, status in code_general_phase12345:
-            self.view_test_status(app+page[0], 302)
+            s.view_test_status(reverse(self.app+':'+page[0]), 302)
         for page, status in code_general_phase67:
-            self.view_test_status(app+page[0], 302)
+            s.view_test_status(reverse(self.app+':'+page[0]), 302)
         for page, status in code_phase1:
-            self.view_test_status(app+page[0], 302, kw=page[1])
+            s.view_test_status(reverse(self.app+':'+page[0], kwargs=page[1]), 302)
 
         # Test general page (not proposal specific)
-        if self.debug:
-            print("Testing general without stats")
-        info['type'] = 'general'
-        for phase in range(1, 6):
-            self.tp.Description = phase
-            self.tp.save()
-            if self.debug:
-                print('General 1, phase {}'.format(phase))
-            info['phase'] = str(phase)
-            for page, status in code_general_phase12345:
-                self.loop_user_status(app+page[0], status, info)
-        for phase in [6, 7]:
-            self.tp.Description = phase
-            self.tp.save()
-            info['phase'] = str(phase)
-            if self.debug:
-                print('General 2, phase {}'.format(phase))
-            for page, status in code_general_phase67:
-                self.loop_user_status(app+page[0], status, info)
+        self.info['type'] = 'general'
+        self.loop_phase_user(range(1,6), code_general_phase12345)
+        self.loop_phase_user([6, 7], code_general_phase67)
 
         # Testing proposal specific pages
         # TimePhase 1
-        if self.debug:
+        if s.debug:
             print("Testing phase1")
-        info['type'] = 'proposal phase1'
-        self.tp.Description = 1
-        self.tp.save()
-        info['phase'] = str(1)
-        for page, status in code_phase1:
-            self.loop_user_status(app+page[0], status, info, page[1])
-
+        self.info['type'] = 'proposal phase1'
+        self.loop_phase_user([1], code_phase1)
         # TimePhase 2
-        if self.debug:
-            print("Testing phase 2")
-        info['type'] = 'proposal phase2'
-        self.tp.Description = 2
-        self.tp.save()
-        info['phase'] = str(2)
-        for page, status in code_phase2:
-            self.loop_user_status(app+page[0], status, info, page[1])
+        self.info['type'] = 'proposal phase2'
+        self.loop_phase_user([2], code_phase2)
         # TimePhase 3+
-        info['type'] = 'proposal phase3+'
-        if self.debug:
-            print("Testing phase34567")
-        for phase in range(3, 8):
-            self.tp.Description = phase
-            self.tp.save()
-            info['phase'] = str(phase)
-            if self.debug:
-                print('Phase {}'.format(phase))
-            for page, status in code_phase34567:
-                self.loop_user_status(app+page[0], status, info, page[1])
+        self.info['type'] = 'proposal phase34567'
+        self.loop_phase_user([3, 4, 5, 6, 7], code_phase34567)
 
         # Test proposal in next timeslot, permissions should be as a proposal in this timeslot in phase 1, except upgrading to status4
         # Change the proposal timeslot to next year
-        self.proposal.TimeSlot = self.nts
-        self.proposal.save()
-        self.privateproposal.TimeSlot = self.nts
-        self.privateproposal.save()
+        s.proposal.TimeSlot = s.nts
+        s.proposal.save()
+        s.privateproposal.TimeSlot = s.nts
+        s.privateproposal.save()
         # All phases test with permissions of phase1 of current timeslot.
-        if self.debug:
-            print("Testing all phases for next timeslot")
-        info['type'] = 'proposal next timeslot'
-        for phase in range(1, 8):
-            self.tp.Description = phase
-            self.tp.save()
-            info['phase'] = str(phase)
-            for page, status in code_next_ts:
-                self.loop_user_status(app+page[0], status, info, page[1])
+        self.info['type'] = 'proposal next timeslot'
+        self.loop_phase_user(range(1, 8), code_next_ts)
 
         # Test proposal in previous timeslot, permissions locked
         # Change the proposal timeslot to next year
-        self.proposal.TimeSlot = self.pts
-        self.proposal.save()
-        self.privateproposal.TimeSlot = self.pts
-        self.privateproposal.save()
+        s.proposal.TimeSlot = s.pts
+        s.proposal.save()
+        s.privateproposal.TimeSlot = s.pts
+        s.privateproposal.save()
         # All phases test with permissions of phase1 of current timeslot.
-        if self.debug:
-            print("Testing all phases for previous timeslot")
-        info['type'] = 'proposal previous timeslot'
-        for phase in range(1, 8):
-            self.tp.Description = phase
-            self.tp.save()
-            info['phase'] = str(phase)
-            for page, status in code_prev_ts:
-                self.loop_user_status(app+page[0], status, info, page[1])
+        self.info['type'] = 'proposal previous timeslot'
+        self.loop_phase_user(range(1, 8), code_prev_ts)
 
+        # make sure all urls of this app are tested.
+        self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")
 
-    def test_apply_buttons(self):
+    def test_apply_buttons(s):
         """
         Test if the apply/retract buttons show at the right time
 
         :return:
         """
-        self.setup()
-        self.status = 4
-        self.proposal.Status = 4
-        self.privateproposal.Status = 4
-        self.privateproposal.save()
-        self.proposal.save()
-        self.tp.Description = 3
-        self.tp.save()
-        if self.debug:
+        s.status = 4
+        s.proposal.Status = 4
+        s.privateproposal.Status = 4
+        s.privateproposal.save()
+        s.proposal.save()
+        s.tp.Description = 3
+        s.tp.save()
+        if s.debug:
             print("Testing apply buttons for student")
 
         user = User.objects.get(username='r-s')
-        self.client.login_user(user)
+        s.client.force_login(user)
         view = "proposals:details"
 
-        if self.debug:
+        if s.debug:
             print("Test apply")
         txta = "Apply</a>"
-        response = self.client.get(reverse(view, kwargs={"pk": self.p}))
-        self.assertContains(response, txta)
+        response = s.client.get(reverse(view, kwargs={"pk": s.p}))
+        s.assertContains(response, txta)
 
-        if self.debug:
+        if s.debug:
             print("Test retract")
-        a = Application(Student=user, Proposal=self.proposal, Priority=1)
+        a = Application(Student=user, Proposal=s.proposal, Priority=1)
         a.save()
         txtr = "Retract Application</a>"
-        response = self.client.get(reverse(view, kwargs={"pk": self.p}))
-        self.assertContains(response, txtr)
+        response = s.client.get(reverse(view, kwargs={"pk": s.p}))
+        s.assertContains(response, txtr)
 
-        if self.debug:
+        if s.debug:
             print("Test private")
-        self.client.logout_user(user)
+        s.client.logout()
         user = User.objects.get(username='t-p')
-        self.client.login_user(user)
-        response = self.client.get(reverse(view, kwargs={"pk": self.ppriv}))
-        self.assertNotContains(response, txta)
-        self.assertNotContains(response, txtr)
-        self.client.logout_user(user)
+        s.client.force_login(user)
+        response = s.client.get(reverse(view, kwargs={"pk": s.ppriv}))
+        s.assertNotContains(response, txta)
+        s.assertNotContains(response, txtr)
+        s.client.logout()
 
-
-    def test_links_visible(self):
+    def test_links_visible(s):
         """
         Test if the visible buttons do return a 200
 
         :return:
         """
-        self.setup()
-        self.proposal.Status = 4
-        self.privateproposal.Status = 4
-        self.status = 4
-        self.proposal.save()
-        self.privateproposal.save()
+        s.proposal.Status = 4
+        s.privateproposal.Status = 4
+        s.status = 4
+        s.proposal.save()
+        s.privateproposal.save()
 
         # only test last timephase
-        self.tp.Description = 7
-        self.tp.save()
+        s.tp.Description = 7
+        s.tp.save()
 
         # assistants will all be verified
-        self.usernames.remove('t-u')
+        s.usernames.remove('t-u')
 
         # Distribute the student, such that professionalskills files becomes available.
-        d = Distribution(Proposal=Proposal.objects.get(id=1), Student=self.users.get('r-s'), Timeslot=self.ts)
+        d = Distribution(Proposal=Proposal.objects.get(id=1), Student=s.users.get('r-s'), Timeslot=s.ts)
         d.save()
-        dp = Distribution(Proposal=Proposal.objects.get(id=2), Student=self.users.get('t-p'), Timeslot=self.ts)
+        dp = Distribution(Proposal=Proposal.objects.get(id=2), Student=s.users.get('t-p'), Timeslot=s.ts)
         dp.save()
-        if self.debug:
+        if s.debug:
             print("Testing all links for users")
 
         view = "proposals:details"
 
-        for username in self.usernames:
-            u = User.objects.get(username=username)
-            if self.debug:
-                print("user {}".format(username))
-            ViewsTest.links_in_view_test(self, u, reverse(view, kwargs={"pk": self.proposal.id}))
+        ViewsTest.links_in_view_test(s, reverse(view, kwargs={"pk": s.proposal.id}))

@@ -81,7 +81,7 @@ def ProposalFiles(request, fileid, proposalid=None, ty=None):
 
 
 @login_required
-def StudentFiles(request, fileid, distid=None ):
+def StudentFiles(request, fileid, distid='' ):
     """
     Student file, uploaded by student as professionalskill. Model in students-app
     Type3 and 4 (support and profskill) staff can see all studentfiles.

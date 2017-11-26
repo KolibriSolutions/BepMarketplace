@@ -1,3 +1,6 @@
+"""
+Excel export functions, for various excel lists. Called from specific views.
+"""
 from datetime import datetime
 
 from django.db.models import Count, Sum
@@ -148,6 +151,11 @@ def listStaffXls(staff):
     :return: 
     """
     def nint(nr):
+        """
+
+        :param nr:
+        :return:
+        """
         if nr is None:
             return 0
         else:

@@ -5,7 +5,16 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import reverse
 
 class TermsMiddleware(MiddlewareMixin):
+    """
+    Middleware to check if the user has accepted the terms of use.
+    Shows index:termsaccept if the terms are not yet accepted.
+    """
     def process_request(self, request):
+        """
+
+        :param request:
+        :return:
+        """
         try:
             user = request.user
         except:

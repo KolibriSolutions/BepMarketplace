@@ -13,3 +13,4 @@ Code
     views
     forms
     models
+    middleware

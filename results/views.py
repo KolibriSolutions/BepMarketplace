@@ -11,10 +11,10 @@ from BepMarketplace.decorators import group_required, get_object_or_404
 from BepMarketplace.decorators import phase7_only
 from general_view import get_timeslot
 from .forms import *
+from django.core.exceptions import PermissionDenied
 
-
-@phase7_only
 @group_required('type1staff', 'type3staff')
+@phase7_only
 def gradeFinalize(request, pk, version=0):
     """
     Finalize the grades and print. Only for trackheads.
@@ -25,12 +25,9 @@ def gradeFinalize(request, pk, version=0):
     :return: 
     """
     dstr = get_object_or_404(Distribution, pk=pk)
-    if not request.user.is_superuser:
-        if request.user != dstr.Proposal.Track.Head:
-            return render(request, "base.html", status=403, context={
-                        "Message" : "You are not the correct owner of this distribution."
-                                    " Grades can only be finalized by track heads."
-                    })
+    if not request.user.is_superuser and request.user != dstr.Proposal.Track.Head:
+            raise PermissionDenied("You are not the correct owner of this distribution."\
+                                     " Grades can only be finalized by track heads.")
 
     vals = [cat.is_valid() for cat in dstr.results.all()]
     if dstr.results.count() < GradeCategory.objects.filter(TimeSlot=get_timeslot()).count() or not all(val is True for val in vals):
@@ -78,8 +75,8 @@ def gradeFinalize(request, pk, version=0):
         return response
 
 
-@phase7_only
 @group_required('type1staff', 'type3staff')
+@phase7_only
 def gradeFormStaff(request, pk, step=0):
     """
     Edit grade for a category as indexed by step. For each student as given by pk.
@@ -91,12 +88,9 @@ def gradeFormStaff(request, pk, step=0):
     :return: 
     """
     dstr = get_object_or_404(Distribution, pk=pk)
-    if not request.user.is_superuser:
-        if request.user != dstr.Proposal.Track.Head:
-            return render(request, "base.html", status=403, context={
-                        "Message" : "You are not the correct owner of this distribution. Only track heads can edit grades."
-                    })
-
+    if not request.user.is_superuser and request.user != dstr.Proposal.Track.Head:
+        raise PermissionDenied("You are not the correct owner of this distribution. "
+                               "Only track heads can edit grades.")
 
     cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
     numcategories = len(cats)

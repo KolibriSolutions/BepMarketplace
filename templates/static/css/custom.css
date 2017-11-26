@@ -1,6 +1,7 @@
 /*Extra spacing for inline images*/
 [class*=" mif-"], [class^="mif-"] {
     transform: translate(-2px, 0);
+    margin-top: -6px;
 }
 
 html, body {

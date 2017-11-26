@@ -30,6 +30,7 @@ def listProposals(request):
     :param request:
     :return:
     """
+
     bodyhtml = cache.get('listproposalsbodyhtml')
     if bodyhtml is None:
         proposals = get_all_proposals().filter(Q(Status=4) & Q(Private=None))
@@ -450,6 +451,12 @@ def getShareLink(request, pk):
 
 
 def truncatestring(data, trunlen=10):
+    """
+
+    :param data:
+    :param trunlen:
+    :return:
+    """
     return (data[:trunlen] + '..') if len(data) > trunlen else data
 
 

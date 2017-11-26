@@ -1,3 +1,6 @@
+"""
+General functions, mostly used in forms (forms.py)
+"""
 from django import forms
 from django.conf import settings
 from django.forms import ValidationError
@@ -43,9 +46,18 @@ class FileForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
     def clean_File(self):
+        """
+
+        :return:
+        """
         return clean_file_default(self)
 
     def save(self, commit=True):
+        """
+
+        :param commit:
+        :return:
+        """
         instance = super().save(commit=False)
         if 'File' in self.changed_data:
             instance.OriginalName = instance.File.name

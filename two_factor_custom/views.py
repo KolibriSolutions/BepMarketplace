@@ -17,9 +17,16 @@ class TwoFactorLoginView(LoginView):
     )
 
     def done(self, form_list, **kwargs):
+        """
+
+        :param form_list:
+        :param kwargs:
+        :return:
+        """
         returnto = super().done(form_list, **kwargs)
         user = self.get_user()
         if Group.objects.get(name="type3staff") not in user.groups.all():
+            # this won't happen as all but superusers will use saml login.
             log = UserLogin()
             log.Subject = user
             log.Page = '/'

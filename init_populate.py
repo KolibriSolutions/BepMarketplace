@@ -1,9 +1,12 @@
+"""
+Initialy populate an empty django database with the required groups, and possibly dummy data for testing.
+
+"""
 import os
 import django
 import argparse
 import sys
 
-# Initialy populate an empty django database with the required groups, and possibly dummy data for testing.
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Populate the database with initial values")
@@ -217,6 +220,11 @@ if __name__=="__main__":
             print("no track created")
 
     def flip(x):
+        """
+
+        :param x:
+        :return:
+        """
         return True if random.random() < x else False
 
     print("creating proposals")

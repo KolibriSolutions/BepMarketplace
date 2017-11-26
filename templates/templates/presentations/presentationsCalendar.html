@@ -2,7 +2,7 @@
 {% load custom_filters %}
 {% load staticfiles %}
 {% block stylesheets %}
-    <link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.2.0/fullcalendar.min.css" rel="stylesheet">
+    <link href="{% static 'css/fullcalendar.min.css'%}" rel="stylesheet">
     <!--<link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.2.0/fullcalendar.print.css" rel="stylesheet"> Only for printing-->
     <style>
         span.dialog-head {
@@ -52,7 +52,7 @@
 {% block scripts %}
     {{ block.super }}
     <script src="{% static "js/moment.js" %}"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.2.0/fullcalendar.min.js"></script>
+    <script src="{% static 'js/fullcalendar.min.js'%}"></script>
 
     <script type="text/javascript">
         function formatDate(date) {

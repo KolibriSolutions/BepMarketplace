@@ -18,3 +18,4 @@ templates/static/admin/*
 templates/static/channels/*
 BepMarketplace/secret.py
 telemetry_cli/telemetry_key.py
+*.lock

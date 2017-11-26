@@ -43,6 +43,9 @@ def distributeApi(request):
     :param request:
     :return:
     """
+    if get_timephase_number() < 4 or get_timephase_number() > 5:
+        raise PermissionDenied("Distribution is not possible in this timephase")
+
     if request.method == 'POST':
         try:
             student = get_all_students().get(pk=request.POST["student"])
@@ -81,6 +84,9 @@ def undistributeApi(request):
     :param request:
     :return:
     """
+    if get_timephase_number() < 4 or get_timephase_number() > 5:
+        raise PermissionDenied("Distribution is not possible in this timephase")
+
     if request.method == 'POST':
         try:
             student = get_all_students().get(pk=request.POST["student"])
@@ -105,6 +111,9 @@ def changeDistributeApi(request):
     :param request:
     :return:
     """
+    if get_timephase_number() < 4 or get_timephase_number() > 5:
+        raise PermissionDenied("Distribution is not possible in this timephase")
+
     if request.method == 'POST':
         try:
             student = get_all_students().get(pk=request.POST["student"])
@@ -140,10 +149,10 @@ def mailDistributions(request):
     :param request:
     :return:
     """
-    if get_timephase_number() != 4:
-        return render(request, 'base.html', {
-            'Message' : 'Wrong timephase!',
-        })
+    if get_timephase_number() < 4 or get_timephase_number() > 5:
+        # mailing is possible in phase 4 or 5
+        raise PermissionDenied("Mailing distributions is not possible in this timephase")
+
     if request.method == "POST":
         form = ConfirmForm(request.POST)
         if form.is_valid():
@@ -219,7 +228,7 @@ def proposalOfDistribution(request, dtype):
     :return:
     """
     if get_timephase_number() < 4 or get_timephase_number() > 5:
-        return render(request, "base.html", {"Message": "Distribution is not possible in this timephase"})
+        raise PermissionDenied("Distribution is not possible in this timephase")
 
     dists = []
     if request.method == "POST":

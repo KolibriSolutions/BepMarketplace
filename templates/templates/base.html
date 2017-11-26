@@ -68,33 +68,42 @@
                             </ul>
                         </li>
                         {% if user|has_group:"type3staff" %}
-                            {% if phasenumber > 2 and phasenumber < 5 %}
-                                <li>
-                                    <a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Distribution</a>
-                                    <ul class="d-menu" data-role="dropdown">
-                                        {% if phasenumber == 4 %}
-                                            <li>
-                                                <a href="#" class="dropdown-toggle">Distribute Automatically</a>
-                                                <ul class="d-menu" data-role="dropdown">
-                                                    <li><a href="{% url 'distributions:distributeproposal' 1 %}">Old
-                                                        Way</a>
-                                                    </li>
-                                                    <li><a href="{% url 'distributions:distributeproposal' 2 %}">New
-                                                        Way</a>
-                                                    </li>
-                                                </ul>
-                                            </li>
+                            {% if phasenumber > 2 %}
+                                {# phase 1 and 2 do not have any distributions #}
+                                {% if phasenumber == 4 or phasenumber == 5 %}
+                                    {# actual distributions are possible in phase 4 and 5 #}
+                                    <li>
+                                        <a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Distribution</a>
+                                        <ul class="d-menu" data-role="dropdown">
+                                            {% if phasenumber == 4 %}
+                                                {# phase 4 show automatic distribution menu#}
+                                                <li>
+                                                    <a href="#" class="dropdown-toggle">Distribute Automatically</a>
+                                                    <ul class="d-menu" data-role="dropdown">
+                                                        <li><a href="{% url 'distributions:distributeproposal' 1 %}">Old
+                                                            Way</a>
+                                                        </li>
+                                                        <li><a href="{% url 'distributions:distributeproposal' 2 %}">New
+                                                            Way</a>
+                                                        </li>
+                                                    </ul>
+                                                </li>
+                                            {% endif %}
+                                                {# phase 4 and 5 show manual distribution button #}
                                             <li><a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
-                                                Manually</a></li>
-                                        {% endif %}
-                                        <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">List
-                                            all</a></li>
-                                    </ul>
-                                </li>
-                            {% else %}
-                                <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">
-                                    <span class="mif-mail-read icon"></span>Distributions</a>
-                                </li>
+                                                    Manually</a></li>
+                                            <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">List
+                                                all</a></li>
+                                        </ul>
+                                    </li>
+                                {% else %}
+                                    {# show simple list applications/distributions button in phase 3, 6 and 7 #}
+                                    <li>
+                                        <a href="{% url 'support:SupportListApplicationsDistributions' %}">
+                                        <span class="mif-mail-read icon"></span>{% if phasenumber == 3 %}Applications{% else %}Distributions{% endif %}
+                                        </a>
+                                    </li>
+                                {% endif %}
                             {% endif %}
                             {% if phasenumber > 4 %}
                                 <li>
@@ -171,16 +180,18 @@
                             </li>
                         {% endif %}
                     {% elif user|has_group:"type4staff" %}
-                        <li><a href="{% url 'support:listgroupproposals' %}">My group proposals</a></li>
-                    {% else %}
+                        <li><a href="{% url 'support:listgroupproposals' %}"><span class="mif-mail-read icon"></span>My group proposals</a></li>
+                    {% elif user|has_group:"type5staff" %}
+                        <li><a href="{% url 'support:listproposalsadvisor' %}"><span class="mif-mail-read icon"></span>All proposals</a></li>
+                    {% else %} {# students and type 5/6 staff #}
                         <li><a href="{% url 'proposals:list' %}"><span class="mif-mail-read icon"></span>Proposals</a>
                         </li>
-                        {% if not user|has_group:'type5staff' %}
+                        {% if not user.groups.exists and phasenumber > 2 %} {# students only #}
                             {% if phasenumber < 5 %}
                                 <li><a href="{% url 'students:listapplications' %}"><span
                                         class="mif-stack2 icon"></span>Applications</a></li>
                             {% endif %}
-                            {% if phasenumber > 5 %}
+                            {% if phasenumber > 5 and user.distributions.exists %}
                                 <li>
                                     <a href="" class="dropdown-toggle"><span
                                             class="mif-files-empty icon"></span>Files</a>
@@ -190,7 +201,7 @@
                                         <li><a href="{% url 'students:editfiles' %}">Edit files</a></li>
                                     </ul>
                                 </li>
-                                <li><!--for students-->
+                                <li>
                                     <a href="{% url 'presentations:presentationscalendar' %}"><span
                                             class="mif-file-powerpoint icon"></span>Presentations</a>
                                 </li>
@@ -331,7 +342,7 @@
                         {% endif %}
 
                         {% if phasenumber > 4 %}
-                            {% if user.distributions.count %}
+                            {% if user.distributions.exists %}
                                 {# only students #}
                                 {% GetDistribution user %}
                                 {% if phasenumber == 5 %}

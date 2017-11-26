@@ -1,3 +1,6 @@
+"""
+General functions that are mostly used in views (views.py).
+"""
 from datetime import datetime
 
 from django.contrib.auth.models import Group, User
@@ -18,10 +21,10 @@ def createShareLink(request, pk):
     """
     Create a share link for a proposal detail page.
     Used to let unauthenticated users view a proposal, possibly before the proposal is public.
-    
-    :param request: 
+
+    :param request:
     :param pk: pk of the proposal to get a link for.
-    :return: 
+    :return:
     """
     current_site = get_current_site(request)
     domain = current_site.domain
@@ -51,7 +54,7 @@ def get_timephase():
     Return the current timephase. Cached for 15 minutes. If there is no timephase, it is not cached
     A timephase is a part of a timeslot.
 
-    :return: 
+    :return:
     """
     # this also gives false if the timephase is none, so if there is no timephase, it isn't cached
     tp = cache.get('timephase')
@@ -118,12 +121,15 @@ def get_all_staff():
     return User.objects.filter(groups__isnull=False)
 
 
-def get_all_proposals():
+def get_all_proposals(old=False):
     """
     All proposals in this timeslot. Cached after timephase 5.
 
     :return:
     """
+    if old:
+        return Proposal.objects.all()
+
     if get_timephase_number() > 5:
         p = cache.get('all_proposals_objects')
         if p:

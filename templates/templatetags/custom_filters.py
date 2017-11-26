@@ -17,17 +17,30 @@ register = template.Library()
 
 @register.filter(name="index")
 def index(List, i):
+    """
+
+    :param List:
+    :param i:
+    :return:
+    """
     return List[int(i)]
 
 
 @register.filter(name='has_group')
 def has_group(user, group_names):
+    """
+
+    :param user:
+    :param group_names:
+    :return:
+    """
     if user.is_superuser:
         return True
     if group_names == "any":
         if user.groups.exists():
             if Group.objects.get(name='type4staff') not in user.groups.all() and \
-                Group.objects.get(name='type5staff') not in user.groups.all():
+                Group.objects.get(name='type5staff') not in user.groups.all() and \
+                Group.objects.get(name='type6staff') not in user.groups.all():
                 return True
             if user.groups.count() > 1:
                 return True
@@ -44,6 +57,11 @@ def has_group(user, group_names):
 
 @register.filter(name='is_trackhead')
 def is_trackhead(user):
+    """
+
+    :param user:
+    :return:
+    """
     if user.is_superuser:
         return True
     if get_grouptype("1") in user.groups.all():
@@ -54,6 +72,11 @@ def is_trackhead(user):
 
 @register.simple_tag
 def getPending(user):
+    """
+
+    :param user:
+    :return:
+    """
     html = "<a href='"+reverse("proposals:pending")+"'><button class=\"button danger loading-pulse\">Pending: {}</button></a>"
     num = 0
 
@@ -70,6 +93,10 @@ def getPending(user):
 
 @register.simple_tag
 def GetPhase():
+    """
+
+    :return:
+    """
     tp = get_timephase()
     if not tp:
         return "No TimePhase Currently"
@@ -78,11 +105,19 @@ def GetPhase():
 
 @register.simple_tag
 def GetPhaseNumber():
+    """
+
+    :return:
+    """
     return get_timephase_number()
 
 
 @register.simple_tag
 def GetHash():
+    """
+
+    :return:
+    """
     try:
         with open("githash", "r") as stream:
             h = stream.readlines()[0].strip('\n')
@@ -93,6 +128,10 @@ def GetHash():
 
 @register.simple_tag
 def GetSlot():
+    """
+
+    :return:
+    """
     ts = get_timeslot()
     if not ts:
         return "No TimeSlot Currently"
@@ -101,6 +140,10 @@ def GetSlot():
 
 @register.simple_tag
 def isThereTimeslot():
+    """
+
+    :return:
+    """
     ts = get_timeslot()
     if ts is not None:
         return True
@@ -110,6 +153,11 @@ def isThereTimeslot():
 
 @register.simple_tag
 def GetBroadcast(user):
+    """
+
+    :param user:
+    :return:
+    """
     msgs = Broadcast.objects.filter((Q(DateBegin__lte=datetime.now()) | Q(DateBegin__isnull=True)) &
                              (Q(DateEnd__gte=datetime.now()) | Q(DateEnd__isnull=True)) &
                              (Q(Private=user) | Q(Private__isnull=True))
@@ -130,6 +178,11 @@ def GetBroadcast(user):
 
 @register.simple_tag
 def GetBroadcastStatus(user):
+    """
+
+    :param user:
+    :return:
+    """
     if not user.is_authenticated():
         return False
     if Broadcast.objects.filter((Q(DateBegin__lte=datetime.now()) | Q(DateBegin__isnull=True)) &
@@ -143,6 +196,11 @@ def GetBroadcastStatus(user):
 
 @register.simple_tag
 def GetDistribution(user):
+    """
+
+    :param user:
+    :return:
+    """
     if not user.is_authenticated():
         return False
     # check if student

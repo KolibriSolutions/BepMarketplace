@@ -5,5 +5,10 @@ from django.core.cache import cache
 
 @receiver(post_delete, sender=UserAcceptedTerms)
 def clearCacheTerms(sender, **kwargs):
-    print("term cache cleared")
+    """
+    Clear the cache of users that have accepted the terms.
+
+    :param sender:
+    :param kwargs:
+    """
     cache.delete('termsaccepted')

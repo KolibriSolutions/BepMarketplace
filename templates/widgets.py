@@ -113,12 +113,24 @@ class MetroFileInput(FileInput):
             return value
 
     def is_image(self, value):
+        """
+
+        :param value:
+        :return:
+        """
         if self.is_initial(value):
             if value.field.__class__.__name__ == 'ImageField':
                 return True
         return False
 
     def get_context(self, name, value, attrs):
+        """
+
+        :param name:
+        :param value:
+        :param attrs:
+        :return:
+        """
         context = super(MetroFileInput, self).get_context(name, value, attrs)
         context['widget'].update({
             'is_initial': self.is_initial(value),

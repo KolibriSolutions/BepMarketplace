@@ -1,6 +1,6 @@
-===============
-proposals.forms
-===============
+=============
+results.forms
+=============
 
 .. automodule:: results.forms
     :members:
