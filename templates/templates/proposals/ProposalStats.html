@@ -70,7 +70,8 @@
 {% endblock %}
 {% block scripts %}
     {{ block.super }}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.bundle.min.js"></script>
+    <script src="{% static 'js/Chart.bundle.min.js' %}"></script>
+    <script src="{% static "js/colors.js"%}"></script>
     <script>
     {% if step != 1 %}
         new Chart($("#mydChart"), {
@@ -80,12 +81,7 @@
                 {% autoescape off %}
                 data: {{ applications }},
                 {% endautoescape %}
-                backgroundColor: [
-                    "#FF6384",
-                    "#4BC0C0",
-                    "#FFCE56",
-                    "#36A2EB"
-                ],
+                backgroundColor: kelly_colors
             }]
         },
         type: 'doughnut',

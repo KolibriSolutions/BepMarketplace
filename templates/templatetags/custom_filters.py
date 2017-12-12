@@ -25,6 +25,10 @@ def index(List, i):
     """
     return List[int(i)]
 
+@register.filter(name='tolist')
+def tolist(object):
+    return list(object)
+
 
 @register.filter(name='has_group')
 def has_group(user, group_names):
