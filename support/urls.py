@@ -11,7 +11,7 @@ urlpatterns = [
     url(r'^mailinglist/$', views.mailinglist, name='mailinglist'),
     url(r'^mailtrackheads/$', views.mailTrackHeads, name='mailtrackheads'),
     url(r'^contentpolicyviolations/$', views.contentpolicy, name='contentpolicy'),
-    url(r'^ectsform/$', views.ECTSForm, name='ectsform'),
+    # url(r'^ectsform/$', views.ECTSForm, name='ectsform'), #deprecated due to osirisdata
     url(r'^stats/$', views.stats, name='stats'),
 
     # public files

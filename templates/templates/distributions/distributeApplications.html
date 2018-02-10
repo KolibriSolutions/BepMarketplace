@@ -26,7 +26,8 @@
 {% block scripts %}
 
     {{ block.super }}
-    <script src="{% static "js/jquery-ui.min.js" %}"></script>
+    {# jquery ui is used for the 'sortable' for the list items #}
+    <script src="{% static "js/jquery-ui.sortable.min.js" %}"></script>
     {% csrf_token %}
     <script>
         function csrfSafeMethod(method) {

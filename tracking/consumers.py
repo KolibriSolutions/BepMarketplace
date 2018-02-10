@@ -1,10 +1,10 @@
 from channels import Group
 from channels.auth import channel_session_user_from_http
-from django.contrib.auth.decorators import login_required
 from .models import TelemetryKey
 from proposals.cacheprop import getProp
 from .views import getTrack
 from django.contrib import auth
+from django.shortcuts import get_object_or_404
 
 @channel_session_user_from_http
 def connectCurrentViewnumber(message, pk):
@@ -28,6 +28,19 @@ def connectCurrentViewnumber(message, pk):
     message.reply_channel.send({'accept' : True})
     Group("viewnumber{}".format(pk)).add(message.reply_channel)
     Group("viewnumber{}".format(pk)).send({'text':str(track.UniqueVisitors.count())})
+
+@channel_session_user_from_http
+def connectTelemetryUser(message, pk):
+    if not message.user.is_superuser:
+        message.reply_channel.send({'accept' : False})
+        return
+    try:
+        target = get_object_or_404(auth.models.User, pk=pk)
+    except:
+        message.reply_channel.send({'accept' : False})
+        return
+    message.reply_channel.send({'accept' : True})
+    Group('live_{}'.format(target.username)).add(message.reply_channel)
 
 
 @channel_session_user_from_http

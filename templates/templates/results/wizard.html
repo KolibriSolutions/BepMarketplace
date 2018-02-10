@@ -75,7 +75,7 @@
     <script src="{% static "js/php-date-formatter.min.js" %}"></script>
     <script src="{% static "js/jquery.datetimepicker.full.min.js" %}"></script>
     <script src="{%  static "js/select2.min.js" %}"></script>
-    <script src="{% static "js/jquery.are-you-sure.js" %}"></script>
+    <script src="{% static "js/jquery.are-you-sure.min.js" %}"></script>
     <script type="text/javascript">
         $(function(){
             $(".select2-tag-enable").select2({
@@ -93,9 +93,5 @@
 {% endblock %}
 
 {% block stylesheets %}
-<style>
-th{
-    text-align: left;
-}
-</style>
+    <link href="{% static "css/jquery.datetimepicker.min.css" %}" rel="stylesheet">
 {% endblock %}

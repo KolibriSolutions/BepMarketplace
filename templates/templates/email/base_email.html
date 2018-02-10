@@ -2,7 +2,7 @@
 Hi!
 <br/>
 {% endblock %}
-
+<br />
 {% block body %}
 
 {% endblock %}
@@ -12,5 +12,5 @@ Kind regards,<br/>
 The {{ name }} Team<br/>
 <a href="{{ domain }}">{{ domain }}</a><br/>
 <br/>
-This email is personal and only for the intended receiver. If you think you received this message in error, please contact us at {{ email }}.<br/>
+This email is personal and only for the intended receiver. If you think you received this message in error, please contact us at <a href="mailto:{{ email }}">{{ email }}</a>.<br/>
 Do NOT reply to this email as it is a no-reply address.

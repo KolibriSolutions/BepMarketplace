@@ -194,9 +194,9 @@ if __name__=="__main__":
 
     print("creating the support user")
     try:
-        supp = User.objects.create_user('fkuijlaars', 'f.c.j.kuijlaars@tue.nl', 'marketplace')
-        supp.first_name = "Suzanne"
-        supp.last_name = "Kuijlaars"
+        supp = User.objects.create_user('janedoe', 'j.doe.1@tue.nl', 'marketplace')
+        supp.first_name = "Jane"
+        supp.last_name = "Doe"
         supp.groups.add(type3staff)
         supp.save()
     except:
@@ -204,9 +204,9 @@ if __name__=="__main__":
 
     print("creating track Head and assigning him")
     try:
-        trackh = User.objects.create_user('pbaltus', 'P.G.M.Baltus@tue.nl', 'marketplace')
-        trackh.first_name = "Peter"
-        trackh.last_name = "Baltus"
+        trackh = User.objects.create_user('johndoe', 'j.doe.2@tue.nl', 'marketplace')
+        trackh.first_name = "John"
+        trackh.last_name = "Doe"
         trackh.groups.add(type1staff)
         trackh.save()
     except:

@@ -21,7 +21,6 @@ def timestamp():
     return "{:%Y-%m-%d %H:%M:%S}".format(datetime.now())
 
 
-
 def listStudentsXls(des, typ):
     """
     Export students and their grades.

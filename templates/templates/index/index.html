@@ -345,7 +345,7 @@
                                     <a href="{% url "download:publicfile" file.id %}"
                                        class="command-button file-button" about>
                                         <span class="icon mif-file-{{ file.metro_icon }}"></span>
-                                        {% if attachment.Caption %}{{ attachment.Caption }}{% else %}Attachment
+                                        {% if file.Caption %}{{ file.Caption }}{% else %}Attachment
                                           {{ forloop.counter }}{% endif %}
                                         <small>{{ file.OriginalName }}</small>
                                     </a>

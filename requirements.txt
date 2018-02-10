@@ -1,8 +1,8 @@
 asgi_redis
 bleach
-channels
+channels<2
 daphne
-django
+django<=1.11
 django-csp
 django-htmlmin
 django-impersonate
@@ -23,3 +23,4 @@ service_identity
 Sphinx
 websocket-client
 xhtml2pdf>=0.2b1
+phonenumbers

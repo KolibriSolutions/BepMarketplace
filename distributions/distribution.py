@@ -41,10 +41,10 @@ class DistributionProposal:
         return "student {} to proposal {} with preference {}".format(self.StudentID, self.ProjectID, self.Preference)
 
 
-def getAllCohorts():
+def get_cohorts():
     """
     Get all cohorts that have students in this year.
-    
+
     :return:
     """
     cohorts = []
@@ -69,7 +69,7 @@ def getValidProposals():
 def distributePersonal(distributionList):
     """
     Distribute all students with a private proposal to the private proposal.
-    
+
     :param distributionList: List of distributions
     :return:
     """
@@ -85,7 +85,7 @@ def distributePersonal(distributionList):
 def CalculateFromProjects():
     """
     Option 2, calculated new way. Loop over proposals and find a student for it.
-    
+
     :return:
     """
     projects = list(getValidProposals())
@@ -181,7 +181,7 @@ def CalculateFromProjects():
 def CalculateFromStudent():
     """
     option1, calculated old way. Look for proposals for each student.
-    
+
     :return:
     """
     # valid students:
@@ -200,7 +200,7 @@ def CalculateFromStudent():
     autrack = Track.objects.get(Name='Automotive')
 
     # get all cohorts
-    cohorts = getAllCohorts()
+    cohorts = get_cohorts()
 
     # loop over all cohorts, take the youngest students first
     # for AU students in AU applications

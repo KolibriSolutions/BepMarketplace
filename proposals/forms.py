@@ -133,7 +133,10 @@ class ProposalForm(forms.ModelForm):
             self.fields['TimeSlot'].queryset = TimeSlot.objects.filter(End__gt=datetime.now())
             self.fields['TimeSlot'].initial = get_timeslot()
         else:
-            self.fields['TimeSlot'].queryset = TimeSlot.objects.filter(Begin__gt=datetime.now())
+            if self.request.user.is_superuser or get_grouptype("3") in self.request.user.groups.all():
+                self.fields['TimeSlot'].queryset = TimeSlot.objects.all()
+            else:
+                self.fields['TimeSlot'].queryset = TimeSlot.objects.filter(Begin__gt=datetime.now())
 
     class Meta:
         model = Proposal

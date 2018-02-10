@@ -67,7 +67,7 @@ class MetroNumberInputInteger(MetroNumberInput):
     Client side validation for integer-only input.
     """
     def __init__(self, *args, **kwargs):
-        kwargs['attrs'] = {'step': 0}
+        kwargs['attrs'] = {'step': 1}
         super(MetroNumberInputInteger, self).__init__(*args, **kwargs)
 
 

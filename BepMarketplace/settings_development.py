@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'timeline.apps.TimelineConfig',
     'tracking.apps.TrackingConfig',
     'two_factor_custom.apps.TwoFactorCustomConfig',
+    'osirisdata.apps.OsirisdataConfig',
 
     'django.contrib.admin',
     'django.contrib.admindocs',

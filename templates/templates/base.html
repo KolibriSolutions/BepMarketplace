@@ -64,6 +64,8 @@
                                             <li><a href="{% url 'proposals:stats' %}">Personal Report</a></li>
                                         </ul>
                                     </li>
+                                {% else %}
+                                    <li><a href="{% url 'support:stats' %}">Statistics</a></li>
                                 {% endif %}
                             </ul>
                         </li>
@@ -80,11 +82,9 @@
                                                 <li>
                                                     <a href="#" class="dropdown-toggle">Distribute Automatically</a>
                                                     <ul class="d-menu" data-role="dropdown">
-                                                        <li><a href="{% url 'distributions:distributeproposal' 1 %}">Old
-                                                            Way</a>
+                                                        <li><a href="{% url 'distributions:distributeproposal' 1 %}">1: By student</a>
                                                         </li>
-                                                        <li><a href="{% url 'distributions:distributeproposal' 2 %}">New
-                                                            Way</a>
+                                                        <li><a href="{% url 'distributions:distributeproposal' 2 %}">2: By project</a>
                                                         </li>
                                                     </ul>
                                                 </li>
@@ -94,6 +94,7 @@
                                                     Manually</a></li>
                                             <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">List
                                                 all</a></li>
+                                            <li><a href="{% url "distributions:secondchoice" %}">Second Choice</a> </li>
                                         </ul>
                                     </li>
                                 {% else %}
@@ -143,13 +144,20 @@
                                         </ul>
                                     </li>
                                     <li><a href="{% url 'support:mailinglist' %}">Mailing List</a></li>
+                                    <li>
+                                        <a href="#" class="dropdown-toggle">Osiris Data</a>
+                                        <ul class="d-menu" data-role="dropdown">
+                                        <li><a href="{% url 'osirisdata:list' %}">All Data</a> </li>
+                                        <li><a href="{% url 'osirisdata:tometa' %}">Rewrite Meta</a> </li>
+                                        </ul>
+                                    </li>
                                     <li><a href="{% url 'support:stats' %}">Stats</a></li>
                                     {% if phasenumber == 2 %}
                                         <li><a href="{% url 'support:mailtrackheads' %}">Mail Track Heads</a></li>
                                     {% endif %}
-                                    {% if phasenumber < 6 %}
-                                        <li><a href="{% url 'support:ectsform' %}">Students ECTS</a></li>
-                                    {% endif %}
+{#                                    {% if phasenumber < 6 %}#}
+{#                                        <li><a href="{% url 'support:ectsform' %}">Students ECTS</a></li>#}
+{#                                    {% endif %}#}
                                     {% if phasenumber < 7 %}
                                         <li><a href="{% url 'support:contentpolicy' %}">Content Policy
                                             Violations</a></li>
@@ -281,12 +289,8 @@
                             {% endautoescape %}
                         {% endif %}
                         {% if return %}
-                            {% if returnget %}
-                                <a href="{% url return returnget %}">
-                            {% else %}
-                                <a href="{% url return %}">
-                            {% endif %}
-                        <button class="button primary">Return</button></a>
+                            <a href="{% if returnget %}{% url return returnget %}{% else %}{% url return %}{% endif %}"
+                               class="button primary">Return</a>
                         {% endif %}
                     {% endblock %}
                 </div>
@@ -392,9 +396,9 @@
 
     <script src="{% static "js/jquery-3.2.1.min.js" %}"></script>
     <script src="{% static "js/datatables.min.js" %}"></script>
-    <script src="{% static "js/dataTables.responsive.min.js" %}"></script>
-    <script src="{% static "js/dataTables.buttons.min.js" %}"></script>
-    <script src="{% static "js/buttons.html5.min.js" %}"></script>
+{#    <script src="{% static "js/dataTables.responsive.min.js" %}"></script>#}
+{#    <script src="{% static "js/dataTables.buttons.min.js" %}"></script>#}
+{#    <script src="{% static "js/buttons.html5.min.js" %}"></script>#}
 
     <script src="{% static "js/MPDataTable.min.js" %}"></script>
     <script src="{% static "js/metro.min.js" %}"></script>

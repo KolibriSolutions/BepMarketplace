@@ -16,6 +16,7 @@ from general_view import get_grouptype, get_all_students
 from tracking.models import ProposalTracking
 from tracking.models import UserLogin
 from .forms import groupAdministrationForm
+from general_view import get_timeslot
 
 
 @superuser_required()
@@ -39,7 +40,7 @@ def visitorsProposalOverview(request):
     :param request:
     :return:
     """
-    props = ProposalTracking.objects.annotate(q_count=Count('UniqueVisitors')).order_by('-q_count')
+    props = ProposalTracking.objects.filter(Subject__TimeSlot=get_timeslot()).annotate(q_count=Count('UniqueVisitors')).order_by('-q_count')
 
     return render(request, 'godpowers/visitorsoverview.html', {
         'props' : props,

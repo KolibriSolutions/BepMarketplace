@@ -6,7 +6,6 @@
         <tr>
             <th>User<br/></th>
             <th>Timestamp<br/></th>
-            <th>Page<br/></th>
         </tr>
         </thead>
         <tbody>
@@ -14,7 +13,6 @@
             <tr>
                 <td><a href="mailto:{{ log.Subject.email }}">{{ log.Subject.get_full_name }}</a></td>
                 <td data-sort="{{ log.Timestamp|date:"U" }}">{{ log.Timestamp|date:'H:i d-m-Y' }}</td>
-                <td>{{ log.Page }}</td>
             </tr>
         {% endfor %}
         </tbody>
@@ -28,10 +26,12 @@
             var cols = [
                 null, //user
                 null, //time
-                null, //page
             ];
+            var options = {
+                "order": [[ 1, "desc" ]]
+            };
             var dropdownColumns = [0];
-            MPDataTable(cols, dropdownColumns);
+            MPDataTable(cols, dropdownColumns, [], [], options);
         });
     </script>
 {% endblock %}

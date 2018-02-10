@@ -15,6 +15,8 @@ from index.models import Track
 from proposals.models import Proposal
 from students.models import Distribution
 from timeline.models import TimeSlot, TimePhase
+from django.contrib.sessions.models import Session
+from django.utils import timezone
 
 
 def createShareLink(request, pk):
@@ -160,3 +162,12 @@ def get_grouptype(shortname):
         gt = Group.objects.get(name=fullname)
         cache.set("gt"+shortname, gt, settings.STATIC_OBJECT_CACHE_DURATION)
         return gt
+
+def get_sessions(user):
+    sessions = []
+    for session in Session.objects.filter(expire_date__gte=timezone.now()):
+        data = session.get_decoded()
+        if data.get('_auth_user_id', None) == str(user.id):
+            sessions.append(session)
+
+    return sessions

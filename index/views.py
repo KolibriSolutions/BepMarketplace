@@ -201,6 +201,9 @@ def feedbackSubmit(request):
             "report": feedback
         }, feedback.Reporter.email,
                   html_email_template_name="email/feedback_report_email_created.html")
+        send_mail("New Feedback report created", "email/feedback_report_admin.html", {
+            "report" : feedback
+        }, settings.CONTACT_EMAIL, html_email_template_name="email/feedback_report_admin.html")
         return render(request, "base.html", {
             "Message": "Feedback saved, thank you for taking the time to improve the system!"
         })

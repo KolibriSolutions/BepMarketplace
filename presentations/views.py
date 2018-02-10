@@ -8,10 +8,11 @@ from django.forms import modelformset_factory
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
+from htmlmin.decorators import not_minified_response
 
 import general_excel
 from BepMarketplace.decorators import group_required
-#from general_form import print_formset_errors
+# from general_form import print_formset_errors
 from general_view import get_timephase_number, get_grouptype
 from index.models import Track
 from students.models import Distribution
@@ -198,6 +199,7 @@ def presentationsPlanning(request):
     return render(request, "presentations/listPresentationsPlanning.html",{"sets": sets})
 
 
+@not_minified_response
 @login_required
 def presentationsPlanningXls(request):
     """

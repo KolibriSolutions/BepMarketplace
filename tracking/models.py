@@ -26,7 +26,6 @@ class ProposalStatusChange(models.Model):
 class UserLogin(models.Model):
     Subject = models.ForeignKey(User, on_delete=models.CASCADE, related_name='logins')
     Timestamp = models.DateTimeField(auto_now_add=True)
-    Page = models.CharField(max_length=1024)
     Twofactor = models.BooleanField(default=False)
 
     def __str__(self):

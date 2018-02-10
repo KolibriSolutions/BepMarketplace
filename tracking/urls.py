@@ -8,4 +8,5 @@ urlpatterns = [
     url(r'^applicationlist/$', views.viewTrackingApplicationList, name='applicationlist'),
     url(r'^listuserlog/$', views.listUserLog, name='listuserlog'),
     url(r'^livestreamer/$', views.liveStreamer, name='livestreamer'),
+    url(r'^userdetail/(?P<pk>[0-9]+)/$', views.userDetail, name='userdetail'),
 ]

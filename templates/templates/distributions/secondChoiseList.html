@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<h1>List of students with random distribution</h1>
+<table class="table bordered hovered striped" id="disttable">
+<thead>
+    <tr>
+        <th>Name</th>
+        <th>Cohort</th>
+        <th>ECTS</th>
+        <th>Project</th>
+    </tr>
+</thead>
+<tbody>
+    {% for dist in distributions %}
+        <tr>
+            <td><a href="mailto:{{ dist.Student.email }}">{{ dist.Student.get_full_name }}</a></td>
+            <td>{{ dist.Student.usermeta.Cohort }}</td>
+            <td>{{ dist.Student.usermeta.ECTS }}</td>
+            <td><a href="{% url "proposals:details" dist.Proposal.pk %}">{{ dist.Proposal.Title }}</a></td>
+        </tr>
+    {% endfor %}
+</tbody>
+</table>
+    <a href="{% url "distributions:deleterandoms" %}" class="button danger">Undistribute these distributions</a>
+
+<h1>List of of non full proposals</h1>
+<table class="table bordered hovered striped" id="propstable">
+<thead>
+<tr>
+    <th>Title</th>
+    <th>Responsible Teacher</th>
+    <th>Max Students</th>
+    <th>Current Students</th>
+</tr>
+</thead>
+<tbody>
+{% for prop in proposals %}
+    <tr>
+        <td><a href="{% url "proposals:details" prop.pk %}">{{ prop.Title }}</a></td>
+        <td>{{ prop.ResponsibleStaff.get_full_name }}</td>
+        <td>{{ prop.NumstudentsMax }}</td>
+        <td>{{ prop.num_distr }}</td>
+    </tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h1>Share Links</h1>
+<div style="border:1px solid black; height:500px; overflow:scroll;">
+{% for link in sharelinks %}
+    {{ link }}<br/>
+{% endfor %}
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+    <script>
+     $(document).ready(function () {
+            $('#disttable').DataTable({"pageLength": 100});
+            $('#propstable').DataTable({"pageLength": 100});
+        });
+
+    </script>
+{% endblock %}

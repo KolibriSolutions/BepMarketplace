@@ -1,10 +1,11 @@
 {% extends "email/base_email.html" %}
-{% block head %}
-Dear {{ supervisor.get_full_name }}
+
+{% block header %}
+Dear {{ supervisor.get_full_name }},<br />
 {% endblock %}
 
 {% block body %}
-Distribution of projects on the Marketplace has finished. <br/>
+Distribution of projects on the {{ name }} has finished. <br/>
 The results for you projects are listed below. If you think we made an error, please let us know <u>within a week</u>.
 <br/><br/>
 
@@ -16,11 +17,11 @@ Projects for which you are responsible:<br/>
     {% else %}
         <ul>
         {% for dist in project.distributions.all %}
-            <li><a href="mailto:{{ dist.Student.email }}">{{ dist.Student.get_full_name }}</a>({{ dist.Student.email }})</li>
+            <li><a href="mailto:{{ dist.Student.email }}">{{ dist.Student.get_full_name }}</a></li>
         {% endfor %}
         </ul>
     {% endif %}
 {% endfor %}
 <br/><br/>
-We will publish statistics about how your project did in the marketplace later this year.
+We will publish statistics about how your project did in the {{ name }} later this year.
 {% endblock %}

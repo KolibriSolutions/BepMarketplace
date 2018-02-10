@@ -21,6 +21,7 @@
                 <th>Edit</th>
                 {% if user.is_superuser %}
                     <th>Impersonate</th>
+                    <td>Telemetry</td>
                 {% endif %}
             </tr>
             </thead>
@@ -71,7 +72,8 @@
                         <td></td>
                     {% endif %}
                     {% if user.is_superuser %}
-                        <td><a href="{% url 'impersonate-start' u.id %}" class="button primary">Go</a></td>
+                        <td><a href="{% url 'impersonate-start' u.id %}" class="button primary">Impersonate</a></td>
+                        <td><a href="{% url 'tracking:userdetail' u.id %}" class="button primary">Telemetry</a> </td>
                     {% endif %}
                 </tr>
             {% endfor %}
@@ -94,6 +96,7 @@
                 {"searchable": false},  //edit
             {% if user.is_superuser %}
                 {"searchable": false}, //impersonate
+                {"searchable": false}, //telemetry
             {% endif %}
             ];
             var dropdownColumns = [3];

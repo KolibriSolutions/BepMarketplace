@@ -11,5 +11,6 @@ urlpatterns = [
     url(r'^api/changedistribute/$', views.changeDistributeApi, name='changedistribute'),
     url(r'^distributeproposal/(?P<dtype>[0-9]+)/$', views.proposalOfDistribution, name='distributeproposal'),
     url(r'^maildistributions/$', views.mailDistributions, name='maildistributions'),
-
+    url(r'^secondchoice/$', views.secondChoiceList, name='secondchoice'),
+    url(r'^delete/randoms/$', views.deleteRandomDistributions, name='deleterandoms'),
 ]

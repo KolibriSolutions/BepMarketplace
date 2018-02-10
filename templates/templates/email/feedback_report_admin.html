@@ -1,0 +1,6 @@
+{% extends 'email/base_email.html' %}
+
+{% block body %}
+New feedback report by {{ report.Reporter.get_full_name }} on page {{ report.Url }}: <br/><br/>
+{{ report.Feedback|linebreaksbr }}
+{% endblock %}

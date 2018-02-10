@@ -60,8 +60,8 @@
 {% block scripts %}
     {{ block.super }}
 
-    <script src="{% static "js/jquery-ui.min.js" %}"></script>
-    <script src="{% static "js/jquery.doubleScroll.js" %}"></script>
+    <script src="{% static "js/jquery-ui.sortable.min.js" %}"></script>
+    <script src="{% static "js/jquery.doubleScroll.min.js" %}"></script>
     {% csrf_token %}
     <script>
         function csrfSafeMethod(method) {

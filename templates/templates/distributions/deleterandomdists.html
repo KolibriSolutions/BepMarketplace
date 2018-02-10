@@ -1,0 +1,26 @@
+{% extends 'GenericForm.html' %}
+
+{% block body %}
+<table class="table bordered hovered striped" id="disttable">
+<thead>
+    <tr>
+        <th>Name</th>
+        <th>Cohort</th>
+        <th>ECTS</th>
+        <th>Project</th>
+    </tr>
+</thead>
+<tbody>
+    {% for dist in distributions %}
+        <tr>
+            <td>{{ dist.Student.get_full_name }}</td>
+            <td>{{ dist.Student.usermeta.Cohort }}</td>
+            <td>{{ dist.Student.usermeta.ECTS }}</td>
+            <td><a href="{% url "proposals:details" dist.Proposal.pk %}">{{ dist.Proposal.Title }}</a></td>
+        </tr>
+    {% endfor %}
+</tbody>
+</table>
+
+{{ block.super }}
+{% endblock %}

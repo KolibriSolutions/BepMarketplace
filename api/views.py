@@ -192,7 +192,7 @@ def getGroupAdmins(request, group=""):
     mmbrs = set()
     for m in obj.Members.all():
         mmbrs.add(str(m.id))
-    return HttpResponse(json.dumps(list(mmbrs)))
+    return JsonResponse(list(mmbrs), safe=False)
 
 
 @login_required

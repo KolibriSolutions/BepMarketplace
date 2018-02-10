@@ -1,9 +1,11 @@
 import json
+import logging
 import time
 
 import channels
 from django.conf import settings
 from django.contrib import auth
+from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponseRedirect  # 30x
 from django.shortcuts import render
 from django.utils.http import is_safe_url
@@ -11,76 +13,55 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from djangosaml2.cache import IdentityCache, OutstandingQueriesCache
 from djangosaml2.conf import get_config
+from djangosaml2.overrides import Saml2Client
 from djangosaml2.signals import post_authenticated
-from djangosaml2.utils import get_custom_setting
+from djangosaml2.utils import get_custom_setting, fail_acs_response
 from djangosaml2.views import _set_subject_id
 from saml2 import BINDING_HTTP_POST
 from saml2.client import Saml2Client
+from saml2.response import StatusAuthnFailed, SignatureError, StatusRequestDenied, UnsolicitedResponse
 from saml2.response import StatusError
 from saml2.sigver import MissingKey
+from saml2.validate import ResponseLifetimeExceed, ToEarly
 
 from general_view import get_timephase_number, get_grouptype, get_timeslot
-from index.models import UserMeta
+from osirisdata.data import osirisData
 from tracking.models import UserLogin
 
+from djangosaml2_custom.acs_failures import unsolicited_response
 
-def set_attributes(user, attributes):
-    """
-    Set the SAML attributes of the user. Stored in user and in usermeta. 
-    
-    :param user: 
-    :param attributes: 
-    :return: 
-    """
-    try:
-        meta = user.usermeta
-    except UserMeta.DoesNotExist:
-        meta = UserMeta()
+from datetime import datetime
+from pytz import utc
+from ipware.ip import get_real_ip
 
-    # make last name from fullname
-    meta.Fullname = attributes["urn:mace:dir:attribute-def:displayName"][0]
-    user.email = attributes["urn:mace:dir:attribute-def:mail"][0].lower()
-
-    # these attributes don't always exist
-    try:
-        meta.Initials = attributes["Initials"][0]
-        user.last_name = attributes["urn:mace:dir:attribute-def:sn"][0]
-        user.first_name = attributes["urn:mace:dir:attribute-def:givenName"][0].split(' ')[0]  # take first if multiple.
-    except:
-        user.last_name = meta.Fullname
-
-    user.save()
-    user.usermeta = meta
-    user.save()
-    meta.save()
-
+logger = logging.getLogger('djangosaml2')
 
 def set_osiris(user, osirisdata):
     """
     Set usermeta based on osiris data
-    
-    :param user: 
-    :param osirisdata: 
-    :return: 
+
+    :param user:
+    :param osirisdata:
+    :return:
     """
     meta = user.usermeta
     if not meta.Overruled:
-        pass
-        # From Osiris:
-        #meta.Department = ldapobj['data']['department']
-        #meta.Study = ldapobj['data']['study']
-        #meta.Cohort = ldapobj['data']['cohort']
-        #meta.Studentnumber = ldapobj['data']['studentnumber']
-        #meta.Culture = ldapobj['data']['culture']
-        #meta.EnrolledBEP = ldapobj['data']['enrolledBEP']
-        #meta.EnrolledExt = ldapobj['data']['enrolledExt']
+        if osirisdata.automotive:
+            meta.Study = 'Automotive'
+        else:
+            meta.Study = 'Eletrical Engineering'
+        meta.Cohort = osirisdata.cohort
+        meta.EnrolledBEP = osirisdata.enrolled
+        meta.EnrolledExt = osirisdata.enrolledextension
+        meta.ECTS = osirisdata.ects
+        meta.save()
 
 def is_staff(user):
     """
     Check whether the user is staff. Staff has an @tue.nl email, students have @student.tue.nl email.
-    
-    :param user: 
-    :return: 
+
+    :param user:
+    :return:
     """
     if user.email[-7:] == "@tue.nl":
         return True
@@ -90,11 +71,27 @@ def is_staff(user):
 def enrolled_osiris(user):
     """
     Check whether the user is enrolled in Osiris for the BEP course
-    
-    :param user: 
-    :return: 
+
+    :param user:
+    :return:
     """
-    return True
+    data = osirisData()
+    userdata = data.get(user.email)
+    if userdata is None:
+        return False
+    else:
+        return userdata.enrolled
+
+def request_info(request):
+    """
+    Extra info from a request to give to logging
+
+    :param request:
+    :return:
+    """
+    return '; ip: '+ get_real_ip(request) + \
+           '; timestamp: ' + str(datetime.utcnow()) +\
+           '; user_agent: ' + request.META.get('HTTP_USER_AGENT')
 
 
 @require_POST
@@ -110,49 +107,62 @@ def assertion_consumer_service(request,
     in using the custom Authorization backend
     djangosaml2.backends.Saml2Backend that should be
     enabled in the settings.py
-    After successfull login, it redirects the user to the RelayState parameter of the SAML response. This is either 
-    the homepage or a page supplied with the ?next= value when it was a redirected login. 
-    
+    After successfull login, it redirects the user to the RelayState parameter of the SAML response. This is either
+    the homepage or a page supplied with the ?next= value when it was a redirected login.
+
     This is a custom version derived from the assertion_consumer_service from djangosaml2.views.
     It also checks OSIRIS subscription, or adds groups for staff members. Next it fills the usermeta for users.
-    It does not use the attribute_mapping from settings.py
+
+    This view is called instead of djangosaml2/views because of overriden urls.py
     """
-
-    # Attribute mapping is not used, but a default needs to be set for the backend to work.
-    attribute_mapping = attribute_mapping or get_custom_setting(
-            'SAML_ATTRIBUTE_MAPPING', {'uid': ('username', )})
-
-    create_unknown_user = True
-
+    attribute_mapping = attribute_mapping or get_custom_setting('SAML_ATTRIBUTE_MAPPING', {'uid': ('username', )})
+    create_unknown_user = create_unknown_user if create_unknown_user is not None else \
+                          get_custom_setting('SAML_CREATE_UNKNOWN_USER', True)
     conf = get_config(config_loader_path, request)
-    if 'SAMLResponse' not in request.POST:
-        return render(request, 'base.html', status=400, context=
-            {"Message": 'Login failed, bad request. (Couldn\'t find "SAMLResponse" in POST data.)'})
-    xmlstr = request.POST['SAMLResponse']
+    try:
+        xmlstr = request.POST['SAMLResponse']
+    except KeyError:
+        logger.warning('Missing "SAMLResponse" parameter in POST data.'+request_info(request))
+        raise SuspiciousOperation
+
     client = Saml2Client(conf, identity_cache=IdentityCache(request.session))
 
     oq_cache = OutstandingQueriesCache(request.session)
     outstanding_queries = oq_cache.outstanding_queries()
 
     try:
-        response = client.parse_authn_request_response(xmlstr, BINDING_HTTP_POST,
-                                                       outstanding_queries)
-    except StatusError:
-        return render(request, 'base.html', status=403, context=
-            {"Message": "Something went wrong while logging you in. (Authentication error)"})
-
+        response = client.parse_authn_request_response(xmlstr, BINDING_HTTP_POST, outstanding_queries)
+    except (StatusError, ToEarly):
+        logger.exception("Error processing SAML Assertion."+request_info(request))
+        return fail_acs_response(request)
+    except ResponseLifetimeExceed:
+        logger.info("SAML Assertion is no longer valid. Possibly caused by network delay or replay attack."+request_info(request), exc_info=True)
+        return fail_acs_response(request)
+    except SignatureError:
+        logger.info("Invalid or malformed SAML Assertion."+request_info(request), exc_info=True)
+        return fail_acs_response(request)
+    except StatusAuthnFailed:
+        logger.info("Authentication denied for user by IdP."+request_info(request), exc_info=True)
+        return fail_acs_response(request)
+    except StatusRequestDenied:
+        logger.warning("Authentication interrupted at IdP."+request_info(request), exc_info=True)
+        return fail_acs_response(request)
     except MissingKey:
-        return render(request, 'base.html', status=403, context=
-            {"Message": "Something went wrong while logging you in. (The Identity Provider is not configured correctly:"
-                " the certificate key is missing)"})
+        logger.exception("SAML Identity Provider is not configured correctly: certificate key is missing!"+request_info(request))
+        return fail_acs_response(request)
+    except UnsolicitedResponse:
+        # use a warning to stop stupid email notifications
+        logger.warning("Received SAMLResponse when no request has been made. (Unsolicited response)"+request_info(request), exc_info=True)
+        # return fail_acs_response(request)
+        # special message because this is a very common error.
+        return unsolicited_response(request)
     except:
-        return render(request, 'base.html', status=403, context=
-            {"Message": "Something went wrong while logging you in. Please try again using the login button."
-                        " If that doesn't work, contact support staff. (Other error / Unsolicited response)"})
+        logger.exception("Djangosaml2 final exception. This should not happen!"+request_info(request), exc_info=True)
+        return fail_acs_response(request, status=400, exc_class=SuspiciousOperation)
 
     if response is None:
-        return render(request, 'base.html', status=400, context=
-            {"Message": "Something went wrong while logging you in. Bad request. (SAML response has errors."})
+        logger.warning("Invalid SAML Assertion received (unknown error)."+request_info(request))
+        return fail_acs_response(request, status=400, exc_class=SuspiciousOperation)
 
     session_id = response.session_id()
     oq_cache.delete(session_id)
@@ -160,18 +170,21 @@ def assertion_consumer_service(request,
     # authenticate the remote user
     session_info = response.session_info()
 
-    # log in using the authentication backend.
-    user = auth.authenticate(session_info=session_info,
+    if callable(attribute_mapping):
+        attribute_mapping = attribute_mapping()
+    if callable(create_unknown_user):
+        create_unknown_user = create_unknown_user()
+
+    logger.debug('Trying to authenticate the user. Session info: %s', session_info)
+    user = auth.authenticate(request=request,
+                             session_info=session_info,
                              attribute_mapping=attribute_mapping,
                              create_unknown_user=create_unknown_user)
     if user is None:
+        logger.warning("Could not authenticate user received in SAML Assertion. Session info: %s", session_info)
         return render(request, 'base.html', status=403, context=
             {"Message": "You are not allowed to log in. Your user account might be disabled. Please contact the "
-                        "support staff"})
-
-    # set the extra user attributes based on the saml attributes
-    attributes = session_info['ava']
-    set_attributes(user, attributes)
+                        "support staff at " + settings.CONTACT_EMAIL})
 
     # block all except supportstaff if there is no timeslot
     if not get_timeslot() and not get_grouptype('3') in user.groups.all():  # if there isn't a timeslot and not type3
@@ -196,7 +209,8 @@ def assertion_consumer_service(request,
                                                                            "Osiris"})
         else:
             # student is enrolled in osiris. Set its usermeta from the osiris data
-            osirisdata = None # to be implemented...
+            data = osirisData()
+            osirisdata = data.get(user.email) #enrollment is already checked so this always returns a person object
             set_osiris(user, osirisdata)
 
             if get_timephase_number() > 5:  # only students with project are allowed
@@ -206,26 +220,28 @@ def assertion_consumer_service(request,
                                                                                    "allowed in this timephase."})
 
             if get_timeslot() not in user.usermeta.TimeSlot.all():  # user is not active in this timeslot
-                if not user.usermeta.TimeSlot.exists():    # user has no timeslot, add the current timeslot
-                    # user has no timeslot
-                    user.usermeta.TimeSlot.add(get_timeslot())
-                else:  # user was active in another timeslot
-                    return render(request, 'base.html', status=403, context={"Message": "You already did your BEP once"
-                                                                                    ", login is not allowed."})
+                # since enrollment was already checked so make this student active in this timeslot
+                user.usermeta.TimeSlot.add(get_timeslot())
+                # if not user.usermeta.TimeSlot.exists():    # user has no timeslot, add the current timeslot
+                #     # user has no timeslot
+                #     user.usermeta.TimeSlot.add(get_timeslot())
+                # else:  # user was active in another timeslot
+                #     return render(request, 'base.html', status=403, context={"Message": "You already did your BEP once"
+                #                                                                     ", login is not allowed."})
 
     auth.login(request, user)
     _set_subject_id(request.session, session_info['name_id'])
+    logger.debug("User %s authenticated via SSO.", user)
 
-    # send the signal for post auth
+    #TODO, this signal is not send correctly: https://github.com/knaperek/djangosaml2/issues/117
+    logger.debug('Sending the post_authenticated signal')
     post_authenticated.send_robust(sender=user, session_info=session_info)
 
+    #TODO after signal is send correctly, move all loging to the signal function in handlers.py
     # log the login
     log = UserLogin()
     log.Subject = user
-    if 'next' in request.GET.keys():
-        log.Page = request.GET['next']
     log.save()
-
     # send the login to the livestreamer
     channels.Group('livestream').send({'text': json.dumps({
         'time': time.strftime('%H:%M:%S'),
@@ -236,10 +252,11 @@ def assertion_consumer_service(request,
     # redirect the user to the view where he came from
     default_relay_state = get_custom_setting('ACS_DEFAULT_REDIRECT_URL',
                                              settings.LOGIN_REDIRECT_URL)
-
     relay_state = request.POST.get('RelayState', default_relay_state)
     if not relay_state:
+        logger.warning('The RelayState parameter exists but is empty')
         relay_state = default_relay_state
     if not is_safe_url(url=relay_state, host=request.get_host()):
-        came_from = settings.LOGIN_REDIRECT_URL
+        relay_state = settings.LOGIN_REDIRECT_URL
+    logger.debug('Redirecting to the RelayState: %s', relay_state)
     return HttpResponseRedirect(relay_state)

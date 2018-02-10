@@ -29,7 +29,6 @@ class TwoFactorLoginView(LoginView):
             # this won't happen as all but superusers will use saml login.
             log = UserLogin()
             log.Subject = user
-            log.Page = '/'
             log.Twofactor = True
             log.save()
 

@@ -39,7 +39,10 @@
             null
         ];
         var dropdownColumns = [];
-        MPDataTable(cols, dropdownColumns);
+        var options = {
+            "order": [[ 1, "desc" ]]
+        };
+        MPDataTable(cols, dropdownColumns, [], [], options);
     });
 
 </script>

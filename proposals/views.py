@@ -338,7 +338,7 @@ def chooseEditProposal(request):
     allprops = Proposal.objects.all()
     proposals = []
 
-    if get_grouptype("3") in request.user.groups.all():
+    if get_grouptype("3") in request.user.groups.all() or request.user.is_superuser:
         proposals = list(allprops)
     else:
         for prop in allprops:

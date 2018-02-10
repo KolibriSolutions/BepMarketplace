@@ -31,6 +31,7 @@ urlpatterns = [
     url(r'^saml2/', include('djangosaml2_custom.urls')),
     url(r'^results/', include('results.urls')),
     url(r'^distributions/', include('distributions.urls')),
+    url(r'^osiris/data/', include('osirisdata.urls')),
 ]
 
 # if settings.DEBUG and False:

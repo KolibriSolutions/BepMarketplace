@@ -26,6 +26,7 @@ from random import choice
 from django.conf import settings
 from proposals.models import Proposal
 from students.models import Application
+from general_view import get_timeslot
 
 cohorts = [
     '2010',
@@ -69,7 +70,7 @@ study = [
 NUMSTDS = 50
 
 print("generating usermeta")
-for n in range(0, NUMSTDS):
+for n in range(1, NUMSTDS):
     std = User.objects.get(username="std{}".format(n))
     um, created = UserMeta.objects.get_or_create(User=std)
     um.ECTS = choice(ects)
@@ -77,13 +78,14 @@ for n in range(0, NUMSTDS):
     um.Study = choice(study)
     um.Fullname = "std {}".format(n)
     um.EnrolledBEP = True
+    um.TimeSlot.add(get_timeslot())
     um.save()
     print("generated for {}".format(std))
 
 print("generating applications")
 projects = Proposal.objects.filter(Status=4)
 Application.objects.all().delete()
-for n in range(0, NUMSTDS):
+for n in range(1, NUMSTDS):
     std = User.objects.get(username="std{}".format(n))
     projs = []
     for i in range(0, settings.MAX_NUM_APPLICATIONS):

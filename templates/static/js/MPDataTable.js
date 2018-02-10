@@ -25,7 +25,7 @@ var dt;         // used to dynamic update the datatable from local code.
  * @constructor
  */
 
-var MPDataTable = function (cols, dropdownColumns, exportColumns, extraButtons, customOptions) {
+var xMPDataTable = function (cols, dropdownColumns, exportColumns, extraButtons, customOptions) {
     //definition of the buttons. All these buttons are overriden (removed) if customOptions['buttons'] is set.
     var buttonCommon = {
         //function to strip the dropdowns of the headers, to not show the dropdown values in the csv/copy

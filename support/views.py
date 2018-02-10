@@ -1,4 +1,3 @@
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
@@ -7,6 +6,7 @@ from django.db.models import Q
 from django.forms import modelformset_factory
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
+from htmlmin.decorators import not_minified_response
 from render_block import render_block_to_string
 
 import general_excel
@@ -18,6 +18,7 @@ from general_model import GroupOptions
 from general_view import get_distributions, get_all_students, get_timephase_number, get_all_staff, get_all_proposals, \
     get_grouptype, get_timeslot
 from index.models import Track, UserMeta
+from osirisdata.data import osirisData
 from results.models import GradeCategory
 from support import check_content_policy
 from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm
@@ -44,6 +45,7 @@ def supportListApplicationsDistributions(request):
     return render(request, 'support/listApplicationsDistributions.html', {"proposals": proposals})
 
 
+@not_minified_response
 @group_required("type3staff", "type6staff")
 def supportListDistributionsXls(request):
     """
@@ -92,6 +94,7 @@ def mailinglist(request):
         ('type2', 'All type2 staff'),
         ('staffnonfinishedprop', 'Staff with non finished proposal'),
         ('type3', 'Type3 staff'),
+        ('osirisstudents', 'All students enrolled on osiris'),
         ('allstudents', 'All students on marketplace'),
         ('10ectsstud', 'Students on marketplace 10ECTS'),
         ('15ectsstud', 'Students on marketplace 15ECTS'),
@@ -132,6 +135,11 @@ def mailinglist(request):
                 # type3staff
                 for user in get_all_staff().filter(groups=get_grouptype("3")):
                     emails.add(user.email)
+            if form.cleaned_data['people_osirisstudents']:
+                #students on osiris
+                data = osirisData()
+                for email in data.getallEmail():
+                    emails.add(email)
             if form.cleaned_data['people_allstudents']:
                 # all students on marketplace
                 for user in get_all_students():
@@ -313,6 +321,7 @@ def listStaffProposals(request, pk):
                   {"title": "Proposals from " + user.get_full_name(), "proposals": proposals})
 
 
+@not_minified_response
 @group_required("type3staff")
 def listStaffXls(request):
     """
@@ -363,6 +372,7 @@ def listStudents(request):
     return render(request, "support/listDistributedStudents.html", {"des": deslist, 'typ': cats})
 
 
+@not_minified_response
 @group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
 def listStudentsXls(request):
     """
@@ -553,7 +563,7 @@ def downgradeUser(request, pk):
 #Other#
 #######
 
-@group_required('type3staff')
+@group_required('type1staff', 'type2staff', 'type3staff')
 def stats(request):
     """
     Statistics about number of proposals, with breakdown per group.
@@ -583,6 +593,8 @@ def stats(request):
         "groupcount"    : groupcount,
         "statuscount"   : statuscount,
         "trackcount"    : trackcount,
+        "mincapacity"   : get_all_proposals().aggregate(Sum('NumstudentsMin'))['NumstudentsMin__sum'],
+        "maxcapacity"   : get_all_proposals().aggregate(Sum('NumstudentsMax'))['NumstudentsMax__sum']
     })
 
 
@@ -600,17 +612,17 @@ def contentpolicy(request):
     }
     return render(request, "support/contentPolicyCheck.html", data)
 
-
-@group_required("type3staff")
-def ECTSForm(request):
-    """
-    Form to fill in the ECTS of students, this is done by administration staff.
-    ECTS are used for the automatic distribution. ECTS changes are send using websockets to consumers.py
-
-    :param request:
-    """
-    stds = get_all_students()
-    return render(request, 'support/ECTSForm.html', {'students': stds})
+##deprecated due to osirisdata
+# @group_required("type3staff")
+# def ECTSForm(request):
+#     """
+#     Form to fill in the ECTS of students, this is done by administration staff.
+#     ECTS are used for the automatic distribution. ECTS changes are send using websockets to consumers.py
+#
+#     :param request:
+#     """
+#     stds = get_all_students()
+#     return render(request, 'support/ECTSForm.html', {'students': stds})
 
 ##############
 #Public Files#
@@ -639,7 +651,6 @@ def addFile(request):
                   {'form': form, 'formtitle': 'Upload a public file ', 'buttontext': 'Save'})
 
 
-@login_required
 @group_required('type3staff')
 def editFiles(request):
     """
@@ -657,10 +668,7 @@ def editFiles(request):
         if formset.is_valid():
             formset.save()
             return render(request, "base.html", {"Message": "File changes saved!", "return": "index:index"})
-        return render(request, "base.html",
-                      {"Message": "Error occurred during editing files. Possibly the file has wrong dimensions or wrong filetype.", "return": "support:editfiles"})
-    else:
-        return render(request, 'GenericForm.html', {'formset': formset, 'formtitle': 'All public uploaded files', 'buttontext': 'Save changes'})
+    return render(request, 'GenericForm.html', {'formset': formset, 'formtitle': 'All public uploaded files', 'buttontext': 'Save changes'})
 
 
 #######

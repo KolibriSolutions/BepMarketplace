@@ -90,6 +90,9 @@
                             <a class="button primary" href="{% url 'proposals:copy' proposal.id %}">
                                 <span class="mif-versions"></span>Copy
                             </a>
+                            {% if user.is_superuser%}
+                            <a href="{% url 'admin:proposals_proposal_change' proposal.pk %}" class="button warning">Admin Edit</a>
+                            {% endif %}
                         {% endif %}
                     </p>
 
