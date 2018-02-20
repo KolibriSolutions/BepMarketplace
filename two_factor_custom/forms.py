@@ -16,6 +16,7 @@ class TwoFactorAuthenticationForm(AuthenticationForm):
         max_length=254,
         widget=widgets.MetroTextInput,
     )
+    username.widget.attrs.update({'autofocus': 'autofocus'})
     password = forms.CharField(
         label="Password",
         strip=False,

@@ -15,4 +15,13 @@ urlpatterns = [
     url(r'^mailoverduestudents/$', views.mailOverDueStudents, name='mailoverduestudents'),
     url(r'^printprvforms/$', views.printPrvForms, name='printprvforms'),
     url(r'^downloadall/(?P<pk>[0-9]+)/$', views.downloadAll, name='downloadall'),
+
+    url(r'^group/create/(?P<pk>[0-9]+)/$', views.createGroup, name='creategroup'),
+    url(r'^group/create/$', views.createGroup, name='creategroup'),
+    url(r'^group/edit/(?P<pk>[0-9]+)/$', views.editGroup, name='editgroup'),
+    url(r'^group/listall/(?P<pk>[0-9]+)/$', views.listGroups, name='listgroups'),
+    url(r'^group/assignshuffle/(?P<pk>[0-9]+)/$', views.assignStudents, name='assignshuffle'),
+    url(r'^group/listown/$', views.listOwnGroups, name='listowngroups'),
+    url(r'^group/switch/(?P<frompk>[0-9]+)/(?P<topk>[0-9]+)/$', views.switchGroup, name='switchgroups'),
+    url(r'^group/members/(?P<pk>[0-9]+)/$', views.listGroupMembers, name='listgroupmembers'),
 ]

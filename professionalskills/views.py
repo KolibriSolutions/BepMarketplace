@@ -3,7 +3,6 @@ from datetime import datetime
 from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponse
@@ -15,13 +14,16 @@ from xhtml2pdf import pisa
 from BepMarketplace.decorators import group_required, student_only
 from students.models import Distribution
 from general_mail import send_mail, EmailThreadMultipleTemplate
-from general_view import get_distributions, get_timephase_number
+from general_view import get_distributions, get_timephase_number, get_timeslot
 from timeline.models import TimeSlot
-from .forms import FileTypeModelForm, ConfirmForm, StaffReponseForm
-from .models import FileType, StaffReponse, StudentFile
-from general_view import get_grouptype
+from .forms import FileTypeModelForm, ConfirmForm, StaffReponseForm, StudentGroupForm, StudentGroupChoice
+from .models import FileType, StaffReponse, StudentFile, StudentGroup
+from general_view import get_grouptype, get_all_students
 from BepMarketplace.decorators import can_access_professionalskills
-
+import random
+from django.db.models import Sum
+from django.http import HttpResponseBadRequest
+from django.core.exceptions import ValidationError
 
 @group_required('type3staff', 'type6staff')
 def downloadAll(request, pk):
@@ -58,9 +60,9 @@ def downloadAll(request, pk):
 def createFileType(request):
     """
     Create a file type that can be used for any professional skill hand-in document.
-    
-    :param request: 
-    :return: 
+
+    :param request:
+    :return:
     """
     if request.method == 'POST':
         form = FileTypeModelForm(request.POST)
@@ -84,10 +86,10 @@ def createFileType(request):
 def editFileType(request, pk):
     """
     Edit a file type.
-    
-    :param request: 
-    :param pk: id of the file type. 
-    :return: 
+
+    :param request:
+    :param pk: id of the file type.
+    :return:
     """
     obj = get_object_or_404(FileType, pk=pk)
     if request.method == 'POST':
@@ -112,10 +114,10 @@ def editFileType(request, pk):
 def deleteFileType(request, pk):
     """
     Delete a file type.
-    
-    :param request: 
-    :param pk: id of the file type 
-    :return: 
+
+    :param request:
+    :param pk: id of the file type
+    :return:
     """
     obj = get_object_or_404(FileType, pk=pk)
 
@@ -147,10 +149,8 @@ def listFileType(request):
     :param request:
     :return:
     """
-
-    ts = TimeSlot.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now()))
     return render(request, 'professionalskills/listFileTypes.html', {
-        'filetypes' : FileType.objects.filter(TimeSlot=ts)
+        'filetypes' : FileType.objects.filter(TimeSlot=get_timeslot())
     })
 
 
@@ -204,7 +204,7 @@ def listStudentFiles(request, pk):
     """
     List files of a specified student.
     Used for the student self, for his supervisor, responsible, trackhead and for support staff.
-    
+
     :param request:
     :param pk: id of distribution
     :return:
@@ -304,7 +304,7 @@ def respondFile(request, pk):
         responseobj.File = fileobj
         responseobj.Staff = request.user
         statusorig = None
-        
+
     if request.method == 'POST':
         form = StaffReponseForm(request.POST, instance=responseobj)
         if form.is_valid():
@@ -386,3 +386,154 @@ def printPrvForms(request):
     response = HttpResponse(buffer, 'application/pdf')
     response['Content-Disposition'] = 'attachment; filename="prvs.pdf"'
     return response
+
+
+@group_required('type3staff', 'type6staff')
+def createGroup(request, pk=None):
+    if request.method == 'POST':
+        form = StudentGroupForm(request.POST)
+        if form.is_valid():
+            obj = form.save()
+            return render(request, 'base.html', {
+                'Message' : '{} created!'.format(obj),
+            })
+    else:
+        if pk is not None:
+            obj = StudentGroup(PRV=get_object_or_404(FileType, pk=pk))
+            form = StudentGroupForm(instance=obj)
+        else:
+            form = StudentGroupForm()
+    return render(request, 'GenericForm.html', {
+        'form' : form,
+        'formtitle' : 'Create new Group',
+        'buttontext' : 'Create'
+    })
+
+
+@group_required('type3staff', 'type6staff')
+def editGroup(request, pk):
+    obj = get_object_or_404(StudentGroup, pk=pk)
+    if request.method == 'POST':
+        form = StudentGroupForm(request.POST, instance=obj)
+        if form.is_valid():
+            obj = form.save()
+            return render(request, 'base.html', {
+                'Message' : '{} saved!'.format(obj),
+            })
+    else:
+        form = StudentGroupForm(instance=obj)
+    return render(request, 'GenericForm.html', {
+        'form' : form,
+        'formtitle' : 'Edit Group',
+        'buttontext' : 'Save'
+    })
+
+
+@group_required('type3staff', 'type6staff')
+def listGroups(request, pk):
+    PRV = get_object_or_404(FileType, pk=pk)
+    return render(request, 'professionalskills/listAllGroups.html', {
+        'groups' : PRV.groups.all(),
+        'PRV' : PRV
+    })
+
+
+@group_required('type3staff', 'type6staff')
+def listGroupMembers(request, pk):
+    group = get_object_or_404(StudentGroup, pk=pk)
+    return render(request, 'GenericList.html', {
+        'items' : group.Members.all(),
+        'title' : 'Members of group {}'.format(group),
+    })
+
+
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
+
+@group_required('type3staff', 'type6staff')
+def assignStudents(request, pk):
+    PRV = get_object_or_404(FileType, pk=pk)
+    if request.method == 'POST':
+        form = ConfirmForm(request.POST)
+        if form.is_valid():
+            if PRV.groups.all().aggregate(Sum('Max'))['Max__sum'] < get_all_students().count():
+                return render(request, 'base.html', {
+                    'Message' : 'Groups capacity not sufficient'
+                })
+            for group in PRV.groups.all():
+                group.Members.clear()
+                group.save()
+            students = list(get_all_students())
+            totalstudents = len(students)
+            random.shuffle(students)
+            groups = list(PRV.groups.all())
+            totaldistributed = 0
+            while totaldistributed < totalstudents:
+                for g in [g for g in groups if g.Members.count() < g.Max]:
+                    try:
+                        g.Members.add(students.pop(0))
+                        totaldistributed += 1
+                    except IndexError:
+                        break
+            for g in groups:
+                g.save()
+
+            return render(request, 'base.html', {
+                'Message' : 'Students divided over the groups'
+            })
+    else:
+        form = ConfirmForm()
+
+    return render(request, 'GenericForm.html', {
+        'form' : form,
+        'formtitle' : 'Confirm reshuffling students for {}'.format(PRV),
+        'buttontext' : 'Confirm'
+    })
+
+
+@student_only()
+def switchGroup(request, frompk, topk):
+    fromgroup = get_object_or_404(StudentGroup, pk=frompk)
+    togroup = get_object_or_404(StudentGroup, pk=topk)
+
+    if fromgroup not in request.user.studentgroups.all():
+        return HttpResponseBadRequest('User not in from group')
+
+    fromgroup.Members.remove(request.user)
+    togroup.Members.add(request.user)
+    togroup.save()
+    fromgroup.save()
+
+    return render(request, 'base.html', {
+        'Message' : 'Switched to group {}'.format(togroup),
+        'return' : 'professionalskills:listowngroups',
+    })
+
+
+@student_only()
+def listOwnGroups(request):
+    if request.method == 'POST':
+        for g in request.user.studentgroups.all():
+            f = StudentGroupChoice(request.POST, initial={'Group': g}, prefix=str(g.PRV.pk), PRV=g.PRV)
+            if f.is_valid():
+                try:
+                    switchGroup(request, g.pk, f.cleaned_data['Group'].pk)
+                except ValidationError:
+                    return render(request, 'base.html', {
+                        'Switched group is full!'
+                    })
+        return render(request, 'base.html', {
+            'Message': 'Switched groups',
+            'return': 'professionalskills:listowngroups',
+        })
+
+    groups = []
+    for g in request.user.studentgroups.all():
+        f = StudentGroupChoice(initial={'Group' : g}, prefix=str(g.PRV.pk), PRV=g.PRV)
+        groups.append((g, f))
+    return render(request, 'professionalskills/listAllOwnGroups.html', {
+        'groups' : groups
+    })

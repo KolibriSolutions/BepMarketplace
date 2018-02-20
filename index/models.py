@@ -74,8 +74,13 @@ class UserMeta(models.Model):
     EnrolledExt = models.BooleanField(default=False)
     Overruled = models.BooleanField(default=False)
     TimeSlot = models.ManyToManyField(TimeSlot, default=get_timeslot_id)
+
     def __str__(self):
         return str(self.User)
+
+    def get_nice_name(self):
+        return str('hoi')
+
 
 class Term(models.Model):
     Text = models.TextField()

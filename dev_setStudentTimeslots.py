@@ -30,7 +30,7 @@ def get_all_students():
 
     :return: user objects
     """
-    return User.objects.filter(Q(usermeta__EnrolledBEP=True)&Q(groups=None)).distinct()
+    return User.objects.filter(Q(groups=None)).distinct()
 
 
 
@@ -39,4 +39,6 @@ ts = get_timeslot()
 for std in get_all_students():
     print(std)
     std.usermeta.TimeSlot.add(ts)
+    std.usermeta.EnrolledBEP =True
+    std.usermeta.save()
     std.save()

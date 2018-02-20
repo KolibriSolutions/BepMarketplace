@@ -4,14 +4,14 @@ from django.db import models
 
 from proposals.models import Proposal
 from timeline.models import TimeSlot
-from BepMarketplace.settings import MAX_NUM_APPLICATIONS
+from django.conf import settings
 
 
 class Application(models.Model):
     """
     A student's application to a proposal.
     """
-    Priority = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(MAX_NUM_APPLICATIONS)])
+    Priority = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(settings.MAX_NUM_APPLICATIONS)])
     Proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE, related_name='applications')
     Student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications')
     Timestamp = models.DateTimeField(auto_now_add=True)

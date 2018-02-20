@@ -38,9 +38,9 @@ def supportListApplicationsDistributions(request):
     """
     if get_timephase_number() < 3:
         raise PermissionDenied("There are no applications yet")
-    elif get_timephase_number() > 4:
+    elif get_timephase_number() > 5:
         proposals = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
-    else:  # phase 3 & 4
+    else:  # phase 3 & 4 & 5
         proposals = get_all_proposals().filter(Status=4)
     return render(request, 'support/listApplicationsDistributions.html', {"proposals": proposals})
 

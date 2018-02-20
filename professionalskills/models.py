@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch.dispatcher import receiver
+from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 
 from general_model import file_delete_default, metro_icon_default, filename_default
 from students.models import Distribution
@@ -69,6 +71,29 @@ class StudentFile(models.Model):
 
     def clean(self):
         self.Caption = clean_text(self.Caption)
+
+class StudentGroup(models.Model):
+    Number = models.IntegerField()
+    PRV = models.ForeignKey(FileType, related_name='groups')
+    Start = models.DateTimeField()
+    Members = models.ManyToManyField(User, related_name='studentgroups')
+    Max = models.IntegerField(validators=[MinValueValidator(0)])
+
+    def __str__(self):
+        return 'Group {} at {}, {}/{}'.format(self.Number, self.Start, self.Members.count(), self.Max)
+
+    def clean(self):
+        try:
+            if self.Members.count() > self.Max:
+                raise ValidationError('Group is full')
+        except:
+            pass
+        if self.Number in [n.Number for n in self.PRV.groups.all()]:
+            raise ValidationError('Group with that number already exists for this PRV')
+
+    class Meta:
+        ordering = ['PRV', 'Number']
+
 
 
 @receiver(pre_delete, sender=StudentFile)

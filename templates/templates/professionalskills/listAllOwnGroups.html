@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% load custom_filters %}
+
+{% block body %}
+<h1>All enrolled groups</h1>
+<form action="" method="post" enctype="multipart/form-data" novalidate>
+{% csrf_token %}
+<table class="table bordered hovered striped datatable">
+<thead>
+<tr>
+    <th>PRV</th>
+    <th>Number</th>
+    <th>Current Group</th>
+</tr>
+</thead>
+<tbody>
+{% for group in groups %}
+    <tr>
+        <td>{{ group.0.PRV }}</td>
+        <td>{{ group.0.Number }}</td>
+        <td>
+            {{ group.1.Group }}
+        </td>
+    </tr>
+{% endfor %}
+</tbody>
+</table>
+<input type="submit" value="Save">
+</form>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static "js/php-date-formatter.min.js" %}"></script>
+    <script src="{% static "js/jquery.datetimepicker.full.min.js" %}"></script>
+    <script src="{% static "js/select2.min.js" %}"></script>
+    <script src="{% static "js/lightbox.js" %}"></script> {# for image form image preview #}
+    <script>
+        $(function () {
+            $(".select2-tag-enable").select2({
+                minimumResultsForSearch: 6,
+                width: '100%',
+            });
+            $.datetimepicker.setLocale('en');
+            $('.metrotimepicker').datetimepicker({
+                datepicker: false,
+                format: 'H:i',
+                step: 5
+            });
+            $('.metrodatetimepicker').datetimepicker({
+                format: 'Y-m-d H:i',
+                step: 5,
+                minDate: '-1970-01-02', // yesterday
+                maxDate: '{% GetEndDate %}'//last date in this timeslot
+            });
+            $('.metrodatepicker').datetimepicker({
+                timepicker: false,
+                format: 'Y-m-d',
+                minDate: '-1970-01-02', // yesterday
+                maxDate: '{% GetEndDate %}' //last date in this timeslot
+            });
+        });
+    </script>
+{% endblock %}

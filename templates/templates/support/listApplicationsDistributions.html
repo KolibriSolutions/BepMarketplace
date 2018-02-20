@@ -2,7 +2,7 @@
 {% load custom_filters %}
 {% GetPhaseNumber as phasenumber %}
 {% block body %}
-    {% if phasenumber < 5 %}
+    {% if phasenumber < 6 %}
         <h1>Proposals with applications and distributions</h1>
     {% else %}
         <h1>Projects and their distributions</h1>
@@ -23,7 +23,7 @@
                 null, //trac
                 null, //group
                 null, //responsible
-                {% if phasenumber < 5 %}
+                {% if phasenumber < 6 %}
                     {"searchable": false}, //nrof students
                     null, //interested
                 {% else %}

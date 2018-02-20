@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<h1>Groups for {{ PRV }}</h1>
+    <a href="{% url 'professionalskills:assignshuffle' PRV.pk %}" class="button warning">Shuffle Students</a>
+<a href="{% url 'professionalskills:creategroup' PRV.pk %}" class="button primary">Create New</a>
+<table class="table bordered hovered striped datatable">
+<thead>
+<tr>
+    <th>Number</th>
+    <th>Start</th>
+    <th>Max Size</th>
+    <th>Member Count</th>
+    <th>Actions</th>
+</tr>
+</thead>
+<tbody>
+{% for group in groups %}
+<tr>
+    <td>{{ group.Number }}</td>
+    <td>{{ group.Start }}</td>
+    <td>{{ group.Max }}</td>
+    <td>{{ group.Members.count }}</td>
+    <td>
+        <a href="{% url 'professionalskills:editgroup' group.pk %}" class="button primary">Edit</a>
+        <a href="{% url 'professionalskills:listgroupmembers' group.pk %}" class="button primary">List Members</a>
+    </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            var cols = [
+                null,
+                null,
+                null,
+                null,
+                {"searchable" : false, "sortable" : false}
+            ];
+            var dropdownColumns = [];
+            MPDataTable(cols, dropdownColumns);
+        });
+
+    </script>
+{% endblock %}

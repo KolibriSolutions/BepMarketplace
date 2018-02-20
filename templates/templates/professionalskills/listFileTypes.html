@@ -4,11 +4,13 @@
     <h1>Professional Skills</h1>
     {% if not user|has_group:'any' %}{# for students #}
         To hand in a prv you can upload files <a href="{% url 'students:addfile' %}">here</a>.<br/>
-        Your previous handins can be found <a href="{% url 'professionalskills:listownfiles' %}">here</a>.
+        Your previous handins can be found <a href="{% url 'professionalskills:listownfiles' %}">here</a>.<br/>
+        <a href="{% url 'professionalskills:listowngroups' %}" class="button primary">List Enrolled Groups</a>
     {% elif user|has_group:"type6staff;type3staff" %}
             <a href="{% url 'professionalskills:mailoverduestudents' %}" class="button primary">Mail Overdue
                 Students</a>
             <a class="button primary" href="{% url 'professionalskills:printprvforms' %}">Print Prv Results</a>
+            <a class="button primary" href="{% url 'professionalskills:filetypecreate' %}">Create New</a>
 
     {% endif %}
     <table id="filetypetable" class="table datatable striped hovered">
@@ -17,8 +19,8 @@
             <th>Name</th>
             <th>Deadline</th>
             <th>Description</th>
-            {% if user|has_group:'type6staff' %}
-                <th>Actions</th>
+            {% if user|has_group:'type3staff;type6staff' %}
+            <th>Actions</th>
             {% endif %}
         </tr>
         </thead>
@@ -35,6 +37,9 @@
                         <a href="{% url 'professionalskills:downloadall' filetype.id %}" class="button primary">Download All</a>
                         <a href="{% url 'professionalskills:filetypeedit' filetype.id %}" class="button warning">Edit</a>
                         <a href="{% url 'professionalskills:filetypedelete' filetype.id %}" class="button danger">Delete</a>
+                        <br/>
+                        <a href="{% url 'professionalskills:listgroups' filetype.pk %}" class="button primary">List Groups</a>
+                        <a href="{% url 'professionalskills:assignshuffle' filetype.pk %}" class="button warning">Shuffle Students</a>
                     </td>
                 {% endif %}
             </tr>
