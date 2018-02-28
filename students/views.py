@@ -7,18 +7,27 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Max
 from django.db.models import Q
-from django.forms import modelformset_factory
 from django.shortcuts import get_object_or_404, render, redirect
 
-from BepMarketplace.decorators import can_view_proposal, can_apply, student_only
+from BepMarketplace.decorators import can_view_proposal, can_apply, student_only, can_access_professionalskills
+from general_view import get_timeslot
 from professionalskills.models import StudentFile
 from proposals.cacheprop import getProp
 from proposals.models import Proposal
-from general_view import get_timephase_number
+from students.models import Distribution
 from tracking.models import ApplicationTracking
 from .forms import StudentFileForm
 from .models import Application
-from students.models import Distribution
+
+
+def get_all_applications(user):
+    """
+    Get a users applications for this timeslot
+
+    :param request:
+    :return:
+    """
+    return user.applications.filter(Proposal__TimeSlot=get_timeslot())
 
 
 @student_only()
@@ -28,12 +37,11 @@ def listApplications(request):
     
     :param request:
     """
-    return render(request, "students/ListApplications.html", context={
-        "applications" : request.user.applications.all
+    return render(request, 'students/ListApplications.html', context={
+        'applications': get_all_applications(request.user)
     })
 
 
-@login_required
 @can_apply
 def prioUp(request, application_id):
     """
@@ -44,25 +52,23 @@ def prioUp(request, application_id):
     """
     targetapp = get_object_or_404(Application, pk=application_id)
     if targetapp.Student != request.user:
-        return render(request, "base.html", context={
-            "Message" : "You are not the owner of this application!",
-            "return": 'students:listapplications',
+        return render(request, 'base.html', context={
+            'Message': 'You are not the owner of this application!',
+            'return': 'students:listapplications',
         })
     if targetapp.Priority == 1:
-        return render(request, "base.html", context={
-            "Message" : "Already at top priority",
-            "return"  : 'students:listapplications',
+        return render(request, 'base.html', context={
+            'Message': 'Already at top priority',
+            'return': 'students:listapplications',
         })
-    swappapp = Application.objects.filter(Q(Student=request.user) & Q(Priority=targetapp.Priority - 1))[0]
+    swappapp = get_all_applications(request.user).filter(Q(Priority=targetapp.Priority - 1))[0]
     swappapp.Priority += 1
     targetapp.Priority -= 1
     swappapp.save()
     targetapp.save()
-
     return redirect('students:listapplications')
 
 
-@login_required
 @can_apply
 def prioDown(request, application_id):
     """
@@ -73,31 +79,29 @@ def prioDown(request, application_id):
     """
     targetapp = get_object_or_404(Application, pk=application_id)
     if targetapp.Student != request.user:
-        return render(request, "base.html", context={
-            "Message" : "You are not the owner of this application!",
-            "return": 'students:listapplications',
+        return render(request, 'base.html', context={
+            'Message': 'You are not the owner of this application!',
+            'return': 'students:listapplications',
         })
     if targetapp.Priority == settings.MAX_NUM_APPLICATIONS:
-        return render(request, "base.html", context={
-            "Message": "Already at bottom priority",
-            "return": 'students:listapplications',
+        return render(request, 'base.html', context={
+            'Message': 'Already at bottom priority',
+            'return': 'students:listapplications',
         })
-    apps = Application.objects.filter(Q(Student=request.user) & Q(Priority=targetapp.Priority + 1))
+    apps = get_all_applications(request.user).filter(Q(Priority=targetapp.Priority + 1))
     if len(apps) == 0:
-        return render(request, "base.html", context={
-            "Message": "Already at bottom priority",
-            "return": 'students:listapplications',
+        return render(request, 'base.html', context={
+            'Message': 'Already at bottom priority',
+            'return': 'students:listapplications',
         })
     swappapp = apps[0]
     swappapp.Priority -= 1
     targetapp.Priority += 1
     swappapp.save()
     targetapp.save()
-
     return redirect('students:listapplications')
 
 
-@login_required
 @can_apply
 def retractApplication(request, application_id):
     """
@@ -121,14 +125,14 @@ def retractApplication(request, application_id):
         'user': request.user.get_full_name(),
     })})
 
-    for app in request.user.applications.all():
+    for app in get_all_applications(request.user):
         if app.Priority > appl.Priority:
             app.Priority -= 1
             app.save()
     appl.delete()
-    return render(request, "base.html", context={
-        "Message" : "Deleted application",
-        "return": 'students:listapplications',
+    return render(request, 'base.html', context={
+        'Message': 'Deleted application',
+        'return': 'students:listapplications',
     })
 
 
@@ -143,18 +147,18 @@ def applyToProposal(request, pk):
     """
     prop = getProp(pk)
     if prop.Status < 4:
-        raise PermissionDenied("This proposal is not public, application is not possible.")
+        raise PermissionDenied('This proposal is not public, application is not possible.')
 
-    if request.user.applications.count() >= settings.MAX_NUM_APPLICATIONS:
-        return render(request, "base.html", context={
-                "Message" : "already at max ammount of applied proposals<br>"
-                            "retract one first before continuing",
-                "return": 'students:listapplications',
+    if get_all_applications(request.user).count() >= settings.MAX_NUM_APPLICATIONS:
+        return render(request, 'base.html', context={
+                'Message': 'already at max ammount of applied proposals<br>'
+                           'retract one first before continuing',
+                'return': 'students:listapplications',
             })
-    if Application.objects.filter(Q(Proposal=prop) & Q(Student=request.user)).exists():
-        return render(request, "base.html", context={
-            "Message" : "You already applied to this proposal.",
-            "return"  : 'students:listapplications',
+    if get_all_applications(request.user).filter(Q(Proposal=prop)).exists():
+        return render(request, 'base.html', context={
+            'Message': 'You already applied to this proposal.',
+            'return': 'students:listapplications',
         })
 
     track = ApplicationTracking()
@@ -172,16 +176,16 @@ def applyToProposal(request, pk):
 
     appl = Application()
     appl.Proposal = prop
-    highestprio = request.user.applications.aggregate(Max('Priority'))['Priority__max']
+    highestprio = get_all_applications(request.user).aggregate(Max('Priority'))['Priority__max']
     appl.Student = request.user
     if highestprio is None:
         appl.Priority = 1
     else:
         appl.Priority = highestprio + 1
     appl.save()
-    return render(request, "base.html", context={
-        "Message" : "Application saved with priority number {}".format(appl.Priority),
-        "return"  : 'students:listapplications',
+    return render(request, 'base.html', context={
+        'Message': 'Application saved with priority number {}'.format(appl.Priority),
+        'return'  : 'students:listapplications',
     })
 
 
@@ -197,19 +201,20 @@ def confirmApplication(request, pk):
     """
     prop = getProp(pk)
     if prop.Status < 4:
-        raise PermissionDenied("This proposal is not public, application is not possible.")
+        raise PermissionDenied('This proposal is not public, application is not possible.')
 
-    if Application.objects.filter(Q(Proposal=prop) & Q(Student=request.user)).exists():
-        return render(request, "base.html", context={
-            "Message" : "You already applied to this proposal.",
-            "return"  : 'students:listapplications',
+    if get_all_applications(request.user).filter(Q(Proposal=prop)).exists():
+        return render(request, 'base.html', context={
+            'Message': 'You already applied to this proposal.',
+            'return'  : 'students:listapplications',
         })
-    return render(request, "students/ApplyToProposal.html", context = {
-        "proposal" : get_object_or_404(Proposal, pk=pk),
+    return render(request, 'students/ApplyToProposal.html', context = {
+        'proposal': get_object_or_404(Proposal, pk=pk),
                                          })
 
 
 @student_only()
+@can_access_professionalskills
 def addFile(request):
     """
     For students to upload a file. Used for the hand in system.
@@ -218,9 +223,6 @@ def addFile(request):
     
     :param request:
     """
-    if get_timephase_number() < 6:
-        raise PermissionDenied("Student files are not available in this phase")
-
     dist = get_object_or_404(Distribution, Student=request.user)
 
     if request.method == 'POST':
@@ -229,8 +231,8 @@ def addFile(request):
             file = form.save(commit=False)
             file.Distribution = dist
             file.save()
-            return render(request, "base.html",
-                          {"Message": "File uploaded!", "return": "professionalskills:listownfiles"})
+            return render(request, 'base.html',
+                          {'Message': 'File uploaded!', 'return': 'professionalskills:listownfiles'})
     else:
         form = StudentFileForm(request=request)
     return render(request, 'GenericForm.html',
@@ -238,32 +240,30 @@ def addFile(request):
 
 
 @student_only()
-def editFiles(request):
+@can_access_professionalskills
+def editFile(request, pk):
     """
-    For students to edit uploaded files. Used for the hand in system.
+    For students to edit a uploaded file. Used for the hand in system.
     Responsibles, supervisors and trackheads can then view the files of their students.
     support staff can see all student files.
     
     :param request:
     """
-    if get_timephase_number() < 6:
-        raise PermissionDenied("Student files are not available in this phase")
-
-    if request.user.groups.exists():
-        raise PermissionDenied("Only for students")
-
-    dist = get_object_or_404(Distribution, Student=request.user)
-
-    formSet = modelformset_factory(StudentFile, form=StudentFileForm, can_delete=True, extra=0)
-    qu = StudentFile.objects.filter(Distribution=dist)
-    formset = formSet(queryset=qu)
-
+    file = get_object_or_404(StudentFile, id=pk)
+    dist = request.user.distributions.filter(Timeslot=get_timeslot()).get()
     if request.method == 'POST':
-        formset = formSet(request.POST, request.FILES)
-        if formset.is_valid():
-            formset.save()
-            return render(request, "base.html", {"Message": "File changes saved!", "return": "professionalskills:listownfiles"})
-        return render(request, "base.html",
-                      {"Message": "Error occurred during editing files. Possibly the file has wrong dimensions or wrong filetype.", "return": "students:editfiles"})
+        form = StudentFileForm(request.POST, request.FILES, request=request, instance=file)
+        if form.is_valid():
+            if form.has_changed():
+                file = form.save(commit=False)
+                file.Distribution = dist
+                file.save()
+                return render(request, 'base.html',
+                          {'Message': 'File changed!', 'return': 'professionalskills:listownfiles'})
+            else:
+                return render(request, 'base.html',
+                              {'Message': 'No change made.', 'return': 'professionalskills:listownfiles'})
     else:
-        return render(request, 'GenericForm.html', {'formset': formset, 'formtitle': 'All your uploaded files', 'buttontext': 'Save changes'})
+        form = StudentFileForm(request=request, instance=file)
+    return render(request, 'GenericForm.html',
+                  {'form': form, 'formtitle': 'Edit a file ', 'buttontext': 'Save'})

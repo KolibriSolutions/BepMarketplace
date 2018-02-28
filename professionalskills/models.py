@@ -10,11 +10,16 @@ from students.models import Distribution
 from timeline.models import TimeSlot
 from general_model import clean_text
 
+
 class FileExtension(models.Model):
     Name = models.CharField(max_length=256)
 
     def __str__(self):
         return self.Name
+
+    def clean(self):
+        if self.Name[0] == '.':
+            raise ValidationError("Please give extension without dot.")
 
 
 class FileType(models.Model):
@@ -51,7 +56,8 @@ class StudentFile(models.Model):
     File = models.FileField(default=None, upload_to=make_upload_path)
     Distribution = models.ForeignKey(Distribution, on_delete=models.CASCADE, related_name='files')
     Type = models.ForeignKey(FileType, on_delete=models.CASCADE, related_name='files')
-    TimeStamp = models.DateTimeField(auto_now_add=True)
+    TimeStamp = models.DateTimeField(auto_now=True)
+    Created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
         return self.OriginalName + " - " + self.Caption
@@ -72,7 +78,11 @@ class StudentFile(models.Model):
     def clean(self):
         self.Caption = clean_text(self.Caption)
 
+
 class StudentGroup(models.Model):
+    """
+    A group of students for a professionalskill
+    """
     Number = models.IntegerField()
     PRV = models.ForeignKey(FileType, related_name='groups')
     Start = models.DateTimeField()
@@ -110,6 +120,9 @@ def student_file_delete(sender, instance, **kwargs):
 
 
 class StaffReponse(models.Model):
+    """
+    Response of a responsible staff member to a student uploaded file.
+    """
     StatusOptions = (
         ("O", "Insufficient"),
         ("V", "Sufficient"),

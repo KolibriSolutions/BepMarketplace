@@ -4,6 +4,7 @@ from general_form import clean_file_default, FileForm
 from general_model import get_ext
 from django.shortcuts import get_object_or_404
 from professionalskills.models import FileType
+from general_view import get_timeslot
 
 
 def clean_studentfile_default(self):
@@ -27,6 +28,11 @@ class StudentFileForm(FileForm):
     """
     Upload or edit a studentfile
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['Type'].queryset = FileType.objects.filter(TimeSlot=get_timeslot())
+
     class Meta(FileForm.Meta):
         fields = ['File', 'Caption', 'Type']
         widgets = {

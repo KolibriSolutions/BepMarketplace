@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from general_view import get_timephase_number, get_grouptype, get_timeslot
 from proposals.cacheprop import getProp
 from proposals.models import Proposal
+from proposals.utils import can_edit_proposal_fn
 from support.models import CapacityGroupAdministration
 
 
@@ -151,41 +152,11 @@ def can_edit_proposal(fn):
                     login_url='index:login',
                     redirect_field_name='next',)
 
-        if prop.prevyear():
-            raise PermissionDenied("This is an old proposal. Changing history is not allowed.")
-
-        # support staf or superusers are always allowed to edit
-        if get_grouptype("3") in request.user.groups.all() or request.user.is_superuser:
+        allowed = can_edit_proposal_fn(request.user, prop)
+        if allowed[0] == True:
             return fn(*args, **kw)
-
-        # published proposals can never be edited.
-        if prop.Status == 4:
-            raise PermissionDenied("No editing possible. This proposal is already published")
-
-        # proposals of this year, check timephases
-        if prop.TimeSlot == get_timeslot():
-            # if no timephase is enabled than forbid editing
-            if get_timephase_number() < 0:
-                raise PermissionDenied("No editing allowed, system is closed")
-
-            # if timephase is after checking phase no editing is allowed, except for support staff
-            if get_timephase_number() > 2 and not get_grouptype("3") in request.user.groups.all():
-                raise PermissionDenied("No editing allowed anymore, not right time phase")
-
-        # track heads are allowed to edit in the create and check phase
-        if prop.Track.Head == request.user:
-            return fn(*args, **kw)
-
-        # if status is either 1 or 2 and user is assistant edit is allowed in create+check timephase
-        if prop.Status < 3 and (request.user in prop.Assistants.all() or prop.ResponsibleStaff == request.user):
-            return fn(*args, **kw)
-
-        # if status is either 1, 2 or 3 and user is track head
-        if prop.Status < 4 and prop.Track.Head == request.user:
-            return fn(*args, **kw)
-
-        raise PermissionDenied("You are not allowed to edit this proposal.")
-
+        else:
+            raise PermissionDenied(allowed[1])
     return wrapper
 
 
@@ -269,12 +240,24 @@ def can_access_professionalskills(fn):
 
     def wrapper(*args, **kw):
         request = args[0]
+
+        # user needs to be logged in (so no need for login_required on top of this)
+        if not request.user.is_authenticated:
+            page = args[0].path
+            return redirect_to_login(
+                    next=page,
+                    login_url='index:login',
+                    redirect_field_name='next',)
+
         # type 3 and 6 can always view professionalskills.
         # Everyone can view it in phase 5 and later.
         if get_timephase_number() < 5 and \
                         get_grouptype("3") not in request.user.groups.all() and \
                         get_grouptype("6") not in request.user.groups.all():
             raise PermissionDenied("Student files are not available in this phase")
+
+        if not request.user.groups.exists() and not request.user.distributions.exists():
+            raise PermissionDenied("Student files are available after you are distributed to a project.")
 
         return fn(*args, **kw)
 
@@ -290,6 +273,15 @@ def can_apply(fn):
     """
     def wrapper(*args, **kw):
         request = args[0]
+
+        # user needs to be logged in (so no need for login_required on top of this)
+        if not request.user.is_authenticated:
+            page = args[0].path
+            return redirect_to_login(
+                    next=page,
+                    login_url='index:login',
+                    redirect_field_name='next',)
+
         if get_timephase_number() != 3:
             raise PermissionDenied("Not correct timephase!")
         if request.user.groups.exists():
@@ -314,6 +306,15 @@ def phase7_only(fn):
     :return: 
     """
     def wrapper(*args, **kw):
+        request = args[0]
+        # user needs to be logged in (so no need for login_required on top of this)
+        if not request.user.is_authenticated:
+            page = args[0].path
+            return redirect_to_login(
+                    next=page,
+                    login_url='index:login',
+                    redirect_field_name='next',)
+
         if get_timephase_number() != 7:
             raise PermissionDenied("Not correct timephase!")
         return fn(*args, **kw)

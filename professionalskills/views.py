@@ -209,13 +209,11 @@ def listStudentFiles(request, pk):
     :param pk: id of distribution
     :return:
     """
-    if get_timephase_number() < 5:
-        raise PermissionDenied("Student files are not available in this phase")
-
     dist = get_object_or_404(Distribution, pk=pk)
     respondrights = False
-    if request.user.groups.count() == 0 and dist.Student == request.user:
-        pass
+    editrights = False
+    if dist.Student == request.user:
+        editrights = True
     elif request.user in dist.Proposal.Assistants.all() \
         or request.user == dist.Proposal.ResponsibleStaff\
         or request.user == dist.Proposal.Track.Head:
@@ -226,8 +224,7 @@ def listStudentFiles(request, pk):
         raise PermissionDenied("You are not allowed to view these files")
 
     files = dist.files.all()
-
-    return render(request, "professionalskills/listFiles.html", {"dist": dist, "files": files, "respond" : respondrights})
+    return render(request, "professionalskills/listFiles.html", {"dist": dist, "files": files, "respond" : respondrights, 'edit': editrights})
 
 
 @group_required('type3staff', 'type6staff')

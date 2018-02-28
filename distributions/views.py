@@ -11,33 +11,37 @@ from django.shortcuts import render
 from BepMarketplace.decorators import group_required
 from general_form import ConfirmForm
 from general_mail import EmailThreadMultipleTemplate
-from general_view import get_all_students, get_timeslot, get_timephase_number, get_all_staff, get_all_proposals, createShareLink
+from general_view import get_all_students, get_timeslot, get_timephase_number, get_all_staff, get_all_proposals, \
+    createShareLink
 from proposals.cacheprop import getProp
 from proposals.models import Proposal
 from students.models import Application, Distribution
+from students.views import get_all_applications
 from timeline.models import TimeSlot
 from . import distribution
 
-warningString = "Something failed in the server, please refresh this page (F5) or contact system administrator"
+warningString = 'Something failed in the server, please refresh this page (F5) or contact system administrator'
 
 
-@group_required("type3staff")
+@group_required('type3staff')
 def supportDistributeApplications(request):
     """
     Support page to distribute students manually to projects. Uses ajax calls to change distributions.
 
     :param request:
     """
-    if get_timephase_number() < 4 or get_timephase_number() > 5:
-        raise PermissionDenied("Distribution is not possible in this timephase")
+    if get_timephase_number() < 4 or get_timephase_number() > 6:
+        raise PermissionDenied('Distribution is not possible in this timephase')
 
     props = get_all_proposals().filter(Q(Status__exact=4))
     studs = get_all_students().filter(Q(distributions=None))
     dists = Distribution.objects.filter(Timeslot=get_timeslot())
-    return render(request, "distributions/distributeApplications.html", {"proposals": props, "undistributedStudents": studs, "distributions": dists})
+    return render(request, 'distributions/distributeApplications.html', {'proposals': props,
+                                                                         'undistributedStudents': studs,
+                                                                         'distributions': dists})
 
 
-@group_required("type3staff")
+@group_required('type3staff')
 def distributeApi(request):
     """
     AJAX call from manual distribute to distribute
@@ -45,7 +49,7 @@ def distributeApi(request):
     :param request:
     :return:
     """
-    if get_timephase_number() < 4 or get_timephase_number() > 5:
+    if get_timephase_number() < 4 or get_timephase_number() > 6:
         raise PermissionDenied('Distribution is not possible in this timephase')
 
     if request.method == 'POST':
@@ -57,16 +61,12 @@ def distributeApi(request):
             dist.Student = student
             dist.Proposal = getProp(request.POST['propTo'])
             # check whether there was an application
-            applprio = -1
-            if dist.Student.applications.count() > 0:
-                if dist.Student.applications.filter(Proposal=dist.Proposal).count() > 0:
-                    appl = dist.Student.applications.get(Proposal=dist.Proposal)
-                    applprio = appl.Priority
-                else:
-                    appl=None
-            else:
-                appl = None
-            dist.Application = appl
+            try:
+                dist.Application = get_all_applications(dist.Student).get(Proposal=dist.Proposal)
+                applprio = dist.Application.Priority
+            except:
+                applprio = -1
+                dist.Application = None
             dist.Timeslot = get_timeslot()
             dist.full_clean()
             dist.save()
@@ -87,7 +87,8 @@ def undistributeApi(request):
     :return:
     """
     if get_timephase_number() < 4 or get_timephase_number() > 5:
-        raise PermissionDenied('Distribution is not possible in this timephase')
+        # Not in phase 6, because projects already started.
+        raise PermissionDenied('Undistribution is not possible in this timephase')
 
     if request.method == 'POST':
         try:
@@ -96,16 +97,16 @@ def undistributeApi(request):
             n = dist.delete()
             if n[0] == 1:
                 return JsonResponse(
-                    {'type':'success', 'txt':'Undistributed Student ' + dist.Student.get_full_name()})
+                    {'type': 'success', 'txt': 'Undistributed Student ' + dist.Student.get_full_name()})
             else:
-                return JsonResponse({'type':'warning', 'txt': warningString + ' (distributions not deleted)'})
+                return JsonResponse({'type': 'warning', 'txt': warningString + ' (distributions not deleted)'})
         except Exception as e:
-            return JsonResponse({'type':'warning','txt': warningString, 'exception': str(e) })
+            return JsonResponse({'type': 'warning', 'txt': warningString, 'exception': str(e)})
     else:
         raise PermissionDenied('You don\'t know what you\'re doing!')
 
 
-@group_required("type3staff")
+@group_required('type3staff')
 def changeDistributeApi(request):
     """
     AJAX call from manual distribute to change a distribution
@@ -113,7 +114,7 @@ def changeDistributeApi(request):
     :param request:
     :return:
     """
-    if get_timephase_number() < 4 or get_timephase_number() > 5:
+    if get_timephase_number() < 4 or get_timephase_number() > 6:
         raise PermissionDenied('Distribution is not possible in this timephase')
 
     if request.method == 'POST':
@@ -123,22 +124,18 @@ def changeDistributeApi(request):
             # change Proposal
             dist.Proposal = getProp(request.POST['propTo'])
             # change Application if user has Application
-            applprio = -1
-            if dist.Student.applications.count() > 0:
-                if dist.Student.applications.filter(Proposal=dist.Proposal).count() > 0:
-                    appl = dist.Student.applications.get(Proposal=dist.Proposal)
-                    applprio = appl.Priority
-                else:
-                    appl=None
-            else:
-                appl = None
-            dist.Application = appl
+            try:
+                dist.Application = get_all_applications(dist.Student).get(Proposal=dist.Proposal)
+                applprio = dist.Application.Priority
+            except:
+                dist.Application = None
+                applprio = -1
             dist.full_clean()
             dist.save()
         except Exception as e:
-            return JsonResponse({'type':'warning', 'txt': warningString, 'exception': str(e)})
-        return JsonResponse({'type':'success', 'txt':'Changed distributed Student '+ dist.Student.get_full_name() +
-                                                     ' to Proposal ' + dist.Proposal.Title, 'prio':applprio})
+            return JsonResponse({'type': 'warning', 'txt': warningString, 'exception': str(e)})
+        return JsonResponse({'type': 'success', 'txt': 'Changed distributed Student '+ dist.Student.get_full_name() +
+                                                       ' to Proposal ' + dist.Proposal.Title, 'prio':applprio})
     else:
         raise PermissionDenied('You don\'t know what you\'re doing!')
 
@@ -164,12 +161,12 @@ def mailDistributions(request):
             for prop in get_all_proposals().filter(Q(distributions__isnull=False)):
                 for dist in prop.distributions.filter(Timeslot=ts):
                     mails.append({
-                        'template'  : 'email/studentdistribution.html',
-                        'email'     : dist.Student.email,
-                        'subject'   : 'BEP Marketplace Distribution',
-                        'context'   : {
-                            'project' : prop,
-                            'student' : dist.Student,
+                        'template': 'email/studentdistribution.html',
+                        'email': dist.Student.email,
+                        'subject': 'BEP Marketplace Distribution',
+                        'context': {
+                            'project': prop,
+                            'student': dist.Student,
                         }
                     })
 
@@ -177,20 +174,20 @@ def mailDistributions(request):
             for usr in get_all_staff().filter(Q(groups__name='type1staff') | Q(groups__name='type2staff')):
                 if usr.proposals.filter(TimeSlot=get_timeslot()).exists():
                     mails.append({
-                        'template'  : 'email/assistantdistribution.html',
-                        'email'     : usr.email,
-                        'subject'   : 'BEP Marketplace Distribution',
-                        'context'   : {
-                            'supervisor' : usr,
-                            'projects'   : usr.proposals.filter(TimeSlot=get_timeslot()).distinct(),
+                        'template': 'email/assistantdistribution.html',
+                        'email': usr.email,
+                        'subject': 'BEP Marketplace Distribution',
+                        'context': {
+                            'supervisor': usr,
+                            'projects': usr.proposals.filter(TimeSlot=get_timeslot()).distinct(),
                         }
                     })
                 if usr.proposalsresponsible.filter(TimeSlot=get_timeslot()).exists():
                     mails.append({
-                        'template'  : 'email/supervisordistribution.html',
-                        'email'     : usr.email,
-                        'subject'   : 'BEP Marketplace Distribution',
-                        'context'   : {
+                        'template': 'email/supervisordistribution.html',
+                        'email': usr.email,
+                        'subject': 'BEP Marketplace Distribution',
+                        'context': {
                             'supervisor': usr,
                             'projects': usr.proposalsresponsible.filter(TimeSlot=get_timeslot()).distinct(),
                         }
@@ -200,11 +197,11 @@ def mailDistributions(request):
             # iterate all students and find those with no distributions
             # for usr in get_all_students().filter(distributions__isnull=True):
             #     mails.append({
-            #         'template'  : 'email/studentnodistribution.html',
-            #         'email'     : usr.email,
-            #         'subject'   : 'BEP Marketplace Action Required',
-            #         'context'   : {
-            #             'student' : usr,
+            #         'template': 'email/studentnodistribution.html',
+            #         'email': usr.email,
+            #         'subject': 'BEP Marketplace Action Required',
+            #         'context': {
+            #             'student': usr,
             #         }
             #     })
             EmailThreadMultipleTemplate(mails).start()
@@ -259,8 +256,10 @@ def proposalOfDistribution(request, dtype):
                 if dist['preference'] > 0:
                     try:
                         dstdbobj.Application = \
-                        Application.objects.filter(Q(Student=dist['student']) & Q(Proposal=dist['proposal']) \
-                                                   & Q(Priority=dist['preference']))[0]
+                        Application.objects.filter(Q(Student=dist['student']) &
+                                                   Q(Proposal=dist['proposal']) &
+                                                   Q(Priority=dist['preference']) &
+                                                   Q(Proposal__TimeSlot=get_timeslot()))[0]
                     except:
                         dstdbobj.Application = None
                 else:
@@ -275,19 +274,18 @@ def proposalOfDistribution(request, dtype):
     else:
         form = ConfirmForm()
         # run the algorithms
-        if int(dtype) == 1: # from student
+        if int(dtype) == 1:  # from student
             distobjs = distribution.CalculateFromStudent()
-        elif int(dtype) == 2: # from project
+        elif int(dtype) == 2:  # from project
             distobjs = distribution.CalculateFromProjects()
         else:
             return render(request, 'base.html', {'Message': 'invalid type'})
         # convert to django models from db
         for obj in distobjs:
             dists.append({
-                #TODO this is wrong, by getting users from all users instead of get_all_students() it is possible that
-                # students from old timeslot are redistributed!
-                'student': User.objects.get(pk=obj.StudentID),
-                'proposal': Proposal.objects.get(pk=obj.ProjectID),
+                # this will fail if a student does not have a timeslot, which should not happen.
+                'student': get_all_students().get(pk=obj.StudentID),
+                'proposal': get_all_proposals().get(pk=obj.ProjectID),
                 'preference': obj.Preference,
             })
 
@@ -345,11 +343,11 @@ def secondChoiceList(request):
     sharelinks = [createShareLink(request, x.pk) for x in props]
 
     return render(request, 'distributions/secondChoiseList.html', {
-        'distributions' : Distribution.objects.filter(Timeslot=get_timeslot(),
+        'distributions': Distribution.objects.filter(Timeslot=get_timeslot(),
                                           Application__isnull=True,
                                           Proposal__Private__isnull=True).order_by('Student'),
-        'proposals' :  props,
-        'sharelinks' : sharelinks,
+        'proposals':  props,
+        'sharelinks': sharelinks,
     })
 
 @group_required('type3staff')
@@ -368,14 +366,14 @@ def deleteRandomDistributions(request):
         if form.is_valid():
             dists.delete()
             return render(request, 'base.html', {
-                'Message' : 'Distributions deleted!'
+                'Message': 'Distributions deleted!'
             })
     else:
         form = ConfirmForm()
 
     return render(request, 'distributions/deleterandomdists.html', {
-        'form' : form,
-        'buttontext' : 'Confirm',
-        'formtitle' : 'Confirm deletion distributions of random assigned projects',
-        'distributions' : dists,
+        'form': form,
+        'buttontext': 'Confirm',
+        'formtitle': 'Confirm deletion distributions of random assigned projects',
+        'distributions': dists,
     })

@@ -207,8 +207,10 @@
                 null, //trac
                 null, //group
                 null, //responsible
+                {% if phasenumber < 6 %}
                 {"searchable": false}, //nrof students
-                null, //interested
+                {% endif %}
+                null, //interested (ph<6) or assistant (phase 6)
                 null //chosen
             ];
             var dropdownColumns = [1, 2, 3];

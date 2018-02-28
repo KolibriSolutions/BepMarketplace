@@ -4,27 +4,25 @@
     <script>
     $(document).ready(function() {
         $.get("{% url 'api:getgroupadmins' %}EES/", function(data) {
-            var lst = JSON.parse(data);
-            if (lst.length === 0)
+            if (data.length === 0)
             {
                 $("#id_AdministrationMembers").select2("val", [""]);
             }
             else {
-                $("#id_AdministrationMembers").select2("val", lst);
-                $("#id_AdministrationMembers").val(lst).trigger('change');
+                $("#id_AdministrationMembers").select2("val", data);
+                $("#id_AdministrationMembers").val(data).trigger('change');
             }
         });
 
         $("#id_Group").on("change", function () {
             //console.log($(this).val());
             $.get("{% url 'api:getgroupadmins' %}" + String($(this).val()), function(data) {
-                var lst = JSON.parse(data);
-                if (lst.length === 0)
+                if (data.length === 0)
                 {
-                    $("#id_AdministrationMembers").select2("val", [""]);
+                    $("#id_AdministrationMembers").selegct2("val", [""]);
                 }
                 else {
-                    $("#id_AdministrationMembers").val(lst).trigger('change');
+                    $("#id_AdministrationMembers").val(data).trigger('change');
                 }
             });
         });

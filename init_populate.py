@@ -157,6 +157,16 @@ if __name__=="__main__":
             profs.append(prof)
         except:
             print(str(i)+" not created")
+        prof = User.objects.get(username='professor{}'.format(i))
+        try:
+            mta = UserMeta()
+            mta.Fullname = "Professor-" + str(i)
+            mta.Studentnumber = 0
+            mta.User = prof
+            mta.save()
+            print("usermeta prof" + str(i))
+        except:
+            print(str(i) + " prof usermeta not created")
 
     print("creating {} phders".format(NUMPHDS))
     for i in range(0, NUMPHDS):
@@ -169,6 +179,16 @@ if __name__=="__main__":
             phds.append(phd)
         except:
             print(str(i)+" not created")
+        phd = User.objects.get(username='phd{}'.format(i))
+        try:
+            mta = UserMeta()
+            mta.Fullname = "phd-" + str(i)
+            mta.Studentnumber = 0
+            mta.User = phd
+            mta.save()
+            print("usermeta phd" + str(i))
+        except:
+            print(str(i) + " phd usermeta not created")
 
     stds = []
     print("creating {} students".format(NUMSTDS))
@@ -201,6 +221,14 @@ if __name__=="__main__":
         supp.save()
     except:
         print("no type3 created")
+    supp = User.objects.get(username='janedoe')
+    try:
+        mta = UserMeta()
+        mta.Fullname = 'Jane Doe'
+        mta.User = supp
+        mta.save()
+    except:
+        print('Supp usermeta not created')
 
     print("creating track Head and assigning him")
     try:
@@ -211,6 +239,14 @@ if __name__=="__main__":
         trackh.save()
     except:
         print("no trackhead created")
+    supp = User.objects.get(username='johndoe')
+    try:
+        mta = UserMeta()
+        mta.Fullname = 'John Doe'
+        mta.User = supp
+        mta.save()
+    except:
+        print('Track usermeta not created')
 
     for track in tracks:
         try:

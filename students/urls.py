@@ -11,5 +11,5 @@ urlpatterns = [
     url(r'^application/prioup/(?P<application_id>[0-9]+)/$', views.prioUp, name='prioUp'),
     url(r'^application/priodown/(?P<application_id>[0-9]+)/$', views.prioDown, name='prioDown'),
     url(r'^files/add/$', views.addFile, name='addfile'),
-    url(r'^files/edit/$', views.editFiles, name='editfiles'),
+    url(r'^files/edit/(?P<pk>[0-9]+)/$', views.editFile, name='editfile'),
 ]

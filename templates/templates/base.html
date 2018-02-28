@@ -72,39 +72,47 @@
                         {% if user|has_group:"type3staff" %}
                             {% if phasenumber > 2 %}
                                 {# phase 1 and 2 do not have any distributions #}
-                                {% if phasenumber == 4 or phasenumber == 5 %}
-                                    {# actual distributions are possible in phase 4 and 5 #}
+                                {# phase 4 - 6 show manual distribution button #}
                                     <li>
                                         <a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Distribution</a>
-                                        <ul class="d-menu" data-role="dropdown">
-                                            {% if phasenumber == 4 %}
-                                                {# phase 4 show automatic distribution menu#}
+                                            <ul class="d-menu" data-role="dropdown">
+
+                                            {% if phasenumber == 4 or phasenumber == 5 %}
+                                                <li><a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
+                                                    Manually</a></li>
+                                            {% endif %}
+                                            {% if phasenumber == 6 and user.is_superuser %}
+                                                <li><a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
+                                                    Manually (superuser)</a></li>
+                                            {% endif %}
+
+                                            {% if phasenumber == 4 or phasenumber == 5 %}
+                                            {# actual distributions are possible in phase 4 and 5 #}
+                                                    {% if phasenumber == 4 %}
+                                                        {# phase 4 show automatic distribution menu#}
+                                                        <li>
+                                                            <a href="#" class="dropdown-toggle">Distribute Automatically</a>
+                                                            <ul class="d-menu" data-role="dropdown">
+                                                                <li><a href="{% url 'distributions:distributeproposal' 1 %}">1: By student</a>
+                                                                </li>
+                                                                <li><a href="{% url 'distributions:distributeproposal' 2 %}">2: By project</a>
+                                                                </li>
+                                                            </ul>
+                                                        </li>
+                                                    {% endif %}
+                                                    <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">List
+                                                        all</a></li>
+                                                    <li><a href="{% url "distributions:secondchoice" %}">Second Choice</a> </li>
+                                            {% else %}
+                                                {# show simple list applications/distributions button in phase 3, 6 and 7 #}
                                                 <li>
-                                                    <a href="#" class="dropdown-toggle">Distribute Automatically</a>
-                                                    <ul class="d-menu" data-role="dropdown">
-                                                        <li><a href="{% url 'distributions:distributeproposal' 1 %}">1: By student</a>
-                                                        </li>
-                                                        <li><a href="{% url 'distributions:distributeproposal' 2 %}">2: By project</a>
-                                                        </li>
-                                                    </ul>
+                                                    <a href="{% url 'support:SupportListApplicationsDistributions' %}">
+                                                    {% if phasenumber == 3 %}List Applications{% else %}List Distributions{% endif %}
+                                                    </a>
                                                 </li>
                                             {% endif %}
-                                                {# phase 4 and 5 show manual distribution button #}
-                                            <li><a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
-                                                    Manually</a></li>
-                                            <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">List
-                                                all</a></li>
-                                            <li><a href="{% url "distributions:secondchoice" %}">Second Choice</a> </li>
                                         </ul>
                                     </li>
-                                {% else %}
-                                    {# show simple list applications/distributions button in phase 3, 6 and 7 #}
-                                    <li>
-                                        <a href="{% url 'support:SupportListApplicationsDistributions' %}">
-                                        <span class="mif-mail-read icon"></span>{% if phasenumber == 3 %}Applications{% else %}Distributions{% endif %}
-                                        </a>
-                                    </li>
-                                {% endif %}
                             {% endif %}
                             {% if phasenumber > 4 %}
                                 <li>
@@ -206,7 +214,6 @@
                                     <ul class="d-menu" data-role="dropdown">
                                         <li><a href="{% url 'professionalskills:listownfiles' %}">List files</a></li>
                                         <li><a href="{% url 'students:addfile' %}">Add file</a></li>
-                                        <li><a href="{% url 'students:editfiles' %}">Edit files</a></li>
                                     </ul>
                                 </li>
                                 <li>

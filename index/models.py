@@ -1,8 +1,11 @@
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
 from general_model import clean_text, get_timeslot_id
 from timeline.models import TimeSlot
+
+
 class Track(models.Model):
     """
     Stores the tracks for EE. Like SSS, CW, C&C en Automotive.
@@ -79,7 +82,19 @@ class UserMeta(models.Model):
         return str(self.User)
 
     def get_nice_name(self):
-        return str('hoi')
+        """
+        Get a users full name with preposition
+
+        :return:
+        """
+        if self.Fullname and '.' in self.Fullname and ',' in self.Fullname:
+            last_name = self.Fullname.split(',')[0].strip()
+            preposition = self.Fullname.split('.')[-1].strip()
+            if preposition:
+                return self.User.first_name + ' ' + preposition + ' ' + last_name
+            return self.User.first_name + ' ' + last_name
+        else:
+            return self.User.get_full_name()
 
 
 class Term(models.Model):

@@ -1,9 +1,9 @@
 from django import forms
-from .models import FileType, StaffReponse, StudentGroup
+
+from general_view import get_timeslot
 from templates import widgets
-from timeline.models import TimeSlot
-from datetime import datetime
-from django.db.models import Q
+from .models import FileType, StaffReponse, StudentGroup
+
 
 class FileTypeModelForm(forms.ModelForm):
 
@@ -15,8 +15,7 @@ class FileTypeModelForm(forms.ModelForm):
                     'created' if self.instance._state.adding else 'changed',
                 )
             )
-        ts = TimeSlot.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now()))[0]
-        self.instance.TimeSlot = ts
+        self.instance.TimeSlot = get_timeslot()
         self.instance.save()
         self._save_m2m()
         return self.instance

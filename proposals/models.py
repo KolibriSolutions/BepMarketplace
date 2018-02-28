@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.contrib.auth.models import Group, User
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -65,6 +64,12 @@ class Proposal(models.Model):
         elif self.TimeSlot.Begin > datetime.now().date():
             return True
         else:
+            return False
+
+    def curyear(self):
+        if self.TimeSlot:
+            return self.TimeSlot.Begin <= datetime.now().date() < self.TimeSlot.End
+        else:  # future proposal
             return False
 
     def clean(self):

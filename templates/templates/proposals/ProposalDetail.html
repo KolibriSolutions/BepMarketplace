@@ -22,7 +22,7 @@
                     <h3 style="margin-top: 0;">
                         <small>Part of {{ proposal.Track.Name }}</small>
                     </h3>
-                    {% if proposal.images.all|length > 0 %}
+                    {% if proposal.images.exists %}
                         <div id="imageCarousel" class="carousel" data-role="carousel" data-height="300"
                              data-controls="true" data-markers="false" data-auto="false">
                             {% for image in proposal.images.all %}
@@ -53,7 +53,7 @@
                     <p>{{ proposal.GeneralDescription|linebreaksbr }}</p>
                     <h4>Students task description</h4>
                     <p>{{ proposal.StudentsTaskDescription|linebreaksbr }}</p>
-                    {% if proposal.attachments.all|length > 0 %}
+                    {% if proposal.attachments.exists %}
                         <h4>Attachments:</h4>
                         {% for attachment in proposal.attachments.all %}
                             <a href="{% url 'download:proposalfile' 'a' attachment.id %}"
@@ -87,6 +87,8 @@
                                 <br>
                             {% endif %}
                             {# show "copy to current timeslot" button for proposals of previous timeslots.#}
+                            <br />
+
                             <a class="button primary" href="{% url 'proposals:copy' proposal.id %}">
                                 <span class="mif-versions"></span>Copy
                             </a>
@@ -198,7 +200,7 @@
                                 </td>
                             </tr>
                         {% endif %}
-                        {% if proposal.Status != 4 %}
+                        {% if proposal.Status != 4 or not proposal.curyear %}
                             <tr>
                                 <td>Status:</td>
                                 <td>

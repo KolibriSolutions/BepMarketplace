@@ -15,12 +15,13 @@ from general_model import GroupOptions
 from general_view import createShareLink, get_timephase_number, get_distributions, get_all_proposals, get_grouptype, \
     get_timeslot
 from index.models import Track
+from students.views import get_all_applications
 from tracking.views import trackProposalVisit
 from .cacheprop import getProp, updatePropCache
 from .forms import ProposalFormEdit, ProposalFormCreate, ProposalImageForm, ProposalDowngradeMessageForm, \
     ProposalAttachmentForm
 from .models import Proposal, ProposalImage, ProposalAttachment
-
+from .utils import can_edit_proposal_fn
 
 @login_required
 def listProposals(request):
@@ -62,9 +63,9 @@ def detailProposal(request, pk):
             button = ''
         else:
             button = '<a href="{}" class="button {}">{}</a>'
-            if request.user.applications.filter(Proposal=prop).exists():  # if user has applied to this proposal
+            if get_all_applications(request.user).filter(Proposal=prop).exists():  # if user has applied to this proposal
                 button = button.format(reverse('students:retractapplication',
-                                               args=[request.user.applications.filter(Proposal=prop)[0].id]), 'danger',
+                                               args=[get_all_applications(request.user).filter(Proposal=prop)[0].id]), 'danger',
                                        'Retract Application')
             else:  # show apply button
                 button = button.format(reverse('students:confirmapply', args=[prop.id]), 'primary', 'Apply')
@@ -86,32 +87,16 @@ def detailProposal(request, pk):
         data = {"proposal": prop}
         data["Editlock"] = "Editing not possible"
         if prop.Status == 4:  # published proposal in this timeslot
-            if not prop.prevyear() and (request.user in prop.Assistants.all()
-                                 or prop.ResponsibleStaff == request.user):
-                data["Editlock"] =\
-                    "To edit, first downgrade the proposal or ask your track head (" + prop.Track.Head.get_full_name() + ") to do so."
             if get_grouptype("3") in request.user.groups.all() and get_timephase_number() > 2:  # support staff can see applications
                 data['applications'] = prop.applications.all()
             if get_timephase_number() >= 4:  # responsible / assistants can see distributions in distribution phase
                 data['distributions'] = get_distributions(request.user).filter(Proposal=prop)
-        elif not prop.prevyear():  # not published proposal, status 1, 2, and 3 and from this timeslot
-            # support staf or superusers are always allowed to edit, in any timephase as long as proposal is not published
-            if get_grouptype("3") in request.user.groups.all():
-                data["Editlock"] = False
-            # in the create and check phase
-            elif get_timephase_number() < 3:
-                # track heads are allowed to edit
-                if prop.Track.Head == request.user:
-                    data["Editlock"] = False
-                # if status is either 1 or 2 and user is assistant edit is allowed
-                elif request.user in prop.Assistants.all() or prop.ResponsibleStaff == request.user:
-                    if prop.Status == 3:
-                        if get_timephase_number() == 2:
-                            data["Editlock"] = "To edit, first downgrade the proposal or ask your track head ("+prop.Track.Head.get_full_name()+") to do so."
-                        else:  # in timephase 1 the responsible can also downgrade.
-                            data["Editlock"] = "To edit, first downgrade the proposal or ask the responsible staff or track head (" + prop.Track.Head.get_full_name() + ") to do so."
-                    else:  # editing allowed in status 1 and 2
-                        data["Editlock"] = False
+        allowed = can_edit_proposal_fn(request.user, prop)
+        if allowed[0]:
+            data['Editlock'] = False
+        else:
+            data['Editlock'] = allowed[1]
+
         return render(request, "proposals/ProposalDetail.html", data)
 
 

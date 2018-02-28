@@ -83,7 +83,7 @@ for n in range(1, NUMSTDS):
     print("generated for {}".format(std))
 
 print("generating applications")
-projects = Proposal.objects.filter(Status=4)
+projects = Proposal.objects.filter(Status=4, TimeSlot=get_timeslot())
 Application.objects.all().delete()
 for n in range(1, NUMSTDS):
     std = User.objects.get(username="std{}".format(n))
@@ -95,7 +95,6 @@ for n in range(1, NUMSTDS):
             if p not in projs:
                 projs.append(p)
                 break
-
         app.Proposal = choice(projects)
         app.Student = std
         app.Priority = i + 1

@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
+
 class TimeSlot(models.Model):
     """
     A timeslot is a year in which the current BEP runs. It consists of multiple timephases.
