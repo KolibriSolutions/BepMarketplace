@@ -1,10 +1,12 @@
+from datetime import datetime
+
 from django.urls import reverse
 
 from general_test import ProposalViewsTest
-from .models import FileType
-from general_view import get_timeslot
-from datetime import datetime
 from students.models import Distribution
+from timeline.utils import get_timeslot
+from .models import FileType
+
 
 class ProfessionalskillsViewsTest(ProposalViewsTest):
     def setUp(self):

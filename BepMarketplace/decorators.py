@@ -4,11 +4,12 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
-from general_view import get_timephase_number, get_grouptype, get_timeslot
+from general_view import get_grouptype
 from proposals.cacheprop import getProp
 from proposals.models import Proposal
 from proposals.utils import can_edit_proposal_fn
 from support.models import CapacityGroupAdministration
+from timeline.utils import get_timephase_number, get_timeslot
 
 
 def group_required(*group_names):

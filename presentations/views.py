@@ -12,10 +12,10 @@ from htmlmin.decorators import not_minified_response
 
 import general_excel
 from BepMarketplace.decorators import group_required
-# from general_form import print_formset_errors
-from general_view import get_timephase_number, get_grouptype
+from general_view import get_grouptype
 from index.models import Track
 from students.models import Distribution
+from timeline.utils import get_timephase_number
 from .forms import PresentationOptionsForm, PresentationRoomForm, PresentationSetForm, get_timeslot, MakePublicForm
 from .models import Room, PresentationSet, PresentationTimeSlot
 

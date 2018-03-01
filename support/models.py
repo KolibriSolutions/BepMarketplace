@@ -3,8 +3,9 @@ from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch.dispatcher import receiver
 
-from general_model import file_delete_default, metro_icon_default, filename_default, clean_text, get_timeslot_id
-from general_view import get_all_proposals, get_timeslot
+from general_model import file_delete_default, metro_icon_default, filename_default, clean_text
+from proposals.utils import get_all_proposals
+from timeline.utils import get_timeslot, get_timeslot_id
 from index.models import Track
 from proposals.models import Proposal
 from students.models import Application, Distribution
@@ -43,6 +44,10 @@ class PublicFile(models.Model):
     OriginalName = models.CharField(max_length=200, blank=True, null=True)
     File = models.FileField(default=None, upload_to=make_upload_path)
     TimeSlot = models.ForeignKey(TimeSlot, default=get_timeslot_id, on_delete=models.CASCADE, related_name='public_files')
+    User = models.ForeignKey(User, blank=True, null=True)
+    TimeStamp = models.DateTimeField(auto_now=True, blank=True, null=True)
+    Created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+
 
     def metro_icon(self):
         return metro_icon_default(self)

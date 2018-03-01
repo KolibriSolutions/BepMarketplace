@@ -1,15 +1,17 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch.dispatcher import receiver
 
-from general_model import GroupOptions
-from general_model import file_delete_default, filename_default, clean_text
+from general_model import GroupOptions, file_delete_default, filename_default, clean_text, get_ext, print_list
 from index.models import Track
 from timeline.models import TimeSlot
+from timeline.utils import get_timeslot
 
 
 class Proposal(models.Model):
@@ -18,10 +20,10 @@ class Proposal(models.Model):
     """
 
     StatusOptions = (
-        (1, "Draft, awaiting completion by type 2 (assistant)"),
-        (2, "Draft, awaiting approval by type 1 (professor)"),
-        (3, "Final draft, awaiting approval track head"),
-        (4, "Active proposal"),
+        (1, 'Draft, awaiting completion by type 2 (assistant)'),
+        (2, 'Draft, awaiting approval by type 1 (professor)'),
+        (3, 'Final draft, awaiting approval track head'),
+        (4, 'Active proposal'),
     )
 
     Title = models.CharField(max_length=100)
@@ -39,7 +41,7 @@ class Proposal(models.Model):
     TimeSlot = models.ForeignKey(TimeSlot, related_name='proposals', null=True, blank=True, on_delete=models.PROTECT)
 
     def __str__(self):
-        return self.Title + " from " + self.ResponsibleStaff.username
+        return self.Title + ' from ' + self.ResponsibleStaff.username
 
     def nDistributions(self):
         return int(self.distributions.count())
@@ -68,7 +70,7 @@ class Proposal(models.Model):
 
     def curyear(self):
         if self.TimeSlot:
-            return self.TimeSlot.Begin <= datetime.now().date() < self.TimeSlot.End
+            return self.TimeSlot == get_timeslot()
         else:  # future proposal
             return False
 
@@ -84,7 +86,7 @@ class ProposalFile(models.Model):
     """
     def make_upload_path(instance, filename):
         filenameNew =  filename_default(filename)
-        return 'proposal_{0}/{1}'.format(instance.Proposal.pk,filenameNew)
+        return 'proposal_{0}/{1}'.format(instance.Proposal.pk, filenameNew)
     Caption = models.CharField(max_length=200, blank=True, null=True)
     OriginalName = models.CharField(max_length=200, blank=True, null=True)
 
@@ -92,7 +94,7 @@ class ProposalFile(models.Model):
         abstract = True
 
     def __str__(self):
-        return self.Proposal.Title + " " + self.Caption
+        return self.Proposal.Title + ' ' + self.Caption
 
     def clean(self):
         self.Caption = clean_text(self.Caption)
@@ -112,13 +114,19 @@ class ProposalImage(ProposalFile):
             pass
         super(ProposalImage, self).save(*args, **kwargs)
 
+    def clean(self):
+        if self.File:
+            if get_ext(self.File.name) not in settings.ALLOWED_PROPOSAL_IMAGES:
+                raise ValidationError(
+                    'This file type is not allowed. Allowed types: ' + print_list(settings.ALLOWED_PROPOSAL_IMAGES))
+
 
 class ProposalAttachment(ProposalFile):
     Proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE, related_name='attachments')
     File = models.FileField(default=None, upload_to=ProposalFile.make_upload_path)
 
     def save(self, *args, **kwargs):
-        #remove old attachement if the attachement changed
+        # remove old attachement if the attachement changed
         try:
             this_old = ProposalAttachment.objects.get(id=self.id)
             if this_old.File != self.File:
@@ -126,6 +134,13 @@ class ProposalAttachment(ProposalFile):
         except:  # new image object
             pass
         super(ProposalAttachment, self).save(*args, **kwargs)
+
+    def clean(self):
+        if self.File:
+            if get_ext(self.File.name) not in settings.ALLOWED_PROPOSAL_ATTACHMENTS:
+                raise ValidationError(
+                    'This file type is not allowed. Allowed types: '
+                    + print_list(settings.ALLOWED_PROPOSAL_ATTACHMENTS))
 
 
 # delete image if ProposalImage Object is removed

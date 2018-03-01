@@ -15,6 +15,7 @@
         <link href="{% static "css/metro-icons.min.css" %}" rel="stylesheet">
         <link href="{% static "css/metro-responsive.min.css" %}" rel="stylesheet">
         <link href="{% static "css/metro-schemes.min.css" %}" rel="stylesheet">
+        <link href="{% static "css/metro-colors.min.css" %}" rel="stylesheet">
         <link href="{% static "css/custom.css" %}" rel="stylesheet">
 
         {% block stylesheets %}
@@ -270,7 +271,7 @@
             <ul class="app-bar-menu place-right" data-flexdirection="reverse">
                 <li>{% GetSlot %}</li>
                 {% if user.is_authenticated %}
-                    <li><a href="{% url 'index:profile' %}"><span class="mif-user icon"></span>{{ user }} Profile</a>
+                    <li><a href="{% url 'index:profile' %}"><span class="mif-user icon"></span>Profile</a>
                     </li>
                     <li><a href="{% url 'index:logout' %}"><span class="mif-vpn-lock icon"></span>Logout</a></li>
                 {% else %}
@@ -282,12 +283,11 @@
     {% endblock %}
     <div id="content">
         <div class="grid">
-            <div class="row cells5">
-                {% block header %}
-
-                {% endblock %}
-            </div>
-            <div class="row cells5">
+            {#<div class="row">#}
+            {#                 block 'header' is not used, is now removed jvo #}
+            {#                #}
+            {#            </div>#}
+            <div class="row cells5" id="contentGrid">
                 <div class="cell colspan4" id="cellContent">
                     {% block body %}
                         {% if Message %}
@@ -370,18 +370,22 @@
                                 <a href="{% url 'impersonate-stop' %}" class="button primary">Stop impersonating</a>
                             </p>
                         {% endif %}
+
                     {% endif %}
                 </div>
             </div>
-            <div class="row cells5">
-                {% block footer %}
-
-                {% endblock %}
-            </div>
+            {#            <div class="row cells5">#}
+            {#                {% block footer %}#}
+            {##}
+            {#                {% endblock %}#}
+            {#            </div>#}
         </div>
     </div>
 </div>
 <div id="footer">
+    <a id="toggleSidebarButton" class="button place-right" title="Show/hide the sidebar">
+        <span id='toggleSidebarButtonIcon' class="mif-chevron-right icon"></span>
+    </a>
     <div class="place-left">
         {% if request.user.is_authenticated %}
             <form method="post" action="{% url 'index:feedbackForm' %}">
@@ -392,24 +396,35 @@
             </form>
         {% endif %}
     </div>
+
     <div class="place-right text-small">
-        <div class="cell place-left padding10" onclick="roll('li')">By: Frank Boerman & Jeroen van Oorschot 2016-2017
-        </div>
-        <div class="cell place-left padding10">Currently deployed<span
-                onclick="$('[class^=mif]').removeClass().addClass('icon mif-shit')">:</span> {% GetHash %}</div>
+        <div class="cell place-left padding10" onclick="roll('li')">By: Kolibri Solutions 2016-2018</div>
+        <div class="cell place-left padding10">Currently deployed: {% GetHash %}</div>
     </div>
 </div>
 {% block scripts %}
-
     <script src="{% static "js/jquery-3.2.1.min.js" %}"></script>
+    {# datatables #}
     <script src="{% static "js/datatables.min.js" %}"></script>
 {#    <script src="{% static "js/dataTables.responsive.min.js" %}"></script>#}
 {#    <script src="{% static "js/dataTables.buttons.min.js" %}"></script>#}
 {#    <script src="{% static "js/buttons.html5.min.js" %}"></script>#}
 
     <script src="{% static "js/MPDataTable.min.js" %}"></script>
+    {# metro #}
     <script src="{% static "js/metro.min.js" %}"></script>
+    {# for top horizontal scroll bar #}
+    <script src="{% static "js/jquery.doubleScroll.js" %}"></script>
+    {# custom #}
     <script src="{% static "js/custom.js" %}"></script>
+
+    {% if hide_sidebar %}
+        <script type="text/javascript">
+            $(function () {
+                hideSidebar();
+            });
+        </script>
+    {% endif %}
 {% endblock %}
 </body>
 </html>

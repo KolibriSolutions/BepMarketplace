@@ -1,7 +1,8 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
-from general_model import clean_text, get_timeslot_id
+from general_model import clean_text
+from timeline.utils import get_timeslot_id
 from index.models import Track
 from students.models import Distribution
 from timeline.models import TimeSlot

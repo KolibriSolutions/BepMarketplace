@@ -30,7 +30,9 @@
                                     <a href="{% url "download:proposalfile" "i" image.id %}" data-lightbox="lightbox1"
                                        data-title="{{ image.Caption }}">
                                         <img data-role="fitImage" data-format="fill" src="{% url "download:proposalfile" "i" image.id %}"
-                                             alt="{{ image.Caption }}"/>
+                                             alt="{{ image.Caption }}"
+                                            referrerpolicy="no-referrer-when-downgrade"
+                                        />
                                     </a>
                                     <div class="imageCaption">
                                         <h5>{{ image.Caption }}</h5>
@@ -43,7 +45,8 @@
                                 <div class="thumb" data-index="{{ forloop.counter }}"><img src="{% url "download:proposalfile" "i" image.id %}"
                                                                                            data-role="fitImage"
                                                                                            data-format="fill"
-                                                                                           alt="{{ image.Caption }}">
+                                                                                           alt="{{ image.Caption }}"
+                                                                                           referrerpolicy="no-referrer-when-downgrade">
                                 </div>
                             {% endfor %}
                         </div>
@@ -57,7 +60,8 @@
                         <h4>Attachments:</h4>
                         {% for attachment in proposal.attachments.all %}
                             <a href="{% url 'download:proposalfile' 'a' attachment.id %}"
-                               class="command-button file-button" download>
+                               class="command-button file-button" download
+                                referrerpolicy="no-referrer-when-downgrade">
                                 <span class="icon mif-file-pdf"></span>
                                 {% if attachment.Caption %}{{ attachment.Caption }}{% else %}Attachment {{ forloop.counter }}{% endif %}
                                 <small>{{ attachment.OriginalName }}</small>
@@ -66,79 +70,79 @@
                     {% endif %}
                     <br/><br/>
 
+                    {% if user.is_authenticated %} {# To prevent API views using sharelinks to see any buttons. #}
+                        <p>
+                                {% comment %} Normal edit buttons for staff {% endcomment %}
+                            {% if user|has_group:"any" %}
+                                {% if Editlock != False %}
+                                    {{ Editlock }}
+                                {% else %}
+                                    <br/>
+                                        <a class="button primary" href="{% url 'proposals:edit' proposal.id %}">
+                                            <span class="mif-pencil"></span>Edit data
+                                        </a>
+                                        <a class="button primary" href="{% url 'proposals:editfile' 'i' proposal.id %}">
+                                            <span class="mif-images"></span>Edit images
+                                        </a>
+                                        <a class="button primary" href="{% url 'proposals:editfile' 'a' proposal.id %}">
+                                            <span class="mif-file-pdf"></span>Edit attachments
+                                        </a>
 
-                    <p>
-                            {% comment %} Normal edit buttons for staff {% endcomment %}
-                        {% if user|has_group:"any" %}
-                            {% if Editlock != False %}
-                                {{ Editlock }}
-                            {% else %}
-                                <br/>
-                                    <a class="button primary" href="{% url 'proposals:edit' proposal.id %}">
-                                        <span class="mif-pencil"></span>Edit data
-                                    </a>
-                                    <a class="button primary" href="{% url 'proposals:editfile' 'i' proposal.id %}">
-                                        <span class="mif-images"></span>Edit images
-                                    </a>
-                                    <a class="button primary" href="{% url 'proposals:editfile' 'a' proposal.id %}">
-                                        <span class="mif-file-pdf"></span>Edit attachments
-                                    </a>
+                                    <br>
+                                {% endif %}
+                                {# show "copy to current timeslot" button for proposals of previous timeslots.#}
+                                <br />
 
-                                <br>
+                                <a class="button primary" href="{% url 'proposals:copy' proposal.id %}">
+                                    <span class="mif-versions"></span>Copy
+                                </a>
+                                {% if user.is_superuser%}
+                                <a href="{% url 'admin:proposals_proposal_change' proposal.pk %}" class="button warning">Admin Edit</a>
+                                {% endif %}
                             {% endif %}
-                            {# show "copy to current timeslot" button for proposals of previous timeslots.#}
-                            <br />
+                        </p>
 
-                            <a class="button primary" href="{% url 'proposals:copy' proposal.id %}">
-                                <span class="mif-versions"></span>Copy
-                            </a>
-                            {% if user.is_superuser%}
-                            <a href="{% url 'admin:proposals_proposal_change' proposal.pk %}" class="button warning">Admin Edit</a>
+                        {% if not user|has_group:"any" %}
+                            {% comment %}
+                            Apply / retract buttons are inserted using a .format on the {} below.
+                            {% endcomment %}
+                            {% if not user|has_group:"type4staff" and not proposal.Private.all %}
+                                {}
                             {% endif %}
-                        {% endif %}
-                    </p>
-
-                    {% if not user|has_group:"any" %}
-                        {% comment %}
-                        Apply / retract buttons are inserted using a .format on the {} below.
-	                    {% endcomment %}
-                        {% if not user|has_group:"type4staff" and not proposal.Private.all %}
-                            {}
-                        {% endif %}
-                    {% else %}
-                        {% if phasenumber < 3 and phasenumber > 0 %}
-                            {% if proposal.Status == 1 %}
-                                {% include 'proposals/Proposal_include_upgradeButton.html' %}
-                            {% elif proposal.Status == 2 %}
-                                {% if user|has_group:"type3staff" or user == proposal.ResponsibleStaff or proposal.Track.Head == request.user %}
+                        {% else %}
+                            {% if phasenumber < 3 and phasenumber > 0 %}
+                                {% if proposal.Status == 1 %}
                                     {% include 'proposals/Proposal_include_upgradeButton.html' %}
-                                {% endif %}
-                                {% include 'proposals/Proposal_include_downgradeButton.html' %}
-                            {% elif proposal.Status == 3 %}
-                                {% if proposal.Track.Head == request.user or user|has_group:"type3staff" %}
-                                    {% include 'proposals/Proposal_include_upgradeButton.html' %}
-                                {% endif %}
-                                {% if user == proposal.ResponsibleStaff or user|has_group:"type3staff" or proposal.Track.Head == request.user %}
+                                {% elif proposal.Status == 2 %}
+                                    {% if user|has_group:"type3staff" or user == proposal.ResponsibleStaff or proposal.Track.Head == request.user %}
+                                        {% include 'proposals/Proposal_include_upgradeButton.html' %}
+                                    {% endif %}
                                     {% include 'proposals/Proposal_include_downgradeButton.html' %}
+                                {% elif proposal.Status == 3 %}
+                                    {% if proposal.Track.Head == request.user or user|has_group:"type3staff" %}
+                                        {% include 'proposals/Proposal_include_upgradeButton.html' %}
+                                    {% endif %}
+                                    {% if user == proposal.ResponsibleStaff or user|has_group:"type3staff" or proposal.Track.Head == request.user %}
+                                        {% include 'proposals/Proposal_include_downgradeButton.html' %}
+                                    {% endif %}
+                                {% elif proposal.Status == 4 %}
+                                    {% if proposal.Track.Head == request.user or user|has_group:"type3staff" %}
+                                        {% include 'proposals/Proposal_include_downgradeButton.html' %}
+                                    {% endif %}
                                 {% endif %}
-                            {% elif proposal.Status == 4 %}
-                                {% if proposal.Track.Head == request.user or user|has_group:"type3staff" %}
-                                    {% include 'proposals/Proposal_include_downgradeButton.html' %}
+                                {% if proposal.Status != 4 %}
+                                    <br/><br/>
+                                    <a href="{% url 'proposals:sharelink' proposal.id %}" class="button primary">Get
+                                        share link</a>
                                 {% endif %}
-                            {% endif %}
-                            {% if proposal.Status != 4 %}
-                                <br/><br/>
-                                <a href="{% url 'proposals:sharelink' proposal.id %}" class="button primary">Get
-                                    Sharelink</a>
-                            {% endif %}
-                            {% if user|has_group:"type3staff" and proposal.Status < 3 %}
-                                    <a class="button warning" href="{% url 'proposals:askdeleteproposal' proposal.id %}">
-                                            <span class="mif-bin"></span>Delete</a>
+                                {% if user|has_group:"type3staff" and proposal.Status < 3 %}
+                                        <a class="button warning" href="{% url 'proposals:askdeleteproposal' proposal.id %}">
+                                                <span class="mif-bin"></span>Delete</a>
+                                {% endif %}
                             {% endif %}
                         {% endif %}
                     {% endif %}
                 </div>
-
 
                 <div class="cell">
                     <table class="table">

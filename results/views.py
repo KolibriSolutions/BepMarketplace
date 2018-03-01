@@ -1,6 +1,7 @@
 from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -9,9 +10,9 @@ from xhtml2pdf import pisa
 
 from BepMarketplace.decorators import group_required, get_object_or_404
 from BepMarketplace.decorators import phase7_only
-from general_view import get_timeslot
+from timeline.utils import get_timeslot
 from .forms import *
-from django.core.exceptions import PermissionDenied
+
 
 @group_required('type1staff', 'type3staff')
 @phase7_only

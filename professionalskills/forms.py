@@ -1,7 +1,8 @@
 from django import forms
+from django.forms import ValidationError
 
-from general_view import get_timeslot
 from templates import widgets
+from timeline.utils import get_timeslot
 from .models import FileType, StaffReponse, StudentGroup
 
 
@@ -45,6 +46,17 @@ class FileTypeModelForm(forms.ModelForm):
         help_texts = {
             'CheckedBySupervisor': 'Check this box if the supervisor of the project has to review and grade this professional skill.'
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # Title should be unique within one timeslot, a new filetype is always created in the current timeslot.
+        title = cleaned_data.get('Name')
+        p = FileType.objects.filter(TimeSlot=get_timeslot(), Name__iexact=title)
+        if p.exists():
+            for conflict_or_self in p:
+                if conflict_or_self.id != self.instance.id:
+                    raise ValidationError('A professional skill with this name already exists in this timeslot')
+        return cleaned_data
 
 
 class ConfirmForm(forms.Form):

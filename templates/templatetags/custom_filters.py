@@ -8,9 +8,11 @@ from django.urls.base import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
-from general_view import get_timeslot, get_timephase, get_timephase_number, get_all_proposals, get_grouptype
+from general_view import get_grouptype
+from proposals.utils import get_all_proposals
 from index.models import Broadcast
 from presentations.models import PresentationTimeSlot, PresentationSet
+from timeline.utils import get_timeslot, get_timephase, get_timephase_number
 
 register = template.Library()
 
@@ -305,7 +307,7 @@ def GetPresentationStaff(user):
                     html = "<p>You do not have any presentations to attend</p>"
 
             else:
-                # check if user has presentations, for responsible and supervisors that are not trackhead
+                # check if user has presentations, for responsible and assistants that are not trackhead
                 try:
                     t = PresentationTimeSlot.objects.filter(Q(Distribution__Proposal__ResponsibleStaff=user) | Q(Distribution__Proposal__Assistants=user))
                 except:

@@ -1,5 +1,3 @@
-import json
-
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -13,9 +11,11 @@ from django.urls import reverse
 from BepMarketplace.decorators import group_required, can_edit_proposal, superuser_required, can_downgrade_proposal
 from general_mail import mailAffectedUser
 from general_model import GroupOptions
-from general_view import get_timephase_number, get_all_proposals, get_grouptype, get_timeslot
+from general_view import get_grouptype
 from proposals.models import Proposal
+from proposals.utils import get_all_proposals
 from support.models import CapacityGroupAdministration
+from timeline.utils import get_timeslot, get_timephase_number
 from tracking.models import ProposalStatusChange
 
 
@@ -40,8 +40,8 @@ def getStatStr(status):
 def viewShareLink(request, token):
     """
     Translate a given sharelink to a proposal-detailpage.
-    
-    :param request: 
+
+    :param request:
     :param token: sharelink token, which includes the pk of the proposal
     :return: proposal detail render
     """
@@ -53,10 +53,10 @@ def viewShareLink(request, token):
         })
     except signing.BadSignature:
         return render(request, "base.html", {
-            "Message" : "Invalid token in link!"
+            "Message": "Invalid token in share link!"
         })
     obj = get_object_or_404(Proposal, pk=pk)
-    return render(request, "proposals/ProposalDetail.html", {"proposal" : obj})
+    return render(request, "proposals/ProposalDetail.html", {"proposal": obj})
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
@@ -64,10 +64,10 @@ def viewShareLink(request, token):
 def upgradeStatusApi(request, pk):
     """
     API call to increase the status of a proposal.
-    
-    :param request: 
+
+    :param request:
     :param pk: id of proposal
-    :return: 
+    :return:
     """
     obj = get_object_or_404(Proposal, pk=pk)
 
@@ -119,11 +119,11 @@ def upgradeStatusApi(request, pk):
 def downgradeStatusApi(request, pk, message=''):
     """
     API call to decrease the status of a proposal.
-    
-    :param request: 
+
+    :param request:
     :param pk: id of proposal
     :param message: message why the proposal was downgraded
-    :return: 
+    :return:
     """
     obj = get_object_or_404(Proposal, pk=pk)
     # Status 2 always allowed
@@ -158,9 +158,9 @@ def verifyAssistant(request, pk):
     """
     API call to verify an type2staffunverified assistant as a type2staff.
 
-    :param request: 
-    :param pk: id of the assistant-user 
-    :return: 
+    :param request:
+    :param pk: id of the assistant-user
+    :return:
     """
     account = get_object_or_404(User, pk=pk)
 
@@ -181,7 +181,7 @@ def getGroupAdmins(request, group=""):
 
     :param request:
     :param group: the group where you want the administration member from
-    :return: 
+    :return:
     """
     objs = CapacityGroupAdministration.objects.filter(Group=group)
     if len(objs) == 0:
@@ -199,9 +199,9 @@ def getGroupAdmins(request, group=""):
 def getPublishedListPerGroup(request):
     """
     Return all public proposals (=type 4) ordered by group as JSON
-    
-    :param request: 
-    :return: JSON response 
+
+    :param request:
+    :return: JSON response
     """
     data = {}
 
@@ -218,8 +218,8 @@ def getPublishedListPerGroup(request):
 def getPublishedTitles(request):
     """
     Get all public proposals (=status 4) titles as JSON
-     
-    :param request: 
+
+    :param request:
     :return: JSON response
     """
     data = {}
@@ -234,10 +234,10 @@ def getPublishedTitles(request):
 def getPublishedDetail(request, pk):
     """
     Get detailed information of given proposal as JSON
-    
-    :param request: 
-    :param pk: id of the proposal 
-    :return: 
+
+    :param request:
+    :param pk: id of the proposal
+    :return:
     """
     prop = get_object_or_404(Proposal, pk=pk)
     if prop.Status != 4 or prop.Private.exists():
@@ -260,9 +260,9 @@ def getPublishedDetail(request, pk):
 def getPublishedList(request):
     """
     JSON list of all published proposals with some detail info.
-    
-    :param request: 
-    :return: 
+
+    :param request:
+    :return:
     """
     props = get_all_proposals().filter(Q(Status=4) & Q(Private__isnull=True))
     l = []

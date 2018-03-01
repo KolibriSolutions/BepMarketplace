@@ -5,10 +5,10 @@ from django.dispatch.dispatcher import receiver
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
 
-from general_model import file_delete_default, metro_icon_default, filename_default
+from general_model import file_delete_default, metro_icon_default, filename_default, print_list
 from students.models import Distribution
 from timeline.models import TimeSlot
-from general_model import clean_text
+from general_model import clean_text, get_ext
 
 
 class FileExtension(models.Model):
@@ -34,13 +34,14 @@ class FileType(models.Model):
     CheckedBySupervisor = models.BooleanField(default=True)
 
     def get_allowed_extensions(self):
-        l = []
-        for ext in self.AllowedExtensions.all():
-            l.append(str(ext))
-        return l
+        return list(self.AllowedExtensions.values_list('Name', flat=True))
 
     def __str__(self):
         return self.Name
+
+    def clean(self):
+        self.Name = clean_text(self.Name)
+        self.Description = clean_text(self.Description)
 
 
 class StudentFile(models.Model):
@@ -77,11 +78,16 @@ class StudentFile(models.Model):
 
     def clean(self):
         self.Caption = clean_text(self.Caption)
+        if self.File:
+            if get_ext(self.File.name) not in self.Type.get_allowed_extensions():
+                raise ValidationError(
+                    'This file type is not allowed. Allowed types: '
+                    + print_list(self.Type.get_allowed_extensions()))
 
 
 class StudentGroup(models.Model):
     """
-    A group of students for a professionalskill
+    A group of students for a professional skill
     """
     Number = models.IntegerField()
     PRV = models.ForeignKey(FileType, related_name='groups')

@@ -34,7 +34,7 @@ if __name__=="__main__":
     from timeline.models import TimePhase, TimeSlot
     from django.contrib.contenttypes.models import ContentType
     import random
-    from general_view import get_timeslot
+    from timeline.utils import get_timeslot
 
     all_models = [Track, Broadcast, Proposal, Application, Distribution, TimePhase, TimeSlot]
 

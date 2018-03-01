@@ -23,7 +23,7 @@
                 <td><span class="icon mif-file-{{ file.metro_icon }}"></span></td>
                 <td>{{ file.Caption }}</td>
 
-                <td><a href="{% url "download:studentfile" file.id %}">{{ file.OriginalName }}</a></td>
+                <td><a href="{% url "download:studentfile" file.id %}" download>{{ file.OriginalName }}</a></td>
 
                 <td>{{ file.Type }}</td>
                 <td data-sort="{{ file.Created|date:"U" }}">{{ file.Created }}</td>

@@ -2,8 +2,8 @@ from datetime import time
 
 from django import forms
 
-from general_view import get_timeslot
 from templates import widgets
+from timeline.utils import get_timeslot
 from .models import PresentationSet, PresentationOptions, Room
 
 

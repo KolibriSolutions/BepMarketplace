@@ -3,19 +3,6 @@ General functions mostly used in models (models.py)
 """
 import re
 import uuid
-from datetime import datetime
-from django.db.models import Q
-from timeline.models import TimeSlot
-from django.core.exceptions import PermissionDenied
-
-def get_timeslot_id():
-    """
-    default timeslot for any model connected to timeslot. Not imported from general_view because circular dependencies.
-    """
-    try:
-        return TimeSlot.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now()))[0].id
-    except:
-        raise PermissionDenied("This is not possible, as there is no timeslot.")
 
 
 def get_ext(filename):
@@ -117,3 +104,24 @@ GroupOptions = (
     ("PHI", "Photonic Integration"),
     ("EM", "Electromagnetics")
 )
+
+
+def print_list(list):
+    """
+    list of strings to pretty inline enumeration.
+    ['a', 'b', 'c'] to 'a, b & c'
+
+    :param list: input list
+    :return: string
+    """
+    if len(list) == 0:
+        return 'None'
+    elif len(list) == 1:
+        return list[0]
+    else:
+        tx = ''
+        for item in list:
+            tx += str(item) + ', '
+        tx = tx[:-2]
+        i = tx.rfind(',')
+        return tx[:i] + ' &' + tx[i+1:]

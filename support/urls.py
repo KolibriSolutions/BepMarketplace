@@ -17,6 +17,8 @@ urlpatterns = [
     # public files
     url(r'^files/add/$', views.addFile, name='addfile'),
     url(r'^files/edit/$', views.editFiles, name='editfiles'),
+    url(r'^files/edit/(?P<pk>[0-9]+)/$', views.editFile, name='editfile'),
+    url(r'^files/delete/(?P<pk>[0-9]+)/$', views.deleteFile, name='deletefile'),
 
     # lists
     url(r'^upgradeuser/(?P<pk>[0-9]+)/$', views.upgradeUser, name='upgradeuser'),

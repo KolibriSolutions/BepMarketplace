@@ -20,7 +20,7 @@ elif MODE == 'production':
 
 django.setup()
 
-from general_view import get_timeslot
+from timeline.utils import get_timeslot
 from django.contrib.auth.models import User
 from django.db.models import Q
 

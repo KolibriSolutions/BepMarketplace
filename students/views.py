@@ -3,18 +3,17 @@ import time
 
 import channels
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Max
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render, redirect
 
 from BepMarketplace.decorators import can_view_proposal, can_apply, student_only, can_access_professionalskills
-from general_view import get_timeslot
 from professionalskills.models import StudentFile
 from proposals.cacheprop import getProp
 from proposals.models import Proposal
 from students.models import Distribution
+from timeline.utils import get_timeslot
 from tracking.models import ApplicationTracking
 from .forms import StudentFileForm
 from .models import Application
@@ -218,7 +217,7 @@ def confirmApplication(request, pk):
 def addFile(request):
     """
     For students to upload a file. Used for the hand in system.
-    Responsibles, supervisors and trackheads can then view the files of their students.
+    Responsibles, assistants and trackheads can then view the files of their students.
     support staff can see all student files.
     
     :param request:
@@ -244,7 +243,7 @@ def addFile(request):
 def editFile(request, pk):
     """
     For students to edit a uploaded file. Used for the hand in system.
-    Responsibles, supervisors and trackheads can then view the files of their students.
+    Responsibles, assistants and trackheads can then view the files of their students.
     support staff can see all student files.
     
     :param request:

@@ -11,13 +11,14 @@ from django.shortcuts import render
 from BepMarketplace.decorators import group_required
 from general_form import ConfirmForm
 from general_mail import EmailThreadMultipleTemplate
-from general_view import get_all_students, get_timeslot, get_timephase_number, get_all_staff, get_all_proposals, \
-    createShareLink
+from general_view import get_all_students, get_all_staff
+from proposals.utils import get_all_proposals, get_share_link
 from proposals.cacheprop import getProp
 from proposals.models import Proposal
 from students.models import Application, Distribution
 from students.views import get_all_applications
 from timeline.models import TimeSlot
+from timeline.utils import get_timeslot, get_timephase_number
 from . import distribution
 
 warningString = 'Something failed in the server, please refresh this page (F5) or contact system administrator'
@@ -34,11 +35,12 @@ def supportDistributeApplications(request):
         raise PermissionDenied('Distribution is not possible in this timephase')
 
     props = get_all_proposals().filter(Q(Status__exact=4))
-    studs = get_all_students().filter(Q(distributions=None))
+    studs = get_all_students(undistributed=True).filter(Q(distributions=None))  # also show undistributed in phase 6
     dists = Distribution.objects.filter(Timeslot=get_timeslot())
     return render(request, 'distributions/distributeApplications.html', {'proposals': props,
                                                                          'undistributedStudents': studs,
-                                                                         'distributions': dists})
+                                                                         'distributions': dists,
+                                                                         'hide_sidebar': True})
 
 
 @group_required('type3staff')
@@ -54,7 +56,7 @@ def distributeApi(request):
 
     if request.method == 'POST':
         try:
-            student = get_all_students().get(pk=request.POST['student'])
+            student = get_all_students(undistributed=True).get(pk=request.POST['student'])
             if student.distributions.filter(Timeslot=get_timeslot()).exists():
                 return JsonResponse({'type': 'warning', 'txt': warningString + ' (Student already distributed)'})
             dist = Distribution()
@@ -92,7 +94,7 @@ def undistributeApi(request):
 
     if request.method == 'POST':
         try:
-            student = get_all_students().get(pk=request.POST['student'])
+            student = get_all_students(undistributed=True).get(pk=request.POST['student'])
             dist = student.distributions.get(Timeslot=get_timeslot())
             n = dist.delete()
             if n[0] == 1:
@@ -119,7 +121,7 @@ def changeDistributeApi(request):
 
     if request.method == 'POST':
         try:
-            student = get_all_students().get(pk=request.POST['student'])
+            student = get_all_students(undistributed=True).get(pk=request.POST['student'])
             dist = student.distributions.get(Timeslot=get_timeslot())
             # change Proposal
             dist.Proposal = getProp(request.POST['propTo'])
@@ -170,7 +172,7 @@ def mailDistributions(request):
                         }
                     })
 
-            # iterate through all supervisors
+            # iterate through all assistants and responsible
             for usr in get_all_staff().filter(Q(groups__name='type1staff') | Q(groups__name='type2staff')):
                 if usr.proposals.filter(TimeSlot=get_timeslot()).exists():
                     mails.append({
@@ -340,7 +342,7 @@ def secondChoiceList(request):
     """
     props = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=get_timeslot()
                                                , num_distr__lt=F('NumstudentsMax')).order_by('Title')
-    sharelinks = [createShareLink(request, x.pk) for x in props]
+    sharelinks = [get_share_link(request, x.pk) for x in props]
 
     return render(request, 'distributions/secondChoiseList.html', {
         'distributions': Distribution.objects.filter(Timeslot=get_timeslot(),

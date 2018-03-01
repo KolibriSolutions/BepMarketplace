@@ -24,7 +24,8 @@ from saml2.response import StatusError
 from saml2.sigver import MissingKey
 from saml2.validate import ResponseLifetimeExceed, ToEarly
 
-from general_view import get_timephase_number, get_grouptype, get_timeslot
+from general_view import get_grouptype
+from timeline.utils import get_timephase_number, get_timeslot
 from osirisdata.data import osirisData
 from tracking.models import UserLogin
 

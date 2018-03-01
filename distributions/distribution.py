@@ -6,7 +6,8 @@ from random import shuffle
 from django.conf import settings
 from django.db.models import Q
 
-from general_view import get_all_students, get_all_proposals
+from general_view import get_all_students
+from proposals.utils import get_all_proposals
 from index.models import Track
 
 

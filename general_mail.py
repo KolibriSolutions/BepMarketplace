@@ -14,7 +14,7 @@ from django.db.models import Q
 from django.template import loader
 from django.utils.html import strip_tags
 
-from general_view import createShareLink, get_all_proposals
+from proposals.utils import get_all_proposals, get_share_link
 from index.models import Track
 from index.models import UserMeta
 
@@ -116,7 +116,7 @@ def mailPrivateStudent(request, proposal, student, message=''):
         'domain'    : domain,
         'proposal'  : proposal,
         'message'   : message,
-        'sharelink' : createShareLink(request, proposal.id)
+        'sharelink' : get_share_link(request, proposal.id)
     }
     send_mail("email/private_student_mail_subject.txt", "email/private_student_email.html", context,
               email,

@@ -57,11 +57,11 @@
                 <td><span class="mif-{{ type1|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
             </tr>
             <tr>
-                <td>User can be supervisor (type 2):</td>
+                <td>User can be assistant (type 2):</td>
                 <td>
                     <span class="mif-{{ type2|yesno:"checkmark fg-green,cross fg-red" }}"></span>
                     {% if type2 == "Unverified" %}
-                        (Unverified supervisor)
+                        (Unverified assistant)
                     {% endif %}
                 </td>
             </tr>

@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
+from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from sendfile import sendfile
@@ -8,6 +9,7 @@ from sendfile import sendfile
 from general_model import get_ext
 from general_view import get_grouptype
 from professionalskills.models import StudentFile
+from proposals.models import Proposal
 from proposals.models import ProposalAttachment, ProposalImage
 from support.models import PublicFile
 from timeline.models import TimeSlot
@@ -39,7 +41,6 @@ def PublicFiles(request, fileid, timeslot=None):
     return sendfile(request, obj.File.path, attachment=True, attachment_filename=obj.OriginalName)
 
 
-@login_required
 def ProposalFiles(request, fileid, proposalid=None, ty=None):
     """
     proposal files, attachements or images, viewable on proposal details, model in proposals-app
@@ -55,6 +56,28 @@ def ProposalFiles(request, fileid, proposalid=None, ty=None):
     :param ty: type, image or attachement
     :return: file download
     """
+    if not request.user.is_authenticated():
+        # allow anonymous users when viewing from a sharelink
+        # make sure referrerpolicy is set on links, otherwise HTTP_REFERER might not be available.
+        if "HTTP_REFERER" in request.META:
+            ref = request.META["HTTP_REFERER"].split('/')
+            if ref[-3] == 'share' and ref[-4] == 'api':  # url  /api/share/<sharetoken>/
+                # check if sharetoken is valid. Same as in api.views
+                try:
+                    pk = signing.loads(ref[-2], max_age=settings.MAXAGESHARELINK)
+                except signing.SignatureExpired:
+                    raise PermissionDenied('Not allowed!')
+                except signing.BadSignature:
+                    raise PermissionDenied('Not allowed!')
+                if not Proposal.objects.filter(pk=pk).exists():
+                    # a check whether this image/attachment belongs to this proposal would be better
+                    # but is more difficult.
+                    raise PermissionDenied('Not allowed!')
+                pass  # anonymous user viewing a valid share link
+            else:
+                raise PermissionDenied('Not allowed!')  # random referred
+        else:  # direct access to file
+            raise PermissionDenied('Not allowed!')
 
     # first try filename as image, then as attachement
     if proposalid: # via a proposal id and a filename (UUID) as fileid, the old way
@@ -62,7 +85,7 @@ def ProposalFiles(request, fileid, proposalid=None, ty=None):
         if ext in settings.ALLOWED_PROPOSAL_IMAGES:
             obj = get_object_or_404(ProposalImage, File='proposal_'+proposalid+'/'+fileid)
             return sendfile(request, obj.File.path, attachment=False) #serve inline
-        elif ext in settings.ALLOWED_PROPOSAL_ATTACHEMENTS:
+        elif ext in settings.ALLOWED_PROPOSAL_ATTACHMENTS:
             obj = get_object_or_404(ProposalAttachment, File='proposal_' + proposalid + '/' + fileid)
             return sendfile(request, obj.File.path, attachment=True, attachment_filename=obj.OriginalName)
         else:
@@ -85,7 +108,7 @@ def StudentFiles(request, fileid, distid='' ):
     """
     Student file, uploaded by student as professionalskill. Model in students-app
     Type3 and 4 (support and profskill) staff can see all studentfiles.
-    Responsible and supervisor of student can view files.
+    Responsible and assistant of student can view files.
     Student itself can view its own files
     
     :param request:

@@ -22,7 +22,7 @@
         {% for file in files %}
             <tr>
                 <td><span class="icon mif-file-{{ file.metro_icon }}"></span></td>
-                <td><a href="{% url "download:studentfile" file.id %}">{{ file.OriginalName }}</a></td>
+                <td><a href="{% url "download:studentfile" file.id %}" download>{{ file.OriginalName }}</a></td>
                 <td>{{ file.Caption }}</td>
                 <td data-sort="{{ file.Created|date:"U" }}">{{ file.Created }}</td>
                 <td {% if file.TimeStamp.date <= type.Deadline %} class="success" {% else %}class="error"{% endif %}

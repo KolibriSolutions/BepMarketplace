@@ -15,12 +15,13 @@ from BepMarketplace.decorators import group_required
 from general_form import ConfirmForm
 from general_mail import EmailThread
 from general_model import GroupOptions
-from general_view import get_distributions, get_all_students, get_timephase_number, get_all_staff, get_all_proposals, \
-    get_grouptype, get_timeslot
+from general_view import get_distributions, get_all_students, get_all_staff, get_grouptype
+from proposals.utils import get_all_proposals
 from index.models import Track, UserMeta
 from osirisdata.data import osirisData
 from results.models import GradeCategory
 from support import check_content_policy
+from timeline.utils import get_timeslot, get_timephase_number
 from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm
 from .models import CapacityGroupAdministration, PublicFile
 
@@ -337,7 +338,7 @@ def listStaffXls(request):
 @group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
 def listStudents(request):
     """
-    For support staff, supervisors and assistants to view their students.
+    For support staff, responsibles and assistants to view their students.
     List all students with distributions that the current user is allowed to see.
     Including a button to view the students files.
     In later timephase shows the grades as well.
@@ -369,7 +370,9 @@ def listStudents(request):
             except:
                 reslist.append('-')
         deslist.append([d, reslist])
-    return render(request, "support/listDistributedStudents.html", {"des": deslist, 'typ': cats})
+    return render(request, "support/listDistributedStudents.html", {'des': deslist,
+                                                                    'typ': cats,
+                                                                    'hide_sidebar': True})
 
 
 @not_minified_response
@@ -636,12 +639,11 @@ def addFile(request):
     :param request:
     :return:
     """
-    user = request.user
     if request.method == 'POST':
         form = PublicFileForm(request.POST, request.FILES, request=request)
         if form.is_valid():
             file = form.save(commit=False)
-            file.User = user
+            file.User = request.user
             file.save()
             return render(request, "base.html",
                           {"Message": "File uploaded!", "return": "index:index"})
@@ -649,6 +651,32 @@ def addFile(request):
         form = PublicFileForm(request=request)
     return render(request, 'GenericForm.html',
                   {'form': form, 'formtitle': 'Upload a public file ', 'buttontext': 'Save'})
+
+
+@group_required('type3staff')
+def editFile(request, pk):
+    """
+    Edit a public file. These files will be visible on the index page after login.
+
+    :param request:
+    :return:
+    """
+    obj = get_object_or_404(PublicFile, pk=pk)
+    if request.method == 'POST':
+        form = PublicFileForm(request.POST, request.FILES, request=request, instance=obj)
+        if form.is_valid():
+            if form.has_changed():
+                file = form.save(commit=False)
+                file.User = request.user
+                file.save()
+                return render(request, "base.html",
+                              {"Message": "File changed!", "return": "index:index"})
+            return render(request, "base.html",
+                          {"Message": "No changes made.", "return": "index:index"})
+    else:
+        form = PublicFileForm(request=request, instance=obj)
+    return render(request, 'GenericForm.html',
+                  {'form': form, 'formtitle': 'Edit public file ', 'buttontext': 'Save'})
 
 
 @group_required('type3staff')
@@ -669,6 +697,20 @@ def editFiles(request):
             formset.save()
             return render(request, "base.html", {"Message": "File changes saved!", "return": "index:index"})
     return render(request, 'GenericForm.html', {'formset': formset, 'formtitle': 'All public uploaded files', 'buttontext': 'Save changes'})
+
+
+@group_required('type3staff')
+def deleteFile(request, pk):
+    """
+    Delete a publicfile
+
+    :param request:
+    :param pk: pk of the proposal to delete
+    :return:
+    """
+    obj = get_object_or_404(PublicFile, pk=pk)
+    obj.delete()
+    return render(request, "base.html", {"Message": "Public file removed!", "return": "index:index"})
 
 
 #######

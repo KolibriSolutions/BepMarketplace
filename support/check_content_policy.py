@@ -38,7 +38,7 @@ def diffTest(stdout=False):
     :return:
     """
     import difflib
-    from general_view import get_all_proposals
+    from proposals.utils import get_all_proposals
     # diff checks
     locations = ['Title', 'GeneralDescription', 'StudentsTaskDescription']
     results = []

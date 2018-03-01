@@ -13,7 +13,7 @@ from django.utils.http import is_safe_url
 
 from BepMarketplace.decorators import superuser_required
 from general_mail import send_mail
-from general_view import get_timephase, get_timephase_number, get_timeslot
+from timeline.utils import get_timephase, get_timephase_number, get_timeslot
 from support.models import PublicFile
 from .forms import *
 from .models import FeedbackReport, Track, UserMeta, Term, UserAcceptedTerms

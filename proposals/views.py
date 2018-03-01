@@ -12,16 +12,18 @@ from BepMarketplace.decorators import group_required, can_edit_proposal, can_vie
 from api.views import upgradeStatusApi, downgradeStatusApi
 from general_mail import mailAffectedUser, mailPrivateStudent
 from general_model import GroupOptions
-from general_view import createShareLink, get_timephase_number, get_distributions, get_all_proposals, get_grouptype, \
-    get_timeslot
+from general_view import get_distributions, get_grouptype
+from proposals.utils import get_all_proposals, get_share_link
 from index.models import Track
 from students.views import get_all_applications
+from timeline.utils import get_timeslot, get_timephase_number
 from tracking.views import trackProposalVisit
 from .cacheprop import getProp, updatePropCache
 from .forms import ProposalFormEdit, ProposalFormCreate, ProposalImageForm, ProposalDowngradeMessageForm, \
     ProposalAttachmentForm
 from .models import Proposal, ProposalImage, ProposalAttachment
 from .utils import can_edit_proposal_fn
+
 
 @login_required
 def listProposals(request):
@@ -183,12 +185,12 @@ def copyProposal(request, pk):
             return render(request, "proposals/ProposalMessage.html", {"Message": "Proposal created!", "Proposal": prop})
     else:
         oldproposal = get_object_or_404(Proposal, pk=pk)
-        oldproposal.id = None
+        oldpk = oldproposal.pk
+        oldproposal.pk = None
         # default timeslot. Overridden by form if this is not in phase 1.
         oldproposal.TimeSlot = get_timeslot()
-
         # Assistants and privates are removed, because m2m is not copied in this way.
-        form = ProposalFormCreate(request=request, instance=oldproposal)
+        form = ProposalFormCreate(request=request, instance=oldproposal, copy=oldpk)
     if get_timephase_number() == 1:
         return render(request, 'GenericForm.html', {'form': form,
                                                     'formtitle': 'Edit copied proposal',
@@ -330,7 +332,8 @@ def chooseEditProposal(request):
             if request.user == prop.ResponsibleStaff or request.user in prop.Assistants.all():
                 proposals.append(prop)
 
-    return render(request, 'proposals/ProposalsCustomList.html', {"proposals": proposals})
+    return render(request, 'proposals/ProposalsCustomList.html', {'proposals': proposals,
+                                                                  'hide_sidebar': True})
 
 
 @login_required
@@ -428,9 +431,9 @@ def getShareLink(request, pk):
     :param pk: Proposal pk to get sharelink for
     :return:
     """
-    link = createShareLink(request, pk)
+    link = get_share_link(request, pk)
     return render(request, "base.html", {
-        "Message" : "Sharelink created: <a href=\"{}\">{}</a> <br/> Use this to show the proposal to anybody without an account. "
+        "Message" : "Share link created: <a href=\"{}\">{}</a> <br/> Use this to show the proposal to anybody without an account. "
                     "The link will be valid for seven days.".format(link, link),
     })
 

@@ -13,10 +13,10 @@ from django.utils import timezone
 
 from BepMarketplace.decorators import superuser_required
 from general_view import get_grouptype, get_all_students
+from timeline.utils import get_timeslot
 from tracking.models import ProposalTracking
 from tracking.models import UserLogin
 from .forms import groupAdministrationForm
-from general_view import get_timeslot
 
 
 @superuser_required()

@@ -14,7 +14,8 @@ from xhtml2pdf import pisa
 from BepMarketplace.decorators import group_required, student_only
 from students.models import Distribution
 from general_mail import send_mail, EmailThreadMultipleTemplate
-from general_view import get_distributions, get_timephase_number, get_timeslot
+from general_view import get_distributions
+from timeline.utils import get_timeslot, get_timephase_number
 from timeline.models import TimeSlot
 from .forms import FileTypeModelForm, ConfirmForm, StaffReponseForm, StudentGroupForm, StudentGroupChoice
 from .models import FileType, StaffReponse, StudentFile, StudentGroup
@@ -95,11 +96,17 @@ def editFileType(request, pk):
     if request.method == 'POST':
         form = FileTypeModelForm(request.POST, instance=obj)
         if form.is_valid():
-            form.save()
-            return render(request, 'base.html', {
-                'Message' : 'File Type saved!',
-                'return'  : 'professionalskills:filetypelist',
-            })
+            if form.has_changed():
+                form.save()
+                return render(request, 'base.html', {
+                    'Message' : 'File Type saved!',
+                    'return'  : 'professionalskills:filetypelist'
+                })
+            else:
+                return render(request, 'base.html', {
+                    'Message' : 'No changes made.',
+                    'return'  : 'professionalskills:filetypelist',
+                })
     else:
         form = FileTypeModelForm(instance=obj)
 
@@ -126,7 +133,7 @@ def deleteFileType(request, pk):
         if form.is_valid():
             obj.delete()
             return render(request, 'base.html', {
-                'Message' : 'Object deleted',
+                'Message' : 'File type deleted.',
                 'return' : 'professionalskills:filetypelist',
             })
     else:
@@ -134,7 +141,7 @@ def deleteFileType(request, pk):
 
     return render(request, 'GenericForm.html', {
         'form' : form,
-        'formtitle' : 'Confirm deletion of FileType {}'.format(obj),
+        'formtitle' : 'Confirm deletion of File type {}'.format(obj),
         'buttontext' : 'Confirm'
     })
 

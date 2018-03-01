@@ -100,7 +100,7 @@
                                     <p>
                                         Account creation is a one time process. The system has a three types of
                                         accounts, type1, type2 and type3 staff. type1 is a responsible for a proposal,
-                                        type2 is an assistant or supervisor and type3 is a support person. Example of
+                                        type2 is an assistant (or daily supervisor) and type3 is a support person. Example of
                                         type1staff is a professor, example of type 2 staff is a PhD'er. Track heads (for
                                         AU, C&amp;C, SSS and CW) are type 1 staff but have additional rights within the
                                         system.<br/>
@@ -208,7 +208,7 @@
                                     <ul>
                                         <li>Title</li>
                                         <li>Responsible staff <br/>Usually the professor that creates the proposal</li>
-                                        <li>Supervisors / assistants<br/>The staff member(s) helping the responsible,
+                                        <li>Assistants (Daily supervisor)<br/>The staff member(s) helping the responsible,
                                             for instance a PhD'er
                                         </li>
                                         <li>Track<br/>Which track the project belongs to (AU, C&amp;C, SSS or CW)</li>
@@ -343,17 +343,33 @@
                             {% for file in files.all %}
                                 <li>
                                     <a href="{% url "download:publicfile" file.id %}"
-                                       class="command-button file-button" about>
+                                       class="command-button file-button" download>
                                         <span class="icon mif-file-{{ file.metro_icon }}"></span>
                                         {% if file.Caption %}{{ file.Caption }}{% else %}Attachment
                                           {{ forloop.counter }}{% endif %}
                                         <small>{{ file.OriginalName }}</small>
                                     </a>
+                                    {% if user|has_group:'type3staff' %}
+                                        <a href="{% url "support:editfile" file.id %}"
+                                       class="button primary">
+                                        Edit
+                                        </a>
+                                        <a href="{% url "support:deletefile" file.id %}"
+                                           class="button warning">
+                                            Delete
+                                        </a>
+                                    {% endif %}
                                 </li>
                             {% endfor %}
                         </ul>
                     {% else %}
                         No public files yet
+                    {% endif %}
+                    {% if user|has_group:'type3staff' %}
+                        <a href="{% url "support:addfile" %}"
+                           class="button primary">
+                            Add public file
+                        </a>
                     {% endif %}
                 {% endif %}
                 <br/>

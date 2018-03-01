@@ -26,7 +26,7 @@ from random import choice
 from django.conf import settings
 from proposals.models import Proposal
 from students.models import Application
-from general_view import get_timeslot
+from timeline.utils import get_timeslot
 
 cohorts = [
     '2010',

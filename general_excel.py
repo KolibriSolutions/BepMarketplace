@@ -9,7 +9,7 @@ from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 
 from results.models import GradeCategory
-from general_view import get_timeslot
+from timeline.utils import get_timeslot
 
 
 def timestamp():
@@ -41,7 +41,7 @@ def listStudentsXls(des, typ):
     ws['A1'].style = 'Headline 2'
     ws['F1'] = "Exported on: " + timestamp()
 
-    header = ["Student id", "Student name", "Project", "Responsible teacher", "Supervisors", "ECTS", "Track"]
+    header = ["Student id", "Student name", "Project", "Responsible teacher", "Assistants", "ECTS", "Track"]
     for t in typ:
         header.append(t.Name + " (" +  str(t.Weight) + "%)")
 
@@ -227,13 +227,13 @@ def listPresentationsXls(sets):
         ws['H8'].style = 'Headline 3'
         # custom dimensions
         ws.column_dimensions['C'].width = 25  # std name
-        ws.column_dimensions['E'].width = 25  # supervisor name
-        ws.column_dimensions['F'].width = 25  # asssistants
+        ws.column_dimensions['E'].width = 25  # responsible name
+        ws.column_dimensions['F'].width = 25  # assistants
         ws.column_dimensions['G'].width = 6  # codeBEP
         ws.column_dimensions['H'].width = 6  # codeExt
         ws.column_dimensions['I'].width = 50  # project name
 
-        header = ["Type", "Stud. id", "Name", "First name", "Responsible teacher", "Supervisors",
+        header = ["Type", "Stud. id", "Name", "First name", "Responsible teacher", "Assistants",
                   codeBEP, codeExt, "Project", "Time", "Duration"]
         ws.append(header)
         for col in ['A','B','C','D','E','F','G','H','I','J','K']:

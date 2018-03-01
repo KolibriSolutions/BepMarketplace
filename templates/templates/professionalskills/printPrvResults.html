@@ -20,7 +20,7 @@ td, th {
 {% for page in pages %}
 <h1>Professional Skills for {{ page.student.get_full_name }}</h1>
 <h2>Project: {{ page.proposal }}</h2>
-<h3>Supervisor: {{ page.proposal.ResponsibleStaff.get_full_name }}</h3>
+<h3>Responsible: {{ page.proposal.ResponsibleStaff.get_full_name }}</h3>
 <table class="table border bordered" style="width:50%;">
 <thead>
 <tr>

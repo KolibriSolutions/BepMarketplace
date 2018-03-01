@@ -1,16 +1,18 @@
 import json
 import time
+from datetime import datetime
 
 from channels import Group
 from django.contrib.auth.decorators import login_required
-from django.core.cache import cache
-from django.shortcuts import render
 from django.contrib.auth.models import User
-from BepMarketplace.decorators import superuser_required
-from .models import ProposalStatusChange, UserLogin, ProposalTracking, ApplicationTracking
-from general_view import get_timeslot, get_sessions
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404
-from datetime import datetime
+from django.shortcuts import render
+
+from BepMarketplace.decorators import superuser_required
+from general_view import get_sessions
+from timeline.utils import get_timeslot
+from .models import ProposalStatusChange, UserLogin, ProposalTracking, ApplicationTracking
 
 
 def getTrack(proposal):

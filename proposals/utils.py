@@ -1,4 +1,12 @@
-from general_view import get_timephase_number, get_grouptype, get_timeslot
+from django.conf import settings
+from django.contrib.sites.shortcuts import get_current_site
+from django.core import signing
+from django.core.cache import cache
+from django.urls import reverse
+
+from general_view import get_grouptype
+from proposals.models import Proposal
+from timeline.utils import get_timephase_number, get_timeslot
 
 
 def can_edit_proposal_fn(user, prop):
@@ -60,3 +68,36 @@ def can_edit_proposal_fn(user, prop):
         return True, ''
 
     return False, 'You are not allowed to edit this proposal.'
+
+
+def get_all_proposals(old=False):
+    """
+    All proposals in this timeslot. Cached after timephase 5.
+
+    :return:
+    """
+    if old:
+        return Proposal.objects.all()
+
+    if get_timephase_number() > 5:
+        p = cache.get('all_proposals_objects')
+        if p:
+            return p
+        else:
+            p = Proposal.objects.filter(TimeSlot=get_timeslot()).distinct()
+            cache.set('all_proposals_objects', p, settings.STATIC_OBJECT_CACHE_DURATION)
+            return p
+    else:
+        return Proposal.objects.filter(TimeSlot=get_timeslot()).distinct()
+
+
+def get_share_link(request, pk):
+    """
+    Create a share link for a proposal detail page.
+    Used to let unauthenticated users view a proposal, possibly before the proposal is public.
+
+    :param request:
+    :param pk: pk of the proposal to get a link for.
+    :return:
+    """
+    return settings.DOMAIN + reverse('api:viewsharelink', args=[signing.dumps(pk)])

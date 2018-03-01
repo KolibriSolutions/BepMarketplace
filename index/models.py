@@ -2,7 +2,8 @@ from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from general_model import clean_text, get_timeslot_id
+from general_model import clean_text
+from timeline.utils import get_timeslot_id
 from timeline.models import TimeSlot
 
 

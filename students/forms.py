@@ -1,10 +1,11 @@
-from templates import widgets
 from django.forms import ValidationError
-from general_form import clean_file_default, FileForm
-from general_model import get_ext
 from django.shortcuts import get_object_or_404
+
+from general_form import clean_file_default, FileForm
+from general_model import get_ext, print_list
+from timeline.utils import get_timeslot
 from professionalskills.models import FileType
-from general_view import get_timeslot
+from templates import widgets
 
 
 def clean_studentfile_default(self):
@@ -17,10 +18,11 @@ def clean_studentfile_default(self):
     try:
         ftype = get_object_or_404(FileType, pk=self.data['Type'])
     except:
-        raise ValidationError("Please select a file type from the dropdown list.")
+        raise ValidationError('Please select a file type from the drop-down list.')
     file = clean_file_default(self)
     if get_ext(file.name) not in ftype.get_allowed_extensions():
-        raise ValidationError("This file extension is not allowed. Allowed extensions: "+str(ftype.get_allowed_extensions()))
+        raise ValidationError('This file extension is not allowed. Allowed extensions: '
+                              + print_list(ftype.get_allowed_extensions()))
     return file
 
 

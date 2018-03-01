@@ -11,8 +11,8 @@
 <body>
 
     <h1>Results for <i>{{ dstr.Student.get_full_name }}</i> for project <i>{{ dstr.Proposal.Title }}</i></h1>
-    <h3>Responsible Staffmember: {{ dstr.Proposal.ResponsibleStaff.get_full_name }}</h3>
-    <h3>Aditional supervisors:</h3>
+    <h3>Responsible Staff member: {{ dstr.Proposal.ResponsibleStaff.get_full_name }}</h3>
+    <h3>Assistants:</h3>
     <ul>
     {% for assistant in dstr.Proposal.Assistants.all %}
     <li>{{ assistant.get_full_name }}</li>
