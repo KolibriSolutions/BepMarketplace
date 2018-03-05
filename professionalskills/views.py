@@ -14,7 +14,7 @@ from xhtml2pdf import pisa
 from BepMarketplace.decorators import group_required, student_only
 from students.models import Distribution
 from general_mail import send_mail, EmailThreadMultipleTemplate
-from general_view import get_distributions
+from distributions.utils import get_distributions
 from timeline.utils import get_timeslot, get_timephase_number
 from timeline.models import TimeSlot
 from .forms import FileTypeModelForm, ConfirmForm, StaffReponseForm, StudentGroupForm, StudentGroupChoice
@@ -176,7 +176,7 @@ def listFilePerType(request, pk):
     ftype = get_object_or_404(FileType, pk=pk)
     return render(request, 'professionalskills/listFilesOfType.html', {
         'type' : ftype,
-        'files' : StudentFile.objects.filter(Type=ftype)
+        'files' : StudentFile.objects.filter(Type=ftype).distinct()
     })
 
 

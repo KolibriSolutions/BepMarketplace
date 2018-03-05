@@ -2,9 +2,10 @@ from datetime import timedelta
 
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.contrib.auth import get_user_model
 
 from index.models import Track
-from students.models import Application, Distribution
+from students.models import Distribution
 from timeline.models import TimeSlot
 from general_model import clean_text
 
@@ -43,7 +44,9 @@ class PresentationSet(models.Model):
     PresentationRoom = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="presentationroom")
     AssessmentRoom = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="assessmentroom")
     Track = models.ForeignKey(Track, on_delete=models.CASCADE, blank=True, null=True)
+    Assessors = models.ManyToManyField(get_user_model(), blank=True)
     DateTime = models.DateTimeField()
+
     def __str__(self):
         return "Presentationset for " + self.PresentationOptions.TimeSlot.__str__() + " and track: " + self.Track.__str__()
 

@@ -43,9 +43,7 @@
                         <li><a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Proposals</a>
                             <ul class="d-menu" data-role="dropdown">
                                 <li><a href="{% url 'proposals:list' %}">All published proposals</a></li>
-                                {% if phasenumber == 1 or user|has_group:'type3staff' %}
-                                    <li><a href="{% url 'proposals:create' %}">Create new proposal</a></li>
-                                {% endif %}
+                                <li><a href="{% url 'proposals:create' %}">Create new proposal</a></li>
                                 <li><a href="{% url 'proposals:chooseedit' %}">{% if user|has_group:'type3staff' %}All
                                     proposals{% else %}My proposals{% endif %}</a></li>
                                 {% if not user|has_group:'type3staff' and phasenumber < 3 %}
@@ -179,6 +177,8 @@
                                             <li><a href="{% url 'support:editfiles' %}">Edit public files</a></li>
                                         </ul>
                                     </li>
+                                    <li><a href="{% url 'timeline:list_timeslots' %}">Timeline edit</a></li>
+                                    <li><a href="{% url 'index:edit_tracks' %}">Track Head edit</a></li>
                                 </ul>
                             </li>
                         {% else %}

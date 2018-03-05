@@ -237,16 +237,18 @@ def GetEndDate():
     else:
         return ''
 
+
 @register.simple_tag
 def GetPresentationStudent(user):
     """
     Displays the presentation for a student
+
     :param user:
     :return:
     """
     if not user.is_authenticated():
         return False
-    #check if student
+    # check if student
     if user.groups.exists():
         return False
     timeslot = get_timeslot()
@@ -255,7 +257,8 @@ def GetPresentationStudent(user):
         if timeslot.presentationoptions.Public or tp == 7:
             #check if user has presentations
             try:
-                t = PresentationTimeSlot.objects.get(Distribution__Student= user)
+                t = PresentationTimeSlot.objects.get(Q(Distribution__Student=user) &
+                                                     Q(Presentations__PresentationOptions__TimeSlot=get_timeslot()))
                 start = timezone.localtime(t.DateTime).strftime("%A %d %B %Y %H:%M")
                 room = t.Presentations.PresentationRoom
             except:
@@ -276,7 +279,8 @@ def GetPresentationStudent(user):
 @register.simple_tag
 def GetPresentationStaff(user):
     """
-    Displays the presentation for a student
+    Displays the presentation for a staff member
+
     :param user:
     :return:
     """
@@ -293,7 +297,7 @@ def GetPresentationStaff(user):
             if is_trackhead(user):
                 # check if trackhead has presentations
                 try:
-                    t = PresentationSet.objects.filter(Track__in=user.tracks.all())
+                    t= timeslot.presentationoptions.presentationsets.filter(Track__in=user.tracks.all())
                 except:
                     return "The presentations for your track are not yet planned"
                 if t.count() > 0:
@@ -304,23 +308,35 @@ def GetPresentationStaff(user):
                         html += "<li>"+str(p.Track)+ ": " + str(start) + " in " + str(room) + "</li>"
                     html += "</ul>"
                 else:
-                    html = "<p>You do not have any presentations to attend</p>"
+                    html = "<p>You do not have presentations for your track to attend</p>"
 
             else:
                 # check if user has presentations, for responsible and assistants that are not trackhead
                 try:
-                    t = PresentationTimeSlot.objects.filter(Q(Distribution__Proposal__ResponsibleStaff=user) | Q(Distribution__Proposal__Assistants=user))
+                    t = PresentationTimeSlot.objects.filter((Q(Distribution__Proposal__ResponsibleStaff=user) | Q(Distribution__Proposal__Assistants=user))
+                                                            & Q(Presentations__PresentationOptions__TimeSlot=get_timeslot()))
                 except:
                     return "Your presentations are not (yet) planned."
                 if t.count() > 0:
-                    html = '<p>Your presentations are on:</p><ul>'
+                    html = '<p>Your presentations as supervisor are on:</p><ul>'
                     for p in t:
                         start = timezone.localtime(p.DateTime).strftime("%A %d %B %Y %H:%M")
                         room = p.Presentations.PresentationRoom
                         html += "<li>"+str(start)+" in "+str(room)+"</li>"
                     html += "</ul>"
                 else:
-                    html = "<p>You do not have any presentations to attend</p>"
+                    html = "<p>You do not have any presentations to attend as supervisor.</p>"
+
+            for set in timeslot.presentationoptions.presentationsets.all():
+                if user in set.Assessors.all():  # ugly way to check if a user has to assess anything
+                    html += '<p>You are assessor for presentations on:</p><ul>'
+                    for set_in in timeslot.presentationoptions.presentationsets.all():
+                        if user in set_in.Assessors.all():
+                            start = timezone.localtime(set_in.DateTime).strftime("%A %d %B %Y %H:%M")
+                            room = set_in.PresentationRoom
+                            html += "<li>"+str(set_in.Track)+ ": " + str(start) + " in " + str(room) + "</li>"
+                    html += "</ul>"
+                    break
 
             html += '<a href="{}" class ="button primary">{}</a>'
             url = reverse('presentations:presentationscalendar')

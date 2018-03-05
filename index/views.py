@@ -2,22 +2,24 @@ from datetime import datetime
 from math import floor
 from urllib import parse
 
+from django.conf import settings
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
+from django.forms import modelformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.utils.http import is_safe_url
 
-from BepMarketplace.decorators import superuser_required
-from general_mail import send_mail
-from timeline.utils import get_timephase, get_timephase_number, get_timeslot
-from support.models import PublicFile
-from .forms import *
-from .models import FeedbackReport, Track, UserMeta, Term, UserAcceptedTerms
+from BepMarketplace.decorators import superuser_required, group_required
 from general_form import ConfirmForm
+from general_mail import send_mail
+from support.models import PublicFile
+from timeline.utils import get_timephase, get_timephase_number, get_timeslot
+from .forms import TrackForm, CloseFeedbackReportForm, FeedbackForm, settingsForm
+from .models import FeedbackReport, Track, UserMeta, Term, UserAcceptedTerms
 
 
 def make_get(get):
@@ -400,6 +402,30 @@ def termsform(request):
         'buttontext' : 'Confirm',
         'terms' : Term.objects.all()
     })
+
+
+@group_required('type3staff')
+def edit_tracks(request):
+    """
+    Edit all tracks.
+
+    :param request:
+    :param pk: pk of the proposal to edit file of
+    :param ty: type of file to edit, either i for image or a for attachement
+    :return:
+    """
+    formSet = modelformset_factory(Track, form=TrackForm, can_delete=False)
+    formset = formSet(queryset=Track.objects.all())
+
+    if request.method == 'POST':
+        formset = formSet(request.POST)
+        if formset.is_valid():
+            formset.save()
+            return render(request, "base.html",
+                          {"Message": "Track changes saved!"})
+    return render(request, 'GenericForm.html',
+                  {'formset': formset, 'formtitle': 'Track Head edit',
+                   'buttontext': 'Save changes'})
 
 
 def error400(request):

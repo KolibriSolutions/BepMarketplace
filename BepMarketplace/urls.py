@@ -21,6 +21,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^', include('index.urls')),
     url(r'^api/', include('api.urls')),
+    url(r'^timeline/', include('timeline.urls')),
     url(r'^tracking/', include('tracking.urls')),
     url(r'^', include('django.contrib.auth.urls')),
     url(r'^godpowers/', include('godpowers.urls')),

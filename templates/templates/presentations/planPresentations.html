@@ -387,6 +387,7 @@
                             Presentation: {{ set.PresentationRoom.Name }}<br/>
                             Assessment: {{ set.AssessmentRoom.Name }}<br/>
                             Track: {{ set.Track }}<br/>
+                            Assessors: {{ set.Assessors.all|unordered_list }}<br/>
                             Start: {{ set.DateTime|date:'H:i d-m-Y' }}
                             <a class="button warning" href="#" onclick="clearSet({{ set.id }})">Clear set</a>
                         </th>
@@ -426,7 +427,6 @@
                     {% endfor %}
                 </tr>
                 </tbody>
-
             </table>
         </div>
         <div class="floatblock">

@@ -15,7 +15,8 @@ from BepMarketplace.decorators import group_required
 from general_form import ConfirmForm
 from general_mail import EmailThread
 from general_model import GroupOptions
-from general_view import get_distributions, get_all_students, get_all_staff, get_grouptype
+from general_view import get_all_students, get_all_staff, get_grouptype
+from distributions.utils import get_distributions
 from proposals.utils import get_all_proposals
 from index.models import Track, UserMeta
 from osirisdata.data import osirisData

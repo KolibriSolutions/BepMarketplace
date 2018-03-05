@@ -101,6 +101,7 @@
 
                     var txt = event.proposal ? "<span class='dialog-head'>Proposal:</span> <span class='dialog-content'>" + event.proposal + "</span><br />" +
                         "<span class='dialog-head'>Track head:</span> <span class='dialog-content'>" + event.trackhead + "</span><br />" +
+                        "<span class='dialog-head'>Assessors:</span> <span class='dialog-content'><ul class='no-margin'>" + event.assessors + "</ul></span><br />" +
                         "<span class='dialog-head'>Responsible:</span> <span class='dialog-content'>" + event.responsible + "</span><br />" +
                         "<span class='dialog-head'>Assistant(s):</span> <span class='dialog-content'><ul class='no-margin'>" + event.assistants + "</ul></span><br />" : "";
                     txt += "<span class='dialog-head'>Location:</span> <span class='dialog-content'>" + event.location + "</span><br />" +
@@ -148,9 +149,10 @@
                                     className: 'bg-{{ setcolor }}',
                                     location: '{{ set.PresentationRoom }}',
                                     proposal: '{{ slot.Distribution.Proposal.Title }}',
-                                    responsible: '{{ slot.Distribution.Proposal.ResponsibleStaff.get_full_name }}',
-                                    assistants: '{% for a in slot.Distribution.Proposal.Assistants.all %}<li>{{ a.get_full_name }}</li>{% endfor %}',
-                                    trackhead: '{{ slot.Distribution.Proposal.Track.Head.get_full_name }} ({{ slot.Distribution.Proposal.Track.Name }})'
+                                    responsible: '{{ slot.Distribution.Proposal.ResponsibleStaff.usermeta.get_nice_name }}',
+                                    assistants: '{% for a in slot.Distribution.Proposal.Assistants.all %}<li>{{ a.usermeta.get_nice_name }}</li>{% endfor %}',
+                                    assessors: '{% for a in set.Assessors.all %}<li>{{ a.usermeta.get_nice_name }}</li>{% endfor %}',
+                                    trackhead: '{{ slot.Distribution.Proposal.Track.Head.usermeta.get_nice_name }} ({{ slot.Distribution.Proposal.Track.Name }})'
                                 {% endif %}
                             },
                         {% endfor %}

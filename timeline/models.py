@@ -38,7 +38,9 @@ class TimePhase(models.Model):
     Description = models.IntegerField(choices=Types)
     Begin = models.DateField()
     End = models.DateField()
-    CountdownEnd = models.DateField(null=True, blank=True)
+    CountdownEnd = models.DateField(null=True, blank=True,
+                                    help_text='Fake end date, to set the homepage clock to an earlier date. '
+                                              'A trick to motivate people.')
     Timeslot = models.ForeignKey(TimeSlot, on_delete=models.PROTECT, related_name="timephases")
 
     def __str__(self):

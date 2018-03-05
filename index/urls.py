@@ -19,4 +19,6 @@ urlpatterns = [
     url(r'^about/$', views.about, name='about'),
     url(r'^changesettings/$', views.changeSettings, name='changesettings'),
     url(r'^terms/$', views.termsform, name='termsaccept'),
+
+    url(r'^track/$', views.edit_tracks, name='edit_tracks'),
 ]

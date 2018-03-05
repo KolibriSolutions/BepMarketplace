@@ -12,7 +12,8 @@ from BepMarketplace.decorators import group_required, can_edit_proposal, can_vie
 from api.views import upgradeStatusApi, downgradeStatusApi
 from general_mail import mailAffectedUser, mailPrivateStudent
 from general_model import GroupOptions
-from general_view import get_distributions, get_grouptype
+from general_view import get_grouptype
+from distributions.utils import get_distributions
 from proposals.utils import get_all_proposals, get_share_link
 from index.models import Track
 from students.views import get_all_applications

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block body %}
+    <h1>TimeSlots</h1>
+    Current TimeSlot: {{ cur }}
+    <a href="{% url "timeline:add_timeslot" %}" class="button primary">Add TimeSlot</a>
+    <table class="table bordered hovered striped datatable">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Begin</th>
+            <th>End</th>
+            <th>Edit/TimePhases</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for p in tss %}
+            <tr>
+                <td>{{ p.Name }}</td>
+                <td data-sort="{{ p.Begin|date:'U' }}">{{ p.Begin }}</td>
+                <td data-sort="{{ p.End|date:'U' }}">{{ p.End }}</td>
+                <td>
+                    {% if p.End >= now %}<a href="{% url 'timeline:edit_timeslot' p.pk %}" class="button primary">Edit</a>{% endif %}
+                    <a href="{% url 'timeline:list_timephases' p.pk %}" class="button primary">List TimePhases</a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <br/>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+        //live search for proposals, using datatables jquery.
+        $(document).ready(function () {
+            var cols = [
+                null, //Type<br /></th>
+                null, //Student<br /></th>
+                null, //Project<br /></th>
+                null, //Responsible<br /></t
+            ];
+            var dropdownColumns = [];
+            MPDataTable(cols, dropdownColumns);
+        });
+    </script>
+{% endblock %}

@@ -2,6 +2,7 @@ from datetime import time
 
 from django import forms
 
+from general_view import get_grouptype
 from templates import widgets
 from timeline.utils import get_timeslot
 from .models import PresentationSet, PresentationOptions, Room
@@ -38,26 +39,25 @@ class PresentationSetForm(forms.ModelForm):
     """
     A set of presentations. A set is a number of presentations in the same room for one track.
     """
-    def save(self, commit=True):
-        if commit:
-            self.instance.PresentationOptions = get_timeslot().presentationoptions
-            super().save(commit=True)
-            self.instance.save()
-        return self.instance
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['Assessors'].queryset = get_grouptype('2').user_set.all() | \
+                                            get_grouptype('2u').user_set.all() | \
+                                            get_grouptype('1').user_set.all()
 
     class Meta:
         model = PresentationSet
-        fields = ['PresentationRoom', 'AssessmentRoom', 'Track', 'DateTime']
+        fields = ['PresentationRoom', 'AssessmentRoom', 'Track', 'Assessors', 'DateTime']
         labels = {
             'PresentationRoom': "Presentation room",
-            'AssessmentRoom': "Assessmentroom",
-            'Track': "Track",
+            'AssessmentRoom': "Assessment room",
             'DateTime': "Start date/time"
         }
         widgets = {
             'PresentationRoom': widgets.MetroSelect,
             'AssessmentRoom': widgets.MetroSelect,
             'Track': widgets.MetroSelect,
+            'Assessors': widgets.MetroSelectMultiple,
             'DateTime': widgets.MetroDateTimeInput
          }
 
@@ -78,6 +78,13 @@ class PresentationSetForm(forms.ModelForm):
             raise forms.ValidationError("The start time is before 7:00, which is too early")
         else:
             return data
+
+    def save(self, commit=True):
+        if commit:
+            self.instance.PresentationOptions = get_timeslot().presentationoptions
+            super().save(commit=True)
+            self.instance.save()
+        return self.instance
 
 
 class PresentationRoomForm(forms.ModelForm):
