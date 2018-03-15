@@ -57,6 +57,14 @@ class ViewsTest(TestCase):
         self.tp = TimePhase(Begin=datetime.now(), End=datetime.now()+timedelta(days=3), Timeslot=self.ts, Description=1 )
         self.tp.save()
 
+        # The timeslot used for testing proposal of next timeslot
+        self.nts = TimeSlot(Begin=datetime.now()+timedelta(days=5), End=datetime.now()+timedelta(days=8), Name='nextyear')
+        self.nts.save()
+
+        # The timeslot used for testing proposal of previous timeslot
+        self.pts = TimeSlot(Begin=datetime.now()-timedelta(days=5), End=datetime.now()-timedelta(days=3), Name='prevyear')
+        self.pts.save()
+
         # Track for automotive, with trackhead t-h. Automotive track must exist because it is special. (distributions)
         th = User.objects.get(username='t-h')
         self.track = Track(Name='Automotive', ShortName='AU', Head=th)
@@ -88,7 +96,9 @@ class ViewsTest(TestCase):
         self.p_allowed =      [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200,]  # everyone
 
         self.p_staff =        [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 200, 200, 200, 200, 200, ]  # all staff, general
+        self.p_staff12345 =   [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 200, 403, 200, ]  # all staff, general, for proposal stats
         self.p_staff_prop =   [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 403, 403, 200,]  # all staff, to create proposals
+        self.p_staff_prop_nou=[200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 403, 403, 403, 403, 200,]  # all staff, to create proposals, no unverified
         self.p_staff_stud =   [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 403, 403, 403, 200, 200,]  # all staff that can see students (1,2,3,6)
 
         self.p_all_this =     [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 403, 403, 403, 200,]  # staff of this proposal
@@ -315,13 +325,6 @@ class ProposalViewsTest(ViewsTest):
         rth = User.objects.get(username='r-h')
         rt = Track(Name='Smart Sustainable', ShortName='SSS', Head=rth)
         rt.save()
-
-        # The timeslot used for testing proposal of next timeslot
-        self.nts = TimeSlot(Begin=datetime.now()+timedelta(days=5), End=datetime.now()+timedelta(days=8), Name='nextyear')
-        self.nts.save()
-        # The timeslot used for testing proposal of previous timeslot
-        self.pts = TimeSlot(Begin=datetime.now()-timedelta(days=5), End=datetime.now()-timedelta(days=3), Name='prevyear')
-        self.pts.save()
 
         # The proposal used for testing
         self.proposal = Proposal(Title="testproposal",

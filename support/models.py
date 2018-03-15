@@ -44,7 +44,7 @@ class PublicFile(models.Model):
     OriginalName = models.CharField(max_length=200, blank=True, null=True)
     File = models.FileField(default=None, upload_to=make_upload_path)
     TimeSlot = models.ForeignKey(TimeSlot, default=get_timeslot_id, on_delete=models.CASCADE, related_name='public_files')
-    User = models.ForeignKey(User, blank=True, null=True)
+    User = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
     TimeStamp = models.DateTimeField(auto_now=True, blank=True, null=True)
     Created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 

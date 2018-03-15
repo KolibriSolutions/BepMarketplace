@@ -90,7 +90,7 @@ class StudentGroup(models.Model):
     A group of students for a professional skill
     """
     Number = models.IntegerField()
-    PRV = models.ForeignKey(FileType, related_name='groups')
+    PRV = models.ForeignKey(FileType, related_name='groups', on_delete=models.CASCADE)
     Start = models.DateTimeField()
     Members = models.ManyToManyField(User, related_name='studentgroups')
     Max = models.IntegerField(validators=[MinValueValidator(0)])

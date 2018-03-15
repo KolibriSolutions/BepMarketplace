@@ -214,17 +214,22 @@ def listPresentationsXls(sets):
         wss.append(ws)
         ws['C1'] = timezone.localtime(pset.DateTime).date().strftime("%A %d %B %Y")
         ws['C3'] = "Track: " + pset.Track.Name
-        ws['C4'] = "Track head: " + pset.Track.Head.get_full_name()
+        ws['C4'] = "Track head: " + pset.Track.Head.usermeta.Fullname
         ws['C5'] = "Exported on: " + timestamp()
         ws['C6'] = "Presentation room: " + pset.PresentationRoom.Name
         ws['C7'] = "Assessment room: " + pset.AssessmentRoom.Name
-        ws['C8'] = ''
+        assessors = ''
+        for a in pset.Assessors.all():
+            assessors += a.usermeta.Fullname + "; "
+        ws['C8'] = 'Assessors: ' + assessors[:-2]
+        ws['C9'] = ''
+
         ws['C1'].style = 'Headline 2'
         # courses span two columns
-        ws['G8'] = 'Courses'
-        ws.merge_cells('G8:H8')
-        ws['G8'].style = 'Headline 3'
-        ws['H8'].style = 'Headline 3'
+        ws['G9'] = 'Courses'
+        ws.merge_cells('G9:H9')
+        ws['G9'].style = 'Headline 3'
+        ws['H9'].style = 'Headline 3'
         # custom dimensions
         ws.column_dimensions['C'].width = 25  # std name
         ws.column_dimensions['E'].width = 25  # responsible name
@@ -237,7 +242,7 @@ def listPresentationsXls(sets):
                   codeBEP, codeExt, "Project", "Time", "Duration"]
         ws.append(header)
         for col in ['A','B','C','D','E','F','G','H','I','J','K']:
-            ws[col+'9'].style = 'Headline 3'
+            ws[col+'10'].style = 'Headline 3'
 
         for slot in pset.timeslots.all():
             if slot.CustomType:
@@ -245,11 +250,11 @@ def listPresentationsXls(sets):
             else:
                 d = slot.Distribution
                 row = ['', d.Student.usermeta.Studentnumber, d.Student.usermeta.Fullname, d.Student.first_name,
-                       d.Proposal.ResponsibleStaff.get_full_name()]
+                       d.Proposal.ResponsibleStaff.usermeta.Fullname]
                 assistants = ''
                 for a in d.Proposal.Assistants.all():
-                    assistants += a.get_full_name() + "; "
-                row.append(assistants)
+                    assistants += a.usermeta.Fullname + "; "
+                row.append(assistants[:-2])
                 row.append('x' if d.Student.usermeta.EnrolledBEP else '')
                 row.append('x' if d.Student.usermeta.EnrolledExt else '')
                 row.append(d.Proposal.Title)

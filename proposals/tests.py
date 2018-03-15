@@ -35,8 +35,8 @@ class ProposalViewsTest(ProposalViewsTest):
             [['create', None],                     [s.p_staff_prop]],
             [['chooseedit', None],                 [s.p_staff_prop]],
             [['pending', None],                    [s.p_pending]],
-            [['stats', None],                      [s.p_forbidden]],
-            [['statsgeneral', None],               [s.p_forbidden]],
+            [['stats', None],                      [s.p_forbidden]],  #TODO s.p_staff12345
+            [['statsgeneral', None],               [s.p_forbidden]],  #TODO s.p_staff12345
             [['listtrackproposals', None],          [s.p_track]]
         ]
         code_general_phase67 =  [

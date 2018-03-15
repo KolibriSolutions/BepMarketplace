@@ -251,8 +251,8 @@ def can_access_professionalskills(fn):
                     redirect_field_name='next',)
 
         # type 3 and 6 can always view professionalskills.
-        # Everyone can view it in phase 5 and later.
-        if get_timephase_number() < 5 and \
+        # Everyone can view it in phase 6 (execution) and later (presenting).
+        if get_timephase_number() < 6 and \
                         get_grouptype("3") not in request.user.groups.all() and \
                         get_grouptype("6") not in request.user.groups.all():
             raise PermissionDenied("Student files are not available in this phase")

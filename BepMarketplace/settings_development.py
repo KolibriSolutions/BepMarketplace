@@ -15,4 +15,6 @@ conffiles = [
 ]
 
 for f in conffiles:
-    exec(open(os.path.abspath(f)).read())
+    fo = open(os.path.abspath(f))
+    exec(fo.read())
+    fo.close()

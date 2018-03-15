@@ -567,7 +567,7 @@ def downgradeUser(request, pk):
 #Other#
 #######
 
-@group_required('type1staff', 'type2staff', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type3staff', 'type4staff', 'type5staff')
 def stats(request):
     """
     Statistics about number of proposals, with breakdown per group.

@@ -1,7 +1,7 @@
 from django.urls import reverse
 
 from general_test import ViewsTest
-from django.contrib.auth.models import User
+
 
 class IndexViewsTest(ViewsTest):
     def setUp(self):
@@ -25,6 +25,7 @@ class IndexViewsTest(ViewsTest):
             [['feedbackclose', {'pk': 0}], self.p_forbidden],  # god only
             [['changesettings', None], self.p_allowed],
             [['termsaccept', None], self.p_allowed],
+            [['edit_tracks', None], self.p_support],
         ]
 
         # not logged in users. Ignore status, only use the views column of permission matrix.

@@ -14,4 +14,4 @@ CHANNEL_LAYERS = {
     },
 }
 
-HTML_MINIFY = False
+HTML_MINIFY = True

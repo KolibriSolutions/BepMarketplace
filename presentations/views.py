@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.forms import modelformset_factory
-from django.http import HttpResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from htmlmin.decorators import not_minified_response
@@ -150,8 +150,8 @@ def presentationswizardstep4(request):
                 "presentations:presentationswizardstep3") + "'>go back to step 3</a>"})
     if request.method == "POST":
         jsondata = request.POST.get('jsondata', None)
-        if jsondata is None:
-            return HttpResponse('{"type":"error","txt":"Invalid POST data"}')
+        if not jsondata:
+            return JsonResponse({'type': 'error', 'txt': 'Invalid POST data. Please contact support staff.'})
         distobjs = json.loads(jsondata)
         #remove all current presentations
         for slot in PresentationTimeSlot.objects.filter(Presentations__PresentationOptions__TimeSlot=get_timeslot()):
@@ -171,7 +171,7 @@ def presentationswizardstep4(request):
                 slotObj.Presentations = PresentationSet.objects.get(id=setID)
                 slotObj.validate_unique()
                 slotObj.save()
-        return HttpResponse('{"type":"success","txt":"success"}')
+        return JsonResponse({'type': 'success', 'txt': 'Data saved!'})
     else:
         dists = Distribution.objects.filter(Q(presenationtimeslot__isnull=True) & Q(Timeslot=get_timeslot()))
         sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts)

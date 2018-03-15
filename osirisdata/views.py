@@ -1,16 +1,25 @@
-from django.shortcuts import render
-from .data import osirisData
-from BepMarketplace.decorators import group_required
 from django.contrib.auth.models import User
-from index.models import UserMeta
+from django.shortcuts import render
+
+from BepMarketplace.decorators import group_required
 from general_form import ConfirmForm
+from index.models import UserMeta
+from .data import osirisData
+
 
 @group_required('type3staff')
 def listOsiris(request):
-    data = osirisData()
+    try:
+        data = osirisData()
+    except:
+        return render(request, 'base.html', {
+            'Message': 'Retrieving Osirisdata failed.',
+            'return': 'index:index',
+        })
     return render(request, 'osirisdata/listosiris.html', {
         'persons' : data.getalldata()
     })
+
 
 @group_required('type3staff')
 def osirisToMeta(request):

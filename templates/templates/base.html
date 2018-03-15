@@ -55,16 +55,18 @@
                                 {% if user|is_trackhead and not user.is_superuser %}
                                     <li><a href="{% url 'proposals:listtrackproposals' %}">My track proposals</a></li>
                                 {% endif %}
-                                {% if phasenumber > 5 %}
-                                    <li>
-                                        <a href="#" class="dropdown-toggle">Statistics</a>
-                                        <ul class="d-menu" data-role="dropdown">
-                                            <li><a href="{% url 'proposals:statsgeneral' %}">General Report</a></li>
-                                            <li><a href="{% url 'proposals:stats' %}">Personal Report</a></li>
-                                        </ul>
-                                    </li>
-                                {% else %}
-                                    <li><a href="{% url 'support:stats' %}">Statistics</a></li>
+                                {% if user|has_group:'type1staff;type2staff;type3staff;type4staff;type5staff' %}
+                                    {% if phasenumber > 5 %}
+                                        <li>
+                                            <a href="#" class="dropdown-toggle">Statistics</a>
+                                            <ul class="d-menu" data-role="dropdown">
+                                                <li><a href="{% url 'proposals:statsgeneral' %}">General Report</a></li>
+                                                <li><a href="{% url 'proposals:stats' %}">Personal Report</a></li>
+                                            </ul>
+                                        </li>
+                                    {% else %}
+                                        <li><a href="{% url 'support:stats' %}">Statistics</a></li>
+                                    {% endif %}
                                 {% endif %}
                             </ul>
                         </li>

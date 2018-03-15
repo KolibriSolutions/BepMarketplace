@@ -449,7 +449,7 @@ def truncatestring(data, trunlen=10):
     return (data[:trunlen] + '..') if len(data) > trunlen else data
 
 
-@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type3staff', 'type4staff', 'type5staff')
 def getProposalStats(request, step=0):
     """
     Gives an overview of the statistics of the proposals of the user. These include the ammount of visitors and applications.
@@ -522,7 +522,7 @@ def getProposalStats(request, step=0):
         })
 
 
-@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type3staff', 'type4staff', 'type5staff')
 def getProposalStatsGeneral(request, step=0):
     """
     Provides report of general statistics, this is breakdown per group etc and the top10 of proposals on the marketplace.

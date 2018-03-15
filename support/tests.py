@@ -15,11 +15,13 @@ class SupportViewsTest(ViewsTest):
             [['mailinglist', None], self.p_support],
             [['mailtrackheads', None],self.p_support],
             [['contentpolicy', None], self.p_support],
-            [['ectsform', None], self.p_support],
-            [['stats', None], self.p_support],
+            [['stats', None], self.p_staff12345],
             # public files
             [['addfile', None], self.p_support],
             [['editfiles', None], self.p_support],
+            #TODO
+            # [['editfile', None], self.p_support],
+            # [['deletefile', None], self.p_support],
             # users
             [['verifyassistants', None], self.p_support],
             # lists
@@ -78,7 +80,7 @@ class SupportViewsTest(ViewsTest):
 
         # create dummy user for upgrade/downgrade
         u = User(username='dummy')
-        u.id = 100;
+        u.id = 100
         u.save()
         m = UserMeta(User=u)
         m.save()

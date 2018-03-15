@@ -102,6 +102,9 @@ def add_timephase(request, timeslot):
     :return:
     """
     ts = get_object_or_404(TimeSlot, pk=timeslot)
+    if ts.End < datetime.now().date():
+        raise PermissionDenied('This timeslot has already finished.')
+
     if request.method == 'POST':
         form = TimePhaseForm(request.POST)
         if form.is_valid():

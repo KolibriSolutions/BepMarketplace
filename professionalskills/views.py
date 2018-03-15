@@ -1,30 +1,29 @@
+import random
 import zipfile
 from datetime import datetime
 from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.core.exceptions import ValidationError
+from django.db.models import Sum
 from django.http import HttpResponse
+from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 
+from BepMarketplace.decorators import can_access_professionalskills
 from BepMarketplace.decorators import group_required, student_only
-from students.models import Distribution
-from general_mail import send_mail, EmailThreadMultipleTemplate
 from distributions.utils import get_distributions
+from general_mail import send_mail, EmailThreadMultipleTemplate
+from general_view import get_grouptype, get_all_students
+from students.models import Distribution
 from timeline.utils import get_timeslot, get_timephase_number
-from timeline.models import TimeSlot
 from .forms import FileTypeModelForm, ConfirmForm, StaffReponseForm, StudentGroupForm, StudentGroupChoice
 from .models import FileType, StaffReponse, StudentFile, StudentGroup
-from general_view import get_grouptype, get_all_students
-from BepMarketplace.decorators import can_access_professionalskills
-import random
-from django.db.models import Sum
-from django.http import HttpResponseBadRequest
-from django.core.exceptions import ValidationError
+
 
 @group_required('type3staff', 'type6staff')
 def downloadAll(request, pk):
