@@ -15,9 +15,9 @@ from timeline.utils import get_timephase_number, get_timeslot
 def group_required(*group_names):
     """
     Check whether a user (django-user) is in a given set of django groups. Gives True if in any of the specified groups.
-    
+
     :param group_names:
-    :return: 
+    :return:
     """
     def in_groups(u):
         if u.is_authenticated():
@@ -36,9 +36,34 @@ def group_required(*group_names):
     return actual_decorator
 
 
+def phase_required(*phase_numbers):
+    """
+    Check whether the system is in any of the given timephases
+
+    :param group_names:
+    :return:
+    """
+
+    def in_phase(u):
+        if u.is_authenticated():
+            if get_timephase_number() in phase_numbers:
+                return True
+            else:
+                raise PermissionDenied("This page is not available in the current timephase.")
+        return False
+
+    actual_decorator = user_passes_test(
+        in_phase,
+        login_url='index:login',
+        redirect_field_name='next',
+    )
+
+    return actual_decorator
+
+
 def superuser_required():
     """
-    True if user is superuser. Redirect to login if not. 
+    True if user is superuser. Redirect to login if not.
     """
     def is_superuser(u):
         if u.is_authenticated():
@@ -59,7 +84,7 @@ def student_only():
     """
     Test if a user is a student. A student is a user with 0 groups. Students are not allowed in first timephases
 
-    :return: 
+    :return:
     """
     def is_student(u):
         if u.is_authenticated():
@@ -81,8 +106,8 @@ def can_view_proposal(fn):
     """
     Test if a given user is able to see a given proposal.
 
-    :param fn: 
-    :return: 
+    :param fn:
+    :return:
     """
     def wrapper(*args, **kw):
         if 'pk' in kw:
@@ -133,9 +158,9 @@ def can_view_proposal(fn):
 def can_edit_proposal(fn):
     """
     Test if a user can edit a given proposal.
-    
-    :param fn: 
-    :return: 
+
+    :param fn:
+    :return:
     """
     def wrapper(*args, **kw):
         if 'pk' in kw:
@@ -153,7 +178,7 @@ def can_edit_proposal(fn):
                     login_url='index:login',
                     redirect_field_name='next',)
 
-        allowed = can_edit_proposal_fn(request.user, prop)
+        allowed = can_edit_proposal_fn(request.user, prop, 'ty' in kw)
         if allowed[0] == True:
             return fn(*args, **kw)
         else:
@@ -268,9 +293,9 @@ def can_access_professionalskills(fn):
 def can_apply(fn):
     """
     Test if a student can apply or retract; The system is in timephase 3, user is a student and proposal is nonprivate.
-    
-    :param fn: 
-    :return: 
+
+    :param fn:
+    :return:
     """
     def wrapper(*args, **kw):
         request = args[0]
@@ -299,12 +324,14 @@ def can_apply(fn):
     return wrapper
 
 
+
+
 def phase7_only(fn):
     """
     Test if the system is in timephase 7
-    
-    :param fn: 
-    :return: 
+
+    :param fn:
+    :return:
     """
     def wrapper(*args, **kw):
         request = args[0]

@@ -47,6 +47,7 @@ def osirisToMeta(request):
                 meta.EnrolledExt = p.enrolledextension
                 meta.Cohort = p.cohort
                 meta.ECTS = p.ects
+                meta.Studentnumber = p.idnumber
                 meta.save()
             return render(request, 'base.html', {
                 'Message' : 'usermeta updated!',

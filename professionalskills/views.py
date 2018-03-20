@@ -3,29 +3,27 @@ import zipfile
 from datetime import datetime
 from io import BytesIO
 
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Sum
 from django.http import HttpResponse
-from django.http import HttpResponseBadRequest
-from django.shortcuts import get_object_or_404
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 
-from BepMarketplace.decorators import can_access_professionalskills
-from BepMarketplace.decorators import group_required, student_only
+from BepMarketplace.decorators import can_access_professionalskills, group_required, student_only, phase_required
 from distributions.utils import get_distributions
 from general_mail import send_mail, EmailThreadMultipleTemplate
 from general_view import get_grouptype, get_all_students
 from students.models import Distribution
-from timeline.utils import get_timeslot, get_timephase_number
+from timeline.utils import get_timeslot
 from .forms import FileTypeModelForm, ConfirmForm, StaffReponseForm, StudentGroupForm, StudentGroupChoice
 from .models import FileType, StaffReponse, StudentFile, StudentGroup
+from django.utils.html import format_html
+from django.contrib.auth.decorators import login_required
 
 
 @group_required('type3staff', 'type6staff')
+@phase_required(6, 7)
 def downloadAll(request, pk):
     """
     Download all files for a given filetype
@@ -34,9 +32,6 @@ def downloadAll(request, pk):
     :param pk: id of the filetype
     :return:
     """
-    if get_timephase_number() < 5:
-        raise PermissionDenied('Students are not yet distributed to projects.')
-
     ftype = get_object_or_404(FileType, pk=pk)
 
     in_memory = BytesIO()
@@ -145,7 +140,6 @@ def deleteFileType(request, pk):
     })
 
 
-@login_required
 @can_access_professionalskills
 def listFileType(request):
     """
@@ -161,6 +155,7 @@ def listFileType(request):
 
 
 @group_required('type3staff', 'type6staff')
+@phase_required(6, 7)
 def listFilePerType(request, pk):
     """
     Lists all files of one type of professional skill.
@@ -169,9 +164,6 @@ def listFilePerType(request, pk):
     :param pk: filetype to show delivered files for
     :return:
     """
-    if get_timephase_number() < 5:
-        raise PermissionDenied('Students are not yet distributed to projects.')
-
     ftype = get_object_or_404(FileType, pk=pk)
     return render(request, 'professionalskills/listFilesOfType.html', {
         'type' : ftype,
@@ -180,6 +172,7 @@ def listFilePerType(request, pk):
 
 
 @group_required('type3staff', 'type6staff')
+@phase_required(6, 7)
 def listMissingPerType(request, pk):
     """
     Lists all students that did not hand in a file with specified type.
@@ -188,10 +181,6 @@ def listMissingPerType(request, pk):
     :param pk: filetype to show missing students for
     :return:
     """
-
-    if get_timephase_number() < 5:
-        raise PermissionDenied("Student files are not available in this phase")
-
     ftype = get_object_or_404(FileType, pk=pk)
     failStudents = []
     for dist in get_distributions(request.user):
@@ -204,7 +193,6 @@ def listMissingPerType(request, pk):
     })
 
 
-@login_required
 @can_access_professionalskills
 def listStudentFiles(request, pk):
     """
@@ -234,6 +222,7 @@ def listStudentFiles(request, pk):
 
 
 @group_required('type3staff', 'type6staff')
+@phase_required(6, 7)
 def mailOverDueStudents(request):
     """
     Mail students that didn't handin file before the deadline
@@ -241,9 +230,6 @@ def mailOverDueStudents(request):
     :param request:
     :return:
     """
-    if get_timephase_number() < 6:
-        raise PermissionDenied('Mailing students for PRVs is not possible in this timephase')
-
     if request.method == "POST":
         form = ConfirmForm(request.POST)
         if form.is_valid():
@@ -333,6 +319,7 @@ def respondFile(request, pk):
 
 
 @student_only()
+@can_access_professionalskills
 def listOwnFiles(request):
     """
     Shows the list of files of a student. Files are attached to distributions-objects.
@@ -341,15 +328,12 @@ def listOwnFiles(request):
     :param request:
     :return:
     """
-
-    if get_timephase_number() < 5:
-        raise PermissionDenied("Student files are not available in this phase")
-
     dist = get_object_or_404(Distribution, Student=request.user)
     return listStudentFiles(request, dist.pk)
 
 
 @group_required('type3staff', 'type6staff')
+@phase_required(6, 7)
 def printPrvForms(request):
     """
     Export PDF of all distributed students
@@ -357,9 +341,6 @@ def printPrvForms(request):
     :param request:
     :return:
     """
-    if get_timephase_number() < 5:
-        raise PermissionDenied('Students are not yet distributed to projects.')
-
     template = get_template('professionalskills/printPrvResults.html')
     pages = []
     for dstr in Distribution.objects.all():
@@ -384,7 +365,7 @@ def printPrvForms(request):
     })
 
     buffer = BytesIO()
-    pisaStatus = pisa.CreatePDF(htmlblock.encode('utf-8'), dest=buffer, encoding='utf-8')
+    pisaStatus = pisa.CreatePDF(htmlblock.encode('utf-8'), dest=buffer, encoding='utf-8')  # TODO check pisaStatus
     buffer.seek(0)
     response = HttpResponse(buffer, 'application/pdf')
     response['Content-Disposition'] = 'attachment; filename="prvs.pdf"'
@@ -393,6 +374,13 @@ def printPrvForms(request):
 
 @group_required('type3staff', 'type6staff')
 def createGroup(request, pk=None):
+    """
+    Create a group of students for PRV's. This does not yet fill the group with students.
+
+    :param request:
+    :param pk:
+    :return:
+    """
     if request.method == 'POST':
         form = StudentGroupForm(request.POST)
         if form.is_valid():
@@ -415,6 +403,13 @@ def createGroup(request, pk=None):
 
 @group_required('type3staff', 'type6staff')
 def editGroup(request, pk):
+    """
+    Edit a prv group.
+
+    :param request:
+    :param pk:
+    :return:
+    """
     obj = get_object_or_404(StudentGroup, pk=pk)
     if request.method == 'POST':
         form = StudentGroupForm(request.POST, instance=obj)
@@ -434,6 +429,13 @@ def editGroup(request, pk):
 
 @group_required('type3staff', 'type6staff')
 def listGroups(request, pk):
+    """
+    List all groups of students for one PRV.
+
+    :param request:
+    :param pk:
+    :return:
+    """
     PRV = get_object_or_404(FileType, pk=pk)
     return render(request, 'professionalskills/listAllGroups.html', {
         'groups' : PRV.groups.all(),
@@ -441,23 +443,33 @@ def listGroups(request, pk):
     })
 
 
-@group_required('type3staff', 'type6staff')
+@login_required
+@phase_required(6, 7)
 def listGroupMembers(request, pk):
+    """
+    List all students in a prv group
+
+    :param request:
+    :param pk:
+    :return:
+    """
     group = get_object_or_404(StudentGroup, pk=pk)
     return render(request, 'GenericList.html', {
-        'items' : group.Members.all(),
-        'title' : 'Members of group {}'.format(group),
+        'items' : [mem.get_full_name() for mem in group.Members.all()],
+        'header' : format_html('<h1>Members of group {}</h1><h2>{}</h2><h3>Starts {}</h3><br/>Capacity: {}/{}'
+                               .format(group.Number, group.PRV, group.Start.strftime("%a %d %b at %H:%M"), group.Members.count(), group.Max)),
     })
 
-
-def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
-
-
 @group_required('type3staff', 'type6staff')
+@phase_required(6, 7)
 def assignStudents(request, pk):
+    """
+    Assign all distributed students to one of the prv groups.
+
+    :param request:
+    :param pk:
+    :return:
+    """
     PRV = get_object_or_404(FileType, pk=pk)
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
@@ -498,12 +510,23 @@ def assignStudents(request, pk):
 
 
 @student_only()
+@can_access_professionalskills
 def switchGroup(request, frompk, topk):
+    """
+    Lets a student switch between prv groups. This function is usually not called via URL, only direct.
+
+    :param request:
+    :param frompk: original student group
+    :param topk: group to switch to
+    :return:
+    """
     fromgroup = get_object_or_404(StudentGroup, pk=frompk)
     togroup = get_object_or_404(StudentGroup, pk=topk)
 
+    if fromgroup.PRV != togroup.PRV:
+        raise PermissionDenied("Groups must be for the same professional skill.")
     if fromgroup not in request.user.studentgroups.all():
-        return HttpResponseBadRequest('User not in from group')
+        raise PermissionDenied('User is not in from group')
 
     fromgroup.Members.remove(request.user)
     togroup.Members.add(request.user)
@@ -517,7 +540,14 @@ def switchGroup(request, frompk, topk):
 
 
 @student_only()
+@can_access_professionalskills
 def listOwnGroups(request):
+    """
+    List all prv groups where a student is in. With a form for each group to switch to another group.
+
+    :param request:
+    :return:
+    """
     if request.method == 'POST':
         for g in request.user.studentgroups.all():
             f = StudentGroupChoice(request.POST, initial={'Group': g}, prefix=str(g.PRV.pk), PRV=g.PRV)

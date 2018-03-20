@@ -8,13 +8,13 @@ from django.db.models import Q, F, Count
 from django.http import JsonResponse
 from django.shortcuts import render
 
-from BepMarketplace.decorators import group_required
+from BepMarketplace.decorators import group_required, phase_required
 from general_form import ConfirmForm
 from general_mail import EmailThreadMultipleTemplate
 from general_view import get_all_students, get_all_staff
-from proposals.utils import get_all_proposals, get_share_link
 from proposals.cacheprop import getProp
 from proposals.models import Proposal
+from proposals.utils import get_all_proposals, get_share_link
 from students.models import Application, Distribution
 from students.views import get_all_applications
 from timeline.models import TimeSlot
@@ -332,7 +332,9 @@ def proposalOfDistribution(request, dtype):
         'jsondata': json.dumps(data),
     })
 
+
 @group_required('type3staff')
+@phase_required(4, 5, 6)
 def secondChoiceList(request):
     """
     list all students with a random distribution
@@ -352,7 +354,9 @@ def secondChoiceList(request):
         'sharelinks': sharelinks,
     })
 
+
 @group_required('type3staff')
+@phase_required(4, 5, 6)
 def deleteRandomDistributions(request):
     """
     Delete all distributions who have had a random assigned project

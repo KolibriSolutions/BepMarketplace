@@ -120,6 +120,7 @@ def trackProposalVisit(proposal, user):
             'user': user.get_full_name(),
         })})
 
+
 @superuser_required()
 def userDetail(request, pk):
     user = get_object_or_404(User, pk=pk)

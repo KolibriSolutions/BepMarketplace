@@ -214,7 +214,7 @@ def listPresentationsXls(sets):
         wss.append(ws)
         ws['C1'] = timezone.localtime(pset.DateTime).date().strftime("%A %d %B %Y")
         ws['C3'] = "Track: " + pset.Track.Name
-        ws['C4'] = "Track head: " + pset.Track.Head.usermeta.Fullname
+        ws['C4'] = "Track responsible staff: " + pset.Track.Head.usermeta.Fullname
         ws['C5'] = "Exported on: " + timestamp()
         ws['C6'] = "Presentation room: " + pset.PresentationRoom.Name
         ws['C7'] = "Assessment room: " + pset.AssessmentRoom.Name
@@ -253,7 +253,10 @@ def listPresentationsXls(sets):
                        d.Proposal.ResponsibleStaff.usermeta.Fullname]
                 assistants = ''
                 for a in d.Proposal.Assistants.all():
-                    assistants += a.usermeta.Fullname + "; "
+                    try:
+                        assistants += str(a.usermeta.Fullname) + "; "
+                    except:
+                        assistants += str(a) + "; "
                 row.append(assistants[:-2])
                 row.append('x' if d.Student.usermeta.EnrolledBEP else '')
                 row.append('x' if d.Student.usermeta.EnrolledExt else '')

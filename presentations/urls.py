@@ -11,5 +11,6 @@ urlpatterns = [
     url(r'^wizard/step4/$', views.presentationswizardstep4, name='presentationswizardstep4'),
     url(r'^list/$', views.presentationsPlanning, name='presentationsplanning'),
     url(r'^listxls/$', views.presentationsPlanningXls, name='presentationsplanningxls'),
-    url(r'^$', views.presentationsCalendar, name='presentationscalendar')
+    url(r'^$', views.presentationsCalendar, name='presentationscalendar'),
+    url(r'^own/$', views.presentationsCalendar, {'own' : True}, name='presentationscalendarown')
 ]

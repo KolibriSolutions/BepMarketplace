@@ -69,3 +69,11 @@ class FileForm(forms.ModelForm):
 class ConfirmForm(forms.Form):
     """Form to confirm a action. Used for extra validation. Not linked to a model."""
     confirm = forms.BooleanField(widget=widgets.MetroCheckBox, label='Confirm:')
+
+class UserChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.get_full_name
+
+class UserMultipleChoiceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(self, obj):
+        return obj.get_full_name

@@ -339,8 +339,8 @@ def GetPresentationStaff(user):
                     break
 
             html += '<a href="{}" class ="button primary">{}</a>'
-            url = reverse('presentations:presentationscalendar')
-            title = "View all presentations"
+            url = reverse('presentations:presentationscalendarown')
+            title = "View all your presentations"
             st = format_html(html, url, title)
             return st
         else:

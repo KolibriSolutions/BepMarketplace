@@ -26,8 +26,8 @@ def presentationswizardstep1(request):
     Step 1 of the planning of the presentations for the projects.
     In this step global options are set, these are only for validation and can be overridden per presentation afterwards.
 
-    :param request: 
-    :return: 
+    :param request:
+    :return:
     """
     if get_timephase_number() <= 4:
         raise PermissionDenied("Projects are not yet distributed.")
@@ -68,7 +68,7 @@ def presentationswizardstep2(request):
     """
     Step 2 of the planning of the presentations for the projects.
     In this step the rooms for the presentations are set. Rooms have just a name. All used rooms have to be supplied.
-    
+
     :param request:
     :return:
     """
@@ -95,9 +95,9 @@ def presentationswizardstep2(request):
 def presentationswizardstep3(request):
     """
     Step 3 of the planning of the presentations for the projects.
-    Setting the presentation sets. A set of presentations is a fixed combination of a presentation room, an 
+    Setting the presentation sets. A set of presentations is a fixed combination of a presentation room, an
     assessment room, a track and a begin datetime. If any of these changes, a new set has to be made.
-     
+
     :param request:
     :return:
     """
@@ -131,10 +131,10 @@ def presentationswizardstep3(request):
 def presentationswizardstep4(request):
     """
     Step 4 of the planning of the presentations for the projects.
-    This is where the actual presentations get planned. All previous steps come together. Each set is a column in the 
-    page. Individual presentations are on the right side and can be dragged into a timeslot. Time differences are 
+    This is where the actual presentations get planned. All previous steps come together. Each set is a column in the
+    page. Individual presentations are on the right side and can be dragged into a timeslot. Time differences are
     automatically calculated. Times for breaks or assesments can be manually adjusted.
-     
+
     :param request:
     :return:
     """
@@ -186,7 +186,7 @@ def presentationsPlanning(request):
     """
     Table view of all presentations in this timeslot. Way too much unorganized information, so mostly used for debugging
     therefore only visible for type3staff
-    
+
     :param request:
     :return:
     """
@@ -204,7 +204,7 @@ def presentationsPlanning(request):
 def presentationsPlanningXls(request):
     """
     Shows the presentations planning in an Excel file in the same way as was done before the marketplace
-    
+
     :param request:
     :return: xlsx file
     """
@@ -232,11 +232,12 @@ def presentationsPlanningXls(request):
 
 
 @login_required
-def presentationsCalendar(request):
+def presentationsCalendar(request, own=False):
     """
     Calendar view of the presentations planning, public visible in phase 7, otherwise only if 'public==True'
-    
+
     :param request:
+    :param own:
     :return:
     """
 
@@ -254,9 +255,16 @@ def presentationsCalendar(request):
 
     ts = get_timeslot()
     sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts).order_by('DateTime')
+    if own:
+        sets = sets.filter(Q(timeslots__Distribution__Proposal__ResponsibleStaff=request.user) |
+                           Q(timeslots__Distribution__Proposal__Assistants=request.user) |
+                           Q(Assessors=request.user)).distinct()
 
     if not sets:
-        return render(request, "base.html", {"Message": "The presentations are not yet planned."})
+        if own:
+            return render(request, "base.html", {"Message": "There are no presentations that you have to attend!"})
+        else:
+            return render(request, "base.html", {"Message": "The presentations are not yet planned."})
 
     # sets are ordered by datetime, so first set has the lowest time, this is where the calendar display starts
     begin = sets[0].DateTime.date()
@@ -279,4 +287,4 @@ def presentationsCalendar(request):
         return render(request, "presentations/presentationsCalendar.html", {"sets": sets, "form": form, "beginCalendar": begin })
 
     # normal view for non-type3 staff
-    return render(request, "presentations/presentationsCalendar.html", {"sets": sets, "beginCalendar": begin})
+    return render(request, "presentations/presentationsCalendar.html", {"sets": sets, "beginCalendar": begin, "own" : own})

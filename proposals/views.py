@@ -21,7 +21,7 @@ from timeline.utils import get_timeslot, get_timephase_number
 from tracking.views import trackProposalVisit
 from .cacheprop import getProp, updatePropCache
 from .forms import ProposalFormEdit, ProposalFormCreate, ProposalImageForm, ProposalDowngradeMessageForm, \
-    ProposalAttachmentForm
+    ProposalAttachmentForm, ProposalFormLimited
 from .models import Proposal, ProposalImage, ProposalAttachment
 from .utils import can_edit_proposal_fn
 
@@ -94,7 +94,7 @@ def detailProposal(request, pk):
                 data['applications'] = prop.applications.all()
             if get_timephase_number() >= 4:  # responsible / assistants can see distributions in distribution phase
                 data['distributions'] = get_distributions(request.user).filter(Proposal=prop)
-        allowed = can_edit_proposal_fn(request.user, prop)
+        allowed = can_edit_proposal_fn(request.user, prop, False)
         if allowed[0]:
             data['Editlock'] = False
         else:
@@ -150,7 +150,11 @@ def editProposal(request, pk):
     """
     obj = get_object_or_404(Proposal, pk=pk)
     if request.method == 'POST':
-        form = ProposalFormEdit(request.POST, request.FILES, request=request, instance=obj)
+        #only limited editing when status 4
+        if obj.Status == 4:
+            form = ProposalFormLimited(request.POST, request=request, instance=obj)
+        else:
+            form = ProposalFormEdit(request.POST, request.FILES, request=request, instance=obj)
         if form.is_valid():
             obj = form.save()
             if form.changed_data:
@@ -160,7 +164,10 @@ def editProposal(request, pk):
                         mailPrivateStudent(request, obj, std, "Your private proposal was edited.")
             return render(request, "proposals/ProposalMessage.html", {"Message": "Proposal saved!", "Proposal": obj})
     else:
-         form = ProposalFormEdit(request=request, instance=obj)
+        if obj.Status == 4:
+            form = ProposalFormLimited(request=request, instance=obj)
+        else:
+            form = ProposalFormEdit(request=request, instance=obj)
     return render(request, 'GenericForm.html', {'form': form, 'formtitle': 'Edit Proposal', 'buttontext': 'Save'})
 
 

@@ -81,13 +81,14 @@
                                         <a class="button primary" href="{% url 'proposals:edit' proposal.id %}">
                                             <span class="mif-pencil"></span>Edit data
                                         </a>
+                                        {% if proposal.Status != 4 %}
                                         <a class="button primary" href="{% url 'proposals:editfile' 'i' proposal.id %}">
                                             <span class="mif-images"></span>Edit images
                                         </a>
                                         <a class="button primary" href="{% url 'proposals:editfile' 'a' proposal.id %}">
                                             <span class="mif-file-pdf"></span>Edit attachments
                                         </a>
-
+                                        {% endif %}
                                     <br>
                                 {% endif %}
                                 {# show "copy to current timeslot" button for proposals of previous timeslots.#}

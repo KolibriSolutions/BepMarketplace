@@ -14,6 +14,7 @@ class TrackingViewsTest(ViewsTest):
             [['applicationlist', None], self.p_forbidden],  # god only
             [['listuserlog', None], self.p_forbidden],
             [['livestreamer', None], self.p_forbidden],
+            [['userdetail', {'pk': 0}], self.p_forbidden],
         ]
 
         # not logged in users. Ignore status, only use the views column of permission matrix.

@@ -7,17 +7,18 @@ logger = logging.getLogger('django')
 class osirisPerson:
     def __init__(self, csvline):
         self.email = csvline[0]
-        if csvline[1] == 'yes' or csvline[1] == '1' or csvline[1] == 1:
+        self.idnumber = csvline[1]
+        if csvline[1] == 'yes' or csvline[2] == '1' or csvline[2] == 1:
             self.enrolled = True
         else:
             self.enrolled = False
-        if csvline[2] == 'yes' or csvline[2] == '1' or csvline[2] == 1:
+        if csvline[2] == 'yes' or csvline[3] == '1' or csvline[3] == 1:
             self.enrolledextension = True
         else:
             self.enrolledextension = False
-        self.cohort = csvline[3]
-        self.ects = csvline[4]
-        if csvline[5] == 'yes' or csvline[5] == '1' or csvline[5] == 1:
+        self.cohort = csvline[4]
+        self.ects = csvline[5]
+        if csvline[6] == 'yes' or csvline[6] == '1' or csvline[6] == 1:
             self.automotive = True
         else:
             self.automotive = False

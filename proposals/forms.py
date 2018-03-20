@@ -9,7 +9,7 @@ from django.core.files.base import ContentFile
 from django.core.files.images import get_image_dimensions
 from django.forms import ValidationError
 
-from general_form import clean_file_default, FileForm
+from general_form import clean_file_default, FileForm, UserChoiceField, UserMultipleChoiceField
 from general_mail import mailPrivateStudent, mail_proposal_single
 from general_model import get_ext, print_list
 from general_view import get_grouptype
@@ -114,6 +114,27 @@ def create_user_from_email(self, email, username, student=False):
     new_account.save()
     return new_account
 
+class ProposalFormLimited(forms.ModelForm):
+    Assistants = UserMultipleChoiceField(get_grouptype('2').user_set.all() | \
+                                             get_grouptype('2u').user_set.all() | \
+                                             get_grouptype('1').user_set.all(), widget=widgets.MetroSelectMultiple)
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+
+    class Meta:
+        model = Proposal
+
+        fields = [
+            'Title',
+            'Assistants'
+        ]
+
+        widgets = {
+            'Title': widgets.MetroTextInput
+        }
+
 
 class ProposalForm(forms.ModelForm):
     """
@@ -126,13 +147,15 @@ class ProposalForm(forms.ModelForm):
                                        widget=widgets.MetroMultiTextInput,
                                        required=False)
 
+    ResponsibleStaff = UserChoiceField(get_grouptype('1').user_set.all(), widget=widgets.MetroSelect,
+                                       label='Responsible staff')
+    Assistants = UserMultipleChoiceField(get_grouptype('2').user_set.all() | \
+                                             get_grouptype('2u').user_set.all() | \
+                                             get_grouptype('1').user_set.all(), widget=widgets.MetroSelectMultiple)
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
-        self.fields['ResponsibleStaff'].queryset = get_grouptype('1').user_set.all()
-        self.fields['Assistants'].queryset = get_grouptype('2').user_set.all() | \
-                                             get_grouptype('2u').user_set.all() | \
-                                             get_grouptype('1').user_set.all()
         self.fields['addAssistantsEmail'].widget.attrs['placeholder'] = 'Add assistant via email address'
         self.fields['addPrivatesEmail'].widget.attrs['placeholder'] = 'Add private student via email address'
 
@@ -163,7 +186,6 @@ class ProposalForm(forms.ModelForm):
                   ]
 
         labels = {
-            'ResponsibleStaff': 'Responsible staff',
             'ECTS': 'Preferred ECTS',
             'NumstudentsMin': 'Minimum number of students',
             'NumstudentsMax': 'Maximum number of students',
@@ -174,8 +196,6 @@ class ProposalForm(forms.ModelForm):
         }
         widgets = {
             'Title': widgets.MetroTextInput,
-            'ResponsibleStaff': widgets.MetroSelect,
-            'Assistants': widgets.MetroSelectMultiple,
             'Track': widgets.MetroSelect,
             'Group': widgets.MetroSelect,
             'ECTS': widgets.MetroSelect,

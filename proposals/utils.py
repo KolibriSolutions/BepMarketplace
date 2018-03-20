@@ -9,7 +9,7 @@ from proposals.models import Proposal
 from timeline.utils import get_timephase_number, get_timeslot
 
 
-def can_edit_proposal_fn(user, prop):
+def can_edit_proposal_fn(user, prop, file):
     """
     Check if a user can edit a proposal. Used to show/hide editbuttons on detailproposal and
     for the can_edit_proposal decorator.
@@ -25,8 +25,11 @@ def can_edit_proposal_fn(user, prop):
     if get_grouptype('3') in user.groups.all() or user.is_superuser:
         return True, ''
 
-    # published proposals can never be edited.
+    # published proposals can only ever be edited limited. choice of form is done in view function
     if prop.Status == 4:
+        if prop.ResponsibleStaff == user and not file:
+            return True, '' # it is the responsibility of the view that the right form is choosen
+
         if prop.nextyear() or (prop.curyear() and get_timephase_number() < 3):
             if user == prop.Track.Head:
                 return False, 'No editing possible. Please downgrade the proposal first.'

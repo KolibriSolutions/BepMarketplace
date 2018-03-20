@@ -96,7 +96,7 @@ class StudentGroup(models.Model):
     Max = models.IntegerField(validators=[MinValueValidator(0)])
 
     def __str__(self):
-        return 'Group {} at {}, {}/{}'.format(self.Number, self.Start, self.Members.count(), self.Max)
+        return 'Group {} at {}'.format(self.Number, self.Start.strftime("%a %d %b %H:%M"))
 
     def clean(self):
         try:

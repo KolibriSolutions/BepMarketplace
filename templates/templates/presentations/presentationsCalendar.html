@@ -22,7 +22,15 @@
     <h1>Presentations planning calendar</h1>
     <p>
         <a href="{% url "presentations:presentationsplanningxls" %}" class="button primary">Export Excel</a>
+    {% if not own %}
+        <a href="{% url 'presentations:presentationscalendarown' %}" class="button primary">List Own Only</a>
+    {% else %}
+        <a href="{% url 'presentations:presentationscalendar' %}" class="button primary">List All</a>
+    {% endif %}
     </p>
+    {% if own %}
+    Only showing the presentations you have to be at.<br/><br/>
+    {% endif %}
     {# form to make the calendar public for type3 staff #}
     {% if form %}
         <div style="border: 2px solid #222;" class="margin20 bg-grayLighter">
@@ -128,7 +136,7 @@
                 },
                 events: [
                     {% for set in sets %}
-                        {% cycle "emerald" "blue" "cobalt" "indigo" "magenta" "orange" "brown" "steel" as setcolor silent %}
+                        {% cycle "#803E75" "#FF6800" "#C10020" "#CEA262" "#007D34" "#F6768E" "#00538A" "#FF7A5C" "#53377A" "#FF8E00" "#B32851" "#F4C800" "#7F180D" "#93AA00" "#593315" "#F13A13" "#232C16" as setcolor silent %}
                         {% for slot in set.timeslots.all %}
                             {
                                 setid: {{ set.id }},
@@ -138,7 +146,6 @@
 
                                 {% if slot.CustomType %}
                                     title: '{{ slot.get_CustomType_display }}',
-                                    className: 'ribbed-{{ setcolor }}',
                                     {% if slot.CustomType == 1 %}
                                         location: '{{ set.AssessmentRoom }}',
                                     {% else %}
@@ -146,7 +153,7 @@
                                     {% endif %}
                                 {% else %}
                                     title: '{{ slot.Distribution.Student.usermeta.Fullname }} ({{ slot.Distribution.Student.usermeta.Studentnumber }})',
-                                    className: 'bg-{{ setcolor }}',
+                                    backgroundColor: "{{ setcolor }}",
                                     location: '{{ set.PresentationRoom }}',
                                     proposal: '{{ slot.Distribution.Proposal.Title }}',
                                     responsible: '{{ slot.Distribution.Proposal.ResponsibleStaff.usermeta.get_nice_name }}',
