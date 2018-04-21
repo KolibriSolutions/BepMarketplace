@@ -1,22 +1,23 @@
 import os
 
 conffiles = [
-     'BepMarketplace/settings_inc/common/base.py'
-,    'BepMarketplace/settings_inc/common/locale.py'
-,    'BepMarketplace/settings_inc/common/marketplace.py'
-    
-,    'BepMarketplace/settings_inc/production/auth.py'
-,    'BepMarketplace/settings_inc/production/cache.py'
-,    'BepMarketplace/settings_inc/production/database.py'
-,    'BepMarketplace/settings_inc/production/email.py'
-,    'BepMarketplace/settings_inc/production/logging.py'
-,    'BepMarketplace/settings_inc/production/media.py'
-,    'BepMarketplace/settings_inc/production/production.py'
-,    'BepMarketplace/settings_inc/production/saml.py'
-,    'BepMarketplace/settings_inc/production/security.py'
+    'BepMarketplace/config/common/01-marketplace.py',
+    'BepMarketplace/config/common/02-base.py',
+    'BepMarketplace/config/common/03-security.py',
+
+    'BepMarketplace/config/production/01-auth.py',
+    'BepMarketplace/config/production/02-database.py',
+    'BepMarketplace/config/production/03-email.py',
+    'BepMarketplace/config/production/05-logging.py',
 ]
+
+DEBUG = False
+HOSTNAME = 'bep.ele.tue.nl'
 
 for f in conffiles:
     fo = open(os.path.abspath(f))
     exec(fo.read())
     fo.close()
+
+# in case of overrides
+DEBUG = False

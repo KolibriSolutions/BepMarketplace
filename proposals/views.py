@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
@@ -38,7 +39,7 @@ def listProposals(request):
     bodyhtml = cache.get('listproposalsbodyhtml')
     if bodyhtml is None:
         proposals = get_all_proposals().filter(Q(Status=4) & Q(Private=None))
-        bodyhtml = render_block_to_string("proposals/ProposalList.html", 'body', {"proposals":proposals})
+        bodyhtml = render_block_to_string("proposals/ProposalList.html", 'body', {"proposals": proposals, 'domain': settings.DOMAIN})
         cache.set('listproposalsbodyhtml', bodyhtml, None)
     return render(request, 'proposals/ProposalList.html', {"bodyhtml" : bodyhtml})
 

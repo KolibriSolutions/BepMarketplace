@@ -74,46 +74,49 @@
                             {% if phasenumber > 2 %}
                                 {# phase 1 and 2 do not have any distributions #}
                                 {# phase 4 - 6 show manual distribution button #}
-                                    <li>
-                                        <a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Distribution</a>
-                                            <ul class="d-menu" data-role="dropdown">
+                                <li>
+                                    <a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Distribution</a>
+                                    <ul class="d-menu" data-role="dropdown">
 
-                                            {% if phasenumber == 4 or phasenumber == 5 %}
-                                                <li><a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
-                                                    Manually</a></li>
-                                            {% endif %}
-                                            {% if phasenumber == 6 and user.is_superuser %}
-                                                <li><a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
-                                                    Manually (superuser)</a></li>
-                                            {% endif %}
+                                        {% if phasenumber == 4 or phasenumber == 5 %}
+                                            <li><a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
+                                                Manually</a></li>
+                                        {% endif %}
+                                        {% if phasenumber == 6 and user.is_superuser %}
+                                            <li><a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
+                                                Manually (superuser)</a></li>
+                                        {% endif %}
 
-                                            {% if phasenumber == 4 or phasenumber == 5 %}
+                                        {% if phasenumber == 4 or phasenumber == 5 %}
                                             {# actual distributions are possible in phase 4 and 5 #}
-                                                    {% if phasenumber == 4 %}
-                                                        {# phase 4 show automatic distribution menu#}
-                                                        <li>
-                                                            <a href="#" class="dropdown-toggle">Distribute Automatically</a>
-                                                            <ul class="d-menu" data-role="dropdown">
-                                                                <li><a href="{% url 'distributions:distributeproposal' 1 %}">1: By student</a>
-                                                                </li>
-                                                                <li><a href="{% url 'distributions:distributeproposal' 2 %}">2: By project</a>
-                                                                </li>
-                                                            </ul>
-                                                        </li>
-                                                    {% endif %}
-                                                    <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">List
-                                                        all</a></li>
-                                                    <li><a href="{% url "distributions:secondchoice" %}">Second Choice</a> </li>
-                                            {% else %}
-                                                {# show simple list applications/distributions button in phase 3, 6 and 7 #}
+                                            {% if phasenumber == 4 %}
+                                                {# phase 4 show automatic distribution menu#}
                                                 <li>
-                                                    <a href="{% url 'support:SupportListApplicationsDistributions' %}">
-                                                    {% if phasenumber == 3 %}List Applications{% else %}List Distributions{% endif %}
-                                                    </a>
+                                                    <a href="#" class="dropdown-toggle">Distribute Automatically</a>
+                                                    <ul class="d-menu" data-role="dropdown">
+                                                        <li><a href="{% url 'distributions:distributeproposal' 1 %}">1:
+                                                            By student</a>
+                                                        </li>
+                                                        <li><a href="{% url 'distributions:distributeproposal' 2 %}">2:
+                                                            By project</a>
+                                                        </li>
+                                                    </ul>
                                                 </li>
                                             {% endif %}
-                                        </ul>
-                                    </li>
+                                            <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">List
+                                                all</a></li>
+                                            <li><a href="{% url "distributions:secondchoice" %}">Second Choice</a></li>
+                                        {% else %}
+                                            {# show simple list applications/distributions button in phase 3, 6 and 7 #}
+                                            <li>
+                                                <a href="{% url 'support:SupportListApplicationsDistributions' %}">
+                                                    {% if phasenumber == 3 %}List Applications{% else %}List
+                                                        Distributions{% endif %}
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </li>
                             {% endif %}
                             {% if phasenumber > 4 %}
                                 <li>
@@ -156,17 +159,17 @@
                                     <li>
                                         <a href="#" class="dropdown-toggle">Osiris Data</a>
                                         <ul class="d-menu" data-role="dropdown">
-                                        <li><a href="{% url 'osirisdata:list' %}">All Data</a> </li>
-                                        <li><a href="{% url 'osirisdata:tometa' %}">Rewrite Meta</a> </li>
+                                            <li><a href="{% url 'osirisdata:list' %}">All Data</a></li>
+                                            <li><a href="{% url 'osirisdata:tometa' %}">Rewrite Meta</a></li>
                                         </ul>
                                     </li>
                                     <li><a href="{% url 'support:stats' %}">Stats</a></li>
                                     {% if phasenumber == 2 %}
                                         <li><a href="{% url 'support:mailtrackheads' %}">Mail Track Heads</a></li>
                                     {% endif %}
-{#                                    {% if phasenumber < 6 %}#}
-{#                                        <li><a href="{% url 'support:ectsform' %}">Students ECTS</a></li>#}
-{#                                    {% endif %}#}
+                                    {#                                    {% if phasenumber < 6 %}#}
+                                    {#                                        <li><a href="{% url 'support:ectsform' %}">Students ECTS</a></li>#}
+                                    {#                                    {% endif %}#}
                                     {% if phasenumber < 7 %}
                                         <li><a href="{% url 'support:contentpolicy' %}">Content Policy
                                             Violations</a></li>
@@ -195,13 +198,15 @@
                         {% isThereTimeslot as timeslotpresent %}
                         {% if phasenumber > 3 or phasenumber < 0 and timeslotpresent %}
                             <li><a href="{% url 'support:liststudents' %}"><span class="mif-users icon"></span>Students
-                                {% if phasenumber > 6 or phasenumber < 0 %} & Grades{% endif %}</a>
+                                {% if phasenumber >= 6 or phasenumber < 0 %} & Grades{% endif %}</a>
                             </li>
                         {% endif %}
                     {% elif user|has_group:"type4staff" %}
-                        <li><a href="{% url 'support:listgroupproposals' %}"><span class="mif-mail-read icon"></span>My group proposals</a></li>
+                        <li><a href="{% url 'support:listgroupproposals' %}"><span class="mif-mail-read icon"></span>My
+                            group proposals</a></li>
                     {% elif user|has_group:"type5staff" %}
-                        <li><a href="{% url 'support:listproposalsadvisor' %}"><span class="mif-mail-read icon"></span>All proposals</a></li>
+                        <li><a href="{% url 'support:listproposalsadvisor' %}"><span class="mif-mail-read icon"></span>All
+                            proposals</a></li>
                     {% else %} {# students and type 5/6 staff #}
                         <li><a href="{% url 'proposals:list' %}"><span class="mif-mail-read icon"></span>Proposals</a>
                         </li>
@@ -243,7 +248,7 @@
                     {% endif %}
                     {% if user.is_superuser %}
                         <li>
-                            <a href="" class="dropdown-toggle"><span class="mif-wrench mif-ani-spanner"></span>GodPowers</a>
+                            <a href="" class="dropdown-toggle"><span class="mif-wrench"></span>GodPowers</a>
                             <ul class="d-menu" data-role="dropdown">
                                 <li><a href="{% url 'index:feedbacklist' %}">Feedback Reports</a></li>
                                 <li>
@@ -406,17 +411,16 @@
 </div>
 {% block scripts %}
     <script src="{% static "js/jquery-3.2.1.min.js" %}"></script>
+    <script src="{% static "js/select2.min.js" %}"></script>
+    {# for top horizontal scroll bar #}
+    <script src="{% static "js/jquery.doubleScroll.min.js" %}"></script>
     {# datatables #}
     <script src="{% static "js/datatables.min.js" %}"></script>
-{#    <script src="{% static "js/dataTables.responsive.min.js" %}"></script>#}
-{#    <script src="{% static "js/dataTables.buttons.min.js" %}"></script>#}
-{#    <script src="{% static "js/buttons.html5.min.js" %}"></script>#}
-
-    <script src="{% static "js/MPDataTable.min.js" %}"></script>
+    {#    <script src="{% static "js/jquery.dataTables.yadcf.js" %}"></script>#}
+    <script src="{% static "js/jquery.dataTables.yadcf.min.js" %}"></script>
+    <script src="{% static "js/dt_wrapper.js" %}"></script>
     {# metro #}
     <script src="{% static "js/metro.min.js" %}"></script>
-    {# for top horizontal scroll bar #}
-    <script src="{% static "js/jquery.doubleScroll.js" %}"></script>
     {# custom #}
     <script src="{% static "js/custom.js" %}"></script>
 

@@ -21,7 +21,6 @@
                 "Your browser is outdated and may not be compatible with this website. Please update your browser or use another browser." +
                 "</div>"
         }
-
     };
     $(function(){
         $('#toggleSidebarButton')[0].addEventListener('click', function(){toggleSidebar()});

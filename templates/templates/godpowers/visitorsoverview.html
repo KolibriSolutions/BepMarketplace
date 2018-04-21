@@ -2,7 +2,7 @@
 
 {% block body %}
 <h1>Visitors Overview</h1>
-<table class="table striped hovered datatable">
+<table class="table striped hovered datatable" data-order='[[ 1, "desc" ]]'>
 <thead>
 <tr>
     <th>Proposal</th>
@@ -33,16 +33,7 @@
 
 <script>
     $(document).ready(function() {
-        var cols = [
-            null,
-            null,
-            null
-        ];
-        var dropdownColumns = [];
-        var options = {
-            "order": [[ 1, "desc" ]]
-        };
-        MPDataTable(cols, dropdownColumns, [], [], options);
+        $(".datatable").dt_wrapper();
     });
 
 </script>

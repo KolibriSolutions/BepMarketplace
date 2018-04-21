@@ -357,9 +357,11 @@ def listStudents(request):
         if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
             return render(request, "base.html", {'Message':
                                "When the phase 'Distribution of projects' is finished, you can view your students here."})
-
+    if get_timephase_number() == 0 or get_timephase_number() >= 6:
+        show_grades = True
+    else:
+        show_grades = False
     cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
-
     des = get_distributions(request.user)
     deslist = []
     # make grades
@@ -373,6 +375,7 @@ def listStudents(request):
         deslist.append([d, reslist])
     return render(request, "support/listDistributedStudents.html", {'des': deslist,
                                                                     'typ': cats,
+                                                                    'show_grades': show_grades,
                                                                     'hide_sidebar': True})
 
 
@@ -396,7 +399,6 @@ def listStudentsXls(request):
 
     typ = GradeCategory.objects.filter(TimeSlot=get_timeslot())
     des = get_distributions(request.user)
-
     file = general_excel.listStudentsXls(des, typ)
 
     response = HttpResponse(content=file)

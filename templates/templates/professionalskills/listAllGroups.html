@@ -11,7 +11,7 @@
     <th>Start</th>
     <th>Max Size</th>
     <th>Member Count</th>
-    <th>Actions</th>
+    <th data-searchable="false" data-sortable="false">Actions</th>
 </tr>
 </thead>
 <tbody>
@@ -35,15 +35,7 @@
     {{ block.super }}
     <script>
         $(document).ready(function () {
-            var cols = [
-                null,
-                null,
-                null,
-                null,
-                {"searchable" : false, "sortable" : false}
-            ];
-            var dropdownColumns = [];
-            MPDataTable(cols, dropdownColumns);
+            var dt = $('.datatable').dt_wrapper();
         });
 
     </script>

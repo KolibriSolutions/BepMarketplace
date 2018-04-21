@@ -16,12 +16,12 @@
                 <th>Email</th>
                 <th>Type<br/></th>
                 <th>Active<br/></th>
-                <th>Last login</th>
+                <th data-searchable="false">Last login</th>
                 <th>Timeslots</th>
-                <th>Edit</th>
+                <th data-searchable="false" data-sortable="false">Edit</th>
                 {% if user.is_superuser %}
-                    <th>Impersonate</th>
-                    <td>Telemetry</td>
+                    <th data-searchable="false" data-sortable="false">Impersonate</th>
+                    <td data-searchable="false" data-sortable="false">Telemetry</td>
                 {% endif %}
             </tr>
             </thead>
@@ -32,7 +32,6 @@
                     <td>{{ u.username }}</td>
                     <td><a href="mailto:{{ u.email }}">{{ u.email }}</a></td>
                     <td>
-                        {# in case a non-superuser has multiple groups, it is shown in the table but the dropdown filter fails to select it #}
                         {% if u.is_superuser %}
                             superuser
                         {% elif u.groups.exists %}
@@ -41,14 +40,14 @@
                             student (no groups)
                         {% endif %}
                     </td>
-                    <td data-sort="{{ u.last_login|yesno:"1,0" }}"><span
+                    <td data-sort="{{ u.last_login|yesno:"yes,no" }}" data-search="{{ u.last_login|yesno:"yes,no" }}"><span
                             class="mif-{{ u.last_login|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
-                    <td data-sort="{{ u.last_login|date:"U" }}">{{ u.last_login|date:'H:i d-m-Y' }}</td>
+                    <td data-sort="{{ u.last_login|date:"U" }}">{{ u.last_login }}</td>
                     <td>
                         <ul>
-                        {% for ts in u.usermeta.TimeSlot.all %}
-                            <li>{{ ts }}</li>
-                        {% endfor %}
+                            {% for ts in u.usermeta.TimeSlot.all %}
+                                <li>{{ ts }}</li>
+                            {% endfor %}
                         </ul>
                     </td>
                     {% if not u.is_superuser %}
@@ -73,7 +72,7 @@
                     {% endif %}
                     {% if user.is_superuser %}
                         <td><a href="{% url 'impersonate-start' u.id %}" class="button primary">Impersonate</a></td>
-                        <td><a href="{% url 'tracking:userdetail' u.id %}" class="button primary">Telemetry</a> </td>
+                        <td><a href="{% url 'tracking:userdetail' u.id %}" class="button primary">Telemetry</a></td>
                     {% endif %}
                 </tr>
             {% endfor %}
@@ -85,22 +84,36 @@
     {{ block.super }}
     <script>
         $(document).ready(function () {
-            var cols = [
-                null, //name
-                null, //uname
-                null, //mail
-                null, //type
-                null, //active
-                {"searchable": false},  //last login
-                null,  //timeslot
-                {"searchable": false},  //edit
-            {% if user.is_superuser %}
-                {"searchable": false}, //impersonate
-                {"searchable": false}, //telemetry
-            {% endif %}
-            ];
-            var dropdownColumns = [3];
-            MPDataTable(cols, dropdownColumns);
+            var dt = $('.datatable').dt_wrapper([
+                    {column_number: 0, filter_type: "text"},
+                    {column_number: 3, filter_type: "select"},
+                    {column_number: 4, filter_type: "select", html5_data: 'data-search'},
+                    {
+                        column_number: 6,
+                        filter_type: "select",
+                        column_data_type: 'html',
+                        html_data_type: 'selector',
+                        html_data_selector: 'li'
+                    }, //to parse ul-li, timeslots
+                ]
+            );
+
+            {#var cols = [#}
+            {#    null, //name#}
+            {#    null, //uname#}
+            {#    null, //mail#}
+            {#    null, //type#}
+            {#    null, //active#}
+            {#    {"searchable": false},  //last login#}
+            {#    null,  //timeslot#}
+            {#    {"searchable": false},  //edit#}
+            {#{% if user.is_superuser %}#}
+            {#    {"searchable": false}, //impersonate#}
+            {#    {"searchable": false}, //telemetry#}
+            {#{% endif %}#}
+            {#];#}
+            {#var dropdownColumns = [3];#}
+            {#MPDataTable(cols, dropdownColumns);#}
         });
 
     </script>

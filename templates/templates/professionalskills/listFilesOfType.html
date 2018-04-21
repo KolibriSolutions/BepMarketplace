@@ -2,20 +2,20 @@
 
 {% block body %}
     <h1>All files of type {{ type }}</h1>
-    <h3>Has deadline {{ type.Deadline|date:'D d b' }}</h3>
-    <table id="filetable" class="table bordered striped">
+    <h3>Has deadline {{ type.Deadline }}</h3>
+    <table class="table bordered striped datatable">
         <thead>
         <tr>
-            <th></th>
+            <th data-sortable="false" data-searchable="false"><span class="mif-attachment"></span></th>
             <th>Name</th>
-            <th>Caption</th>
+            <th data-sortable="false">Caption</th>
             <th>Created</th>
             <th>Updated</th>
             <th>Student</th>
             <th>Supervisors Email</th>
             <th>Supervisor Approval</th>
             <th>Approval Timestamp</th>
-            <th>Supervisor comments</th>
+            <th data-sortable="false">Supervisor comments</th>
         </tr>
         </thead>
         <tbody>
@@ -72,46 +72,7 @@
     {{ block.super }}
     <script>
         $(document).ready(function () {
-            var options = {
-                "pageLength": 100,
-                "order": [],
-                "columns": [
-                    null,  // icon
-                    null,  // name
-                    null,  // caption
-                    null,  // created
-                    null,  // updated
-                    null,  // student
-                    null,  // supervisor email
-                    null,  // supervisor approval
-                    null,  // approval timestamp
-                    null,  // approval comment
-                ],
-                initComplete: function () {
-                    this.api().columns([]).every(function () {
-                        var column = this;
-                        var select = $('<select><option value=""></option></select>')
-                            .appendTo($(column.header()))
-                            .on('change', function () {
-                                var val = $.fn.dataTable.util.escapeRegex(
-                                    $(this).val()
-                                );
-                                column
-                                    .search(val ? '^' + val + '$' : '', true, false)
-                                    .draw();
-                            });
-
-                        column.data().unique().sort().each(function (d, j) {
-                            select.append('<option value="' + d + '">' + d + '</option>')
-                        });
-                    });
-                }
-            };
-            $('#filetable').DataTable(options);
-            //for datatables, do not sort the table when clicking a select.
-            $("th>select").click(function () {
-                return false;
-            })
+            var dt = $('.datatable').dt_wrapper();
         });
     </script>
 {% endblock %}

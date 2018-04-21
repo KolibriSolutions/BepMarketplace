@@ -25,12 +25,10 @@ class TwoFactorLoginView(LoginView):
         """
         returnto = super().done(form_list, **kwargs)
         user = self.get_user()
-        if Group.objects.get(name="type3staff") not in user.groups.all():
-            # this won't happen as all but superusers will use saml login.
-            log = UserLogin()
-            log.Subject = user
-            log.Twofactor = True
-            log.save()
+        log = UserLogin()
+        log.Subject = user
+        log.Twofactor = True
+        log.save()
 
         return returnto
 

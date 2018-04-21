@@ -30,12 +30,15 @@
     <script src="{% static "js/jquery-ui.sortable.min.js" %}"></script>
     {% csrf_token %}
     <script>
+    var dt; // to store the datatable instance
+
         function csrfSafeMethod(method) {
             // these HTTP methods do not require CSRF protection
             return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
         }
+
         $.ajaxSetup({
-            beforeSend: function(xhr, settings) {
+            beforeSend: function (xhr, settings) {
                 if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
                     xhr.setRequestHeader("X-CSRFToken", csrftoken);
                 }
@@ -55,6 +58,7 @@
             jqthis.find(".studentApplicationPriority").show().text("-2");
             $.Notify(errorNotify)
         }
+
         function showNotify(data, icon) {
             $.Notify({
                 caption: data.type.charAt(0).toUpperCase() + data.type.slice(1),
@@ -62,7 +66,11 @@
                 icon: "<span class=\"" + (data.type === 'success' ? 'mif-' + icon : 'mif-warning') + "\"></span>",
                 type: data.type
             });
+            if(data.exception){
+                console.log(data.exception)
+            }
         }
+
         //check whether nr of students needed matches nrof studnets distributed
         function checkNoStudents(proposalNum, row) {
             var label = row.find(".NrOfStudents");
@@ -104,7 +112,7 @@
                         }, function (data) {
                             showNotify(data, 'link');
                             //update link icon and prio
-                            if (data.type == 'success') {
+                            if (data.type === 'success') {
                                 //remove from previous prop link icon
                                 var rowFrom = $(ui.sender).parent().parent();
                                 var rowTo = jqthis.parent().parent();
@@ -129,7 +137,7 @@
                             .fail(function () {
                                 studentError(jqthis);
                             });
-                    } else if (to == "availableStudents") {
+                    } else if (to === "availableStudents") {
                         //undistribute
                         $.post("{% url 'distributions:undistribute' %}", {
                             student: student,
@@ -137,7 +145,7 @@
                         }, function (data) {
                             showNotify(data, 'unlink');
                             //update link icon and prio
-                            if (data.type == 'success') {
+                            if (data.type === 'success') {
                                 //remove from previous prop link icon
                                 var rowFrom = $(ui.sender).parent().parent();
                                 dt.rows(rowFrom).invalidate();
@@ -158,10 +166,13 @@
                     if (to === "distributedStudents") {
                         var propTo = $(this).data('proposal');
                         //distribute
-                        $.post("{% url 'distributions:distribute' %}", {student: student, propTo: propTo}, function (data) {
+                        $.post("{% url 'distributions:distribute' %}", {
+                            student: student,
+                            propTo: propTo
+                        }, function (data) {
                             showNotify(data, 'link');
                             //update link icon and prio
-                            if (data.type == 'success') {
+                            if (data.type === 'success') {
                                 var rowTo = jqthis.parent().parent();
                                 //update datatable cache
                                 dt.rows(rowTo).invalidate();
@@ -182,7 +193,7 @@
                             .fail(function () {
                                 studentError(jqthis);
                             });
-                    } else if (to == "availableStudents") {
+                    } else if (to === "availableStudents") {
                         //nothing done
                         alert("Noting done")
                     } else {
@@ -198,30 +209,41 @@
 
         //live search for proposals, using datatables jquery.
         $(document).ready(function () {
+             dt = $('.datatable').dt_wrapper([
+                    {column_number: 0, filter_type: "text"},        //name
+                    {column_number: 1, filter_type: "select"},      //track
+                    {column_number: 2, filter_type: "select"},      //group
+                    {column_number: 3, filter_type: "select", column_data_type: 'html'},  //responsible
+                    {% if phasenumber < 6 %}
+                        {#{column_number: 4, filter_type: "number", html5_data: 'data-search'},  maybe range input later on.#}
+                        {
+                            column_number: 5,
+                            filter_type: "select",
+                            column_data_type: 'html',
+                            html_data_type: 'selector',
+                            html_data_selector: 'span.studentName'
+                        }, //to parse ul-li, interested students.
+                    {% else %}
+                        {
+                            column_number: 4,
+                            filter_type: "select",
+                            column_data_type: 'html',
+                            html_data_type: 'selector',
+                            html_data_selector: 'li'
+                        }, //to parse ul-li, assistants
+                    {% endif %}
+                ]
+            );
 
-            var cols = [
-                null, //name
-                null, //trac
-                null, //group
-                null, //responsible
-                {% if phasenumber < 6 %}
-                {"searchable": false}, //nrof students
-                {% endif %}
-                null, //interested (ph<6) or assistant (phase 6)
-                null //chosen
-            ];
-            var dropdownColumns = [1, 2, 3];
-            MPDataTable(cols, dropdownColumns);
-
-            //hide application prio on undistributed students
-            $("li#availableStudents").each(function () {
+             //hide application prio on undistributed students
+            $("ul#availableStudents").each(function () {
                 $(this).find(".studentApplicationPriority").hide()
             });
 
 
             $('#student-search-box').on('change input', function () {
                 var searchTerm = $(this).val().toLowerCase();
-                $('li#availableStudents').each(function () {
+                $('ul#availableStudents li').each(function () {
                     if ($(this).filter('[data-search-term *= ' + searchTerm + ']').length > 0 || searchTerm.length < 1) {
                         $(this).show();
                     } else {
@@ -235,14 +257,14 @@
              $(this).attr('data-search-term', $(this).text().toLowerCase());
              });*/
 
-
+            //search if student is clicked
+            $(".application-student-click, .private-student-click, .distributed-student-click").click(function (data) {
+                var std = $(this).data("student");
+                //dt is the global variable holding the datatable
+                dt.search(std).draw()
+            })
         });
-        //search if student is clicked
-        $(".application-student-click, .private-student-click, .distributed-student-click").click(function (data) {
-            var std = $(this).data("student");
-            //dt is the global variable holding the datatable
-            dt.search(std).draw()
-        })
+
     </script>
 {% endblock %}
 

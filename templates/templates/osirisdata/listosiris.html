@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<h1>All Osiris Data</h1>
+    <h1>All Osiris Data</h1>
     <table class="table bordered striped hovered datatable">
         <thead>
         <tr>
@@ -14,19 +14,20 @@
             <th>Automotive</th>
         </tr>
         </thead>
-    <tbody>
+        <tbody>
         {% for person in persons %}
             <tr>
                 <td>{{ person.email }}</td>
                 <td>{{ person.idnumber }}</td>
                 <td><span class="mif-{{ person.enrolled|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
-                <td><span class="mif-{{ person.enrolledextension|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+                <td><span class="mif-{{ person.enrolledextension|yesno:"checkmark fg-green,cross fg-red" }}"></span>
+                </td>
                 <td>{{ person.cohort }}</td>
                 <td>{{ person.ects }}</td>
                 <td><span class="mif-{{ person.automotive|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
             </tr>
         {% endfor %}
-    </tbody>
+        </tbody>
     </table>
 {% endblock %}
 
@@ -34,17 +35,10 @@
     {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
-            var cols = [
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-            ];
-            var dropdownColumns = [3,4];
-            MPDataTable(cols, dropdownColumns);
+            $('.datatable').dt_wrapper([
+                {column_number: 3, filter_type: "select"},
+                {column_number: 4, filter_type: "select"},
+            ]);
         });
     </script>
 {% endblock %}

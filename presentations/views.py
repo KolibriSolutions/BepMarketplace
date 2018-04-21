@@ -258,7 +258,8 @@ def presentationsCalendar(request, own=False):
     if own:
         sets = sets.filter(Q(timeslots__Distribution__Proposal__ResponsibleStaff=request.user) |
                            Q(timeslots__Distribution__Proposal__Assistants=request.user) |
-                           Q(Assessors=request.user)).distinct()
+                           Q(Assessors=request.user) |
+                           Q(timeslots__Distribution__Student=request.user)).distinct()
 
     if not sets:
         if own:

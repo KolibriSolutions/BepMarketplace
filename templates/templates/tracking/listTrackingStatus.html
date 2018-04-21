@@ -55,19 +55,7 @@
     {{ block.super }}
     <script>
         $(document).ready(function () {
-            var cols= [
-                    null, //time
-                    null, //proposal
-                    null, //user
-                    null, //from
-                    null, //to
-                    null,  //message
-                ];
-                var dropdownColumns = [2, 3, 4];
-                var options = {
-                "order": [[ 0, "desc" ]]
-                };
-                MPDataTable(cols, dropdownColumns, [], [],options);
+            var dt = $('.datatable').dt_wrapper()
         });
     </script>
 {% endblock %}

@@ -8,12 +8,12 @@
         <thead>
         <tr>
             <th>Name</th>
-            <th>Type<br/></th>
-            <th>Proposals<br/></th>
-            <th>Proposals total<br/></th>
-            <th>Students<br/></th>
-            <th>Students total<br/></th>
-            <th>show<br/></th>
+            <th>Type</th>
+            <th data-searchable="false" data-sortable="false">Proposals</th>
+            <th data-searchable="false">Proposals total</th>
+            <th data-searchable="false" data-sortable="false">Students</th>
+            <th data-searchable="false">Students total</th>
+            <th data-searchable="false" data-sortable="false">Show</th>
         </tr>
         </thead>
         <tbody>
@@ -56,17 +56,29 @@
     {{ block.super }}
     <script>
         $(document).ready(function () {
-            var cols = [
-                null, //name
-                null, //type
-                {"searchable": false, "sortable": false}, //proposals both
-                null, //proposals
-                {"searchable": false, "sortable": false},  //distribution both
-                null, //distribution
-                {"searchable": false, "sortable": false} //button
-            ];
-            var dropdownColumns = [1];
-            MPDataTable(cols, dropdownColumns);
+            var dt = $('.datatable').dt_wrapper([
+                    {column_number: 0, filter_type: "text"},
+                    {column_number: 1, filter_type: "select"},
+                    {
+                        column_number: 6,
+                        filter_type: "select",
+                        column_data_type: 'html',
+                        html_data_type: 'selector',
+                        html_data_selector: 'li'
+                    }, //to parse ul-li, timeslots
+                ]
+            );
+            {#var cols = [#}
+            {#    null, //name#}
+            {#    null, //type#}
+            {#    {"searchable": false, "sortable": false}, //proposals both#}
+            {#    null, //proposals#}
+            {#    {"searchable": false, "sortable": false},  //distribution both#}
+            {#    null, //distribution#}
+            {#    {"searchable": false, "sortable": false} //button#}
+            {#];#}
+            {#var dropdownColumns = [1];#}
+            {#MPDataTable(cols, dropdownColumns);#}
         })
     </script>
 {% endblock %}

@@ -34,14 +34,7 @@
     <script type="text/javascript">
         //live search for proposals, using datatables jquery.
         $(document).ready(function () {
-            var cols = [
-                null, //Type<br /></th>
-                null, //Student<br /></th>
-                null, //Project<br /></th>
-                null, //Responsible<br /></t
-            ];
-            var dropdownColumns = [];
-            MPDataTable(cols, dropdownColumns);
+           var dt = $('.datatable').dt_wrapper();
         });
     </script>
 {% endblock %}

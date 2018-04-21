@@ -131,6 +131,21 @@ th {
     overflow-x: auto; /* for horizontal scrolling if too wide table*/
     min-width: 100%; /* for auto-resize when screen resize or sidebar hide*/
 }
+/*set the sort arrow on the top of the header row, so it does not interfere with the select boxes.*/
+.dataTable .sorting.sort-asc::after,
+.dataTable .sorting.sort-desc::after,
+.dataTable .sorting_asc::after,
+.dataTable .sorting_desc::after{
+    position:absolute;
+    top: 0;
+    margin-top:0.25em;
+}
+/*Set a larger margin on yadcf text-boxes to look like metro-ui-css*/
+input[type=text].yadcf-filter {
+    margin: 0.325rem 0;
+    min-height: 2.125rem;
+    height: 2.125rem;
+}
 
 /*lineheight of metroui sucks, */
 p {

@@ -7,63 +7,68 @@
         {% endautoescape %}
     {% else %}
         <h1>{% if usrsubject %}Visited by {{ usrsubject.get_full_name }}{% else %}Published proposals{% endif %}</h1>
-        <table class="table datatable striped hovered">
-            <thead>
-            <tr>
-                <th data-priority="1">Name<br/></th>
-                <th>Track<br/></th>
-                <th>Research group<br/></th>
-                <th>Responsible staff<br/></th>
-                <th>Assistants<br/></th>
-                <th>ECTS<br/></th>
-                <th>URL<br/></th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for proposal in proposals %}
-                <tr data-prop="{{ proposal.pk }}">
-                    <td><a href="{% url 'proposals:details' proposal.id %}" class="capitalize">{{ proposal.Title }}</a>
-                    </td>
-                    <td>{{ proposal.Track }}</td>
-                    <td>{{ proposal.Group }}</td>
-                    <td>
-                        <a href="mailto:{{ proposal.ResponsibleStaff.email }}">
-                            {{ proposal.ResponsibleStaff.get_full_name }}
-                        </a>
-                    </td>
-                    <td>
-                        <ul class="no-margin">
-                            {% for a in proposal.Assistants.all %}
-                                <li><a href="mailto:{{ a.email }}">{{ a.get_full_name }}</a></li>
-                            {% endfor %}
-                        </ul>
-                    </td>
-                    <td>{{ proposal.ECTS }}</td>
-                    <td>{% url 'proposals:details' proposal.id %}</td>
+        <div class="double-scroll">
+
+            <table class="table datatable striped hovered">
+                <thead>
+                <tr>
+                    <th data-priority="1">Name</th>
+                    <th>Track</th>
+                    <th>Research group</th>
+                    <th>Responsible staff</th>
+                    <th>Assistants</th>
+                    <th>ECTS</th>
+                    <th data-visible='false'>URL</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for proposal in proposals %}
+                    <tr data-prop="{{ proposal.pk }}">
+                        <td><a href="{% url 'proposals:details' proposal.id %}"
+                               class="capitalize">{{ proposal.Title }}</a>
+                        </td>
+                        <td>{{ proposal.Track }}</td>
+                        <td>{{ proposal.Group }}</td>
+                        <td>
+                            <a href="mailto:{{ proposal.ResponsibleStaff.email }}">
+                                {{ proposal.ResponsibleStaff.get_full_name }}
+                            </a>
+                        </td>
+                        <td>
+                            <ul class="no-margin">
+                                {% for a in proposal.Assistants.all %}
+                                    <li><a href="mailto:{{ a.email }}">{{ a.get_full_name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>{{ proposal.ECTS }}</td>
+                        <td>{{ domain }}{% url 'proposals:details' proposal.id %}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 {% endblock %}
 {% block scripts %}
     {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
-            var cols = [
-                null, //name
-                null, //track
-                null, //group
-                null, //responsible
-                null, //assistants
-                null,  //ECTS
-                {
-                    visible: false,      // URL: hide this column. It is only used for CSV/copy export functions
-                    prependDomain: true, // custom setting: prepend the domain to make the url a full link
-                }
-            ];
-            var dropdownColumns = [1, 2, 5];
-            MPDataTable(cols, dropdownColumns);
+            $('.datatable').dt_wrapper([
+                    {column_number: 0, filter_type: "text"},
+                    {column_number: 1, filter_type: "select"},
+                    {column_number: 2, filter_type: "select"},
+                    {column_number: 3, filter_type: "select", column_data_type: 'html'},  // to parse mailto links
+                    {
+                        column_number: 4,
+                        filter_type: "select",
+                        column_data_type: 'html',
+                        html_data_type: 'selector',
+                        html_data_selector: 'li'
+                    }, //to parse ul-li
+                    {column_number: 5, filter_type: "select"}
+                ]
+            );
         });
 
 

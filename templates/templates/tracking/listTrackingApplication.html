@@ -27,17 +27,7 @@
     {{ block.super }}
     <script>
         $(document).ready(function () {
-            var cols= [
-                    null, //time
-                    null, //type
-                    null, //student
-                    null, //proposal
-                ];
-                var dropdownColumns = [1];
-                var options = {
-                "order": [[ 0, "desc" ]]
-                };
-                MPDataTable(cols, dropdownColumns, [], [],options);
+            var dt = $('.datatable').dt_wrapper();
         });
     </script>
 {% endblock %}

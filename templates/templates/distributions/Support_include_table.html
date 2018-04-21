@@ -1,17 +1,17 @@
 <table class="table bordered datatable" id="proposalTable">
     <thead>
     <tr>
-        <th data-priority="1">Title<br/></th>
-        <th>Track<br/></th>
-        <th>Research group<br/></th>
-        <th data-priority="3">Reponsible Teacher<br/></th>
+        <th data-priority="1">Title</th>
+        <th>Track</th>
+        <th>Research group</th>
+        <th data-priority="3">Reponsible staff</th>
         {% if phasenumber < 6 %}
-            <th>Nr of std.<br/></th>
-            <th>Interested students<br/></th>
+            <th data-searchable="false">Nr of std.</th>
+            <th>Interested students</th>
         {% else %}
             <th>Assistants</th>
         {% endif %}
-        <th data-priority="2">Chosen student<br/></th>
+        <th data-priority="2">Chosen student</th>
     </tr>
     </thead>
     <tbody>
@@ -20,10 +20,11 @@
             <td><a href="{% url 'proposals:details' proposal.id %}">{{ proposal.Title }}</a></td>
             <td>{{ proposal.Track }}</td>
             <td>{{ proposal.Group }}</td>
-            <td><a href="mailto:{{ proposal.ResponsibleStaff.email }}">{{ proposal.ResponsibleStaff.get_full_name }}</a>
+            <td>
+                <a href="mailto:{{ proposal.ResponsibleStaff.email }}">{{ proposal.ResponsibleStaff.get_full_name }}</a>
             </td>
             {% if phasenumber < 6 %}
-                <td>
+                <td data-sort="{{ proposal.NumstudentsMin }}">
                                     <span class="NrOfStudents" data-min="{{ proposal.NumstudentsMin }}"
                                           data-max="{{ proposal.NumstudentsMax }}">
                                         {# icon #}
@@ -44,7 +45,7 @@
                                         {% endif %}
                                     </span>
                 </td>
-                <td>
+                <td>{# interested students #}
                     <ul class="no-margin">
                         {% for application in proposal.applications.all|dictsort:"Priority" %}
                             <li class="application-student-click clickable"
@@ -57,15 +58,16 @@
                                 {% if "automotive" in application.Student.usermeta.Study|lower %}
                                     <span class="icon mif-automobile"></span>
                                 {% endif %}
-                                {{ application.Student.usermeta.Fullname }}
+                                <span class="studentName">{{ application.Student.usermeta.Fullname }}</span>
                             </li>
                         {% endfor %}
                         {% for privstd in proposal.Private.all %}
-                            <li class="private-student-click clickable" data-student="{{ privstd.usermeta.Fullname }}">
+                            <li class="private-student-click clickable"
+                                data-student="{{ privstd.usermeta.Fullname }}">
                                 <span class="{% if privstd.distributions in proposal.distributions.all %} icon mif-link {% endif %} applicationChosenLinkIcon"
                                       data-student="{{ privstd.pk }}"></span>
                                 <span class="tag info">Private</span>
-                                {{ privstd.usermeta.Fullname }}
+                                <span class="studentName">{{ privstd.usermeta.Fullname }}</span>
                             </li>
                         {% endfor %}
                     </ul>
@@ -103,7 +105,7 @@
                                     {% if "automotive" in student.usermeta.Study|lower %}
                                         <span class="icon mif-automobile"></span>
                                     {% endif %}
-                                    {{ student.usermeta.Fullname }}
+                                    <span class="studentName">{{ student.usermeta.Fullname }}</span>
                                 </li>
                             {% endwith %}
                         {% endfor %}

@@ -3,7 +3,7 @@
 {% block body %}
     <h1>Students with no submission for files of type {{ type }}</h1>
     <h3>Has deadline {{ type.Deadline|date:'D d b' }}</h3>
-    <table id="filetable" class="table bordered striped">
+    <table id="filetable" class="table bordered striped datatable">
         <thead>
         <tr>
             <th>Student</th>
@@ -19,4 +19,12 @@
         {% endfor %}
         </tbody>
     </table>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+           var dt = $('.datatable').dt_wrapper();
+        });
+    </script>
 {% endblock %}

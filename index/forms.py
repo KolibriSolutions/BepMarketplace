@@ -12,7 +12,7 @@ mailPattern = re.compile(settings.EMAILREGEXCHECK)
 class FeedbackForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['Url'].disabled = True
+        self.fields['Url'].widget.attrs['readonly'] = True
 
     class Meta:
         model = FeedbackReport

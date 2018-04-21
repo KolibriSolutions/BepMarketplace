@@ -9,22 +9,24 @@ from professionalskills.models import StudentFile
 from templates import widgets
 
 
-def clean_file_default(self):
+def clean_file_default(self, required=True):
     """
     A check for an uploaded file. Checks filesize.
 
     :param self:
+    :param required: Whether it is required to have a file.
     :return:
     """
     file = self.cleaned_data.get("File")
-    if not file:
+    if file:
+        s = file.size
+        if s > settings.MAX_UPLOAD_SIZE:
+            raise ValidationError(
+                "The file is too large, it has to be at most " + str(
+                    round(settings.MAX_UPLOAD_SIZE / 1024 / 1024)) + "MB and is " + str(
+                    round(s / 1024 / 1024)) + "MB.")
+    elif required:
         raise ValidationError("No file supplied!")
-    s = file.size
-    if s > settings.MAX_UPLOAD_SIZE:
-        raise ValidationError(
-            "The file is too large, it has to be at most " + str(
-                round(settings.MAX_UPLOAD_SIZE / 1024 / 1024)) + "MB and is " + str(
-                round(s / 1024 / 1024)) + "MB.")
     return file
 
 

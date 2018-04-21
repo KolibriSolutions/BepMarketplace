@@ -3,11 +3,14 @@ import zipfile
 from datetime import datetime
 from io import BytesIO
 
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template.loader import get_template
+from django.utils.html import format_html
+from django.utils.timezone import localtime
 from xhtml2pdf import pisa
 
 from BepMarketplace.decorators import can_access_professionalskills, group_required, student_only, phase_required
@@ -18,8 +21,6 @@ from students.models import Distribution
 from timeline.utils import get_timeslot
 from .forms import FileTypeModelForm, ConfirmForm, StaffReponseForm, StudentGroupForm, StudentGroupChoice
 from .models import FileType, StaffReponse, StudentFile, StudentGroup
-from django.utils.html import format_html
-from django.contrib.auth.decorators import login_required
 
 
 @group_required('type3staff', 'type6staff')
@@ -457,7 +458,7 @@ def listGroupMembers(request, pk):
     return render(request, 'GenericList.html', {
         'items' : [mem.get_full_name() for mem in group.Members.all()],
         'header' : format_html('<h1>Members of group {}</h1><h2>{}</h2><h3>Starts {}</h3><br/>Capacity: {}/{}'
-                               .format(group.Number, group.PRV, group.Start.strftime("%a %d %b at %H:%M"), group.Members.count(), group.Max)),
+                               .format(group.Number, group.PRV, localtime(group.Start).strftime("%a %d %b at %H:%M"), group.Members.count(), group.Max)),
     })
 
 @group_required('type3staff', 'type6staff')

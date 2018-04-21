@@ -17,6 +17,8 @@ migrations/
 templates/static/admin/*
 templates/static/channels/*
 BepMarketplace/secret.py
+BepMarketplace/config/secret.py
 telemetry_cli/telemetry_key.py
 *.lock
 *.csv
+/node_modules/

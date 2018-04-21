@@ -21,17 +21,10 @@
 {% block scripts %}
     {{ block.super }}
     <script type="text/javascript">
-        //live search for proposals, using datatables jquery.
         $(document).ready(function () {
-            var cols = [
-                null, //user
-                null, //time
-            ];
-            var options = {
-                "order": [[ 1, "desc" ]]
-            };
-            var dropdownColumns = [0];
-            MPDataTable(cols, dropdownColumns, [], [], options);
+            var dt = $('.datatable').dt_wrapper([
+                {column_number: 0, filter_type: "select"},
+            ])
         });
     </script>
 {% endblock %}

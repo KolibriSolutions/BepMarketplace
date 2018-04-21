@@ -1,14 +1,15 @@
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch.dispatcher import receiver
-from django.core.validators import MinValueValidator
-from django.core.exceptions import ValidationError
+from django.utils.timezone import localtime
 
+from general_model import clean_text, get_ext
 from general_model import file_delete_default, metro_icon_default, filename_default, print_list
 from students.models import Distribution
 from timeline.models import TimeSlot
-from general_model import clean_text, get_ext
 
 
 class FileExtension(models.Model):
@@ -96,7 +97,7 @@ class StudentGroup(models.Model):
     Max = models.IntegerField(validators=[MinValueValidator(0)])
 
     def __str__(self):
-        return 'Group {} at {}'.format(self.Number, self.Start.strftime("%a %d %b %H:%M"))
+        return 'Group {} sat {}'.format(self.Number, localtime(self.Start).strftime("%a %d %b %H:%M"))
 
     def clean(self):
         try:
