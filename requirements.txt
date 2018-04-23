@@ -1,13 +1,14 @@
 asgi_redis
 bleach
-channels<2
-daphne
-django<=1.11
+channels>=2
+daphne>=2
+django>=2
 django-csp
 django-htmlmin
 django-impersonate
 django-ipware
 django-redis
+channels_redis
 django-render-block
 django-sendfile
 django-two-factor-auth

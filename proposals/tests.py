@@ -267,3 +267,4 @@ class ProposalViewsTest(ProposalViewsTest):
         view = "proposals:details"
 
         ViewsTest.links_in_view_test(s, reverse(view, kwargs={"pk": s.proposal.id}))
+

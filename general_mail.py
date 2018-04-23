@@ -6,7 +6,8 @@ import threading
 from math import floor
 from time import sleep
 
-import channels
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives
@@ -149,6 +150,7 @@ class EmailThreadMultipleTemplate(threading.Thread):
     def __init__(self, mails):
         self.mails = mails
         super().__init__()
+        self.channel_layer = get_channel_layer()
 
     def run(self):
         """
@@ -162,7 +164,8 @@ class EmailThreadMultipleTemplate(threading.Thread):
                 'email' : mail['email'],
                 'progress' : floor(((i+1)/len(self.mails))*100),
             }
-            channels.Group('emailprogress').send({'text':json.dumps(package)})
+            # channels.Group('emailprogress').send({'text':json.dumps(package)})
+            async_to_sync(self.channel_layer.group_send)('emailprogress', {"type": 'update', 'text': json.dumps(package)})
             send_mail(mail['subject'], mail['template'], mail['context'],
                       mail['email'], html_email_template_name=mail['template'])
 
@@ -177,6 +180,7 @@ class EmailThread(threading.Thread):
         self.context = context
         self.emails = emails
         super().__init__()
+        self.channel_layer = get_channel_layer()
 
     def run(self):
         """
@@ -190,7 +194,8 @@ class EmailThread(threading.Thread):
                 'email' : email,
                 'progress' : floor(((i+1)/len(self.emails))*100),
             }
-            channels.Group('emailprogress').send({'text':json.dumps(package)})
+            # channels.Group('emailprogress').send({'text':json.dumps(package)})
+            async_to_sync(self.channel_layer.group_send)('emailprogress', {"type": 'update', 'text': json.dumps(package)})
             send_mail(self.subject, self.message, self.context,
                       email, html_email_template_name=self.message)
 
@@ -211,7 +216,7 @@ def MailTrackHeadsPending(stdout=False):
             if proposals.count() > 0:
                 e = track.Head.email
                 context = {
-                    'domain': "marketplace.ieeesb.nl",
+                    'domain': settings.DOMAIN,
                     'proposals': proposals,
                     'Track': track,
                 }

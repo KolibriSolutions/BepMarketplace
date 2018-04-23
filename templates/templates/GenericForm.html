@@ -79,7 +79,7 @@
             {% if buttontext %}{{ buttontext }}{% else %}Go{% endif %}
         </button>
         {# On a proposal attachement/images edit form, show the buttons to add a image/attachement #}
-        {% if  Proposal %}
+        {% if Proposal %}
             <a href="{% url "proposals:addfile" 'i' Proposal %}" class="button primary"><span
                     class="mif-image"></span>Add image to proposal</a>
             <a href="{% url "proposals:addfile" 'a' Proposal %}" class="button primary"><span
@@ -94,7 +94,7 @@
     {{ block.super }}
     <script src="{% static "js/php-date-formatter.min.js" %}"></script>
     <script src="{% static "js/jquery.datetimepicker.full.min.js" %}"></script>
-{#    <script src="{% static "js/select2.min.js" %}"></script> Included in base.html #}
+    {#    <script src="{% static "js/select2.min.js" %}"></script> Included in base.html #}
     <script src="{% static "js/lightbox.js" %}"></script> {# for image form image preview #}
     <script>
         $(function () {
@@ -111,19 +111,19 @@
             $('.metrodatetimepicker').datetimepicker({
                 format: 'Y-m-d H:i',
                 step: 5,
-            {% if not skip_date_validate %}
-                minDate: '-1970-01-02', // yesterday
-                maxDate: '{% GetEndDate %}'//last date in this timeslot
-            {% endif %}
+                {% if not skip_date_validate %}
+                    minDate: '-1970-01-02', // yesterday
+                    maxDate: '{% GetEndDate %}'//last date in this timeslot
+                {% endif %}
 
             });
             $('.metrodatepicker').datetimepicker({
                 timepicker: false,
                 format: 'Y-m-d',
-            {% if not skip_date_validate %}
-                minDate: '-1970-01-02', // yesterday
-                maxDate: '{% GetEndDate %}' //last date in this timeslot
-            {% endif %}
+                {% if not skip_date_validate %}
+                    minDate: '-1970-01-02', // yesterday
+                    maxDate: '{% GetEndDate %}' //last date in this timeslot
+                {% endif %}
             });
         });
     </script>

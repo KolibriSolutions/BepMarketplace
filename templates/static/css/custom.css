@@ -101,6 +101,10 @@ th > select {
 th {
     text-align: left;
 }
+/*Normal margin on lists in table cells */
+table.datatable ul{
+    padding-left:0;
+}
 
 /* Validation error input fields are given an div with 'input-error-wrapper'. The input in this div gets a red border.
  Normally this would be done by setting the 'error' class on div.input-control, but widgets are static.

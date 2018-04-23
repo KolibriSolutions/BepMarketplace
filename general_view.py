@@ -2,6 +2,8 @@
 General functions that are mostly used in views (views.py).
 """
 
+from datetime import datetime
+
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.contrib.sessions.models import Session
@@ -20,7 +22,8 @@ def get_all_students(undistributed=False):
     :return: user objects
     """
 
-    users = User.objects.filter(Q(usermeta__EnrolledBEP=True) & Q(groups=None) & Q(usermeta__TimeSlot=get_timeslot())).distinct()
+    users = User.objects.filter(
+        Q(usermeta__EnrolledBEP=True) & Q(groups=None) & Q(usermeta__TimeSlot=get_timeslot())).distinct()
     if get_timephase_number() < 6 or undistributed:
         return users
     else:
@@ -48,12 +51,12 @@ def get_grouptype(shortname):
     else:
         fullname = "type" + shortname + "staff"
 
-    gt = cache.get("gt"+shortname)
+    gt = cache.get("gt" + shortname)
     if gt:
         return gt
     else:
         gt = Group.objects.get(name=fullname)
-        cache.set("gt"+shortname, gt, settings.STATIC_OBJECT_CACHE_DURATION)
+        cache.set("gt" + shortname, gt, settings.STATIC_OBJECT_CACHE_DURATION)
         return gt
 
 
@@ -66,3 +69,11 @@ def get_sessions(user):
 
     return sessions
 
+
+def timestamp():
+    """
+    Timestamp for a xls export
+
+    :return:
+    """
+    return "{:%Y-%m-%d %H:%M:%S}".format(datetime.now())

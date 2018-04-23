@@ -135,7 +135,7 @@ def logout(request):
     :param request:
     :return:
     """
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         return HttpResponseRedirect('/')
     auth_logout(request)
     return render(request, "base.html", {"Message":"You are now logged out. "

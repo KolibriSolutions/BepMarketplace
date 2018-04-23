@@ -4,15 +4,17 @@
     <table class="table bordered striped hovered datatable">
         <thead>
         <tr>
-            <th>User<br/></th>
-            <th>Timestamp<br/></th>
+            <th>User</th>
+            <th data-searchable="false">Timestamp</th>
+            <th data-searchable="false" data-orderable="false">Telemtry</th>
         </tr>
         </thead>
         <tbody>
         {% for log in userlogs %}
             <tr>
                 <td><a href="mailto:{{ log.Subject.email }}">{{ log.Subject.get_full_name }}</a></td>
-                <td data-sort="{{ log.Timestamp|date:"U" }}">{{ log.Timestamp|date:'H:i d-m-Y' }}</td>
+                <td data-sort="{{ log.Timestamp|date:"U" }}">{{ log.Timestamp }}</td>
+                <td><a href="{% url 'tracking:userdetail' log.Subject.id %}" class="button primary">Telemetry</a></td>
             </tr>
         {% endfor %}
         </tbody>
@@ -22,9 +24,9 @@
     {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
-            var dt = $('.datatable').dt_wrapper([
-                {column_number: 0, filter_type: "select"},
-            ])
+            $('.datatable').dt_wrapper([
+                {column_number: 0, filter_type: "select", column_data_type: "html"},
+            ]);
         });
     </script>
 {% endblock %}

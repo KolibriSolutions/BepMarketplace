@@ -26,13 +26,13 @@ CACHES = {
 }
 
 # channels, a new and better way to run Django including websockets.
+ASGI_APPLICATION = 'BepMarketplace.routing.application'
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'asgi_redis.RedisChannelLayer',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': ['redis://127.0.0.1:6379/2'],
+            "hosts": [('127.0.0.1', 6379)],
         },
-        'ROUTING': SETTINGS_DIR + '.routing.channel_routing',
     },
 }
 

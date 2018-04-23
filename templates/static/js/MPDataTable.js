@@ -1,9 +1,10 @@
 /**
  * Created by Jeroen 2016-2018, Marketplaces ELE. Kolibri Solutions
- * General init script for all datatables, including copy and csv export.
+ * General init wrapper script for all datatables, including copy and csv export.
  * make sure your table has the class ".datatable"
  */
 
+//global options, so this only works when only one .datatable on the page.
 var options;    // datatable options. global to preserve on re-init (for responsive change).
 var dt;         // used to dynamic update the datatable from local code.
 
@@ -11,7 +12,7 @@ var dt;         // used to dynamic update the datatable from local code.
  * Function to transform all tables with class '.datatable' to a DataTable.
  * Features on top of default DataTables:
  * - Store/recall sorting/filtering settings in URL to share/bookmark a sorted table
- * - Dropdown selects in the table header, for any column supplied in dropdownColumns
+ * - Dropdown selects in the table header, for any column supplied in dropdownColumns. (Append a <br /> after the header text)
  * - CSV/Copy buttons with datatables.buttons. Customize columns to export using exportColumns
  * - Export valid URLs to CSV/Copy by prepending the domain before exporting
  * - Add extra buttons with 'extraButtons'
@@ -174,7 +175,7 @@ var MPDataTable = function (cols, dropdownColumns, exportColumns, extraButtons, 
     for (i = 0; i < options.columns.length; i++) {
         options["searchCols"].push(null);
     }
-    //GET strings.
+    //GET strings, stored in URL.
     var vars = window.location.search.substring(1).split("&");
     var k, v, a;
     for (i = 0; i < vars.length; i++) {

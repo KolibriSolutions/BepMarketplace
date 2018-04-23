@@ -1,14 +1,11 @@
 from django.conf import settings
 
-# def contactemail(request):
-#     return {
-#         'CONTACT_EMAIL' : settings.CONTACT_EMAIL
-#     }
-#
-# def domain(request):
-#     return {
-#         'DOMAIN' : settings.DOMAIN
-#     }
+def general(request):
+    return {
+        'DOMAIN' : settings.DOMAIN,
+        'CONTACT_EMAIL': settings.CONTACT_EMAIL,
+        'NAME': settings.NAME_PRETTY,
+    }
 
 def debugsetting(request):
     """

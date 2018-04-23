@@ -28,7 +28,7 @@
         {% for track in trackings %}
             <tr>
                 <td data-sort="{{ track.Timestamp|date:"U" }}">
-                    {{ track.Timestamp|date:"d-m-Y H:i:s" }}
+                    {{ track.Timestamp }}
                 </td>
                 <td>
                     <a class="capitalize"

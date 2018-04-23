@@ -14,11 +14,14 @@ CACHES = {
 }
 
 # channels
+ASGI_APPLICATION = 'BepMarketplace.routing.application'
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'asgiref.inmemory.ChannelLayer',
-        'ROUTING': SETTINGS_DIR + '.routing.channel_routing',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
     },
 }
 
-HTML_MINIFY = True
+HTML_MINIFY = False

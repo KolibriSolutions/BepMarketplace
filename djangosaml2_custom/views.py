@@ -243,12 +243,7 @@ def assertion_consumer_service(request,
     log = UserLogin()
     log.Subject = user
     log.save()
-    # send the login to the livestreamer
-    channels.Group('livestream').send({'text': json.dumps({
-        'time': time.strftime('%H:%M:%S'),
-        'event': 'login',
-        'user': str(user),
-    })})
+
 
     # redirect the user to the view where he came from
     default_relay_state = get_custom_setting('ACS_DEFAULT_REDIRECT_URL',

@@ -26,7 +26,7 @@ def PublicFiles(request, fileid, timeslot=None):
     """
     Public files, uploaded by type3, viewable on index.html, model in support-app
 
-    :param request: 
+    :param request:
     :param fileid: The ID of the public file to download.
     :param timeslot: The timeslot id, used if the file is accessed by URI. This corresponds to the directory name.
     :return: file download
@@ -49,14 +49,14 @@ def ProposalFiles(request, fileid, proposalid=None, ty=None):
     Mode 1: (old) proposalid gives the folder to search in, fileid is the filename (an UUID)
     Mode 2: (new) ty is either "a" or "i" to refer to image or attachement and fileid is the ID (pk) of the corresponding model
     When the file is an image, it is send inline, otherwise it is send as attachement.
-   
+
     :param request:
     :param fileid: id of the proposal file.
     :param proposalid: id of the proposal, corresponds to directory name appendix.
     :param ty: type, image or attachement
     :return: file download
     """
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         # allow anonymous users when viewing from a sharelink
         # make sure referrerpolicy is set on links, otherwise HTTP_REFERER might not be available.
         if "HTTP_REFERER" in request.META:
@@ -110,7 +110,7 @@ def StudentFiles(request, fileid, distid='' ):
     Type3 and 4 (support and profskill) staff can see all studentfiles.
     Responsible and assistant of student can view files.
     Student itself can view its own files
-    
+
     :param request:
     :param fileid: id of the student file.
     :param distid: id of the distribution of the student.

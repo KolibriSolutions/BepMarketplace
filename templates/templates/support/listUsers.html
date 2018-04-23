@@ -97,24 +97,6 @@
                     }, //to parse ul-li, timeslots
                 ]
             );
-
-            {#var cols = [#}
-            {#    null, //name#}
-            {#    null, //uname#}
-            {#    null, //mail#}
-            {#    null, //type#}
-            {#    null, //active#}
-            {#    {"searchable": false},  //last login#}
-            {#    null,  //timeslot#}
-            {#    {"searchable": false},  //edit#}
-            {#{% if user.is_superuser %}#}
-            {#    {"searchable": false}, //impersonate#}
-            {#    {"searchable": false}, //telemetry#}
-            {#{% endif %}#}
-            {#];#}
-            {#var dropdownColumns = [3];#}
-            {#MPDataTable(cols, dropdownColumns);#}
         });
-
     </script>
 {% endblock %}

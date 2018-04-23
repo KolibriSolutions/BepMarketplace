@@ -13,7 +13,7 @@
         <tbody>
         {% for tracking in trackinglist %}
             <tr>
-                <td data-sort="{{ tracking.Timestamp|date:"U" }}">{{ tracking.Timestamp|date:"d-m-Y H:i:s" }}</td>
+                <td data-sort="{{ tracking.Timestamp|date:"U" }}">{{ tracking.Timestamp }}</td>
                 <td>{{ tracking.get_Type_display }}</td>
                 <td>{{ tracking.Student.get_full_name }}</td>
                 <td><a href="{% url 'proposals:details' tracking.Proposal_id %}">{{ tracking.Proposal }}</a></td>
@@ -27,7 +27,9 @@
     {{ block.super }}
     <script>
         $(document).ready(function () {
-            var dt = $('.datatable').dt_wrapper();
+            $('.datatable').dt_wrapper([
+                {column_number: 1, filter_type: "select"},
+            ]);
         });
     </script>
 {% endblock %}

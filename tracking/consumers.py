@@ -1,89 +1,148 @@
-from channels import Group
-from channels.auth import channel_session_user_from_http
+from channels.generic.websocket import AsyncWebsocketConsumer
+from django.contrib.auth.models import Group, User
 from .models import TelemetryKey
-from proposals.cacheprop import getProp
 from .views import getTrack
-from django.contrib import auth
 from django.shortcuts import get_object_or_404
+from django.contrib import auth
+from channels.db import database_sync_to_async
+from proposals.cacheprop import getProp
 
-@channel_session_user_from_http
-def connectCurrentViewnumber(message, pk):
-    """
+class LiveStreamConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope['user']
+        if await database_sync_to_async(Group.objects.get)(name='type3staff') \
+                not in await database_sync_to_async(self.user.groups.all)() \
+                and not self.user.is_superuser:
+            await self.close()
+        else:
+            await self.channel_layer.group_add(
+                'liveview_telemetry',
+                self.channel_name
+            )
+            await self.accept()
+    async def disconnect(self, code):
+        await self.channel_layer.group_discard(
+            'liveview_telemetry',
+            self.channel_name
+        )
 
-    :param message:
-    :param pk:
-    :return:
-    """
-    track = getTrack(getProp(pk))
-    if track.Subject.Status != 4:
-        message.reply_channel.send({'accept': False})
-        return
-    if message.user != track.Subject.ResponsibleStaff and \
-                    message.user not in track.Subject.Assistants.all() and \
-                    auth.models.Group.objects.get(name="type3staff") not in message.user.groups.all() and \
-                    not message.user.is_superuser:
-        message.reply_channel.send({'accept': False})
-        return
-    message.channel_session['pk'] = pk
-    message.reply_channel.send({'accept' : True})
-    Group("viewnumber{}".format(pk)).add(message.reply_channel)
-    Group("viewnumber{}".format(pk)).send({'text':str(track.UniqueVisitors.count())})
+    async def receive(self, text_data):
+        pass
 
-@channel_session_user_from_http
-def connectTelemetryUser(message, pk):
-    if not message.user.is_superuser:
-        message.reply_channel.send({'accept' : False})
-        return
-    try:
-        target = get_object_or_404(auth.models.User, pk=pk)
-    except:
-        message.reply_channel.send({'accept' : False})
-        return
-    message.reply_channel.send({'accept' : True})
-    Group('live_{}'.format(target.username)).add(message.reply_channel)
+    async def update(self, event):
+        # Handles the messages on channel
+        await self.send(text_data=event["text"])
 
 
-@channel_session_user_from_http
-def connectLiveStream(message):
-    """
+class TelemetryAPIConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        key = self.scope['url_route']['kwargs']['key']
+        if len(key) != 64:
+            await self.close()
+            return
+        try:
+            obj = await database_sync_to_async(TelemetryKey.objects.get)(Key=key)
+        except TelemetryKey.DoesNotExist:
+            await self.close()
+            return
 
-    :param message:
-    :return:
-    """
-    if auth.models.Group.objects.get(name="type3staff") not in message.user.groups.all() and not message.user.is_superuser:
-        message.reply_channel.send({'accept': False})
-        return
-    message.reply_channel.send({'accept' : True})
-    Group('livestream').add(message.reply_channel)
+        if not obj.is_valid():
+            await self.close()
+            return
 
-'''
-@channel_session_user_from_http
-@login_required
-def disconnectCurrentViewnumber(message):
-    pk = message.channel_session['pk']
-    Group("viewnumber{}".format(pk)).discard(message.reply_channel)
-'''
+        await self.channel_layer.group_add(
+            'telemetry',
+            self.channel_name
+        )
 
-def connectTelemetry(message, key):
-    """
+        await self.accept()
 
-    :param message:
-    :param key:
-    :return:
-    """
-    if len(key) != 64:
-        message.reply_channel.send({'accept': False})
-        return
+    async def disconnect(self, code):
+        await self.channel_layer.group_discard (
+            'telemetry',
+            self.channel_name
+        )
 
-    try:
-        obj = TelemetryKey.objects.get(Key=key)
-    except TelemetryKey.DoesNotExist:
-        message.reply_channel.send({'accept' : False})
-        return
+    async def receive(self, text_data):
+        pass
 
-    if not obj.is_valid():
-        message.reply_channel.send({'accept' : False})
-        return
+    async def update(self, event):
+        # Handles the messages on channel
+        await self.send(text_data=event["text"])
 
-    message.reply_channel.send({'accept': True})
-    Group('telemetry').add(message.reply_channel)
+
+class TelemetryUserConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope['user']
+        if not self.user.is_superuser:
+            await self.close()
+            return
+        self.userpk = self.scope['url_route']['kwargs']['pk']
+        try:
+            self.target = await database_sync_to_async(get_object_or_404)(User, pk=self.userpk)
+        except:
+            await self.close()
+            return
+
+        await self.channel_layer.group_add(
+            'live_{}'.format(self.target.username),
+            self.channel_name
+        )
+        await self.accept()
+
+    async def disconnect(self, code):
+        try:
+            await self.channel_layer.group_discard (
+                'live_{}'.format(self.target.username),
+                self.channel_name
+            )
+        except:
+            pass
+    async def receive(self, text_data):
+        pass
+
+    async def update(self, event):
+        # Handles the messages on channel
+        await self.send(text_data=event["text"])
+
+
+def checkauthcurrentviewnumber(user, track):
+    if user != track.Subject.ResponsibleStaff and \
+                    user not in track.Subject.Assistants.all() and \
+                    auth.models.Group.objects.get(name="type3staff") not in user.groups.all() and \
+                    not user.is_superuser:
+        return True
+    return False
+
+class CurrentViewNumberConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.pk = self.scope['url_route']['kwargs']['pk']
+        self.prop = await database_sync_to_async(getProp)(self.pk)
+        self.track = await database_sync_to_async(getTrack)(self.prop)
+        self.user = self.scope['user']
+        if self.track.Subject.Status != 4:
+            await self.close()
+            return
+        if await database_sync_to_async(checkauthcurrentviewnumber)(self.user, self.track):
+            await self.close()
+            return
+
+        await self.channel_layer.group_add(
+                'viewnumber{}'.format(self.pk),
+                self.channel_name
+            )
+        await self.accept()
+        await self.send(text_data=str(await database_sync_to_async(self.track.UniqueVisitors.count)()))
+
+    async def disconnect(self, code):
+        await self.channel_layer.group_discard(
+            'viewnumber{}'.format(self.pk),
+            self.channel_name
+        )
+
+    async def receive(self, text_data):
+        pass
+
+    async def update(self, event):
+        # Handles the messages on channel
+        await self.send(text_data=event["text"])

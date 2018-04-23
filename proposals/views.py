@@ -150,6 +150,8 @@ def editProposal(request, pk):
     :return:
     """
     obj = get_object_or_404(Proposal, pk=pk)
+    title = 'Edit Proposal'
+
     if request.method == 'POST':
         #only limited editing when status 4
         if obj.Status == 4:
@@ -167,9 +169,10 @@ def editProposal(request, pk):
     else:
         if obj.Status == 4:
             form = ProposalFormLimited(request=request, instance=obj)
+            title = 'Edit active Proposal'
         else:
             form = ProposalFormEdit(request=request, instance=obj)
-    return render(request, 'GenericForm.html', {'form': form, 'formtitle': 'Edit Proposal', 'buttontext': 'Save'})
+    return render(request, 'GenericForm.html', {'form': form, 'formtitle': title, 'buttontext': 'Save'})
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')

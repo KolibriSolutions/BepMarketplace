@@ -1,9 +1,9 @@
-from channels.routing import route
-from tracking import consumers
+from django.conf.urls import url
+from . import consumers
 
-channel_routing = [
-    route('websocket.connect', consumers.connectCurrentViewnumber, path=r'^viewnumber/(?P<pk>[0-9]+)/$'),
-    route('websocket.connect', consumers.connectLiveStream, path=r'live/$'),
-    route('websocket.connect', consumers.connectTelemetry, path=r'^telemetry/(?P<key>[a-zA-Z0-9]+)/$'),
-    route('websocket.connect', consumers.connectTelemetryUser, path=r'^telemetry/user/(?P<pk>[0-9]+)/$'),
+websocket_urlpatterns = [
+    url(r'^tracking/viewnumber/(?P<pk>[0-9]+)/$', consumers.CurrentViewNumberConsumer),
+    url(r'^tracking/live/$', consumers.LiveStreamConsumer),
+    url(r'^tracking/telemetry/(?P<key>[a-zA-Z0-9]+)/$', consumers.TelemetryAPIConsumer),
+    url(r'^tracking/telemetry/user/(?P<pk>[0-9]+)/$', consumers.TelemetryUserConsumer)
 ]

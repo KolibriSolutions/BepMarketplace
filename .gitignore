@@ -16,9 +16,11 @@ media/*
 migrations/
 templates/static/admin/*
 templates/static/channels/*
-BepMarketplace/secret.py
+BepMarketplace/config/secret.py
 BepMarketplace/config/secret.py
 telemetry_cli/telemetry_key.py
 *.lock
 *.csv
+Pipfile
+Pipfile.lock
 /node_modules/

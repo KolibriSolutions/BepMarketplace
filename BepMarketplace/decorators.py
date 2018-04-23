@@ -20,7 +20,7 @@ def group_required(*group_names):
     :return:
     """
     def in_groups(u):
-        if u.is_authenticated():
+        if u.is_authenticated:
             if u.groups.filter(name__in=group_names).exists() or u.is_superuser:
                 return True
             else:
@@ -45,7 +45,7 @@ def phase_required(*phase_numbers):
     """
 
     def in_phase(u):
-        if u.is_authenticated():
+        if u.is_authenticated:
             if get_timephase_number() in phase_numbers:
                 return True
             else:
@@ -66,7 +66,7 @@ def superuser_required():
     True if user is superuser. Redirect to login if not.
     """
     def is_superuser(u):
-        if u.is_authenticated():
+        if u.is_authenticated:
             if u.is_superuser:
                 return True
             else:
@@ -87,7 +87,7 @@ def student_only():
     :return:
     """
     def is_student(u):
-        if u.is_authenticated():
+        if u.is_authenticated:
             if u.groups.exists():
                 raise PermissionDenied("This page is only available for students.")
             if get_timephase_number() < 3:

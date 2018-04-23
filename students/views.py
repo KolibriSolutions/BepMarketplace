@@ -33,7 +33,7 @@ def get_all_applications(user):
 def listApplications(request):
     """
     List the applications of a student, with a button to retract the application
-    
+
     :param request:
     """
     return render(request, 'students/ListApplications.html', context={
@@ -45,7 +45,7 @@ def listApplications(request):
 def prioUp(request, application_id):
     """
     Increase the priority of an application of a student.
-    
+
     :param request:
     :param application_id: Application id
     """
@@ -72,7 +72,7 @@ def prioUp(request, application_id):
 def prioDown(request, application_id):
     """
     Decrease the priority of an application of a student.
-    
+
     :param request:
     :param application_id: Application id
     """
@@ -105,7 +105,7 @@ def prioDown(request, application_id):
 def retractApplication(request, application_id):
     """
     Let a user un-apply / retract an application.
-    
+
     :param request:
     :param application_id: Application id
     """
@@ -116,13 +116,6 @@ def retractApplication(request, application_id):
     track.Student = request.user
     track.Type = 'r'
     track.save()
-
-    channels.Group('livestream').send({'text': json.dumps({
-        'time': time.strftime('%H:%M:%S'),
-        'event': 'retract',
-        'proposal': appl.Proposal.id,
-        'user': request.user.get_full_name(),
-    })})
 
     for app in get_all_applications(request.user):
         if app.Priority > appl.Priority:
@@ -140,7 +133,7 @@ def retractApplication(request, application_id):
 def applyToProposal(request, pk):
     """
     Let a user apply to a proposal. Called after confirmapply.
-    
+
     :param request:
     :param pk: id of a proposal.
     """
@@ -166,13 +159,6 @@ def applyToProposal(request, pk):
     track.Type = 'a'
     track.save()
 
-    channels.Group('livestream').send({'text': json.dumps({
-        'time': time.strftime('%H:%M:%S'),
-        'event': 'apply',
-        'proposal': prop.id,
-        'user': request.user.get_full_name(),
-    })})
-
     appl = Application()
     appl.Proposal = prop
     highestprio = get_all_applications(request.user).aggregate(Max('Priority'))['Priority__max']
@@ -194,7 +180,7 @@ def confirmApplication(request, pk):
     """
     After a student presses apply on a proposal, he/she has to confirm the application on this page.
     This page also checks whether the user is allowed to apply
-    
+
     :param request:
     :param pk: id of the proposal
     """
@@ -219,7 +205,7 @@ def addFile(request):
     For students to upload a file. Used for the hand in system.
     Responsibles, assistants and trackheads can then view the files of their students.
     support staff can see all student files.
-    
+
     :param request:
     """
     dist = get_object_or_404(Distribution, Student=request.user)
@@ -245,7 +231,7 @@ def editFile(request, pk):
     For students to edit a uploaded file. Used for the hand in system.
     Responsibles, assistants and trackheads can then view the files of their students.
     support staff can see all student files.
-    
+
     :param request:
     """
     file = get_object_or_404(StudentFile, id=pk)

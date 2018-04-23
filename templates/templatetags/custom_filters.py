@@ -189,7 +189,7 @@ def GetBroadcastStatus(user):
     :param user:
     :return:
     """
-    if not user.is_authenticated():
+    if not user.is_authenticated:
         return False
     if Broadcast.objects.filter((Q(DateBegin__lte=datetime.now()) | Q(DateBegin__isnull=True)) &
                              (Q(DateEnd__gte=datetime.now()) | Q(DateEnd__isnull=True)) &
@@ -207,7 +207,7 @@ def GetDistribution(user):
     :param user:
     :return:
     """
-    if not user.is_authenticated():
+    if not user.is_authenticated:
         return False
     # check if student
     if user.groups.exists():
@@ -246,7 +246,7 @@ def GetPresentationStudent(user):
     :param user:
     :return:
     """
-    if not user.is_authenticated():
+    if not user.is_authenticated:
         return False
     # check if student
     if user.groups.exists():
@@ -284,7 +284,7 @@ def GetPresentationStaff(user):
     :param user:
     :return:
     """
-    if not user.is_authenticated():
+    if not user.is_authenticated:
         return False
     # check if not student
     if not user.groups.exists():

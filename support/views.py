@@ -9,20 +9,20 @@ from django.shortcuts import get_object_or_404, render
 from htmlmin.decorators import not_minified_response
 from render_block import render_block_to_string
 
-import general_excel
 import general_mail
 from BepMarketplace.decorators import group_required
+from distributions.utils import get_distributions
 from general_form import ConfirmForm
 from general_mail import EmailThread
 from general_model import GroupOptions
 from general_view import get_all_students, get_all_staff, get_grouptype
-from distributions.utils import get_distributions
-from proposals.utils import get_all_proposals
 from index.models import Track, UserMeta
 from osirisdata.data import osirisData
+from proposals.utils import get_all_proposals
 from results.models import GradeCategory
 from support import check_content_policy
 from timeline.utils import get_timeslot, get_timephase_number
+from .exports import listStudentsXls, listStaffXls, listDistributionsXls
 from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm
 from .models import CapacityGroupAdministration, PublicFile
 
@@ -59,7 +59,7 @@ def supportListDistributionsXls(request):
         proposals = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
     else:
         proposals = get_all_proposals().filter(Status=4)
-    file = general_excel.listDistributionsXls(proposals)
+    file = listDistributionsXls(proposals)
     response = HttpResponse(content=file)
     response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
     return response
@@ -330,7 +330,7 @@ def listStaffXls(request):
     Same as supportListStaff but as XLSX
     """
     staff = get_all_staff().filter(Q(groups=get_grouptype("2")) | Q(groups=get_grouptype("1")))
-    file = general_excel.listStaffXls(staff)
+    file = listStaffXls(staff)
     response = HttpResponse(content=file)
     response['Content-Disposition'] = 'attachment; filename=marketplace-staff-list.xlsx'
     return response
@@ -399,7 +399,7 @@ def listStudentsXls(request):
 
     typ = GradeCategory.objects.filter(TimeSlot=get_timeslot())
     des = get_distributions(request.user)
-    file = general_excel.listStudentsXls(des, typ)
+    file = listStudentsXls(des, typ)
 
     response = HttpResponse(content=file)
     response['Content-Disposition'] = 'attachment; filename=students-grades.xlsx'

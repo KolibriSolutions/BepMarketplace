@@ -1,26 +1,14 @@
+import hmac
+from datetime import date
+from hashlib import sha256
+from os import urandom
+
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from os import urandom
-from hashlib import sha256
-from datetime import date
-import hmac
 
-from proposals.models import Proposal
 from general_model import clean_text
-
-class ProposalStatusChange(models.Model):
-    Subject = models.ForeignKey(Proposal, on_delete=models.CASCADE, related_name="StatusChangeTracking")
-    Timestamp = models.DateTimeField(auto_now_add=True)
-    Actor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="StatusChangeTracking")
-    StatusFrom = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(4)],
-                                     choices=Proposal.StatusOptions)
-    StatusTo = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(4)],
-                                     choices=Proposal.StatusOptions)
-    Message = models.CharField(max_length=500, null=True, blank=True)
-
-    def clean(self):
-        self.Message = clean_text(self.Message)
+from proposals.models import Proposal
 
 
 class UserLogin(models.Model):
@@ -30,6 +18,20 @@ class UserLogin(models.Model):
 
     def __str__(self):
         return self.Subject.get_full_name() + "@" + self.Timestamp.strftime("%H:%M %d-%m-%Y")
+
+
+class ProposalStatusChange(models.Model):
+    Subject = models.ForeignKey(Proposal, on_delete=models.CASCADE, related_name="StatusChangeTracking")
+    Timestamp = models.DateTimeField(auto_now_add=True)
+    Actor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="StatusChangeTracking")
+    StatusFrom = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(4)],
+                                     choices=Proposal.StatusOptions)
+    StatusTo = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(4)],
+                                   choices=Proposal.StatusOptions)
+    Message = models.CharField(max_length=500, null=True, blank=True)
+
+    def clean(self):
+        self.Message = clean_text(self.Message)
 
 
 class ProposalTracking(models.Model):

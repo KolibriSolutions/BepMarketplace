@@ -10,12 +10,12 @@ from django.shortcuts import render
 from django.urls import reverse
 from htmlmin.decorators import not_minified_response
 
-import general_excel
 from BepMarketplace.decorators import group_required
 from general_view import get_grouptype
 from index.models import Track
 from students.models import Distribution
 from timeline.utils import get_timephase_number
+from .exports import listPresentationsXls
 from .forms import PresentationOptionsForm, PresentationRoomForm, PresentationSetForm, get_timeslot, MakePublicForm
 from .models import Room, PresentationSet, PresentationTimeSlot
 
@@ -225,7 +225,7 @@ def presentationsPlanningXls(request):
         return render(request, "base.html",
                       {"Message": "There is nothing planned yet. Please plan the presentations first."})
 
-    file = general_excel.listPresentationsXls(sets)
+    file = listPresentationsXls(sets)
     response = HttpResponse(content=file)
     response['Content-Disposition'] = 'attachment; filename=presentations-planning.xlsx'
     return response
