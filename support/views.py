@@ -9,11 +9,10 @@ from django.shortcuts import get_object_or_404, render
 from htmlmin.decorators import not_minified_response
 from render_block import render_block_to_string
 
-import general_mail
 from BepMarketplace.decorators import group_required
 from distributions.utils import get_distributions
 from general_form import ConfirmForm
-from general_mail import EmailThread
+from general_mail import EmailThread, MailTrackHeadsPending
 from general_model import GroupOptions
 from general_view import get_all_students, get_all_staff, get_grouptype
 from index.models import Track, UserMeta
@@ -22,18 +21,18 @@ from proposals.utils import get_all_proposals
 from results.models import GradeCategory
 from support import check_content_policy
 from timeline.utils import get_timeslot, get_timephase_number
-from .exports import listStudentsXls, listStaffXls, listDistributionsXls
+from .exports import get_list_students_xlsx, get_list_staff_xlsx, get_list_distributions_xlsx
 from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm
 from .models import CapacityGroupAdministration, PublicFile
 
 
 ###############
-#Distributions#
+# Distributions#
 ###############
 
 
 @group_required("type3staff", "type6staff")
-def supportListApplicationsDistributions(request):
+def list_applications_distributions(request):
     """
     Show a list of all active proposals with the applications and possibly distributions of students.
     Used for support staff as an overview.
@@ -49,7 +48,7 @@ def supportListApplicationsDistributions(request):
 
 @not_minified_response
 @group_required("type3staff", "type6staff")
-def supportListDistributionsXls(request):
+def list_distributions_xlsx(request):
     """
     Same as supportListApplications but as XLSX
     """
@@ -59,14 +58,14 @@ def supportListDistributionsXls(request):
         proposals = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
     else:
         proposals = get_all_proposals().filter(Status=4)
-    file = listDistributionsXls(proposals)
+    file = get_list_distributions_xlsx(proposals)
     response = HttpResponse(content=file)
     response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
     return response
 
 
 #########
-#Mailing#
+# Mailing#
 #########
 
 
@@ -82,7 +81,7 @@ def supportListDistributionsXls(request):
 #        (10, 'all students on marketplace 10ects'),
 #        (11, 'all students on marketplace 15ects'),
 @group_required('type3staff')
-def mailinglist(request):
+def mailing(request):
     """
 
     :param request:
@@ -112,7 +111,7 @@ def mailinglist(request):
             # iterate through all selected users
             if form.cleaned_data['people_all']:
                 # users
-                for user in list(get_all_students())+list(get_all_staff()):
+                for user in list(get_all_students()) + list(get_all_staff()):
                     emails.add(user.email)
             if form.cleaned_data['people_type1']:
                 # all type1staff
@@ -138,7 +137,7 @@ def mailinglist(request):
                 for user in get_all_staff().filter(groups=get_grouptype("3")):
                     emails.add(user.email)
             if form.cleaned_data['people_osirisstudents']:
-                #students on osiris
+                # students on osiris
                 data = osirisData()
                 for email in data.getallEmail():
                     emails.add(email)
@@ -160,7 +159,7 @@ def mailinglist(request):
                 for prop in props:
                     emails.add(prop.ResponsibleStaff.email)
             if form.cleaned_data['people_staffdistr']:
-                #staff with students
+                # staff with students
                 props = get_all_proposals().filter(distributions__isnull=False).distinct()
                 for prop in props:
                     emails.add(prop.ResponsibleStaff.email)
@@ -176,7 +175,7 @@ def mailinglist(request):
                 emails.add(sup.email)
 
             context = {
-                'message' : form.cleaned_data['message'],
+                'message': form.cleaned_data['message'],
             }
             if form.cleaned_data['subject'] != '':
                 subject = form.cleaned_data['subject']
@@ -189,14 +188,14 @@ def mailinglist(request):
         form = ChooseMailingList(options=options)
 
     return render(request, "GenericForm.html", {
-        "form" : form,
-        "formtitle" : "Send mailling list",
-        "buttontext" : "Send",
+        "form": form,
+        "formtitle": "Send mailling list",
+        "buttontext": "Send",
     })
 
 
 @group_required('type3staff')
-def mailTrackHeads(request):
+def mail_track_heads(request):
     """
     Mail all track heads with their todo actions
 
@@ -204,29 +203,29 @@ def mailTrackHeads(request):
     :return:
     """
     if get_timephase_number() > 2:
-        return render(request, "base.html", {"Message" : "Only possible in first two phases"})
+        return render(request, "base.html", {"Message": "Only possible in first two phases"})
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
         if form.is_valid():
-            general_mail.MailTrackHeadsPending()
-            return render(request, "base.html", {"Message" : "Track Heads mailed!"})
+            MailTrackHeadsPending()
+            return render(request, "base.html", {"Message": "Track Heads mailed!"})
     else:
         form = ConfirmForm()
 
     trackstats = {}
     for track in Track.objects.all():
         trackstats[str(track)] = {
-            'pending' : get_all_proposals().filter(Q(Status=3) & Q(Track=track)).count(),
-            'head' : track.Head.email,
+            'pending': get_all_proposals().filter(Q(Status=3) & Q(Track=track)).count(),
+            'head': track.Head.email,
         }
-    return render(request, "support/TrackHeadSendConfirm.html", {'trackstats':trackstats, 'form' : form})
+    return render(request, "support/TrackHeadSendConfirm.html", {'trackstats': trackstats, 'form': form})
 
 
 #######
-#Lists#
+# Lists#
 #######
 @group_required('type3staff', 'type6staff')
-def listUsers(request):
+def list_users(request):
     """
     List of all active users, including upgrade/downgrade button for staff and impersonate button for admins
 
@@ -249,7 +248,7 @@ def listUsers(request):
 
 
 @group_required('type3staff')
-def usermetaOverrule(request, pk):
+def usermeta_overrule(request, pk):
     """
 
     :param request:
@@ -276,19 +275,67 @@ def usermetaOverrule(request, pk):
         'form': form,
     })
 
+@group_required('type3staff') # might be added to profile in the future.
+def user_info(request, pk):
+    """
+    Return information and privacy data of given user.
+
+    :param request:
+    :param pk:
+    :return:
+    """
+    user = get_object_or_404(User, pk=pk)
+    user_model = [[field.name, getattr(user, field.name)] for field in user._meta.fields]
+    usermeta_model = [[field.name, getattr(user.usermeta, field.name)] for field in user.usermeta._meta.fields]
+    related = []
+    for obj in user._meta.related_objects+user._meta.many_to_many:
+        if hasattr(user, obj.name):
+            try:
+                related.append([obj.name, [obj2.__str__() for obj2 in getattr(user, obj.name).all()]])
+            except:
+                related.append([obj.name, [getattr(user, obj.name).__str__()]])
+        else:
+            related.append([obj.name, []])
+    distribution = []
+    if user.groups.exists():
+        ds = []
+        for p in user.proposals.all():
+            ds += list(p.distributions.all())
+        for p in user.proposalsresponsible.all():
+            ds += list(p.distributions.all())
+        print(ds)
+    else: #student
+        ds = user.distributions.all()
+    for d in ds:
+        for obj in d._meta.related_objects+d._meta.many_to_many:
+            if hasattr(d, obj.name):
+                try:
+                    distribution.append([obj.name, [obj2.__str__() for obj2 in getattr(d, obj.name).all()]])
+                except:
+                    distribution.append([obj.name, [getattr(d, obj.name).__str__()]])
+            else:
+                distribution.append([obj.name, []])
+    return render(request, 'index/user_info.html', {
+        'view_user': user,
+        'user_model': user_model,
+        'usermeta_model': usermeta_model,
+        'related': related,
+        'distribution': distribution,
+    })
 
 @group_required('type3staff', 'type6staff')
-def listStaff(request):
+def list_staff(request):
     """
     List all staff with a distributed proposal
 
     :param request:
     :return:
     """
+
     def nint(nr):
         """
 
-        :param nr:
+        :param <int> nr:
         :return:
         """
         if nr is None:
@@ -312,7 +359,7 @@ def listStaff(request):
 
 
 @group_required('type3staff')
-def listStaffProposals(request, pk):
+def list_staff_projects(request, pk):
     """
     List all proposals of a staff member
     """
@@ -325,19 +372,19 @@ def listStaffProposals(request, pk):
 
 @not_minified_response
 @group_required("type3staff")
-def listStaffXls(request):
+def list_staff_xlsx(request):
     """
     Same as supportListStaff but as XLSX
     """
     staff = get_all_staff().filter(Q(groups=get_grouptype("2")) | Q(groups=get_grouptype("1")))
-    file = listStaffXls(staff)
+    file = get_list_staff_xlsx(staff)
     response = HttpResponse(content=file)
     response['Content-Disposition'] = 'attachment; filename=marketplace-staff-list.xlsx'
     return response
 
 
 @group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
-def listStudents(request):
+def list_students(request):
     """
     For support staff, responsibles and assistants to view their students.
     List all students with distributions that the current user is allowed to see.
@@ -356,7 +403,7 @@ def listStudents(request):
             raise PermissionDenied("Students are not yet distributed")
         if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
             return render(request, "base.html", {'Message':
-                               "When the phase 'Distribution of projects' is finished, you can view your students here."})
+                                                     "When the phase 'Distribution of projects' is finished, you can view your students here."})
     if get_timephase_number() == 0 or get_timephase_number() >= 6:
         show_grades = True
     else:
@@ -381,7 +428,7 @@ def listStudents(request):
 
 @not_minified_response
 @group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
-def listStudentsXls(request):
+def list_students_xlsx(request):
     """
     Same as liststudents but as XLSX. The combination of students and grades is done in general_excel.
 
@@ -395,11 +442,12 @@ def listStudentsXls(request):
             raise PermissionDenied("Students are not yet distributed")
         if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
             return render(request, "base.html", {'Message':
-                               "When the phase 'Distribution of projects' is finished, you can view your students here."})
+                                                 "When the phase 'Distribution of projects is "
+                                                 "finished, you can view your students here."})
 
     typ = GradeCategory.objects.filter(TimeSlot=get_timeslot())
     des = get_distributions(request.user)
-    file = listStudentsXls(des, typ)
+    file = get_list_students_xlsx(des, typ)
 
     response = HttpResponse(content=file)
     response['Content-Disposition'] = 'attachment; filename=students-grades.xlsx'
@@ -407,7 +455,7 @@ def listStudentsXls(request):
 
 
 @group_required('type3staff')
-def verifyAssistants(request):
+def verify_assistants(request):
     """
     Page to let support staff give type2staffunverified the type2staff status.
 
@@ -421,22 +469,23 @@ def verifyAssistants(request):
 
 
 @group_required('type4staff')
-def listGroupProposals(request):
+def list_group_projects(request):
     """
     List all proposals of a group.
 
     :param request:
     :return:
     """
-    obj = get_object_or_404(CapacityGroupAdministration, Members__id = request.user.id)
+    obj = get_object_or_404(CapacityGroupAdministration, Members__id=request.user.id)
     props = get_all_proposals(old=True).filter(Group=obj.Group)
     return render(request, "proposals/ProposalsCustomList.html", {
-        "proposals" : props,
-        "title"     : "Proposals of My Group"
+        "proposals": props,
+        "title": "Proposals of My Group"
     })
 
+
 @group_required('type5staff')
-def listProposalsAdvisor(request):
+def list_studyadvisor_projects(request):
     """
     List all proposals for the studyadvisor, so includes old and private ones
 
@@ -444,12 +493,13 @@ def listProposalsAdvisor(request):
     :return:
     """
     return render(request, "proposals/ProposalsCustomList.html", {
-        "proposals" : get_all_proposals(old=True),
-        "title" : "All proposals in system"
+        "proposals": get_all_proposals(old=True),
+        "title": "All proposals in system"
     })
 
+
 @group_required('type3staff', 'type6staff')
-def listPrivateProposals(request):
+def list_private_projects(request):
     """
     List all private proposals.
 
@@ -458,14 +508,14 @@ def listPrivateProposals(request):
     """
     props = get_all_proposals().filter(Private__isnull=False).distinct()
     return render(request, "proposals/ProposalsCustomList.html", {
-        "proposals" : props,
-        "title"     : "All private proposals",
-        "private"   : True
+        "proposals": props,
+        "title": "All private proposals",
+        "private": True
     })
 
 
 @group_required('type3staff')
-def upgradeUser(request, pk):
+def upgrade_user(request, pk):
     """
     Upgrade a user from type2staff to type1staff
 
@@ -477,7 +527,7 @@ def upgradeUser(request, pk):
 
     # verify type 2 unverified
     if get_grouptype("2u") in usr.groups.all():
-        if get_grouptype("2")in usr.groups.all():
+        if get_grouptype("2") in usr.groups.all():
             usr.groups.remove(get_grouptype("2"))
         if get_grouptype("2u") in usr.groups.all():
             usr.groups.remove(get_grouptype("2u"))
@@ -501,7 +551,7 @@ def upgradeUser(request, pk):
         })
 
     if get_grouptype("1") not in usr.groups.all():
-        if get_grouptype("2")in usr.groups.all():
+        if get_grouptype("2") in usr.groups.all():
             usr.groups.remove(get_grouptype("2"))
         if get_grouptype("2u") in usr.groups.all():
             usr.groups.remove(get_grouptype("2u"))
@@ -519,13 +569,13 @@ def upgradeUser(request, pk):
         cache.delete('listusersbodyhtmladmin')
 
     return render(request, "base.html", {
-        "Message" : "User upgraded!",
-        "return" : "support:listusers"
+        "Message": "User upgraded!",
+        "return": "support:listusers"
     })
 
 
 @group_required('type3staff')
-def downgradeUser(request, pk):
+def downgrade_user(request, pk):
     """
     Change a user from type1staff to type2staff
 
@@ -543,11 +593,11 @@ def downgradeUser(request, pk):
 
     if get_grouptype("3") in usr.groups.all():
         return render(request, "base.html", {
-            "Message": "User is supportstaff!",
+            "Message": "User is support staff!",
             "return": "support:listusers"
         })
 
-    if get_grouptype("2")not in usr.groups.all() and get_grouptype("2u") not in usr.groups.all():
+    if get_grouptype("2") not in usr.groups.all() and get_grouptype("2u") not in usr.groups.all():
         if get_grouptype("1") in usr.groups.all():
             usr.groups.remove(get_grouptype("1"))
         usr.groups.add(get_grouptype("2"))
@@ -558,15 +608,14 @@ def downgradeUser(request, pk):
     if cache.has_key('listusersbodyhtmladmin'):
         cache.delete('listusersbodyhtmladmin')
 
-
     return render(request, "base.html", {
-        "Message" : "User downgraded!",
-        "return" : "support:listusers"
+        "Message": "User downgraded!",
+        "return": "support:listusers"
     })
 
 
 #######
-#Other#
+# Other#
 #######
 
 @group_required('type1staff', 'type2staff', 'type3staff', 'type4staff', 'type5staff')
@@ -593,19 +642,19 @@ def stats(request):
         trackcount[track.__str__()] = get_all_proposals().filter(Track=track).count()
 
     return render(request, "support/stats.html", {
-        "proposalcount" : get_all_proposals().count(),
-        "usercount"     : get_all_students().count() + get_all_staff().count(),
-        "privatecount"  : get_all_proposals().filter(Private__isnull=False).count(),
-        "groupcount"    : groupcount,
-        "statuscount"   : statuscount,
-        "trackcount"    : trackcount,
-        "mincapacity"   : get_all_proposals().aggregate(Sum('NumstudentsMin'))['NumstudentsMin__sum'],
-        "maxcapacity"   : get_all_proposals().aggregate(Sum('NumstudentsMax'))['NumstudentsMax__sum']
+        "proposalcount": get_all_proposals().count(),
+        "usercount": get_all_students().count() + get_all_staff().count(),
+        "privatecount": get_all_proposals().filter(Private__isnull=False).count(),
+        "groupcount": groupcount,
+        "statuscount": statuscount,
+        "trackcount": trackcount,
+        "mincapacity": get_all_proposals().aggregate(Sum('NumstudentsMin'))['NumstudentsMin__sum'],
+        "maxcapacity": get_all_proposals().aggregate(Sum('NumstudentsMax'))['NumstudentsMax__sum']
     })
 
 
 @group_required('type3staff')
-def contentpolicy(request):
+def content_policy(request):
     """
     List of proposal description/assignment texts that do not met the expected text.
     Example of a policy violation is an email address in a proposal description.
@@ -618,7 +667,8 @@ def contentpolicy(request):
     }
     return render(request, "support/contentPolicyCheck.html", data)
 
-##deprecated due to osirisdata
+
+# deprecated due to osirisdata
 # @group_required("type3staff")
 # def ECTSForm(request):
 #     """
@@ -631,11 +681,11 @@ def contentpolicy(request):
 #     return render(request, 'support/ECTSForm.html', {'students': stds})
 
 ##############
-#Public Files#
+# Public Files#
 ##############
 
 @group_required('type3staff')
-def addFile(request):
+def add_file(request):
     """
     Upload a public file. These files will be visible on the index page after login.
 
@@ -657,11 +707,12 @@ def addFile(request):
 
 
 @group_required('type3staff')
-def editFile(request, pk):
+def edit_file(request, pk):
     """
     Edit a public file. These files will be visible on the index page after login.
 
     :param request:
+    :param pk: id of file.
     :return:
     """
     obj = get_object_or_404(PublicFile, pk=pk)
@@ -683,45 +734,57 @@ def editFile(request, pk):
 
 
 @group_required('type3staff')
-def editFiles(request):
+def edit_files(request):
     """
     Edit public files. Only for supportstaff
     These files are shown on the homepage for every logged in user.
 
     :param request:
     """
-    formSet = modelformset_factory(PublicFile, form=PublicFileForm, can_delete=True, extra=0)
+    form_set = modelformset_factory(PublicFile, form=PublicFileForm, can_delete=True, extra=0)
     qu = PublicFile.objects.filter(TimeSlot=get_timeslot())
-    formset = formSet(queryset=qu)
+    formset = form_set(queryset=qu)
 
     if request.method == 'POST':
-        formset = formSet(request.POST, request.FILES)
+        formset = form_set(request.POST, request.FILES)
         if formset.is_valid():
             formset.save()
             return render(request, "base.html", {"Message": "File changes saved!", "return": "index:index"})
-    return render(request, 'GenericForm.html', {'formset': formset, 'formtitle': 'All public uploaded files', 'buttontext': 'Save changes'})
+    return render(request, 'GenericForm.html',
+                  {'formset': formset, 'formtitle': 'All public uploaded files', 'buttontext': 'Save changes'})
 
 
 @group_required('type3staff')
-def deleteFile(request, pk):
+def delete_file(request, pk):
     """
-    Delete a publicfile
+    Delete a public file
 
     :param request:
     :param pk: pk of the proposal to delete
     :return:
     """
     obj = get_object_or_404(PublicFile, pk=pk)
-    obj.delete()
-    return render(request, "base.html", {"Message": "Public file removed!", "return": "index:index"})
+    if request.method == 'POST':
+        form = ConfirmForm(request.POST)
+        if form.is_valid():
+            obj.delete()
+            return render(request, "base.html", {"Message": "Public file removed!", "return": "index:index"})
+    else:
+        form = ConfirmForm()
+
+    return render(request, 'GenericForm.html', {
+        'form' : form,
+        'formtitle' : 'Confirm deleting public file {}'.format(obj),
+        'buttontext' : 'Confirm'
+    })
 
 
 #######
-#Cache#
+# Cache#
 #######
 
 @group_required('type3staff', 'type6staff')
-def clearListUsersCache(request):
+def list_users_clear_cache(request):
     """
     Clear cache for list users
 
@@ -731,8 +794,7 @@ def clearListUsersCache(request):
     cache.delete('listusersbodyhtmladmin')
     cache.delete('listusersbodyhtml')
 
-    return render(request, 'base.html', {'Message': 'Cache cleared for userlist', "return":"support:listusers"})
-
+    return render(request, 'base.html', {'Message': 'Cache cleared for userlist', "return": "support:listusers"})
 
 #
 # @group_required('type3staff', 'type6staff')

@@ -1,12 +1,12 @@
 from django.conf import settings
-from django.contrib.sites.shortcuts import get_current_site
 from django.core import signing
 from django.core.cache import cache
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
 from general_view import get_grouptype
-from proposals.models import Proposal
 from timeline.utils import get_timephase_number, get_timeslot
+from .models import Proposal
 
 
 def can_edit_proposal_fn(user, prop, file):
@@ -27,14 +27,14 @@ def can_edit_proposal_fn(user, prop, file):
 
     # published proposals can only ever be edited limited. choice of form is done in view function
     if prop.Status == 4:
-        if prop.ResponsibleStaff == user and not file:
-            return True, '' # it is the responsibility of the view that the right form is choosen
+        if (prop.ResponsibleStaff == user or user == prop.Track.Head) and not file:
+            return True, ''  # it is the responsibility of the view that the right form is choosen
 
         if prop.nextyear() or (prop.curyear() and get_timephase_number() < 3):
             if user == prop.Track.Head:
                 return False, 'No editing possible. Please downgrade the proposal first.'
             else:
-                return False, 'To edit, ask your track head (%s) to downgrade the status of this proposal.'\
+                return False, 'To edit, ask your track head (%s) to downgrade the status of this proposal.' \
                        % prop.Track.Head.usermeta.get_nice_name()
         else:  # later timephases for the current year
             return False, 'No editing possible, the project is already active.'
@@ -60,10 +60,10 @@ def can_edit_proposal_fn(user, prop, file):
 
     if prop.Status == 3:
         if get_timephase_number() == 2:
-            return False, 'To edit, first downgrade the proposal or ask your track head (%s) to do so.'\
+            return False, 'To edit, first downgrade the proposal or ask your track head (%s) to do so.' \
                    % prop.Track.Head.usermeta.get_nice_name()
         else:  # timephase 1
-            return False, 'To edit, first downgrade the proposal or ask the responsible staff (%s) or track head (%s) to do so.'\
+            return False, 'To edit, first downgrade the proposal or ask the responsible staff (%s) or track head (%s) to do so.' \
                    % (prop.ResponsibleStaff.usermeta.get_nice_name(), prop.Track.Head.usermeta.get_nice_name())
 
     # if status is either 1, 2 or 3 and user is track head
@@ -104,3 +104,43 @@ def get_share_link(request, pk):
     :return:
     """
     return settings.DOMAIN + reverse('api:viewsharelink', args=[signing.dumps(pk)])
+
+
+def getProp(pk):
+    """
+    Get a proposal from cache or from database. Put it in cache if it is not yet in cache.
+
+    :param pk: pk of proposal
+    :return:
+    """
+    cprop = cache.get('proposal_{}'.format(pk))
+    if cprop is None:
+        prop = get_object_or_404(Proposal, pk=pk)
+        if prop.Status == 4:
+            cache.set('proposal_{}'.format(pk), prop, None)
+        return prop
+    else:
+        return cprop
+
+
+def updatePropCache(prop):
+    """
+    Update a cached proposal
+
+    :param prop: proposal object
+    :return:
+    """
+    if prop.Status == 4:
+        cache.set('proposal_{}'.format(prop.id), prop, None)
+
+
+def updatePropCache_pk(pk):
+    """
+    Update a cached proposal
+
+    :param pk: pk of proposal
+    :return:
+    """
+    prop = get_object_or_404(Proposal, pk=pk)
+    if prop.Status == 4:
+        cache.set('proposal_{}'.format(pk), prop, None)

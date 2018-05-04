@@ -1,11 +1,12 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import Group, User
 from .models import TelemetryKey
-from .views import getTrack
+from .views import get_ProposalTracking
 from django.shortcuts import get_object_or_404
 from django.contrib import auth
 from channels.db import database_sync_to_async
-from proposals.cacheprop import getProp
+from proposals.utils import getProp
+
 
 class LiveStreamConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -118,7 +119,7 @@ class CurrentViewNumberConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.pk = self.scope['url_route']['kwargs']['pk']
         self.prop = await database_sync_to_async(getProp)(self.pk)
-        self.track = await database_sync_to_async(getTrack)(self.prop)
+        self.track = await database_sync_to_async(get_ProposalTracking)(self.prop)
         self.user = self.scope['user']
         if self.track.Subject.Status != 4:
             await self.close()

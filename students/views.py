@@ -1,7 +1,3 @@
-import json
-import time
-
-import channels
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Max
@@ -10,7 +6,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 
 from BepMarketplace.decorators import can_view_proposal, can_apply, student_only, can_access_professionalskills
 from professionalskills.models import StudentFile
-from proposals.cacheprop import getProp
+from proposals.utils import getProp
 from proposals.models import Proposal
 from students.models import Distribution
 from timeline.utils import get_timeslot
@@ -23,14 +19,14 @@ def get_all_applications(user):
     """
     Get a users applications for this timeslot
 
-    :param request:
+    :param user: user to get applications for
     :return:
     """
     return user.applications.filter(Proposal__TimeSlot=get_timeslot())
 
 
 @student_only()
-def listApplications(request):
+def list_applications(request):
     """
     List the applications of a student, with a button to retract the application
 
@@ -42,7 +38,7 @@ def listApplications(request):
 
 
 @can_apply
-def prioUp(request, application_id):
+def prio_up(request, application_id):
     """
     Increase the priority of an application of a student.
 
@@ -69,7 +65,7 @@ def prioUp(request, application_id):
 
 
 @can_apply
-def prioDown(request, application_id):
+def prio_down(request, application_id):
     """
     Decrease the priority of an application of a student.
 
@@ -102,7 +98,7 @@ def prioDown(request, application_id):
 
 
 @can_apply
-def retractApplication(request, application_id):
+def retract_application(request, application_id):
     """
     Let a user un-apply / retract an application.
 
@@ -130,7 +126,7 @@ def retractApplication(request, application_id):
 
 @can_view_proposal
 @can_apply
-def applyToProposal(request, pk):
+def apply(request, pk):
     """
     Let a user apply to a proposal. Called after confirmapply.
 
@@ -143,10 +139,10 @@ def applyToProposal(request, pk):
 
     if get_all_applications(request.user).count() >= settings.MAX_NUM_APPLICATIONS:
         return render(request, 'base.html', context={
-                'Message': 'already at max ammount of applied proposals<br>'
-                           'retract one first before continuing',
-                'return': 'students:listapplications',
-            })
+            'Message': 'already at max ammount of applied proposals<br>'
+                       'retract one first before continuing',
+            'return': 'students:listapplications',
+        })
     if get_all_applications(request.user).filter(Q(Proposal=prop)).exists():
         return render(request, 'base.html', context={
             'Message': 'You already applied to this proposal.',
@@ -170,13 +166,13 @@ def applyToProposal(request, pk):
     appl.save()
     return render(request, 'base.html', context={
         'Message': 'Application saved with priority number {}'.format(appl.Priority),
-        'return'  : 'students:listapplications',
+        'return': 'students:listapplications',
     })
 
 
 @can_view_proposal
 @can_apply
-def confirmApplication(request, pk):
+def confirm_apply(request, pk):
     """
     After a student presses apply on a proposal, he/she has to confirm the application on this page.
     This page also checks whether the user is allowed to apply
@@ -191,16 +187,16 @@ def confirmApplication(request, pk):
     if get_all_applications(request.user).filter(Q(Proposal=prop)).exists():
         return render(request, 'base.html', context={
             'Message': 'You already applied to this proposal.',
-            'return'  : 'students:listapplications',
+            'return': 'students:listapplications',
         })
-    return render(request, 'students/ApplyToProposal.html', context = {
+    return render(request, 'students/ApplyToProposal.html', context={
         'proposal': get_object_or_404(Proposal, pk=pk),
-                                         })
+    })
 
 
 @student_only()
 @can_access_professionalskills
-def addFile(request):
+def add_file(request):
     """
     For students to upload a file. Used for the hand in system.
     Responsibles, assistants and trackheads can then view the files of their students.
@@ -226,12 +222,13 @@ def addFile(request):
 
 @student_only()
 @can_access_professionalskills
-def editFile(request, pk):
+def edit_file(request, pk):
     """
     For students to edit a uploaded file. Used for the hand in system.
     Responsibles, assistants and trackheads can then view the files of their students.
     support staff can see all student files.
 
+    :param pk: pk of file to edit
     :param request:
     """
     file = get_object_or_404(StudentFile, id=pk)
@@ -244,7 +241,7 @@ def editFile(request, pk):
                 file.Distribution = dist
                 file.save()
                 return render(request, 'base.html',
-                          {'Message': 'File changed!', 'return': 'professionalskills:listownfiles'})
+                              {'Message': 'File changed!', 'return': 'professionalskills:listownfiles'})
             else:
                 return render(request, 'base.html',
                               {'Message': 'No change made.', 'return': 'professionalskills:listownfiles'})

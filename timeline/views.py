@@ -15,7 +15,6 @@ def list_timeslots(request):
     List all timeslots (years)
 
     :param request:
-    :param timeslot:
     :return:
     """
     tss = TimeSlot.objects.all()
@@ -40,11 +39,11 @@ def add_timeslot(request):
                            'return': 'timeline:list_timeslots'})
     else:
         form = TimeSlotForm()
-    return render(request, 'GenericForm.html',{
-                  'form': form,
-                  'formtitle': 'Add TimeSlot',
-                  'buttontext': 'Save',
-                  'skip_date_validate': True,
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Add TimeSlot',
+        'buttontext': 'Save',
+        'skip_date_validate': True,
     })
 
 
@@ -69,11 +68,11 @@ def edit_timeslot(request, timeslot):
                 })
     else:
         form = TimeSlotForm(instance=ts)
-    return render(request, 'GenericForm.html',{
-                  'form': form,
-                  'formtitle': 'Edit timeslot',
-                  'buttontext': 'Save',
-                  'skip_date_validate': True,
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Edit timeslot',
+        'buttontext': 'Save',
+        'skip_date_validate': True,
     })
 
 
@@ -89,7 +88,8 @@ def list_timephases(request, timeslot):
     ts = get_object_or_404(TimeSlot, pk=timeslot)
     ph = ts.timephases.all()
     cur = get_timephase()
-    return render(request, 'timeline/list_timephases.html', {'ts': ts, 'ph': ph, 'cur': cur, 'now': datetime.now().date()})
+    return render(request, 'timeline/list_timephases.html',
+                  {'ts': ts, 'ph': ph, 'cur': cur, 'now': datetime.now().date()})
 
 
 @group_required('type3staff')
@@ -109,18 +109,18 @@ def add_timephase(request, timeslot):
         form = TimePhaseForm(request.POST)
         if form.is_valid():
             form.save()
-            return render(request, 'base.html',{
+            return render(request, 'base.html', {
                 'Message': 'TimePhase added!',
                 'return': 'timeline:list_timephases',
                 'returnget': ts.pk,
             })
     else:
         form = TimePhaseForm(initial={'Timeslot': ts})
-    return render(request, 'GenericForm.html',{
-                  'form': form,
-                  'formtitle': 'Add TimePhase',
-                  'buttontext': 'Save',
-                  'skip_date_validate': True,
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Add TimePhase',
+        'buttontext': 'Save',
+        'skip_date_validate': True,
     })
 
 
@@ -129,7 +129,7 @@ def edit_timephase(request, timephase):
     """
 
     :param request:
-    :param timeslot:
+    :param timephase: timephase to edit
     :return:
     """
     tp = get_object_or_404(TimePhase, pk=timephase)
@@ -154,9 +154,9 @@ def edit_timephase(request, timephase):
                 })
     else:
         form = TimePhaseForm(instance=tp)
-    return render(request, 'GenericForm.html',{
-                  'form': form,
-                  'formtitle': 'Edit TimePhase',
-                  'buttontext': 'Save',
-                  'skip_date_validate': True,
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Edit TimePhase',
+        'buttontext': 'Save',
+        'skip_date_validate': True,
     })

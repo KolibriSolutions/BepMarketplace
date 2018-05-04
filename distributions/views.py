@@ -12,9 +12,8 @@ from BepMarketplace.decorators import group_required, phase_required
 from general_form import ConfirmForm
 from general_mail import EmailThreadMultipleTemplate
 from general_view import get_all_students, get_all_staff
-from proposals.cacheprop import getProp
 from proposals.models import Proposal
-from proposals.utils import get_all_proposals, get_share_link
+from proposals.utils import get_all_proposals, get_share_link, getProp
 from students.models import Application, Distribution
 from students.views import get_all_applications
 from timeline.models import TimeSlot
@@ -25,7 +24,7 @@ warningString = 'Something failed in the server, please refresh this page (F5) o
 
 
 @group_required('type3staff')
-def supportDistributeApplications(request):
+def manual(request):
     """
     Support page to distribute students manually to projects. Uses ajax calls to change distributions.
 
@@ -44,7 +43,7 @@ def supportDistributeApplications(request):
 
 
 @group_required('type3staff')
-def distributeApi(request):
+def api_distribute(request):
     """
     AJAX call from manual distribute to distribute
 
@@ -74,14 +73,14 @@ def distributeApi(request):
             dist.save()
         except Exception as e:
             return JsonResponse({'type': 'warning', 'txt': warningString, 'exception': str(e)})
-        return JsonResponse({'type':'success', 'txt':'Distributed Student '+ dist.Student.get_full_name() +
-                                                     ' to Proposal ' + dist.Proposal.Title, 'prio':applprio})
+        return JsonResponse({'type': 'success', 'txt': 'Distributed Student ' + dist.Student.get_full_name() +
+                                                       ' to Proposal ' + dist.Proposal.Title, 'prio': applprio})
     else:
         raise PermissionDenied('You don\'t know what you\'re doing!')
 
 
 @group_required('type3staff')
-def undistributeApi(request):
+def api_undistribute(request):
     """
     AJAX call from manual distribute to undistribute
 
@@ -109,7 +108,7 @@ def undistributeApi(request):
 
 
 @group_required('type3staff')
-def changeDistributeApi(request):
+def api_redistribute(request):
     """
     AJAX call from manual distribute to change a distribution
 
@@ -136,14 +135,14 @@ def changeDistributeApi(request):
             dist.save()
         except Exception as e:
             return JsonResponse({'type': 'warning', 'txt': warningString, 'exception': str(e)})
-        return JsonResponse({'type': 'success', 'txt': 'Changed distributed Student '+ dist.Student.get_full_name() +
-                                                       ' to Proposal ' + dist.Proposal.Title, 'prio':applprio})
+        return JsonResponse({'type': 'success', 'txt': 'Changed distributed Student ' + dist.Student.get_full_name() +
+                                                       ' to Proposal ' + dist.Proposal.Title, 'prio': applprio})
     else:
         raise PermissionDenied('You don\'t know what you\'re doing!')
 
 
 @group_required('type3staff')
-def mailDistributions(request):
+def mail_distributions(request):
     """
     Mail all distributions to affected users
 
@@ -220,7 +219,7 @@ def mailDistributions(request):
 
 
 @group_required('type3staff')
-def proposalOfDistribution(request, dtype):
+def automatic(request, dtype):
     """
     After automatic distribution, this pages shows how good the automatic distribution is. At this point a type3staff
      member can choose to apply the distributions. Later, this distribution can be edited using manual distributions.
@@ -258,10 +257,10 @@ def proposalOfDistribution(request, dtype):
                 if dist['preference'] > 0:
                     try:
                         dstdbobj.Application = \
-                        Application.objects.filter(Q(Student=dist['student']) &
-                                                   Q(Proposal=dist['proposal']) &
-                                                   Q(Priority=dist['preference']) &
-                                                   Q(Proposal__TimeSlot=get_timeslot()))[0]
+                            Application.objects.filter(Q(Student=dist['student']) &
+                                                       Q(Proposal=dist['proposal']) &
+                                                       Q(Priority=dist['preference']) &
+                                                       Q(Proposal__TimeSlot=get_timeslot()))[0]
                     except:
                         dstdbobj.Application = None
                 else:
@@ -335,7 +334,7 @@ def proposalOfDistribution(request, dtype):
 
 @group_required('type3staff')
 @phase_required(4, 5, 6)
-def secondChoiceList(request):
+def list_second_choice(request):
     """
     list all students with a random distribution
 
@@ -343,21 +342,22 @@ def secondChoiceList(request):
     :return:
     """
     props = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=get_timeslot()
-                                               , num_distr__lt=F('NumstudentsMax')).order_by('Title')
+                                                                               , num_distr__lt=F(
+            'NumstudentsMax')).order_by('Title')
     sharelinks = [get_share_link(request, x.pk) for x in props]
 
     return render(request, 'distributions/secondChoiseList.html', {
         'distributions': Distribution.objects.filter(Timeslot=get_timeslot(),
-                                          Application__isnull=True,
-                                          Proposal__Private__isnull=True).order_by('Student'),
-        'proposals':  props,
+                                                     Application__isnull=True,
+                                                     Proposal__Private__isnull=True).order_by('Student'),
+        'proposals': props,
         'sharelinks': sharelinks,
     })
 
 
 @group_required('type3staff')
 @phase_required(4, 5, 6)
-def deleteRandomDistributions(request):
+def delete_random_distributions(request):
     """
     Delete all distributions who have had a random assigned project
 
@@ -365,8 +365,8 @@ def deleteRandomDistributions(request):
     :return:
     """
     dists = Distribution.objects.filter(Timeslot=get_timeslot(),
-                                                 Application__isnull=True,
-                                                 Proposal__Private__isnull=True).order_by('Student')
+                                        Application__isnull=True,
+                                        Proposal__Private__isnull=True).order_by('Student')
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
         if form.is_valid():

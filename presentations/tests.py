@@ -26,6 +26,7 @@ class PresentationsViewsTest(ViewsTest):
             [['presentationsplanning', None], self.p_support],
             [['presentationsplanningxls', None], self.p_allowed],  # only truely visible when presentations are set to public or phase =7
             [['presentationscalendar', None], self.p_allowed],
+            [['presentationscalendarown', None], self.p_allowed],
         ]
 
         # not logged in users. Ignore status, only use the views column of permission matrix.

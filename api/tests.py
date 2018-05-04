@@ -25,6 +25,7 @@ class ApiViewsTest(ProposalViewsTest):
             [['listpublished', None], s.p_allowed],
             [['listpublishedpergroup', None], s.p_allowed],
             [['listpublishedtitles', None], s.p_allowed],
+            [['api', None], s.p_allowed],
         ]
         # anonymous proposal pages
         codes_prop_notpublic = [

@@ -16,7 +16,7 @@ from .forms import *
 
 @group_required('type1staff', 'type3staff')
 @phase7_only
-def gradeFinalize(request, pk, version=0):
+def finalize(request, pk, version=0):
     """
     Finalize the grades and print. Only for trackheads.
     
@@ -78,7 +78,7 @@ def gradeFinalize(request, pk, version=0):
 
 @group_required('type1staff', 'type3staff')
 @phase7_only
-def gradeFormStaff(request, pk, step=0):
+def staff_form(request, pk, step=0):
     """
     Edit grade for a category as indexed by step. For each student as given by pk.
     Also edit the individual aspects of each grade category. Only for trackheads
@@ -181,7 +181,7 @@ def gradeFormStaff(request, pk, step=0):
 
 
 @login_required
-def gradeExplanation(request):
+def about(request):
     """
     Explanation about grading and grade categories.
     

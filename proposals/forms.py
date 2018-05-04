@@ -116,13 +116,16 @@ def create_user_from_email(self, email, username, student=False):
 
 
 class ProposalFormLimited(forms.ModelForm):
-    Assistants = UserMultipleChoiceField(get_grouptype('2').user_set.all() | \
-                                         get_grouptype('2u').user_set.all() | \
-                                         get_grouptype('1').user_set.all(), widget=widgets.MetroSelectMultiple)
+    # Assistants = UserMultipleChoiceField(get_grouptype('2').user_set.all() | \
+    #                                      get_grouptype('2u').user_set.all() | \
+    #                                      get_grouptype('1').user_set.all(), widget=)
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
+        self.fields['Assistants'].queryset = get_grouptype('2').user_set.all() | \
+                                             get_grouptype('2u').user_set.all() | \
+                                             get_grouptype('1').user_set.all()
 
     class Meta:
         model = Proposal
@@ -133,7 +136,11 @@ class ProposalFormLimited(forms.ModelForm):
         ]
 
         widgets = {
-            'Title': widgets.MetroTextInput
+            'Title': widgets.MetroTextInput,
+            'Assistants': widgets.MetroSelectMultiple,
+        }
+        field_classes = {
+            'Assistants': UserMultipleChoiceField
         }
 
 
@@ -147,17 +154,21 @@ class ProposalForm(forms.ModelForm):
     addPrivatesEmail = forms.CharField(label='Private students (email, one per line)',
                                        widget=widgets.MetroMultiTextInput,
                                        required=False)
-
-    ResponsibleStaff = UserChoiceField(get_grouptype('1').user_set.all(), widget=widgets.MetroSelect,
-                                       label='Responsible staff')
-    Assistants = UserMultipleChoiceField(get_grouptype('2').user_set.all() | \
-                                         get_grouptype('2u').user_set.all() | \
-                                         get_grouptype('1').user_set.all(), widget=widgets.MetroSelectMultiple,
-                                         required=False)
+    #
+    # ResponsibleStaff = UserChoiceField(get_grouptype('1').user_set.all(), widget=widgets.MetroSelect,
+    #                                    label='Responsible staff')
+    # Assistants = UserMultipleChoiceField(get_grouptype('2').user_set.all() | \
+    #                                      get_grouptype('2u').user_set.all() | \
+    #                                      get_grouptype('1').user_set.all(), widget=widgets.MetroSelectMultiple,
+    #                                      required=False)
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
+        self.fields['ResponsibleStaff'].queryset = get_grouptype('1').user_set.all()
+        self.fields['Assistants'].queryset = get_grouptype('2').user_set.all() | \
+                                             get_grouptype('2u').user_set.all() | \
+                                             get_grouptype('1').user_set.all()
         self.fields['addAssistantsEmail'].widget.attrs['placeholder'] = 'Add assistant via email address'
         self.fields['addPrivatesEmail'].widget.attrs['placeholder'] = 'Add private student via email address'
 
@@ -198,6 +209,8 @@ class ProposalForm(forms.ModelForm):
         }
         widgets = {
             'Title': widgets.MetroTextInput,
+            'ResponsibleStaff': widgets.MetroSelect,
+            'Assistants': widgets.MetroSelectMultiple,
             'Track': widgets.MetroSelect,
             'Group': widgets.MetroSelect,
             'ECTS': widgets.MetroSelect,
@@ -207,6 +220,10 @@ class ProposalForm(forms.ModelForm):
             'StudentsTaskDescription': widgets.MetroMultiTextInput,
             'TimeSlot': widgets.MetroSelect,
             'Private': widgets.MetroSelectMultiple
+        }
+        field_classes = {
+            'ResponsibleStaff': UserChoiceField,
+            'Assistants': UserMultipleChoiceField,
         }
 
     def clean(self):

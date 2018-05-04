@@ -1,22 +1,25 @@
-from django.conf.urls import url
+from django.urls import re_path, path
 
 from . import views
+
 # define all kinds of file downloads here.
 # Files can be downloaded using their filename (for backward compatibility with file edit) or using their object ID
 app_name = 'download'
 
-reguuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}.[A-z]{1,5}"
+reguuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}.[A-z]{1,5}"  # regex for uuid with extension
 
 urlpatterns = [
     # public files
-    url(r'publicfile/(?P<fileid>[0-9]+)$', views.PublicFiles, name='publicfile'),  # by object-id
-    url(r'public_files/(?P<timeslot>[0-9]+)/(?P<fileid>'+reguuid+')$', views.PublicFiles, name='public_files'),  # uri
+    path('publicfile/<int:fileid>', views.public_files, name='publicfile'),  # by object-id
+    re_path(r'public_files/(?P<timeslot>[0-9]+)/(?P<fileid>' + reguuid + ')$', views.public_files, name='public_files'),
+    # uri
 
     # proposal attachements
-    url(r'proposalfile/(?P<ty>[a-z])/(?P<fileid>[0-9]+)$', views.ProposalFiles, name='proposalfile'),  # object-id
-    url(r'proposal_(?P<proposalid>[0-9]+)/(?P<fileid>'+reguuid+')$', views.ProposalFiles, name='proposal_files'),  # uri
+    path('proposalfile/<str:ty>/<int:fileid>', views.project_files, name='proposalfile'),  # object-id
+    re_path(r'proposal_(?P<proposalid>[0-9]+)/(?P<fileid>' + reguuid + ')$', views.project_files,
+            name='proposal_files'),  # uri
 
     # student files (professionalskills)
-    url(r'studentfile/(?P<fileid>[0-9]+)$', views.StudentFiles, name='studentfile'),  # object-id
-    url(r'dist_(?P<distid>[0-9]+)/(?P<fileid>' + reguuid + ')$', views.StudentFiles, name='student_files'),  # uri
+    path('studentfile/<int:fileid>', views.student_files, name='studentfile'),  # object-id
+    re_path(r'dist_(?P<distid>[0-9]+)/(?P<fileid>' + reguuid + ')$', views.student_files, name='student_files'),  # uri
 ]

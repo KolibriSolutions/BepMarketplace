@@ -1,16 +1,17 @@
-from django.conf.urls import url
+from django.urls import path
 
 from . import views
 
 app_name = 'distributions'
 
 urlpatterns = [
-    url(r'^distribute/$', views.supportDistributeApplications, name='supportDistributeApplications'),
-    url(r'^api/distribute/$', views.distributeApi, name='distribute'),
-    url(r'^api/undistribute/$', views.undistributeApi, name='undistribute'),
-    url(r'^api/changedistribute/$', views.changeDistributeApi, name='changedistribute'),
-    url(r'^distributeproposal/(?P<dtype>[0-9]+)/$', views.proposalOfDistribution, name='distributeproposal'),
-    url(r'^maildistributions/$', views.mailDistributions, name='maildistributions'),
-    url(r'^secondchoice/$', views.secondChoiceList, name='secondchoice'),
-    url(r'^delete/randoms/$', views.deleteRandomDistributions, name='deleterandoms'),
+    path('manual/', views.manual, name='supportDistributeApplications'),
+    path('api/distribute/', views.api_distribute, name='distribute'),
+    path('api/undistribute/', views.api_undistribute, name='undistribute'),
+    path('api/redistribute/', views.api_redistribute, name='changedistribute'),
+    path('mail/', views.mail_distributions, name='maildistributions'),
+
+    path('automatic/<int:dtype>/', views.automatic, name='distributeproposal'),
+    path('secondchoice/', views.list_second_choice, name='secondchoice'),
+    path('delete/randoms/', views.delete_random_distributions, name='deleterandoms'),
 ]

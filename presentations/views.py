@@ -21,10 +21,11 @@ from .models import Room, PresentationSet, PresentationTimeSlot
 
 
 @group_required("type3staff")
-def presentationswizardstep1(request):
+def wizard_step1(request):
     """
     Step 1 of the planning of the presentations for the projects.
-    In this step global options are set, these are only for validation and can be overridden per presentation afterwards.
+    In this step global options are set,
+    these are only for validation and can be overridden per presentation afterwards.
 
     :param request:
     :return:
@@ -40,31 +41,36 @@ def presentationswizardstep1(request):
     if request.method == 'POST':
         form = PresentationOptionsForm(request.POST, instance=options)
         if form.is_valid():
-            #if something changed or if nothing exists yet.
+            # if something changed or if nothing exists yet.
             if form.changed_data or not hasattr(ts, 'presentationoptions'):
                 # create new
                 options = form.save()
                 try:
                     options.Timeslot = get_timeslot()
-                # check for errors
+                    # check for errors
                     options.validate_unique()
                 except:
                     return render(request, "base.html", {
-                        "Message": "Presentation options failed. Please try again or contact support staff.", "return":reverse("presentations:presentationswizardstep2")})
+                        "Message": "Presentation options failed. Please try again or contact support staff.",
+                        "return": reverse("presentations:presentationswizardstep2")})
                 options.save()
                 return render(request, "base.html", {"Message": "Presentation options saved. <br />\
-                If there were already presentations planned and you changed the durations, please recalculate the timings in 'step 4' and re-save the presentations! \
-                <br /><a class='button success' href='"+reverse("presentations:presentationswizardstep2")+"'>Go to next step</a>"})
+                If there were already presentations planned and you changed the durations, "
+                                                                "please recalculate the timings in 'step 4' and re-save the presentations! \
+                <br /><a class='button success' href='" + reverse(
+                    "presentations:presentationswizardstep2") + "'>Go to next step</a>"})
 
             return render(request, "base.html", {"Message": "No changes in presentation options. <br />\
-            <a class='button success' href='"+reverse("presentations:presentationswizardstep2")+"'>Go to next step</a>"})
+            <a class='button success' href='" + reverse(
+                "presentations:presentationswizardstep2") + "'>Go to next step</a>"})
     else:
         form = PresentationOptionsForm(instance=options)
-    return render(request, 'GenericForm.html', {'form' : form, 'formtitle':'Presentations step 1; Presentation options', 'buttontext': 'Save and go to step 2'})
+    return render(request, 'GenericForm.html', {'form': form, 'formtitle': 'Presentations step 1; Presentation options',
+                                                'buttontext': 'Save and go to step 2'})
 
 
 @group_required("type3staff")
-def presentationswizardstep2(request):
+def wizard_step2(request):
     """
     Step 2 of the planning of the presentations for the projects.
     In this step the rooms for the presentations are set. Rooms have just a name. All used rooms have to be supplied.
@@ -77,22 +83,28 @@ def presentationswizardstep2(request):
 
     ts = get_timeslot()
     if not hasattr(ts, 'presentationoptions'):
-        return render(request, "base.html", {"Message": "There are no presentation options yet, please <a class='button success' href='"+reverse("presentations:presentationswizardstep1")+"'>go back to step 1</a>"})
+        return render(request, "base.html", {
+            "Message": "There are no presentation options yet, please <a class='button success' href='" + reverse(
+                "presentations:presentationswizardstep1") + "'>go back to step 1</a>"})
 
-    formSet = modelformset_factory(Room, form=PresentationRoomForm, can_delete=True, extra=6)
-    formset = formSet(queryset=Room.objects.all())
+    form_set = modelformset_factory(Room, form=PresentationRoomForm, can_delete=True, extra=6)
+    formset = form_set(queryset=Room.objects.all())
     if request.method == 'POST':
-        formset = formSet(request.POST)
+        formset = form_set(request.POST)
 
         if formset.is_valid():
             formset.save()
             return render(request, "base.html", {"Message": "Rooms saved!  <br />\
-            <a class='button success' href='"+reverse("presentations:presentationswizardstep3")+"'>Go to next step</a> <a class='button primary' href='"+reverse("presentations:presentationswizardstep2")+"'>Add more rooms</a>"})
-    return render(request, 'GenericForm.html', {'formset': formset, 'formtitle': "Presentations step 2; Rooms for presentations & assessments", 'buttontext': 'Save and go to step 3'})
+            <a class='button success' href='" + reverse(
+                "presentations:presentationswizardstep3") + "'>Go to next step</a> <a class='button primary' href='" + reverse(
+                "presentations:presentationswizardstep2") + "'>Add more rooms</a>"})
+    return render(request, 'GenericForm.html',
+                  {'formset': formset, 'formtitle': "Presentations step 2; Rooms for presentations & assessments",
+                   'buttontext': 'Save and go to step 3'})
 
 
 @group_required("type3staff")
-def presentationswizardstep3(request):
+def wizard_step3(request):
     """
     Step 3 of the planning of the presentations for the projects.
     Setting the presentation sets. A set of presentations is a fixed combination of a presentation room, an
@@ -106,29 +118,37 @@ def presentationswizardstep3(request):
 
     ts = get_timeslot()
     if not hasattr(ts, 'presentationoptions'):
-        return render(request, "base.html", {"Message": "There are no presentation options yet, please <a class='button success' href='"+reverse("presentations:presentationswizardstep1")+"'>go back to step 1</a>"})
-    #this is needed because the form validation uses the presentation timeslot
+        return render(request, "base.html", {
+            "Message": "There are no presentation options yet, please <a class='button success' href='" + reverse(
+                "presentations:presentationswizardstep1") + "'>go back to step 1</a>"})
+    # this is needed because the form validation uses the presentation timeslot
     try:
         ts.timephases.get(Description=7)
     except:
-        raise PermissionDenied("There is no timephase for presentations defined, please define a timephase or contact the support staff.")
+        raise PermissionDenied(
+            "There is no timephase for presentations defined, please define a timephase or contact the support staff.")
 
     form = PresentationSetForm
-    formSet = modelformset_factory(PresentationSet, form=form, can_delete=True, extra=4)
-    formset = formSet(queryset=PresentationSet.objects.all())
+    form_set = modelformset_factory(PresentationSet, form=form, can_delete=True, extra=4)
+    formset = form_set(queryset=PresentationSet.objects.all())
 
     if request.method == 'POST':
-        formset = formSet(request.POST)
+        formset = form_set(request.POST)
         if formset.is_valid():
             formset.save()
             return render(request, "base.html", {"Message": "Sets saved! <br />\
-            If there were already presentations planned and you changed the durations, please recalculate the timings in 'step 4' and re-save the presentations! <br /> \
-             <a class='button success' href='"+reverse("presentations:presentationswizardstep4")+"'>Go to final step</a> <a class='button primary' href='"+reverse("presentations:presentationswizardstep3")+"'>Make more sets</a>"})
-    return render(request, 'GenericForm.html', {'formset': formset, 'formtitle': "Presentations step 3; Generate presentations sets", 'buttontext': 'Save and go to step 4'})
+            If there were already presentations planned and you changed the durations, "
+                                                            "please recalculate the timings in 'step 4' and re-save the presentations! <br /> \
+             <a class='button success' href='" + reverse(
+                "presentations:presentationswizardstep4") + "'>Go to final step</a> <a class='button primary' href='" + reverse(
+                "presentations:presentationswizardstep3") + "'>Make more sets</a>"})
+    return render(request, 'GenericForm.html',
+                  {'formset': formset, 'formtitle': "Presentations step 3; Generate presentations sets",
+                   'buttontext': 'Save and go to step 4'})
 
 
 @group_required("type3staff")
-def presentationswizardstep4(request):
+def wizard_step4(request):
     """
     Step 4 of the planning of the presentations for the projects.
     This is where the actual presentations get planned. All previous steps come together. Each set is a column in the
@@ -143,7 +163,9 @@ def presentationswizardstep4(request):
 
     ts = get_timeslot()
     if not hasattr(ts, 'presentationoptions'):
-        return render(request, "base.html", {"Message": "There are no presentation options yet, please <a class='button success' href='"+reverse("presentations:presentationswizardstep1")+"'>go back to step 1</a>"})
+        return render(request, "base.html", {
+            "Message": "There are no presentation options yet, please <a class='button success' href='" + reverse(
+                "presentations:presentationswizardstep1") + "'>go back to step 1</a>"})
     if ts.presentationoptions.presentationsets.count() == 0:
         return render(request, "base.html", {
             "Message": "There are no presentation sets yet, please <a class='button success' href='" + reverse(
@@ -153,13 +175,13 @@ def presentationswizardstep4(request):
         if not jsondata:
             return JsonResponse({'type': 'error', 'txt': 'Invalid POST data. Please contact support staff.'})
         distobjs = json.loads(jsondata)
-        #remove all current presentations
+        # remove all current presentations
         for slot in PresentationTimeSlot.objects.filter(Presentations__PresentationOptions__TimeSlot=get_timeslot()):
             slot.delete()
-        #generate new
+        # generate new
         for dset in distobjs:
-#            print(dset)
-            setID = dset[0]
+            #            print(dset)
+            set_id = dset[0]
             for slot in dset[1]:
                 slotObj = PresentationTimeSlot()
                 slotObj.DateTime = datetime.fromtimestamp(slot['DateTime'])
@@ -168,7 +190,7 @@ def presentationswizardstep4(request):
                     slotObj.CustomType = slot["CustomType"]
                 else:
                     slotObj.Distribution = Distribution.objects.get(id=slot["Distribution"])
-                slotObj.Presentations = PresentationSet.objects.get(id=setID)
+                slotObj.Presentations = PresentationSet.objects.get(id=set_id)
                 slotObj.validate_unique()
                 slotObj.save()
         return JsonResponse({'type': 'success', 'txt': 'Data saved!'})
@@ -178,11 +200,12 @@ def presentationswizardstep4(request):
         opts = ts.presentationoptions
         types = PresentationTimeSlot.SlotTypes
         tracks = Track.objects.all()
-        return render(request, 'presentations/planPresentations.html', {'dists': dists, 'sets': sets, 'opts': opts, 'types': types, 'tracks':tracks})
+        return render(request, 'presentations/planPresentations.html',
+                      {'dists': dists, 'sets': sets, 'opts': opts, 'types': types, 'tracks': tracks})
 
 
 @group_required('type3staff')
-def presentationsPlanning(request):
+def list_presentations(request):
     """
     Table view of all presentations in this timeslot. Way too much unorganized information, so mostly used for debugging
     therefore only visible for type3staff
@@ -195,13 +218,14 @@ def presentationsPlanning(request):
 
     sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=get_timeslot())
     if not sets:
-        return render(request, "base.html", {"Message": "There is nothing planned yet. Please plan the presentations first."})
-    return render(request, "presentations/listPresentationsPlanning.html",{"sets": sets})
+        return render(request, "base.html",
+                      {"Message": "There is nothing planned yet. Please plan the presentations first."})
+    return render(request, "presentations/listPresentationsPlanning.html", {"sets": sets})
 
 
 @not_minified_response
 @login_required
-def presentationsPlanningXls(request):
+def export_presentations(request):
     """
     Shows the presentations planning in an Excel file in the same way as was done before the marketplace
 
@@ -232,7 +256,7 @@ def presentationsPlanningXls(request):
 
 
 @login_required
-def presentationsCalendar(request, own=False):
+def calendar(request, own=False):
     """
     Calendar view of the presentations planning, public visible in phase 7, otherwise only if 'public==True'
 
@@ -285,7 +309,9 @@ def presentationsCalendar(request, own=False):
                 options.save()
         else:
             form = MakePublicForm(instance=options)
-        return render(request, "presentations/presentationsCalendar.html", {"sets": sets, "form": form, "beginCalendar": begin })
+        return render(request, "presentations/presentationsCalendar.html",
+                      {"sets": sets, "form": form, "beginCalendar": begin})
 
     # normal view for non-type3 staff
-    return render(request, "presentations/presentationsCalendar.html", {"sets": sets, "beginCalendar": begin, "own" : own})
+    return render(request, "presentations/presentationsCalendar.html",
+                  {"sets": sets, "beginCalendar": begin, "own": own})

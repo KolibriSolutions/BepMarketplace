@@ -24,3 +24,4 @@ telemetry_cli/telemetry_key.py
 Pipfile
 Pipfile.lock
 /node_modules/
+/start_redis.bat

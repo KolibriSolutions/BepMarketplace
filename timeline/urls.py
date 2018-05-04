@@ -1,14 +1,14 @@
-from django.conf.urls import url
+from django.urls import path
 
 from . import views
 
 app_name = 'timeline'
 
 urlpatterns = [
-    url(r'^timeslot/list/$', views.list_timeslots, name='list_timeslots'),
-    url(r'^timeslot/add/$', views.add_timeslot, name='add_timeslot'),
-    url(r'^timeslot/(?P<timeslot>[0-9]+)/$', views.edit_timeslot, name='edit_timeslot'),
-    url(r'^timeslot/(?P<timeslot>[0-9]+)/list/$', views.list_timephases, name='list_timephases'),
-    url(r'^timeslot/(?P<timeslot>[0-9]+)/add/$', views.add_timephase, name='add_timephase'),
-    url(r'^timephase/(?P<timephase>[0-9]+)/$', views.edit_timephase, name='edit_timephase'),
+    path('timeslot/list/', views.list_timeslots, name='list_timeslots'),
+    path('timeslot/add/', views.add_timeslot, name='add_timeslot'),
+    path('timeslot/<int:timeslot>/', views.edit_timeslot, name='edit_timeslot'),
+    path('timeslot/<int:timeslot>/list/', views.list_timephases, name='list_timephases'),
+    path('timeslot/<int:timeslot>/add/', views.add_timephase, name='add_timephase'),
+    path('timephase/<int:timephase>/', views.edit_timephase, name='edit_timephase'),
 ]

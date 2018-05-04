@@ -1,45 +1,43 @@
 """
 BEPMarketplace URL Configuration
-
 """
-from django.conf import settings
-from django.conf.urls import url, include
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
+from django.urls import path, include
+
 from django.views.generic.base import RedirectView
 
 admin.autodiscover()
 admin.site.login = login_required(admin.site.login)
 
 urlpatterns = [
-    url(r'^favicon\.ico$', RedirectView.as_view(url='/static/favicon.ico')),
-    url(r'^impersonate/', include('impersonate.urls')),
-    url(r'^student/', include('students.urls')),
-    url(r'^proposals/', include('proposals.urls')),
-    url(r'^support/', include('support.urls')),
-    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-    url(r'^admin/', admin.site.urls),
-    url(r'^', include('index.urls')),
-    url(r'^api/', include('api.urls')),
-    url(r'^timeline/', include('timeline.urls')),
-    url(r'^tracking/', include('tracking.urls')),
-    url(r'^', include('django.contrib.auth.urls')),
-    url(r'^godpowers/', include('godpowers.urls')),
-    url(r'^presentations/', include('presentations.urls')),
-    url(r'^professionalskills/', include('professionalskills.urls')),
-    url(r'^download/', include('download.urls')),
-    url(r'^two_factor/', include('two_factor_custom.urls')),
-    url(r'^saml2/', include('djangosaml2_custom.urls')),
-    url(r'^results/', include('results.urls')),
-    url(r'^distributions/', include('distributions.urls')),
-    url(r'^osiris/data/', include('osirisdata.urls')),
+    path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico')),
+    path('impersonate/', include('impersonate.urls')),
+    path('student/', include('students.urls')),
+    path('proposals/', include('proposals.urls')),
+    path('support/', include('support.urls')),
+    path('admin/doc/', include('django.contrib.admindocs.urls')),
+    path('admin/', admin.site.urls),
+    path('', include('index.urls')),
+    path('api/', include('api.urls')),
+    path('timeline/', include('timeline.urls')),
+    path('tracking/', include('tracking.urls')),
+    path('godpowers/', include('godpowers.urls')),
+    path('presentations/', include('presentations.urls')),
+    path('professionalskills/', include('professionalskills.urls')),
+    path('download/', include('download.urls')),
+    path('two_factor/', include('two_factor_custom.urls')),
+    path('saml2/', include('djangosaml2_custom.urls')),
+    path('results/', include('results.urls')),
+    path('distributions/', include('distributions.urls')),
+    path('osiris/data/', include('osirisdata.urls')),
 ]
 
 # if settings.DEBUG and False:
 #     import debug_toolbar
 #
 #     urlpatterns = [
-#         url(r'^debug/', include(debug_toolbar.urls)),
+#         path('debug/', include(debug_toolbar.urls)),
 #
 #     ] + urlpatterns
 

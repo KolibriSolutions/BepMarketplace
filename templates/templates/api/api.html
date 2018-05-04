@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block body %}
+<h1>{{ NAME }} API</h1>
+<h3>By kolibri solutions</h3>
+The endpoints to use:<br/>
+<table class="table">
+    <thead>
+    <tr>
+        <th>Endpoint</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>/api/</td>
+        <td>This help page</td>
+    </tr>
+    <tr>
+        <td>/api/share/-token-</td>
+        <td>View a project shared with token</td>
+    </tr>
+    <tr>
+        <td>/api/projects/</td>
+        <td>List of all public projects</td>
+    </tr>
+    <tr>
+        <td>/api/projects/group/</td>
+        <td>List of all public projects ids ordered by capacity group</td>
+    </tr>
+    <tr>
+        <td>/api/projects/titles/</td>
+        <td>
+            List of titles of all public projects.
+        </td>
+    </tr>
+    <tr>
+        <td>/api/projects/-id-</td>
+        <td>Detailed information about project with given id.</td>
+    </tr>
+    </tbody>
+</table>
+{% endblock %}

@@ -1,9 +1,9 @@
 from django.urls import reverse
 
-from general_test import ProposalViewsTest, ViewsTest
-from students.models import Distribution
+from general_test import ViewsTest
 from django.contrib.auth.models import User
 from index.models import UserMeta
+from support.models import PublicFile
 
 class SupportViewsTest(ViewsTest):
     def setUp(self):
@@ -19,9 +19,7 @@ class SupportViewsTest(ViewsTest):
             # public files
             [['addfile', None], self.p_support],
             [['editfiles', None], self.p_support],
-            #TODO
-            # [['editfile', None], self.p_support],
-            # [['deletefile', None], self.p_support],
+
             # users
             [['verifyassistants', None], self.p_support],
             # lists
@@ -32,9 +30,14 @@ class SupportViewsTest(ViewsTest):
             [['liststaffproposals', {'pk':1}], self.p_support],
             [['liststaffXls', None], self.p_support],
             [['listgroupproposals', None], self.p_cgadmin],
-            [['listproposalsadvisor', None], self.p_study]
+            [['listproposalsadvisor', None], self.p_study],
         ]
-        #
+
+        codes_pubfile_phase1234567 = [
+            [['editfile', {'pk' : 1}], self.p_support],
+            [['deletefile', {'pk' : 1}], self.p_support],
+        ]
+
         codes_dist_phase12 = [
             [['SupportListApplicationsDistributions', None], self.p_forbidden],
             [['SupportListDistributionsXls', None], self.p_forbidden],
@@ -54,7 +57,8 @@ class SupportViewsTest(ViewsTest):
         codes_users_phase1234567 = [
             [['upgradeuser', {'pk':100}], self.p_support],
             [['downgradeuser', {'pk':100}], self.p_support],
-            [['overruleusermeta', {'pk':100}], self.p_support]
+            [['overruleusermeta', {'pk':100}], self.p_support],
+            [['userinfo', {'pk':100}], self.p_support]
         ]
 
         # not logged in users. Ignore status, only use the views column of permission matrix.
@@ -85,6 +89,10 @@ class SupportViewsTest(ViewsTest):
         m = UserMeta(User=u)
         m.save()
         self.loop_phase_user(range(1,8), codes_users_phase1234567)
+        #create dummy public file for edit and delete
+        pf = PublicFile(File='/home/django/dummy.txt')
+        pf.save()
+        self.loop_phase_user(range(1, 8), codes_pubfile_phase1234567)
 
         # check if all urls are processed
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

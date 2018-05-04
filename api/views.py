@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from BepMarketplace.decorators import group_required, can_edit_proposal, superuser_required, can_downgrade_proposal
+from api.utils import getStatStr
 from general_mail import mailAffectedUser
 from general_model import GroupOptions
 from general_view import get_grouptype
@@ -18,26 +19,11 @@ from support.models import CapacityGroupAdministration
 from timeline.utils import get_timeslot, get_timephase_number
 from tracking.models import ProposalStatusChange
 
+@login_required
+def api_info(request):
+    return render(request, 'api/api.html')
 
-def getStatStr(status):
-    """
-    returns string for proposal status change message
-    
-    :param status: integer with the status
-    :return: a string with the status
-    """
-    allstatstr = "Proposal status changed to '{}'<br /><ol>".format(Proposal.StatusOptions[status - 1][1])
-    for opt in Proposal.StatusOptions:
-        allstatstr += "<li class=\""
-        if opt[0] == status:
-            allstatstr += "text-accent fg-navy"
-        else:
-            allstatstr += "text-secondary"
-        allstatstr += "\">" + opt[1] + "</li>"
-    return allstatstr+"</ol>"
-
-
-def viewShareLink(request, token):
+def view_share_link(request, token):
     """
     Translate a given sharelink to a proposal-detailpage.
 
@@ -49,7 +35,7 @@ def viewShareLink(request, token):
         pk = signing.loads(token, max_age=settings.MAXAGESHARELINK)
     except signing.SignatureExpired:
         return render(request, "base.html", {
-            "Message" : "Share link has expired!"
+            "Message": "Share link has expired!"
         })
     except signing.BadSignature:
         return render(request, "base.html", {
@@ -61,7 +47,7 @@ def viewShareLink(request, token):
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
 @can_edit_proposal
-def upgradeStatusApi(request, pk):
+def upgrade_status_api(request, pk):
     """
     API call to increase the status of a proposal.
 
@@ -78,8 +64,8 @@ def upgradeStatusApi(request, pk):
         return HttpResponse("Cannot publish proposal for future timeslot", status=403)
 
     elif get_timephase_number() > 2 and \
-                    obj.TimeSlot == get_timeslot() and \
-                    get_grouptype('3') not in request.user.groups.all():
+            obj.TimeSlot == get_timeslot() and \
+            get_grouptype('3') not in request.user.groups.all():
         return HttpResponse("Proposal frozen in this timeslot", status=403)
 
     elif request.user in obj.Assistants.all() and obj.Status >= 2:
@@ -116,7 +102,7 @@ def upgradeStatusApi(request, pk):
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
 @can_downgrade_proposal
-def downgradeStatusApi(request, pk, message=''):
+def downgrade_status_api(request, pk, message=''):
     """
     API call to decrease the status of a proposal.
 
@@ -141,7 +127,7 @@ def downgradeStatusApi(request, pk, message=''):
     notification.StatusTo = obj.Status
     notification.save()
 
-    #destroy the cache for this if the status went from 4->3
+    # destroy the cache for this if the status went from 4->3
     if obj.Status == 3:
         if cache.has_key('listproposalsbodyhtml'):
             cache.delete('listproposalsbodyhtml')
@@ -154,7 +140,7 @@ def downgradeStatusApi(request, pk, message=''):
 
 
 @group_required('type3staff')
-def verifyAssistant(request, pk):
+def verify_assistant(request, pk):
     """
     API call to verify an type2staffunverified assistant as a type2staff.
 
@@ -175,7 +161,7 @@ def verifyAssistant(request, pk):
 
 
 @superuser_required()
-def getGroupAdmins(request, group=""):
+def get_group_admins(request, group=""):
     """
     Get all capacity group administration members as JSON
 
@@ -184,7 +170,7 @@ def getGroupAdmins(request, group=""):
     :return:
     """
     objs = CapacityGroupAdministration.objects.filter(Group=group)
-    if len(objs) == 0:
+    if not objs.exists():
         return HttpResponse("Could not find group")
     else:
         obj = objs[0]
@@ -196,7 +182,7 @@ def getGroupAdmins(request, group=""):
 
 
 @login_required
-def getPublishedListPerGroup(request):
+def list_public_projects_api(request):
     """
     Return all public proposals (=type 4) ordered by group as JSON
 
@@ -207,15 +193,16 @@ def getPublishedListPerGroup(request):
 
     for group in GroupOptions:
         data[group[0]] = {
-            "name"      : group[0],
-            "projects"  : [prop.id for prop in get_all_proposals().filter(Q(Status=4) & Q(Group=group[0]) & Q(Private__isnull=True))]
+            "name": group[0],
+            "projects": [prop.id for prop in
+                         get_all_proposals().filter(Q(Status=4) & Q(Group=group[0]) & Q(Private__isnull=True))]
         }
 
     return JsonResponse(data)
 
 
 @login_required
-def getPublishedTitles(request):
+def list_public_projects_titles_api(request):
     """
     Get all public proposals (=status 4) titles as JSON
 
@@ -231,7 +218,7 @@ def getPublishedTitles(request):
 
 
 @login_required
-def getPublishedDetail(request, pk):
+def detail_proposal_api(request, pk):
     """
     Get detailed information of given proposal as JSON
 
@@ -243,21 +230,21 @@ def getPublishedDetail(request, pk):
     if prop.Status != 4 or prop.Private.exists():
         return HttpResponse("Not allowed", status=403)
     return JsonResponse({
-        "id" : prop.id,
-        "detaillink" : reverse("proposals:details", args=[prop.id]),
-        "title" : prop.Title,
-        "group" : prop.Group,
-        "track" : str(prop.Track),
-        "ECTS" : prop.ECTS,
-        "reponsible" : str(prop.ResponsibleStaff),
-        "assistants" : [str(u) for u in list(prop.Assistants.all())],
-        "generaldescription" : prop.GeneralDescription,
-        "taskdescription" : prop.StudentsTaskDescription,
+        "id": prop.id,
+        "detaillink": reverse("proposals:details", args=[prop.id]),
+        "title": prop.Title,
+        "group": prop.Group,
+        "track": str(prop.Track),
+        "ECTS": prop.ECTS,
+        "reponsible": str(prop.ResponsibleStaff),
+        "assistants": [str(u) for u in list(prop.Assistants.all())],
+        "generaldescription": prop.GeneralDescription,
+        "taskdescription": prop.StudentsTaskDescription,
     })
 
 
 @login_required
-def getPublishedList(request):
+def list_published_api(request):
     """
     JSON list of all published proposals with some detail info.
 
@@ -268,13 +255,13 @@ def getPublishedList(request):
     l = []
     for prop in props:
         l.append({
-            "id" : prop.id,
-            "detaillink" : reverse("proposals:details", args=[prop.id]),
-            "title" : prop.Title,
-            "group" : prop.Group,
-            "track" : str(prop.Track),
-            "ECTS" : prop.ECTS,
-            "reponsible" : str(prop.ResponsibleStaff),
-            "assistants" : [str(u) for u in list(prop.Assistants.all())]    ,
+            "id": prop.id,
+            "detaillink": reverse("proposals:details", args=[prop.id]),
+            "title": prop.Title,
+            "group": prop.Group,
+            "track": str(prop.Track),
+            "ECTS": prop.ECTS,
+            "reponsible": str(prop.ResponsibleStaff),
+            "assistants": [str(u) for u in list(prop.Assistants.all())],
         })
     return JsonResponse(l, safe=False)

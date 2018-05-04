@@ -141,7 +141,7 @@ class ViewsTest(TestCase):
         for g in self.group_names:
             group, created = Group.objects.get_or_create(name=g)
             assert created
-            # make group object accessable as a class variable. < self.type1staff > etc. 
+            # make group object accessable as a class variable. < self.type1staff > etc.
             setattr(self, g, group)
 
 
@@ -201,9 +201,9 @@ class ViewsTest(TestCase):
             ua = UserAcceptedTerms(User=u)
             ua.save()
             m.save()
-            
 
-    def links_in_view_test(self, sourceurl):
+
+    def links_in_view_test(self, sourceurl, skip=[]):
         """
         Find all links in a response and check if they return status 200.
 
@@ -224,7 +224,8 @@ class ViewsTest(TestCase):
                                          and "/static/" not in x
                                          and "/logout/" not in x
                                          and "tracking/live/" not in x
-                                         and "tracking/viewnumber/" not in x)]
+                                         and "tracking/viewnumber/" not in x
+                                         and x not in skip)]
 
             for link in urls:  # select the url in href for all a tags(links)
                 self.info['user'] = user.username
@@ -295,7 +296,8 @@ class ViewsTest(TestCase):
                     try:
                         exception = list(response.context[0])[0]["Message"]
                     except:
-                        exception = response.context  # this is a large amount of information
+                        # exception = response.context  # this is a large amount of information
+                        exception = 'html'
                 self.info['exception'] = exception
             else:
                 self.info['exception'] = "no 403"

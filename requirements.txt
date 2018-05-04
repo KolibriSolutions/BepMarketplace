@@ -1,8 +1,9 @@
+asgiref
 asgi_redis
 bleach
 channels>=2
 daphne>=2
-django>=2
+django==2.*
 django-csp
 django-htmlmin
 django-impersonate
@@ -12,13 +13,13 @@ channels_redis
 django-render-block
 django-sendfile
 django-two-factor-auth
-djangosaml2
+djangosaml2==0.16.11
 docutils
 openpyxl
 pillow
 pip
 psycopg2
-pysaml2
+pysaml2==4.4.*
 pytz
 service_identity
 Sphinx

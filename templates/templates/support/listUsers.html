@@ -40,7 +40,8 @@
                             student (no groups)
                         {% endif %}
                     </td>
-                    <td data-sort="{{ u.last_login|yesno:"yes,no" }}" data-search="{{ u.last_login|yesno:"yes,no" }}"><span
+                    <td data-sort="{{ u.last_login|yesno:"yes,no" }}"
+                        data-search="{{ u.last_login|yesno:"yes,no" }}"><span
                             class="mif-{{ u.last_login|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
                     <td data-sort="{{ u.last_login|date:"U" }}">{{ u.last_login }}</td>
                     <td>
@@ -71,8 +72,13 @@
                         <td></td>
                     {% endif %}
                     {% if user.is_superuser %}
-                        <td><a href="{% url 'impersonate-start' u.id %}" class="button primary">Impersonate</a></td>
-                        <td><a href="{% url 'tracking:userdetail' u.id %}" class="button primary">Telemetry</a></td>
+                        <td>
+                            <a href="{% url 'impersonate-start' u.id %}" class="button primary">Impersonate</a>
+                        </td>
+                        <td>
+                            <a href="{% url 'tracking:userdetail' u.id %}" class="button primary">Telemetry</a>
+                            <a href="{% url 'support:userinfo' u.id %}" class="button primary">Info</a>
+                        </td>
                     {% endif %}
                 </tr>
             {% endfor %}

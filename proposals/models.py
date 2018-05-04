@@ -39,6 +39,8 @@ class Proposal(models.Model):
     Assistants = models.ManyToManyField(User, related_name='proposals', blank=True)
     Status = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(4)], choices=StatusOptions)
     TimeSlot = models.ForeignKey(TimeSlot, related_name='proposals', null=True, blank=True, on_delete=models.PROTECT)
+    TimeStamp = models.DateTimeField(auto_now=True, null=True)
+    Created = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         return self.Title + ' from ' + self.ResponsibleStaff.username

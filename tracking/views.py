@@ -14,7 +14,7 @@ from timeline.utils import get_timeslot
 from .models import ProposalStatusChange, UserLogin, ProposalTracking, ApplicationTracking
 
 
-def getTrack(proposal):
+def get_ProposalTracking(proposal):
     """
     try retrieving the object from cache, if not in cache from db, if not in db, create it. update cache accordingly
 
@@ -36,7 +36,7 @@ def getTrack(proposal):
 
 
 @superuser_required()
-def listUserLog(request):
+def list_user_login(request):
     """
     Shows the list of loginattempts by time.
 
@@ -49,7 +49,7 @@ def listUserLog(request):
 
 
 @superuser_required()
-def viewTrackingStatusList(request):
+def list_proposal_status_change(request):
     """
     List of proposal status changes.
 
@@ -62,7 +62,7 @@ def viewTrackingStatusList(request):
 
 
 @superuser_required()
-def viewTrackingApplicationList(request):
+def list_application_change(request):
     """
     List of application-apply and application-retracts of all students.
 
@@ -75,7 +75,7 @@ def viewTrackingApplicationList(request):
 
 
 @superuser_required()
-def liveStreamer(request):
+def live_streamer(request):
     """
     Show the livestreamer. This pages shows events like a user logging in. Using websockets.
 
@@ -86,7 +86,7 @@ def liveStreamer(request):
 
 
 @superuser_required()
-def userDetail(request, pk):
+def telemetry_user_detail(request, pk):
     user = get_object_or_404(User, pk=pk)
 
     try:
@@ -112,7 +112,7 @@ def userDetail(request, pk):
     })
 
 
-def trackProposalVisit(project, user):
+def tracking_visit_project(project, user):
     """
     Add a proposal-visit to the list of visitors to count unique student views to a proposal
 
@@ -129,7 +129,7 @@ def trackProposalVisit(project, user):
         return
 
     # retrieve object
-    track = getTrack(project)
+    track = get_ProposalTracking(project)
 
     # add if it is unique visitor and write to both db and cache
     if user not in track.UniqueVisitors.all():

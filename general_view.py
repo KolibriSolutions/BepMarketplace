@@ -77,3 +77,14 @@ def timestamp():
     :return:
     """
     return "{:%Y-%m-%d %H:%M:%S}".format(datetime.now())
+
+
+def truncate_string(data, trun_len=10):
+    """
+    Maybe replace with from django.template.defaultfilters import truncatechars
+
+    :param data:
+    :param trun_len:
+    :return:
+    """
+    return (data[:trun_len] + '..') if len(data) > trun_len else data

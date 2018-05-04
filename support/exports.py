@@ -9,7 +9,7 @@ from results.models import GradeCategory
 from timeline.utils import get_timeslot
 
 
-def listStudentsXls(des, typ):
+def get_list_students_xlsx(des, typ):
     """
     Export students and their grades.
     List all students with their proposal and grades.
@@ -72,7 +72,7 @@ def listStudentsXls(des, typ):
     return save_virtual_workbook(wb)
 
 
-def listStaffXls(staff):
+def get_list_staff_xlsx(staff):
     """
     Lists all staff from the marketplace, with number of proposals and distributions
 
@@ -128,7 +128,7 @@ def listStaffXls(staff):
     return save_virtual_workbook(wb)
 
 
-def listDistributionsXls(proposals):
+def get_list_distributions_xlsx(proposals):
     """
     Excel export of proposals with distributions.
     Lists all proposals with their student.

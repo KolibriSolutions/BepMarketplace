@@ -7,7 +7,7 @@ from django.conf import settings
 #from django.contrib.auth.models import User
 
 from templates import widgets
-from .models import FeedbackReport, UserMeta, Track
+from index.models import FeedbackReport, UserMeta, Track
 
 #
 # class CaptchaPasswordResetForm(PasswordResetForm):

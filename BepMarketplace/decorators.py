@@ -5,9 +5,8 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
 from general_view import get_grouptype
-from proposals.cacheprop import getProp
 from proposals.models import Proposal
-from proposals.utils import can_edit_proposal_fn
+from proposals.utils import can_edit_proposal_fn, getProp
 from support.models import CapacityGroupAdministration
 from timeline.utils import get_timephase_number, get_timeslot
 
@@ -181,6 +180,38 @@ def can_edit_proposal(fn):
         allowed = can_edit_proposal_fn(request.user, prop, 'ty' in kw)
         if allowed[0] == True:
             return fn(*args, **kw)
+        else:
+            raise PermissionDenied(allowed[1])
+    return wrapper
+
+def can_share_proposal(fn):
+    """
+    Test if a user can share a given proposal.
+
+    :param fn:
+    :return:
+    """
+    def wrapper(*args, **kw):
+        if 'pk' in kw:
+            pk = int(kw['pk'])
+        else:
+            pk = int(args[1])
+        prop = get_object_or_404(Proposal, pk=pk)
+        request = args[0]
+
+        # user needs to be logged in (so no need for login_required on top of this)
+        if not request.user.is_authenticated:
+            page = args[0].path
+            return redirect_to_login(
+                    next=page,
+                    login_url='index:login',
+                    redirect_field_name='next',)
+
+        allowed = can_edit_proposal_fn(request.user, prop, 'ty' in kw)
+        if allowed[0] == True:
+            return fn(*args, **kw)
+        elif (request.user == prop.ResponsibleStaff or request.user in prop.Assistants.all() or request.user == prop.Track.Head) and not prop.prevyear():
+                return fn(*args, **kw)
         else:
             raise PermissionDenied(allowed[1])
     return wrapper

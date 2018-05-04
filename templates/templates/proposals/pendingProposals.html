@@ -10,7 +10,7 @@
                     $("#disappr_".concat(String(proposalid))).prop('checked', false);
                     $.get("/api/upgradestatus/" + String(proposalid));
                 }
-                $.get("/api/upgradestatus/" + String(proposalid), function (data) {
+                $.get("/api/status/upgrade/" + String(proposalid), function (data) {
                     $.Notify({
                         caption: 'Result',
                         content: data,
@@ -19,7 +19,7 @@
                 });
             }
             else {
-                $.get("/api/downgradestatus/" + String(proposalid), function (data) {
+                $.get("/api/status/downgrade/" + String(proposalid), function (data) {
                     $.Notify({
                         caption: 'Result',
                         content: data,

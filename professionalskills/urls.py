@@ -1,27 +1,30 @@
-from django.conf.urls import url
-from . import  views
+from django.urls import path
+
+from . import views
 
 app_name = 'professionalskills'
-urlpatterns = [
-    url(r'filetype/create/$', views.createFileType, name='filetypecreate'),
-    url(r'filetype/edit/(?P<pk>[0-9]+)/$', views.editFileType, name='filetypeedit'),
-    url(r'filetype/delete/(?P<pk>[0-9]+)/$', views.deleteFileType, name='filetypedelete'),
-    url(r'filetype/list/$', views.listFileType, name='filetypelist'),
-    url(r'^studentfiles/(?P<pk>[0-9]+)/$', views.listStudentFiles, name='liststudentfiles'),
-    url(r'^files/$', views.listOwnFiles, name='listownfiles'),
-    url(r'^files/type/(?P<pk>[0-9]+)/all/$', views.listFilePerType, name='listfileoftype'),
-    url(r'^files/type/(?P<pk>[0-9]+)/missing/$', views.listMissingPerType, name='listmissingoftype'),
-    url(r'^file/respond/(?P<pk>[0-9]+)/$', views.respondFile, name='respondfile'),
-    url(r'^mailoverduestudents/$', views.mailOverDueStudents, name='mailoverduestudents'),
-    url(r'^printprvforms/$', views.printPrvForms, name='printprvforms'),
-    url(r'^downloadall/(?P<pk>[0-9]+)/$', views.downloadAll, name='downloadall'),
 
-    url(r'^group/create/(?P<pk>[0-9]+)/$', views.createGroup, name='creategroup'),
-    url(r'^group/create/$', views.createGroup, name='creategroup'),
-    url(r'^group/edit/(?P<pk>[0-9]+)/$', views.editGroup, name='editgroup'),
-    url(r'^group/listall/(?P<pk>[0-9]+)/$', views.listGroups, name='listgroups'),
-    url(r'^group/assignshuffle/(?P<pk>[0-9]+)/$', views.assignStudents, name='assignshuffle'),
-    url(r'^group/listown/$', views.listOwnGroups, name='listowngroups'),
-    url(r'^group/switch/(?P<frompk>[0-9]+)/(?P<topk>[0-9]+)/$', views.switchGroup, name='switchgroups'),
-    url(r'^group/members/(?P<pk>[0-9]+)/$', views.listGroupMembers, name='listgroupmembers'),
+urlpatterns = [
+    path('filetype/create/', views.create_filetype, name='filetypecreate'),
+    path('filetype/edit/<int:pk>/', views.edit_filetype, name='filetypeedit'),
+    path('filetype/delete/<int:pk>/', views.delete_filetype, name='filetypedelete'),
+    path('filetype/list/', views.list_filetypes, name='filetypelist'),
+    path('studentfiles/<int:pk>/', views.list_student_files, name='liststudentfiles'),
+    path('files/', views.list_own_files, name='listownfiles'),
+    path('files/type/<int:pk>/all/', views.list_files_of_type, name='listfileoftype'),
+    path('files/type/<int:pk>/missing/', views.list_missing_of_type, name='listmissingoftype'),
+    path('file/respond/<int:pk>/', views.respond_file, name='respondfile'),
+
+    path('mail/overdue/', views.mail_overdue_students, name='mailoverduestudents'),
+    path('print/forms/', views.print_forms, name='printprvforms'),
+    path('download/type/<int:pk>/', views.download_all_of_type, name='downloadall'),
+
+    path('group/create/<int:pk>/', views.create_group, name='creategroup'),
+    path('group/create/', views.create_group, name='creategroup'),
+    path('group/edit/<int:pk>/', views.edit_group, name='editgroup'),
+    path('group/listall/<int:pk>/', views.list_groups, name='listgroups'),
+    path('group/assign/<int:pk>/', views.assign, name='assignshuffle'),
+    path('group/listown/', views.list_own_groups, name='listowngroups'),
+    path('group/switch/<int:frompk>/<int:topk>)/', views.switch_group, name='switchgroups'),
+    path('group/members/<int:pk>/', views.list_group_members, name='listgroupmembers'),
 ]

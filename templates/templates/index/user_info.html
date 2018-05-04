@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block body %}
+    <h1>Profile</h1>
+    <a href="{% url 'index:profile' %}" class="button primary">User Profile</a>
+    <a href="{% url 'index:changesettings' %}" class="button primary">User Settings</a>
+    <h2>User</h2>
+    <table class="table bordered">
+        {% for row in user_model %}
+            <tr>
+                <td>{{ row.0 }}</td>
+                <td>{{ row.1 }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <h2>User Meta</h2>
+    <table class="table bordered">
+
+        {% for row in usermeta_model %}
+            <tr>
+                <td>{{ row.0 }}</td>
+                <td>{{ row.1 }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <h2>Related models</h2>
+    <table class="table bordered">
+        {% for row in related %}
+            <tr>
+                <td>{{ row.0 }}</td>
+                <td>
+                    <ul>{{ row.1|unordered_list }}</ul>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    <h2>Distribution related models</h2>
+    <table class="table bordered">
+        {% for row in distribution %}
+            <tr>
+                <td>{{ row.0 }}</td>
+                <td>
+                    <ul>{{ row.1|unordered_list }}</ul>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

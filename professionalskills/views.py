@@ -25,7 +25,7 @@ from .models import FileType, StaffReponse, StudentFile, StudentGroup
 
 @group_required('type3staff', 'type6staff')
 @phase_required(6, 7)
-def downloadAll(request, pk):
+def download_all_of_type(request, pk):
     """
     Download all files for a given filetype
 
@@ -40,8 +40,9 @@ def downloadAll(request, pk):
         for file in ftype.files.all():
             trck = file.Distribution.Proposal.Track
             with open(file.File.path, 'rb') as fstream:
-                archive.writestr('{}/{}.{}'.format(str(trck), file.Distribution.Student.get_full_name().replace(' ', ''),
-                                                   file.File.name.split('.')[-1]), fstream.read())
+                archive.writestr(
+                    '{}/{}.{}'.format(str(trck), file.Distribution.Student.get_full_name().replace(' ', ''),
+                                      file.File.name.split('.')[-1]), fstream.read())
     in_memory.seek(0)
 
     response = HttpResponse(content_type="application/zip")
@@ -53,7 +54,7 @@ def downloadAll(request, pk):
 
 
 @group_required('type3staff', 'type6staff')
-def createFileType(request):
+def create_filetype(request):
     """
     Create a file type that can be used for any professional skill hand-in document.
 
@@ -65,21 +66,21 @@ def createFileType(request):
         if form.is_valid():
             form.save()
             return render(request, 'base.html', {
-                'Message' : 'File Type created!',
-                'return'  : 'professionalskills:filetypelist',
+                'Message': 'File Type created!',
+                'return': 'professionalskills:filetypelist',
             })
     else:
         form = FileTypeModelForm()
 
     return render(request, 'GenericForm.html', {
-        'formtitle' : 'Create New FileType',
-        'form'      : form,
+        'formtitle': 'Create New FileType',
+        'form': form,
         'buttontext': 'Create'
     })
 
 
 @group_required('type3staff', 'type6staff')
-def editFileType(request, pk):
+def edit_filetype(request, pk):
     """
     Edit a file type.
 
@@ -94,26 +95,26 @@ def editFileType(request, pk):
             if form.has_changed():
                 form.save()
                 return render(request, 'base.html', {
-                    'Message' : 'File Type saved!',
-                    'return'  : 'professionalskills:filetypelist'
+                    'Message': 'File Type saved!',
+                    'return': 'professionalskills:filetypelist'
                 })
             else:
                 return render(request, 'base.html', {
-                    'Message' : 'No changes made.',
-                    'return'  : 'professionalskills:filetypelist',
+                    'Message': 'No changes made.',
+                    'return': 'professionalskills:filetypelist',
                 })
     else:
         form = FileTypeModelForm(instance=obj)
 
     return render(request, 'GenericForm.html', {
-        'formtitle' : 'Edit FileType',
-        'form'      : form,
+        'formtitle': 'Edit FileType',
+        'form': form,
         'buttontext': 'Save'
     })
 
 
 @group_required('type3staff', 'type6staff')
-def deleteFileType(request, pk):
+def delete_filetype(request, pk):
     """
     Delete a file type.
 
@@ -128,21 +129,21 @@ def deleteFileType(request, pk):
         if form.is_valid():
             obj.delete()
             return render(request, 'base.html', {
-                'Message' : 'File type deleted.',
-                'return' : 'professionalskills:filetypelist',
+                'Message': 'File type deleted.',
+                'return': 'professionalskills:filetypelist',
             })
     else:
         form = ConfirmForm()
 
     return render(request, 'GenericForm.html', {
-        'form' : form,
-        'formtitle' : 'Confirm deletion of File type {}'.format(obj),
-        'buttontext' : 'Confirm'
+        'form': form,
+        'formtitle': 'Confirm deletion of File type {}'.format(obj),
+        'buttontext': 'Confirm'
     })
 
 
 @can_access_professionalskills
-def listFileType(request):
+def list_filetypes(request):
     """
     For students to view a list of all profskills they have to hand in.
     For type3/type6 staff also shows edit and download buttons
@@ -151,13 +152,13 @@ def listFileType(request):
     :return:
     """
     return render(request, 'professionalskills/listFileTypes.html', {
-        'filetypes' : FileType.objects.filter(TimeSlot=get_timeslot())
+        'filetypes': FileType.objects.filter(TimeSlot=get_timeslot())
     })
 
 
 @group_required('type3staff', 'type6staff')
 @phase_required(6, 7)
-def listFilePerType(request, pk):
+def list_files_of_type(request, pk):
     """
     Lists all files of one type of professional skill.
 
@@ -167,14 +168,14 @@ def listFilePerType(request, pk):
     """
     ftype = get_object_or_404(FileType, pk=pk)
     return render(request, 'professionalskills/listFilesOfType.html', {
-        'type' : ftype,
-        'files' : StudentFile.objects.filter(Type=ftype).distinct()
+        'type': ftype,
+        'files': StudentFile.objects.filter(Type=ftype).distinct()
     })
 
 
 @group_required('type3staff', 'type6staff')
 @phase_required(6, 7)
-def listMissingPerType(request, pk):
+def list_missing_of_type(request, pk):
     """
     Lists all students that did not hand in a file with specified type.
 
@@ -183,19 +184,19 @@ def listMissingPerType(request, pk):
     :return:
     """
     ftype = get_object_or_404(FileType, pk=pk)
-    failStudents = []
+    missing_students = []
     for dist in get_distributions(request.user):
         if dist.files.filter(Type=ftype).count() == 0:
-            failStudents.append(dist)
-    failStudents.sort(key=lambda d: str(d.Student.last_name))
+            missing_students.append(dist)
+    missing_students.sort(key=lambda d: str(d.Student.last_name))
     return render(request, 'professionalskills/listFailStudents.html', {
-        'type' : ftype,
-        'distributions' : failStudents,
+        'type': ftype,
+        'distributions': missing_students,
     })
 
 
 @can_access_professionalskills
-def listStudentFiles(request, pk):
+def list_student_files(request, pk):
     """
     List files of a specified student.
     Used for the student self, for his supervisor, responsible, trackhead and for support staff.
@@ -210,8 +211,8 @@ def listStudentFiles(request, pk):
     if dist.Student == request.user:
         editrights = True
     elif request.user in dist.Proposal.Assistants.all() \
-        or request.user == dist.Proposal.ResponsibleStaff\
-        or request.user == dist.Proposal.Track.Head:
+            or request.user == dist.Proposal.ResponsibleStaff \
+            or request.user == dist.Proposal.Track.Head:
         respondrights = True
     elif get_grouptype("3") in request.user.groups.all() or get_grouptype('6') in request.user.groups.all():
         pass
@@ -219,12 +220,13 @@ def listStudentFiles(request, pk):
         raise PermissionDenied("You are not allowed to view these files")
 
     files = dist.files.all()
-    return render(request, "professionalskills/listFiles.html", {"dist": dist, "files": files, "respond" : respondrights, 'edit': editrights})
+    return render(request, "professionalskills/listFiles.html",
+                  {"dist": dist, "files": files, "respond": respondrights, 'edit': editrights})
 
 
 @group_required('type3staff', 'type6staff')
 @phase_required(6, 7)
-def mailOverDueStudents(request):
+def mail_overdue_students(request):
     """
     Mail students that didn't handin file before the deadline
 
@@ -244,13 +246,13 @@ def mailOverDueStudents(request):
                         missingtypes.append(ftype)
                 if len(missingtypes) > 0:
                     mails.append({
-                        'template' : 'email/overdueprvstudent.html',
-                        'email'    : dist.Student.email,
-                        'subject'  : 'Overdue PRV delivery',
-                        'context'  : {
-                            'student' : dist.Student,
-                            'project' : dist.Proposal,
-                            'types'   : missingtypes,
+                        'template': 'email/overdueprvstudent.html',
+                        'email': dist.Student.email,
+                        'subject': 'Overdue PRV delivery',
+                        'context': {
+                            'student': dist.Student,
+                            'project': dist.Proposal,
+                            'types': missingtypes,
                         }
                     })
 
@@ -269,7 +271,7 @@ def mailOverDueStudents(request):
 
 @group_required('type1staff', 'type2staff')
 @can_access_professionalskills
-def respondFile(request, pk):
+def respond_file(request, pk):
     """
     Form to let a staff member give a response to a students file.
 
@@ -278,11 +280,10 @@ def respondFile(request, pk):
     :return:
     """
 
-
     fileobj = get_object_or_404(StudentFile, pk=pk)
     if (request.user not in fileobj.Distribution.Proposal.Assistants.all() and
-                    request.user != fileobj.Distribution.Proposal.ResponsibleStaff) \
-                    or not fileobj.Type.CheckedBySupervisor:
+        request.user != fileobj.Distribution.Proposal.ResponsibleStaff) \
+            or not fileobj.Type.CheckedBySupervisor:
         raise PermissionDenied("You cant respond to this file")
 
     try:
@@ -300,28 +301,28 @@ def respondFile(request, pk):
         if form.is_valid():
             if form.cleaned_data['Status'] != statusorig:
                 send_mail('Prv Feedback', 'email/prvresponse.html', {
-                    'student' : fileobj.Distribution.Student,
-                    'status' : form.cleaned_data['Status'],
-                    'explanation' : form.cleaned_data['Explanation'],
-                    'type' : fileobj.Type.Name,
+                    'student': fileobj.Distribution.Student,
+                    'status': form.cleaned_data['Status'],
+                    'explanation': form.cleaned_data['Explanation'],
+                    'type': fileobj.Type.Name,
                 }, fileobj.Distribution.Student.email, 'email/prvresponse.html')
             form.save()
             return render(request, 'base.html', {
-                'Message' : 'Response saved!',
-                'return' : 'support:liststudents',
+                'Message': 'Response saved!',
+                'return': 'support:liststudents',
             })
     else:
         form = StaffReponseForm(instance=responseobj)
 
     return render(request, 'GenericForm.html', {
-        'form' : form,
-        'formtitle' : 'Respond to {} from {}'.format(fileobj.Type.Name, fileobj.Distribution.Student.get_full_name())
+        'form': form,
+        'formtitle': 'Respond to {} from {}'.format(fileobj.Type.Name, fileobj.Distribution.Student.get_full_name())
     })
 
 
 @student_only()
 @can_access_professionalskills
-def listOwnFiles(request):
+def list_own_files(request):
     """
     Shows the list of files of a student. Files are attached to distributions-objects.
     This function calls the general file list function listStudentFiles with this student as argument.
@@ -330,12 +331,12 @@ def listOwnFiles(request):
     :return:
     """
     dist = get_object_or_404(Distribution, Student=request.user)
-    return listStudentFiles(request, dist.pk)
+    return list_student_files(request, dist.pk)
 
 
 @group_required('type3staff', 'type6staff')
 @phase_required(6, 7)
-def printPrvForms(request):
+def print_forms(request):
     """
     Export PDF of all distributed students
 
@@ -346,13 +347,13 @@ def printPrvForms(request):
     pages = []
     for dstr in Distribution.objects.all():
         obj = {
-            'student'   : dstr.Student,
-            'proposal'  : dstr.Proposal,
-            'files'     : StaffReponse.objects.filter(File__Distribution=dstr).order_by('File__Type__id'),
+            'student': dstr.Student,
+            'proposal': dstr.Proposal,
+            'files': StaffReponse.objects.filter(File__Distribution=dstr).order_by('File__Type__id'),
         }
         try:
             obj['room'] = dstr.presenationtimeslot.Presentations.AssessmentRoom
-            obj['time'] =  dstr.presenationtimeslot.DateTime
+            obj['time'] = dstr.presenationtimeslot.DateTime
         except:
             pass
         pages.append(obj)
@@ -362,7 +363,7 @@ def printPrvForms(request):
     # })
 
     htmlblock = template.render({
-        'pages' : pages
+        'pages': pages
     })
 
     buffer = BytesIO()
@@ -374,7 +375,7 @@ def printPrvForms(request):
 
 
 @group_required('type3staff', 'type6staff')
-def createGroup(request, pk=None):
+def create_group(request, pk=None):
     """
     Create a group of students for PRV's. This does not yet fill the group with students.
 
@@ -387,7 +388,7 @@ def createGroup(request, pk=None):
         if form.is_valid():
             obj = form.save()
             return render(request, 'base.html', {
-                'Message' : '{} created!'.format(obj),
+                'Message': '{} created!'.format(obj),
             })
     else:
         if pk is not None:
@@ -396,14 +397,14 @@ def createGroup(request, pk=None):
         else:
             form = StudentGroupForm()
     return render(request, 'GenericForm.html', {
-        'form' : form,
-        'formtitle' : 'Create new Group',
-        'buttontext' : 'Create'
+        'form': form,
+        'formtitle': 'Create new Group',
+        'buttontext': 'Create'
     })
 
 
 @group_required('type3staff', 'type6staff')
-def editGroup(request, pk):
+def edit_group(request, pk):
     """
     Edit a prv group.
 
@@ -417,19 +418,19 @@ def editGroup(request, pk):
         if form.is_valid():
             obj = form.save()
             return render(request, 'base.html', {
-                'Message' : '{} saved!'.format(obj),
+                'Message': '{} saved!'.format(obj),
             })
     else:
         form = StudentGroupForm(instance=obj)
     return render(request, 'GenericForm.html', {
-        'form' : form,
-        'formtitle' : 'Edit Group',
-        'buttontext' : 'Save'
+        'form': form,
+        'formtitle': 'Edit Group',
+        'buttontext': 'Save'
     })
 
 
 @group_required('type3staff', 'type6staff')
-def listGroups(request, pk):
+def list_groups(request, pk):
     """
     List all groups of students for one PRV.
 
@@ -437,16 +438,16 @@ def listGroups(request, pk):
     :param pk:
     :return:
     """
-    PRV = get_object_or_404(FileType, pk=pk)
+    filetype = get_object_or_404(FileType, pk=pk)
     return render(request, 'professionalskills/listAllGroups.html', {
-        'groups' : PRV.groups.all(),
-        'PRV' : PRV
+        'groups': filetype.groups.all(),
+        'PRV': filetype
     })
 
 
 @login_required
 @phase_required(6, 7)
-def listGroupMembers(request, pk):
+def list_group_members(request, pk):
     """
     List all students in a prv group
 
@@ -456,14 +457,16 @@ def listGroupMembers(request, pk):
     """
     group = get_object_or_404(StudentGroup, pk=pk)
     return render(request, 'GenericList.html', {
-        'items' : [mem.get_full_name() for mem in group.Members.all()],
-        'header' : format_html('<h1>Members of group {}</h1><h2>{}</h2><h3>Starts {}</h3><br/>Capacity: {}/{}'
-                               .format(group.Number, group.PRV, localtime(group.Start).strftime("%a %d %b at %H:%M"), group.Members.count(), group.Max)),
+        'items': [mem.get_full_name() for mem in group.Members.all()],
+        'header': format_html('<h1>Members of group {}</h1><h2>{}</h2><h3>Starts {}</h3><br/>Capacity: {}/{}'
+                              .format(group.Number, group.PRV, localtime(group.Start).strftime("%a %d %b at %H:%M"),
+                                      group.Members.count(), group.Max)),
     })
+
 
 @group_required('type3staff', 'type6staff')
 @phase_required(6, 7)
-def assignStudents(request, pk):
+def assign(request, pk):
     """
     Assign all distributed students to one of the prv groups.
 
@@ -471,21 +474,21 @@ def assignStudents(request, pk):
     :param pk:
     :return:
     """
-    PRV = get_object_or_404(FileType, pk=pk)
+    filetype = get_object_or_404(FileType, pk=pk)
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
         if form.is_valid():
-            if PRV.groups.all().aggregate(Sum('Max'))['Max__sum'] < get_all_students().count():
+            if filetype.groups.all().aggregate(Sum('Max'))['Max__sum'] < get_all_students().count():
                 return render(request, 'base.html', {
-                    'Message' : 'Groups capacity not sufficient'
+                    'Message': 'Groups capacity not sufficient'
                 })
-            for group in PRV.groups.all():
+            for group in filetype.groups.all():
                 group.Members.clear()
                 group.save()
             students = list(get_all_students())
             totalstudents = len(students)
             random.shuffle(students)
-            groups = list(PRV.groups.all())
+            groups = list(filetype.groups.all())
             totaldistributed = 0
             while totaldistributed < totalstudents:
                 for g in [g for g in groups if g.Members.count() < g.Max]:
@@ -498,21 +501,21 @@ def assignStudents(request, pk):
                 g.save()
 
             return render(request, 'base.html', {
-                'Message' : 'Students divided over the groups'
+                'Message': 'Students divided over the groups'
             })
     else:
         form = ConfirmForm()
 
     return render(request, 'GenericForm.html', {
-        'form' : form,
-        'formtitle' : 'Confirm reshuffling students for {}'.format(PRV),
-        'buttontext' : 'Confirm'
+        'form': form,
+        'formtitle': 'Confirm reshuffling students for {}'.format(filetype),
+        'buttontext': 'Confirm'
     })
 
 
 @student_only()
 @can_access_professionalskills
-def switchGroup(request, frompk, topk):
+def switch_group(request, frompk, topk):
     """
     Lets a student switch between prv groups. This function is usually not called via URL, only direct.
 
@@ -535,14 +538,14 @@ def switchGroup(request, frompk, topk):
     fromgroup.save()
 
     return render(request, 'base.html', {
-        'Message' : 'Switched to group {}'.format(togroup),
-        'return' : 'professionalskills:listowngroups',
+        'Message': 'Switched to group {}'.format(togroup),
+        'return': 'professionalskills:listowngroups',
     })
 
 
 @student_only()
 @can_access_professionalskills
-def listOwnGroups(request):
+def list_own_groups(request):
     """
     List all prv groups where a student is in. With a form for each group to switch to another group.
 
@@ -554,7 +557,7 @@ def listOwnGroups(request):
             f = StudentGroupChoice(request.POST, initial={'Group': g}, prefix=str(g.PRV.pk), PRV=g.PRV)
             if f.is_valid():
                 try:
-                    switchGroup(request, g.pk, f.cleaned_data['Group'].pk)
+                    switch_group(request, g.pk, f.cleaned_data['Group'].pk)
                 except ValidationError:
                     return render(request, 'base.html', {
                         'Switched group is full!'
@@ -566,8 +569,8 @@ def listOwnGroups(request):
 
     groups = []
     for g in request.user.studentgroups.all():
-        f = StudentGroupChoice(initial={'Group' : g}, prefix=str(g.PRV.pk), PRV=g.PRV)
+        f = StudentGroupChoice(initial={'Group': g}, prefix=str(g.PRV.pk), PRV=g.PRV)
         groups.append((g, f))
     return render(request, 'professionalskills/listAllOwnGroups.html', {
-        'groups' : groups
+        'groups': groups
     })

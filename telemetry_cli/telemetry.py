@@ -16,9 +16,14 @@ def on_message(ws, message):
         data = json.loads(message)
     except:
         return
-
-    with open('./data/{}.log'.format(data['user']), 'a') as stream:
-        stream.write(message + '\n')
+    type = data.pop('type')
+    message = json.dumps(data)
+    if type =='user':
+        with open('./data/{}.log'.format(data['user']), 'a') as stream:
+            stream.write(message + '\n')
+    elif type == 'anon_404':
+        with open('./data/404.log', 'a') as stream:
+            stream.write(message + '\n')
 
     print(message)
 
@@ -43,8 +48,6 @@ def on_open(ws):
     :param ws:
     """
     print("### Connection opened ###")
-    # def run(*args):
-    #     threading.Thread(target=run, args=()).start()
 
 
 if __name__ == "__main__":

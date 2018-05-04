@@ -1,12 +1,12 @@
-from django.conf.urls import url
+from django.urls import path
 from . import views
 
 app_name = 'results'
 
 urlpatterns = [
-    url(r'^about/$', views.gradeExplanation, name='about'),
-    url(r'^staff/form/(?P<pk>[0-9]+)/$', views.gradeFormStaff, name='gradeformstaff'),
-    url(r'^staff/form/(?P<pk>[0-9]+)/(?P<step>[0-9]+)/$', views.gradeFormStaff, name='gradeformstaff'),
-    url(r'^staff/end/(?P<pk>[0-9]+)/$', views.gradeFinalize, name='gradefinal'),
-    url(r'^staff/end/(?P<pk>[0-9]+)/(?P<version>[0-2])/$', views.gradeFinalize, name='gradefinal'),
+    path('about/', views.about, name='about'),
+    path('staff/form/<int:pk>/', views.staff_form, name='gradeformstaff'),
+    path('staff/form/<int:pk>/<int:step>/', views.staff_form, name='gradeformstaff'),
+    path('staff/end/<int:pk>/', views.finalize, name='gradefinal'),
+    path('staff/end/<int:pk>/<int:version>/', views.finalize, name='gradefinal'),
 ]

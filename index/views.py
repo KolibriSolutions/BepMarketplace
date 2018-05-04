@@ -38,40 +38,40 @@ def make_get(get):
         u = get
         return "?next=" + u
 
-
-def gotoNextOrHome(request):
-    """
-    Used if a get-string is supplied with a "next" argument. This string is used to redirect a user to a page.
-    In case a user has to login first, the get string is kept in the url until a successfull login.
-    This function processes the request and redirects the user to the 'next' string or otherwise to the homepage
-
-    :param request:
-    :return: redirect to a page.
-    """
-    if 'next' in request.GET.keys():
-        # strip leading an trialing "/" to prevent confusion, then re-append a "/"
-        get = request.GET["next"].strip('/')
-        # strip a possible second get string (for sort order in datatables)
-        p = get.find("?")
-        g = ''
-        if p > 0:
-            u = get[0:p-1]
-            g = get[p:]
-            u += "/"
-        else:
-            u = get
-            g = ''
-
-        #redirect to the next page if the page exists
-        #if a link goes to a download, discard it and go to the homepage, as rendering downloads is quite hard
-        if u.split("/")[0] == 'download':
-            return HttpResponseRedirect('/')
-        if is_safe_url(url=u, host=request.get_host()):
-            return HttpResponseRedirect("/"+u+g)
-        else:
-            raise PermissionDenied("This is not allowed. You used an invalid redirect link.")
-    # otherwise redirect to home
-    return HttpResponseRedirect('/')
+# DEPRICATED
+# def redirect_next_or_home(request):
+#     """
+#     Used if a get-string is supplied with a "next" argument. This string is used to redirect a user to a page.
+#     In case a user has to login first, the get string is kept in the url until a successfull login.
+#     This function processes the request and redirects the user to the 'next' string or otherwise to the homepage
+#
+#     :param request:
+#     :return: redirect to a page.
+#     """
+#     if 'next' in request.GET.keys():
+#         # strip leading an trialing "/" to prevent confusion, then re-append a "/"
+#         get = request.GET["next"].strip('/')
+#         # strip a possible second get string (for sort order in datatables)
+#         p = get.find("?")
+#         g = ''
+#         if p > 0:
+#             u = get[0:p - 1]
+#             g = get[p:]
+#             u += "/"
+#         else:
+#             u = get
+#             g = ''
+#
+#         # redirect to the next page if the page exists
+#         # if a link goes to a download, discard it and go to the homepage, as rendering downloads is quite hard
+#         if u.split("/")[0] == 'download':
+#             return HttpResponseRedirect('/')
+#         if is_safe_url(url=u, host=request.get_host()):
+#             return HttpResponseRedirect("/" + u + g)
+#         else:
+#             raise PermissionDenied("This is not allowed. You used an invalid redirect link.")
+#     # otherwise redirect to home
+#     return HttpResponseRedirect('/')
 
 
 def index(request):
@@ -100,7 +100,7 @@ def index(request):
         if ph <= 2:
             info = ""
         elif ph == 3:
-           info = "Use the Proposals menu to view the proposals and to apply. Use the applications menu to manage your applications."
+            info = "Use the Proposals menu to view the proposals and to apply. Use the applications menu to manage your applications."
         elif ph == 4:
             info = "Please wait for the support staff to distribute the projects"
         elif ph == 5:
@@ -111,21 +111,23 @@ def index(request):
             info = "Good luck with your presentation!"
     ts = get_timephase()
     if not ts:
-        d=0
-        s=0
+        d = 0
+        s = 0
     else:
         # if there is a countdown end take that one, otherwise take the real one
         if ts.CountdownEnd is not None:
             tdelta = datetime.combine(ts.CountdownEnd, datetime.min.time()) - datetime.now()
         else:
             tdelta = datetime.combine(ts.End, datetime.min.time()) - datetime.now()
-        if tdelta.total_seconds()<0:
-            d=0
-            s=0
+        if tdelta.total_seconds() < 0:
+            d = 0
+            s = 0
         else:
-            d=tdelta.days
-            s=tdelta.seconds
-    return render(request, "index/index.html", {"info" : info, "files": files , "countdownDays":d, "countdownHours":floor((s / 3600) % 24), "countdownMinutes":floor((s / 60) % 60)})
+            d = tdelta.days
+            s = tdelta.seconds
+    return render(request, "index/index.html",
+                  {"info": info, "files": files, "countdownDays": d, "countdownHours": floor((s / 3600) % 24),
+                   "countdownMinutes": floor((s / 60) % 60)})
 
 
 def logout(request):
@@ -138,13 +140,13 @@ def logout(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('/')
     auth_logout(request)
-    return render(request, "base.html", {"Message":"You are now logged out. "
-                                                   "<a href='/' title='Home'>Go back to the homepage</a>.<br />"
-                                                   "To logout of the TU/e single sign on please close your browser."})
+    return render(request, "base.html", {"Message": "You are now logged out. "
+                                                    "<a href='/' title='Home'>Go back to the homepage</a>.<br />"
+                                                    "To logout of the TU/e single sign on please close your browser."})
 
 
 @superuser_required()
-def listFeedback(request):
+def list_feedback(request):
     """
     List the feedback supplied via the feedback button. Only for superusers.
 
@@ -157,7 +159,7 @@ def listFeedback(request):
 
 
 @login_required
-def feedbackForm(request):
+def feedback_form(request):
     """
     The form to give feedback using the feedback button. All users can supply feedback. Superusers can view it.
 
@@ -182,7 +184,7 @@ def feedbackForm(request):
 
 
 @login_required
-def feedbackSubmit(request):
+def feedback_submit(request):
     """
     The 'thanks' page after feedback is submitted by a user.
 
@@ -204,7 +206,7 @@ def feedbackSubmit(request):
         }, feedback.Reporter.email,
                   html_email_template_name="email/feedback_report_email_created.html")
         send_mail("New Feedback report created", "email/feedback_report_admin.html", {
-            "report" : feedback
+            "report": feedback
         }, settings.CONTACT_EMAIL, html_email_template_name="email/feedback_report_admin.html")
         return render(request, "base.html", {
             "Message": "Feedback saved, thank you for taking the time to improve the system!"
@@ -215,7 +217,7 @@ def feedbackSubmit(request):
 
 
 @superuser_required()
-def feedbackConfirm(request, pk):
+def feedback_confirm(request, pk):
     """
     Form to confirm the feedback given by a user. Only for superusers. Sends a simple confirm mail to the user.
 
@@ -244,7 +246,7 @@ def feedbackConfirm(request, pk):
 
 
 @superuser_required()
-def feedbackClose(request, pk):
+def feedback_close(request, pk):
     """
     Close a feedback report. Send a custom message to the user that gave the feedback. Only for superusers
 
@@ -339,7 +341,7 @@ def profile(request):
 
 
 @login_required
-def changeSettings(request):
+def user_settings(request):
     """
     Let a user change its settings, like email preferences.
 
@@ -373,7 +375,7 @@ def changeSettings(request):
 
 
 @login_required
-def termsform(request):
+def terms_form(request):
     """
     Form for a user to accept the terms of use.
 
@@ -397,10 +399,10 @@ def termsform(request):
         form = ConfirmForm()
 
     return render(request, 'index/Terms.html', {
-        'form' : form,
-        'formtitle' : 'I have read and accepted the Terms of Services',
-        'buttontext' : 'Confirm',
-        'terms' : Term.objects.all()
+        'form': form,
+        'formtitle': 'I have read and accepted the Terms of Services',
+        'buttontext': 'Confirm',
+        'terms': Term.objects.all()
     })
 
 
@@ -410,15 +412,13 @@ def edit_tracks(request):
     Edit all tracks.
 
     :param request:
-    :param pk: pk of the proposal to edit file of
-    :param ty: type of file to edit, either i for image or a for attachement
     :return:
     """
-    formSet = modelformset_factory(Track, form=TrackForm, can_delete=False)
-    formset = formSet(queryset=Track.objects.all())
+    form_set = modelformset_factory(Track, form=TrackForm, can_delete=False)
+    formset = form_set(queryset=Track.objects.all())
 
     if request.method == 'POST':
-        formset = formSet(request.POST)
+        formset = form_set(request.POST)
         if formset.is_valid():
             formset.save()
             return render(request, "base.html",
@@ -428,7 +428,7 @@ def edit_tracks(request):
                    'buttontext': 'Save changes'})
 
 
-def error400(request):
+def error400(request, exception):
     """
     http 400 page, for instance wrong hostname
 
@@ -438,11 +438,12 @@ def error400(request):
     return render(request, "400.html", status=400)
 
 
-def error404(request):
+def error404(request, exception):
     """
     http 404 page
 
     :param request:
+    :param exception:
     :return:
     """
     return render(request, "base.html", status=404, context={
@@ -469,9 +470,12 @@ def error500(request):
     :return:
     """
     return render(request, "50x.html", status=500, context={
-        "reason": "Something went wrong in the server. The BEP marketplace team has been automatically notified. </br>"
-                    "Please help them by sending an email to <a href=\"mailto:bepmarketplace@tue.nl?subject=BugReport\">bepmarketplace@tue.nl</a> with more information what you were trying to do. <br/>"
-                    "Thanks in advance!"
+        "reason": "Something went wrong in the server. "
+                  "The BEP marketplace team has been automatically notified. </br>"
+                  "Please help them by sending an email to "
+                  "<a href=\"mailto:bepmarketplace@tue.nl?subject=BugReport\">bepmarketplace@tue.nl</a> "
+                  "with more information what you were trying to do. <br/>"
+                  "Thanks in advance!"
     })
 
 

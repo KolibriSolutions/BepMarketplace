@@ -34,11 +34,9 @@ class ProfessionalSkillsViewsTest(ProposalViewsTest):
             [['mailoverduestudents', None], self.p_forbidden],
             [['printprvforms', None], self.p_forbidden],
             [['downloadall', {'pk': 0}], self.p_forbidden],
-
             [['listowngroups', None], self.p_forbidden],
             [['switchgroups', {'frompk': 0, 'topk': 1}], self.p_forbidden],
             [['listgroupmembers', {'pk': 0}], self.p_forbidden],
-
             [['assignshuffle', {'pk': 100}], self.p_forbidden],
         ]
 
@@ -55,8 +53,7 @@ class ProfessionalSkillsViewsTest(ProposalViewsTest):
 
             [['listowngroups', None], self.p_student],
             # [['switchgroups', {'frompk': 0, 'topk': 1}], self.p_student], # never used and hard to test, so not tested
-            [['listgroupmembers', {'pk': 0}], self.p_support_prv],
-
+            [['listgroupmembers', {'pk': 0}], self.p_allowed],
             [['assignshuffle', {'pk': 100}], self.p_support_prv],
         ]
 

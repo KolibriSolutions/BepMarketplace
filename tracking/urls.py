@@ -1,12 +1,12 @@
-from django.conf.urls import url
+from django.urls import path
 
 from . import views
 
 app_name = 'tracking'
 urlpatterns = [
-    url(r'^listuserlog/$', views.listUserLog, name='listuserlog'),
-    url(r'^statuslist/$', views.viewTrackingStatusList, name='statuslist'),
-    url(r'^applicationlist/$', views.viewTrackingApplicationList, name='applicationlist'),
-    url(r'^livestreamer/$', views.liveStreamer, name='livestreamer'),
-    url(r'^userdetail/(?P<pk>[0-9]+)/$', views.userDetail, name='userdetail'),
+    path('user/login', views.list_user_login, name='listuserlog'),
+    path('proposal/', views.list_proposal_status_change, name='statuslist'),
+    path('application/', views.list_application_change, name='applicationlist'),
+    path('stream/', views.live_streamer, name='livestreamer'),
+    path('user/<int:pk>/', views.telemetry_user_detail, name='userdetail'),
 ]
