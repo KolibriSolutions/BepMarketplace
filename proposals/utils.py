@@ -103,10 +103,10 @@ def get_share_link(request, pk):
     :param pk: pk of the proposal to get a link for.
     :return:
     """
-    return settings.DOMAIN + reverse('api:viewsharelink', args=[signing.dumps(pk)])
+    return settings.DOMAIN + reverse('proposals:viewsharelink', args=[signing.dumps(pk)])
 
 
-def getProp(pk):
+def get_cached_project(pk):
     """
     Get a proposal from cache or from database. Put it in cache if it is not yet in cache.
 

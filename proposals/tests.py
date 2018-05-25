@@ -1,13 +1,13 @@
 from django.contrib.auth.models import User
 from django.urls import reverse
 
-from general_test import ViewsTest, ProposalViewsTest
+from general_test import ViewsTest, ProjectViewsTestGeneral
 from students.models import Application
 from students.models import Distribution
 from .models import Proposal
 
 
-class ProposalViewsTest(ProposalViewsTest):
+class ProposalViewsTest(ProjectViewsTestGeneral):
     """
     All tests for proposal views
 
@@ -29,24 +29,26 @@ class ProposalViewsTest(ProposalViewsTest):
         s = self
         # setup environment
         # expected results:
-        # Use the above-defined matrix of permissions to set permissions for some pages.
+        code_general = [
+            [['viewsharelink', {'token': 'blabla'}], [s.p_all]]
+        ]
         code_general_phase12345 = [
-            [['list', None],                       [s.p_allowed]],
+            [['list', None], [s.p_all]],
             [['create', None],                     [s.p_staff_prop]],
             [['chooseedit', None],                 [s.p_staff_prop]],
             [['pending', None],                    [s.p_pending]],
             [['stats', None],                      [s.p_forbidden]],  #TODO s.p_staff12345
             [['statsgeneral', None],               [s.p_forbidden]],  #TODO s.p_staff12345
-            [['listtrackproposals', None],          [s.p_track]]
+            [['listtrackproposals', None],          [s.p_track]],
         ]
         code_general_phase67 =  [
-            [['list', None],                       [s.p_allowed]],
+            [['list', None], [s.p_all]],
             [['create', None],                     [s.p_staff_prop]],
             [['chooseedit', None],                 [s.p_staff_prop]],
             [['pending', None],                    [s.p_pending]],
             [['stats', None],                      [s.p_staff_prop]],
             [['statsgeneral', None],               [s.p_staff_prop]],
-            [['listtrackproposals', None],          [s.p_track]]
+            [['listtrackproposals', None],          [s.p_track]],
         ]
 
         # These permissions are for a given proposal, which is active in this timeslot (this year).
@@ -100,7 +102,7 @@ class ProposalViewsTest(ProposalViewsTest):
             [['editfile', {'ty': 'a', 'pk': s.p}],    [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],
             [['edit', {'pk': s.p}],                   [s.p_support       , s.p_support         ,s.p_support        , s.p_no_assistant  ]],
             [['copy', {'pk': s.p}],                   [s.p_all_this      , s.p_all_this        ,s.p_all_this       , s.p_staff_prop  ]],
-            [['details', {'pk': s.p}],                [s.p_all_this_view , s.p_all_this_view   ,s.p_all_this_view  , s.p_allowed  ]],
+            [['details', {'pk': s.p}], [s.p_all_this_view , s.p_all_this_view   , s.p_all_this_view  , s.p_all]],
             [['details', {'pk': s.ppriv}],            [s.p_all_this_view , s.p_all_this_view   ,s.p_all_this_view  , s.p_private  ]],
             [['copy', {'pk': s.ppriv}],               [s.p_all_this      , s.p_all_this        ,s.p_all_this       , s.p_all_this  ]],
             [['upgradestatus', {'pk': s.p}],          [s.p_support       , s.p_support         ,s.p_support        , s.p_forbidden]],
@@ -146,15 +148,16 @@ class ProposalViewsTest(ProposalViewsTest):
         # Status should be 302 always.
         self.info['type'] = 'not logged in'
         for page, status in code_general_phase12345:
-            s.view_test_status(reverse(self.app+':'+page[0]), 302)
+            s.view_test_status(reverse(self.app+':'+page[0], kwargs=page[1]), 302)
         for page, status in code_general_phase67:
-            s.view_test_status(reverse(self.app+':'+page[0]), 302)
+            s.view_test_status(reverse(self.app+':'+page[0], kwargs=page[1]), 302)
         for page, status in code_phase1:
             s.view_test_status(reverse(self.app+':'+page[0], kwargs=page[1]), 302)
 
         # Test general page (not proposal specific)
         self.info['type'] = 'general'
         self.loop_phase_user(range(1,6), code_general_phase12345)
+        self.loop_phase_user(range(1,8), code_general)  # share link
         self.loop_phase_user([6, 7], code_general_phase67)
 
         # Testing proposal specific pages

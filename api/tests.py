@@ -2,11 +2,11 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 
 from general_model import GroupOptions
-from general_test import ProposalViewsTest
+from general_test import ProjectViewsTestGeneral
 from index.models import UserMeta
 
 
-class ApiViewsTest(ProposalViewsTest):
+class ApiViewsTest(ProjectViewsTestGeneral):
     def setUp(self):
         self.app = 'api'
         super().setUp()
@@ -15,24 +15,24 @@ class ApiViewsTest(ProposalViewsTest):
         s = self
         # anonymous pages
         codes_anonymous_phase1234567=[
-            [['viewsharelink', {'token': 'blabla'}], s.p_allowed]
+            [['viewsharelink', {'token': 'blabla'}], s.p_all]  # depricated, moved to proposals.
         ]
         # not related to proposals
         codes_general_phase1234567 = [
             [['verifyassistant', {'pk': 100}], s.p_support],  # use a dummy user without type2staffunverified
             [['getgroupadmins', None], s.p_forbidden],  # god only
             [['getgroupadminsarg', {'group': GroupOptions[0][0]}], s.p_forbidden],
-            [['listpublished', None], s.p_allowed],
-            [['listpublishedpergroup', None], s.p_allowed],
-            [['listpublishedtitles', None], s.p_allowed],
-            [['api', None], s.p_allowed],
+            [['listpublished', None], s.p_all],
+            [['listpublishedpergroup', None], s.p_all],
+            [['listpublishedtitles', None], s.p_all],
+            [['api', None], s.p_all],
         ]
         # anonymous proposal pages
         codes_prop_notpublic = [
             [['getpublisheddetail', {'pk': self.p}], s.p_forbidden],
         ]
         codes_prop_public = [
-            [['getpublisheddetail', {'pk': self.p}], s.p_allowed],
+            [['getpublisheddetail', {'pk': self.p}], s.p_all],
         ]
         # proposal up/downgrade
         codes_phase1 = [

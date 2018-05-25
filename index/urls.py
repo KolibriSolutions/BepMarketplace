@@ -3,8 +3,6 @@ from djangosaml2.views import login
 
 from . import views
 
-# from .forms import CaptchaPasswordResetForm
-
 app_name = 'index'
 urlpatterns = [
     path('', views.index, name='index'),

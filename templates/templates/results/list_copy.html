@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block body %}
+    <h1>Timeslots</h1>
+    <p>Import grades from another timeslot to the current timeslot.
+        Current TimeSlot: {{ ts }}
+    </p>
+
+    <table class="table bordered hovered striped datatable">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Categories</th>
+            <th>View</th>
+            <th>Copy</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for p in tss %}
+            <tr>
+                <td>{{ p.Name }}</td>
+                <td>
+                    {% if p.gradecategories %}
+                        <ul>{{ p.gradecategories.all|unordered_list }}</ul>
+                    {% else %}
+                        None
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'results:about' p.pk %}" class="button primary">View</a>
+                </td>
+                <td>
+                    {% if p == ts %}
+                        Current timeslot<br />
+                        {# current timeslot #}
+                            <a href="{% url "results:list_categories" %}" class="button primary">List categories</a>
+
+                    {% else %}
+                        <a href="{% url 'results:copy' p.pk %}" class="button primary">Copy</a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <br/>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+        //live search for proposals, using datatables jquery.
+        $(document).ready(function () {
+            var dt = $('.datatable').dt_wrapper();
+        });
+    </script>
+{% endblock %}

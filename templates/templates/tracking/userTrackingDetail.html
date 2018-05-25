@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load staticfiles %}
 {% block body %}
     <h1>Telemetry of user: {{ target.get_full_name }}</h1>
     <div class="tabcontrol2" data-role="tabcontrol">
@@ -71,25 +71,18 @@
 
 {% block scripts %}
     {{ block.super }}
+    <script src="{% static "channels/js/websocketbridge.js" %}"></script>
     <script>
         $(document).ready(function () {
             $('.datatable').dt_wrapper([
                 {column_number: 1, filter_type: "select"},
                 {column_number: 2, filter_type: "select"},
                 {column_number: 3, filter_type: "select"},
-
             ]);
-
-            if (window.location.protocol == "https:") {
-                window.socket = new WebSocket("wss://" + window.location.host + "/tracking/telemetry/user/{{ target.id }}/");
-            }
-            else {
-                window.socket = new WebSocket("ws://" + window.location.host + "/tracking/telemetry/user/{{ target.id }}/");
-            }
-            window.socket.onmessage = function (e) {
-                console.log(e.data);
-                //var info = JSON.parse(e.data);
-                document.getElementById('liveview').insertAdjacentHTML('afterbegin', e.data + "<br/>");
+            const webSocketBridge = new channels.WebSocketBridge();
+            webSocketBridge.connect("/tracking/telemetry/user/{{ target.id }}/");
+            webSocketBridge.socket.onmessage = function(event) {
+                document.getElementById('liveview').insertAdjacentHTML('afterbegin', event.data + "<br/>");
             };
         });
     </script>

@@ -2,13 +2,13 @@ from datetime import datetime
 
 from django.urls import reverse
 
-from general_test import ProposalViewsTest
+from general_test import ProjectViewsTestGeneral
 from students.models import Distribution
 from timeline.utils import get_timeslot
 from .models import FileType, StudentGroup
 
 
-class ProfessionalSkillsViewsTest(ProposalViewsTest):
+class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
     def setUp(self):
         self.app = 'professionalskills'
         super().setUp()
@@ -43,7 +43,7 @@ class ProfessionalSkillsViewsTest(ProposalViewsTest):
         codes_phase67 = [
             [['listfileoftype', {'pk': 100}], self.p_support_prv],
             [['listmissingoftype', {'pk': 100}], self.p_support_prv],
-            [['filetypelist', None], self.p_allowed],
+            [['filetypelist', None], self.p_all],
             [['liststudentfiles', {'pk': 1}], self.p_all_this_dist],
             [['listownfiles', None], self.p_student],
             #[['respondfile', {'pk': 0}], self.p_all_this],# too complex to test
@@ -53,7 +53,7 @@ class ProfessionalSkillsViewsTest(ProposalViewsTest):
 
             [['listowngroups', None], self.p_student],
             # [['switchgroups', {'frompk': 0, 'topk': 1}], self.p_student], # never used and hard to test, so not tested
-            [['listgroupmembers', {'pk': 0}], self.p_allowed],
+            [['listgroupmembers', {'pk': 0}], self.p_all],
             [['assignshuffle', {'pk': 100}], self.p_support_prv],
         ]
 

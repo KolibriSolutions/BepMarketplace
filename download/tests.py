@@ -1,12 +1,12 @@
 from django.urls import reverse
 
-from general_test import ProposalViewsTest
+from general_test import ProjectViewsTestGeneral
 
 
-class DownloadViewsTest(ProposalViewsTest):
+class DownloadViewsTest(ProjectViewsTestGeneral):
     def setUp(self):
         self.app = 'download'
-        super().setUp()
+        super(DownloadViewsTest, self).setUp()
 
     def test_view_status(self):
         codes_phase1234567 = [
@@ -14,8 +14,11 @@ class DownloadViewsTest(ProposalViewsTest):
             [['public_files', {'fileid': '9b73c48b-e05f-4e08-9db5-c8100119f673.pdf', 'timeslot': 0}], self.p_404],
 
             # proposal attachements
-            [['proposalfile', {'ty':'a', 'fileid':0}], self.p_404],
-            [['proposal_files', {'proposalid': 0, 'fileid': '9b73c48b-e05f-4e08-9db5-c8100119f673.pdf'}], self.p_404],
+            [['proposalfile', {'ty': 'a', 'fileid': 0}], self.p_404],
+            [['proposal_files', {'project_id': 0, 'fileid': '9b73c48b-e05f-4e08-9db5-c8100119f673.pdf'}], self.p_404],
+            # proposal attachements
+            [['projectfile', {'ty': 'a', 'fileid': 0}], self.p_404],
+            [['project_files', {'project_id': 0, 'fileid': '9b73c48b-e05f-4e08-9db5-c8100119f673.pdf'}], self.p_404],
 
             # student files (professionalskills)
             [['studentfile', {'fileid': 0}], self.p_404],

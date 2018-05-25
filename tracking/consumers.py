@@ -1,11 +1,11 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import Group, User
 from .models import TelemetryKey
-from .views import get_ProposalTracking
+from tracking.utils import get_ProposalTracking
 from django.shortcuts import get_object_or_404
 from django.contrib import auth
 from channels.db import database_sync_to_async
-from proposals.utils import getProp
+from proposals.utils import get_cached_project
 
 
 class LiveStreamConsumer(AsyncWebsocketConsumer):
@@ -59,7 +59,7 @@ class TelemetryAPIConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, code):
-        await self.channel_layer.group_discard (
+        await self.channel_layer.group_discard(
             'telemetry',
             self.channel_name
         )
@@ -93,12 +93,13 @@ class TelemetryUserConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, code):
         try:
-            await self.channel_layer.group_discard (
+            await self.channel_layer.group_discard(
                 'live_{}'.format(self.target.username),
                 self.channel_name
             )
         except:
             pass
+
     async def receive(self, text_data):
         pass
 
@@ -115,10 +116,11 @@ def checkauthcurrentviewnumber(user, track):
         return True
     return False
 
+
 class CurrentViewNumberConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.pk = self.scope['url_route']['kwargs']['pk']
-        self.prop = await database_sync_to_async(getProp)(self.pk)
+        self.prop = await database_sync_to_async(get_cached_project)(self.pk)
         self.track = await database_sync_to_async(get_ProposalTracking)(self.prop)
         self.user = self.scope['user']
         if self.track.Subject.Status != 4:

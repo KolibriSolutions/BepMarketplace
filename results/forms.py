@@ -29,3 +29,47 @@ class AspectResultForm(forms.ModelForm):
         widgets = {
             'Grade': widgets.MetroSelect
         }
+
+
+class GradeCategoryForm(forms.ModelForm):
+    """
+    Form to edit a timeslot
+    """
+
+    class Meta:
+        model = GradeCategory
+        fields = ['Name', 'Weight']
+        widgets = {
+            'Name': widgets.MetroTextInput,
+            'Weight': widgets.MetroNumberInput,
+        }
+
+
+class GradeCategoryAspectForm(forms.ModelForm):
+    """
+    Form to edit/create a timephase
+    """
+
+    class Meta:
+        model = GradeCategoryAspect
+        fields = ['Name', 'Description']
+        widgets = {
+            'Name': widgets.MetroTextInput,
+            'Description': widgets.MetroTextInput,
+        }
+
+
+class MakeVisibleForm(forms.ModelForm):
+    """
+    Confirmform to make the presentationsplanning public in timephase 6.
+    """
+
+    class Meta:
+        model = ResultOptions
+        fields = ["Visible"]
+        labels = {
+            "Visible": "Make results visible for staff"
+        }
+        widgets = {
+            "Visible": widgets.MetroCheckBox
+        }

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block body %}
+    <h1>Categories</h1>
+    <p>
+    Current TimeSlot: {{ ts }}.
+    </p>
+    <a href="{% url "results:copy_overview" %}" class="button primary">Import from other timeslot</a>
+    <a href="{% url "results:add_category" %}" class="button primary">Add Category</a>
+
+     {% if form %}
+        <div style="border: 2px solid #222;" class="margin20 bg-grayLighter">
+            <p class="margin10">
+    The results section is currently set to {% if not visible %}not {% endif %}visible for staff members.
+            </p>
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+                <table class="table" style="text-align:left;">
+                    {{ form.as_table }}
+                    <tr>
+                        <td>
+                            <button class="button success" type="submit">Confirm</button>
+                        </td>
+                        <td></td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    {% endif %}
+    <table class="table bordered hovered striped datatable">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th data-priority="1">Weight</th>
+            <th>Aspects</th>
+            <th>Edit/Aspects</th>
+        </tr>
+        </thead>
+        <tfoot>
+        <tr>
+            <td>Total:</td>
+            <td>{{ gsum }}%</td>
+            <td>{{ asum }} Aspects</td>
+            <td></td>
+        </tr>
+        </tfoot>
+        <tbody>
+        {% for p in categories %}
+            <tr>
+                <td>{{ p.Name }}</td>
+                <td>{{ p.Weight }}%</td>
+                <td>
+                    <ul>{{ p.aspects.all|unordered_list }}</ul>
+                </td>
+                <td>
+                    <a href="{% url 'results:edit_category' p.pk %}" class="button primary">Edit</a>
+                    <a href="{% url 'results:delete_category' p.pk %}" class="button warning">Delete</a>
+
+                    <a href="{% url 'results:list_aspects' p.pk %}" class="button primary">List Aspects</a>
+                    <a href="{% url "results:add_aspect" p.pk %}" class="button primary">Add Aspect</a>
+
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <br/>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+        //live search for proposals, using datatables jquery.
+        $(document).ready(function () {
+            var dt = $('.datatable').dt_wrapper();
+        });
+    </script>
+{% endblock %}

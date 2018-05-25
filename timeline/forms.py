@@ -10,6 +10,7 @@ class TimeSlotForm(forms.ModelForm):
     """
     Form to edit a timeslot
     """
+
     class Meta:
         model = TimeSlot
         fields = ['Name', 'Begin', 'End']
@@ -23,10 +24,12 @@ class TimeSlotForm(forms.ModelForm):
         if self.cleaned_data['End'] < datetime.now().date():
             raise forms.ValidationError('End date cannot be in the past.')
 
+
 class TimePhaseForm(forms.ModelForm):
     """
     Form to edit/create a timephase
     """
+
     class Meta:
         model = TimePhase
         fields = ['Description', 'Begin', 'End', 'CountdownEnd', 'Timeslot']

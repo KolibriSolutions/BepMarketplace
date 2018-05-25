@@ -17,14 +17,14 @@ class IndexViewsTest(ViewsTest):
         ]
         codes_user = [
             #[['logout'], self.p_allowed],
-            [['profile', None], self.p_allowed],
-            [['feedbackForm', None], self.p_allowed],
-            [['feedbackSubmit', None], self.p_allowed],
+            [['profile', None], self.p_all],
+            [['feedbackForm', None], self.p_all],
+            [['feedbackSubmit', None], self.p_all],
             [['feedbacklist', None], self.p_forbidden],  # god only
             [['feedbackconfirm', {'pk': 0}], self.p_forbidden],  # god only
             [['feedbackclose', {'pk': 0}], self.p_forbidden],  # god only
-            [['changesettings', None], self.p_allowed],
-            [['termsaccept', None], self.p_allowed],
+            [['changesettings', None], self.p_all],
+            [['termsaccept', None], self.p_all],
             [['edit_tracks', None], self.p_support],
         ]
 

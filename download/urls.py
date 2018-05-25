@@ -16,8 +16,11 @@ urlpatterns = [
 
     # proposal attachements
     path('proposalfile/<str:ty>/<int:fileid>', views.project_files, name='proposalfile'),  # object-id
-    re_path(r'proposal_(?P<proposalid>[0-9]+)/(?P<fileid>' + reguuid + ')$', views.project_files,
+    re_path(r'proposal_(?P<project_id>[0-9]+)/(?P<fileid>' + reguuid + ')$', views.project_files,
             name='proposal_files'),  # uri
+    path('projectfile/<str:ty>/<int:fileid>', views.project_files, name='projectfile'),
+    re_path(r'project_(?P<project_id>[0-9]+)/(?P<fileid>' + reguuid + ')$', views.project_files, name='project_files'),
+    # direct url
 
     # student files (professionalskills)
     path('studentfile/<int:fileid>', views.student_files, name='studentfile'),  # object-id

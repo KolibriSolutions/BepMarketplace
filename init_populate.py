@@ -7,11 +7,11 @@ import django
 import argparse
 import sys
 
-
-if __name__=="__main__":
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Populate the database with initial values")
     parser.add_argument('--mode', nargs='?', const=1, type=str, default='debug', help='debug/production')
-    parser.add_argument('--create-dummy-data', dest='createDummyData', action='store_true', help='if activated dummy data is generated')
+    parser.add_argument('--create-dummy-data', dest='createDummyData', action='store_true',
+                        help='if activated dummy data is generated')
     parser.set_defaults(createDummyData=False)
     DUMMY, MODE = parser.parse_args().createDummyData, parser.parse_args().mode
 
@@ -59,7 +59,67 @@ if __name__=="__main__":
 
     print("populating tables with production values")
 
-    #setup tracks
+    # default results
+    [{"model": "results.gradecategory", "pk": 1, "fields": {"Weight": 20.0, "Name": "Specialisation", "TimeSlot": 1}},
+     {"model": "results.gradecategory", "pk": 2,
+      "fields": {"Weight": 20.0, "Name": "Research and design skills", "TimeSlot": 1}},
+     {"model": "results.gradecategory", "pk": 3, "fields": {"Weight": 20.0, "Name": "Execution", "TimeSlot": 1}},
+     {"model": "results.gradecategory", "pk": 4, "fields": {"Weight": 20.0, "Name": "Report", "TimeSlot": 1}},
+     {"model": "results.gradecategory", "pk": 5,
+      "fields": {"Weight": 20.0, "Name": "Presentation and defense", "TimeSlot": 1}}]
+
+    # default aspects
+    [{"model": "results.gradecategoryaspect", "pk": 1, "fields": {"Category": 1, "Name": "Quality of literature review",
+                                                                  "Description": "Orientation on literature, identification of relevant sources, evaluation and interpretation of relevance of sources for the investigation"}},
+     {"model": "results.gradecategoryaspect", "pk": 2,
+      "fields": {"Category": 1, "Name": "Level of specialised knowledge",
+                 "Description": "Level of knowledge and technical skill set relevant for execution of research project"}},
+     {"model": "results.gradecategoryaspect", "pk": 3, "fields": {"Category": 1, "Name": "Disciplinary knowledge",
+                                                                  "Description": "Broader knowledge on research area, total skill set, insight in scope and context of research, discipline of electrical engineering"}},
+     {"model": "results.gradecategoryaspect", "pk": 4,
+      "fields": {"Category": 1, "Name": "Ability to connect problem definition to research field/sub-questions",
+                 "Description": "Ability to deconstruct research problem(s) in sub-problems, connect to knowledge, and synthesize solutions"}},
+     {"model": "results.gradecategoryaspect", "pk": 5,
+      "fields": {"Category": 2, "Name": "Formulation of research questions",
+                 "Description": "Quantification and clarity of problem formulation, clarity of research for project aims, formulation of sub-goals"}},
+     {"model": "results.gradecategoryaspect", "pk": 6,
+      "fields": {"Category": 2, "Name": "Quality and quantity of established results",
+                 "Description": "Quality of results in terms of scientific and/or functional value. Quantity of results in view of project time"}},
+     {"model": "results.gradecategoryaspect", "pk": 7,
+      "fields": {"Category": 2, "Name": "Creativity, originality, innovative value",
+                 "Description": "Originality of contributions, creativity of solution(s), innovative value"}},
+     {"model": "results.gradecategoryaspect", "pk": 8, "fields": {"Category": 2,
+                                                                  "Name": "Critical attitude towards results, methodology, scope and perspective of research",
+                                                                  "Description": "Ability to critically assess, analyse and defend the relevance of contributions, scientific way of working."}},
+     {"model": "results.gradecategoryaspect", "pk": 9, "fields": {"Category": 3, "Name": "Level of independency",
+                                                                  "Description": "Pro-activity and independence in the execution and organization of the project, networking activities for acquiring knowledge"}},
+     {"model": "results.gradecategoryaspect", "pk": 10, "fields": {"Category": 3, "Name": "Commitment and dedication",
+                                                                   "Description": "Commitment in the project, problem-ownership, dedication, general level of responsibility, responsibility as team member"}},
+     {"model": "results.gradecategoryaspect", "pk": 11, "fields": {"Category": 3, "Name": "Time planning",
+                                                                   "Description": "Effectivity of time planning, ability to adhere to planning or adjust planning where necessary. General timing"}},
+     {"model": "results.gradecategoryaspect", "pk": 12, "fields": {"Category": 3, "Name": "Effectiveness",
+                                                                   "Description": "Ability to communicate with specialists and peers, organization of research, preparation and effectiveness of technical meetings"}},
+     {"model": "results.gradecategoryaspect", "pk": 13, "fields": {"Category": 4, "Name": "Readability of report",
+                                                                   "Description": "Formulation, ease of understanding, perceptibility, correctness of English, good use of figures, graphs and tables"}},
+     {"model": "results.gradecategoryaspect", "pk": 14, "fields": {"Category": 4, "Name": "Problem formulation",
+                                                                   "Description": "Clarity of main objectives, problem definition, formulation of sub-questions"}},
+     {"model": "results.gradecategoryaspect", "pk": 15, "fields": {"Category": 4, "Name": "Quality of content",
+                                                                   "Description": "Scientific quality of report, clarity of summary, clarity of exposition, clarity of figures, clarity of reasoning, accuracy of proofs, (suitability for publication)"}},
+     {"model": "results.gradecategoryaspect", "pk": 16,
+      "fields": {"Category": 4, "Name": "Structure and organisation of report",
+                 "Description": "Introduction, literature review, problem formulation, methodology, analysis and results, conclusions"}},
+     {"model": "results.gradecategoryaspect", "pk": 17,
+      "fields": {"Category": 5, "Name": "Coverage of research outcomes",
+                 "Description": "Clarity of problem formulation, clarity on contributions and main conclusions from the research. Choice and relevance of presented material"}},
+     {"model": "results.gradecategoryaspect", "pk": 18, "fields": {"Category": 5, "Name": "Presentation skills",
+                                                                   "Description": "Didactic quality of presentation, clarity, pace, self-confidence, correctness of formulations, accuracy of timing, fitting for audience, ability to attract attention and interest from audience"}},
+     {"model": "results.gradecategoryaspect", "pk": 19,
+      "fields": {"Category": 5, "Name": "Quality of supporting material",
+                 "Description": "Effectiveness of visual support (slides), quality of demonstration, sound or other equipment"}},
+     {"model": "results.gradecategoryaspect", "pk": 20, "fields": {"Category": 5, "Name": "Discussion skills",
+                                                                   "Description": "Initiative and initiation of discussion, flow and focus in discussion, confidence in responses"}}]
+
+    # setup tracks
     trackobjs = []
     for track in tracks:
         t, created = Track.objects.get_or_create(Name=track[0])
@@ -69,17 +129,17 @@ if __name__=="__main__":
             t.save()
         trackobjs.append(t)
 
-    #setup all groups with permissions
+    # setup all groups with permissions
     g, created = Group.objects.get_or_create(name='type1staff')
     if created:
-         print("creating type1staff")
-         #perms = Permission.objects.filter(content_type=ContentType.objects.get_for_model(Proposal))
-         # for p in perms:
-         #     g.permissions.add(p)
-         # #perms = Permission.objects.filter(content_type=ContentType.objects.get_for_model(CategoryResult))
-         # g.permissions.add(perms[0])
-         # g.permissions.add(perms[1])
-         g.save()
+        print("creating type1staff")
+        # perms = Permission.objects.filter(content_type=ContentType.objects.get_for_model(Proposal))
+        # for p in perms:
+        #     g.permissions.add(p)
+        # #perms = Permission.objects.filter(content_type=ContentType.objects.get_for_model(CategoryResult))
+        # g.permissions.add(perms[0])
+        # g.permissions.add(perms[1])
+        g.save()
 
     g, created = Group.objects.get_or_create(name='type2staff')
     if created:
@@ -127,11 +187,10 @@ if __name__=="__main__":
         print("creating type6staff")
 
     if not DUMMY:
-        #End of non dummy generation
+        # End of non dummy generation
         sys.exit(0)
 
-
-    #generate test users, proposals and applictions for debug purpose
+    # generate test users, proposals and applictions for debug purpose
     print("populating tables with debug objects")
 
     NUMPROFS = 20
@@ -156,7 +215,7 @@ if __name__=="__main__":
             prof.save()
             profs.append(prof)
         except:
-            print(str(i)+" not created")
+            print(str(i) + " not created")
         prof = User.objects.get(username='professor{}'.format(i))
         try:
             mta = UserMeta()
@@ -178,7 +237,7 @@ if __name__=="__main__":
             phd.save()
             phds.append(phd)
         except:
-            print(str(i)+" not created")
+            print(str(i) + " not created")
         phd = User.objects.get(username='phd{}'.format(i))
         try:
             mta = UserMeta()
@@ -200,7 +259,7 @@ if __name__=="__main__":
             std.save()
             stds.append(std)
         except:
-            print(str(i)+" not created")
+            print(str(i) + " not created")
         std = User.objects.get(username='std{}'.format(i))
         try:
             mta = UserMeta()
@@ -210,7 +269,7 @@ if __name__=="__main__":
             mta.save()
             print("usermeta" + str(i))
         except:
-            print(str(i)+" usermeta not created")
+            print(str(i) + " usermeta not created")
 
     print("creating the support user")
     try:
@@ -256,6 +315,7 @@ if __name__=="__main__":
         except:
             print("no track created")
 
+
     def flip(x):
         """
 
@@ -264,6 +324,7 @@ if __name__=="__main__":
         """
         return True if random.random() < x else False
 
+
     print("creating proposals")
     for i in range(0, NUMPROPOSALS):
         try:
@@ -271,19 +332,19 @@ if __name__=="__main__":
             p.Title = "project{}".format(i)
             p.ResponsibleStaff = random.choice(profs)
             p.Group = random.choice(Groups)[0]
-            p.NumstudentsMin = random.randint(1,2)
+            p.NumstudentsMin = random.randint(1, 2)
             p.NumstudentsMax = random.randint(p.NumstudentsMin, 5)
             p.GeneralDescription = "stuff about project. autogenerated with number {}".format(i)
             p.StudentsTaskDescription = "students have to do stuff woop woop"
             p.ECTS = 15
             p.Track = random.choice(trackobjs)
-            #p.Private = None
+            # p.Private = None
             # p.Image = random.choice(["niels.png", "crying.png"])
             # p.Status = random.choice(Proposal.StatusOptions)[0]
             p.Status = 4
             p.TimeSlot = get_timeslot()
-            p.save() #save already to activate the manytomany field of assistants
-            numphd = random.choice([1,2])
+            p.save()  # save already to activate the manytomany field of assistants
+            numphd = random.choice([1, 2])
             ass1 = random.choice(phds)
             p.Assistants.add(ass1)
             if numphd == 2:
@@ -294,4 +355,4 @@ if __name__=="__main__":
             p.save()
             print('{} created'.format(p))
         except:
-            print(str(i)+"th proposal not created")
+            print(str(i) + "th proposal not created")

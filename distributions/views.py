@@ -13,7 +13,7 @@ from general_form import ConfirmForm
 from general_mail import EmailThreadMultipleTemplate
 from general_view import get_all_students, get_all_staff
 from proposals.models import Proposal
-from proposals.utils import get_all_proposals, get_share_link, getProp
+from proposals.utils import get_all_proposals, get_share_link, get_cached_project
 from students.models import Application, Distribution
 from students.views import get_all_applications
 from timeline.models import TimeSlot
@@ -60,7 +60,7 @@ def api_distribute(request):
                 return JsonResponse({'type': 'warning', 'txt': warningString + ' (Student already distributed)'})
             dist = Distribution()
             dist.Student = student
-            dist.Proposal = getProp(request.POST['propTo'])
+            dist.Proposal = get_cached_project(request.POST['propTo'])
             # check whether there was an application
             try:
                 dist.Application = get_all_applications(dist.Student).get(Proposal=dist.Proposal)
@@ -123,7 +123,7 @@ def api_redistribute(request):
             student = get_all_students(undistributed=True).get(pk=request.POST['student'])
             dist = student.distributions.get(Timeslot=get_timeslot())
             # change Proposal
-            dist.Proposal = getProp(request.POST['propTo'])
+            dist.Proposal = get_cached_project(request.POST['propTo'])
             # change Application if user has Application
             try:
                 dist.Application = get_all_applications(dist.Student).get(Proposal=dist.Proposal)

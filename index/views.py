@@ -1,17 +1,14 @@
 from datetime import datetime
 from math import floor
-from urllib import parse
 
 from django.conf import settings
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.forms import modelformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
-from django.utils.http import is_safe_url
 
 from BepMarketplace.decorators import superuser_required, group_required
 from general_form import ConfirmForm
@@ -20,58 +17,6 @@ from support.models import PublicFile
 from timeline.utils import get_timephase, get_timephase_number, get_timeslot
 from .forms import TrackForm, CloseFeedbackReportForm, FeedbackForm, settingsForm
 from .models import FeedbackReport, Track, UserMeta, Term, UserAcceptedTerms
-
-
-def make_get(get):
-    """
-    Creates the get string for the login functions, to keep the redirect page after logging in
-    An optional get string inside the redirect (usually for storing datatables sort options) is percent-urlencoded
-
-    :param get: a url to encode.
-    """
-    p = get.find("?")
-    if p > 0:
-        u = get[0:p - 1]
-        g = get[p:]
-        return "?next=" + u + "/" + parse.quote_plus(g)
-    else:
-        u = get
-        return "?next=" + u
-
-# DEPRICATED
-# def redirect_next_or_home(request):
-#     """
-#     Used if a get-string is supplied with a "next" argument. This string is used to redirect a user to a page.
-#     In case a user has to login first, the get string is kept in the url until a successfull login.
-#     This function processes the request and redirects the user to the 'next' string or otherwise to the homepage
-#
-#     :param request:
-#     :return: redirect to a page.
-#     """
-#     if 'next' in request.GET.keys():
-#         # strip leading an trialing "/" to prevent confusion, then re-append a "/"
-#         get = request.GET["next"].strip('/')
-#         # strip a possible second get string (for sort order in datatables)
-#         p = get.find("?")
-#         g = ''
-#         if p > 0:
-#             u = get[0:p - 1]
-#             g = get[p:]
-#             u += "/"
-#         else:
-#             u = get
-#             g = ''
-#
-#         # redirect to the next page if the page exists
-#         # if a link goes to a download, discard it and go to the homepage, as rendering downloads is quite hard
-#         if u.split("/")[0] == 'download':
-#             return HttpResponseRedirect('/')
-#         if is_safe_url(url=u, host=request.get_host()):
-#             return HttpResponseRedirect("/" + u + g)
-#         else:
-#             raise PermissionDenied("This is not allowed. You used an invalid redirect link.")
-#     # otherwise redirect to home
-#     return HttpResponseRedirect('/')
 
 
 def index(request):
@@ -438,6 +383,17 @@ def error400(request, exception):
     return render(request, "400.html", status=400)
 
 
+def error403(request, exception):
+    """
+    http 403 page
+
+    :param request:
+    :param exception: Reason why this page is forbidden.
+    :return:
+    """
+    return render(request, "403.html", status=403, context={"exception": exception})
+
+
 def error404(request, exception):
     """
     http 404 page
@@ -449,17 +405,6 @@ def error404(request, exception):
     return render(request, "base.html", status=404, context={
         "Message": "The page you are looking for does not exist. Please have a look at the <a href=\"/\">homepage</a>"
     })
-
-
-def error403(request, exception):
-    """
-    http 403 page
-
-    :param request:
-    :param exception: Reason why this page is forbidden.
-    :return:
-    """
-    return render(request, "403.html", status=403, context={"exception": exception})
 
 
 def error500(request):

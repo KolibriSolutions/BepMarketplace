@@ -1,43 +1,41 @@
 {% extends "base.html" %}
 
 {% block body %}
-<h1>Grade Explanation</h1>
     <a class="button primary" href="javascript:history.back()">Go back</a>
-
+    <h1>Grading of time slot {{ ts }}</h1>
     <h2>Grading</h2>
     <h4>Grades per category</h4>
     <ul>
-<li>	10 – excellent – top 2%</li>
-<li>	9 – very good – top 5%</li>
-<li>	8 – good</li>
-<li>	7 – satisfactory</li>
-<li>	6 – sufficient</li>
-<li>	&lt;6 – fail</li>
+        <li> 10 – excellent – top 2%</li>
+        <li> 9 – very good – top 5%</li>
+        <li> 8 – good</li>
+        <li> 7 – satisfactory</li>
+        <li> 6 – sufficient</li>
+        <li> &lt;6 – fail</li>
     </ul>
     <h4>Scores per aspect:</h4>
     <ul>
-<li>	E – Excellent</li>
-<li>	VG – Very Good</li>
-<li>	G – Good</li>
-<li>	S – Sufficient/Satisfactory</li>
-    <li>F – Fail</li>
+        <li> E – Excellent</li>
+        <li> VG – Very Good</li>
+        <li> G – Good</li>
+        <li> S – Sufficient/Satisfactory</li>
+        <li>F – Fail</li>
     </ul>
 
-<h2>Categories and their aspects</h2>
+    <h2>Categories and their aspects</h2>
     <ul>
-    {% for category in categories %}
-    <li><h3>{{ category }}</h3>
-        <ul>
-        {% for aspect in category.aspects.all %}
-            <li>
-                <h4>{{ aspect.Name }}</h4>
-                {{ aspect.Description }}
+        {% for category in categories %}
+            <li><h3>{{ category }}</h3>
+                <ul>
+                    {% for aspect in category.aspects.all %}
+                        <li>
+                            <h4>{{ aspect.Name }}</h4>
+                            {{ aspect.Description }}
+                        </li>
+                    {% endfor %}
+                </ul>
             </li>
-
         {% endfor %}
-        </ul>
-    </li>
-    {% endfor %}
     </ul>
 
     <a class="button primary" href="javascript:history.back()">Go back</a>

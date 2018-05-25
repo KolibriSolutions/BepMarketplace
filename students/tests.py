@@ -2,12 +2,12 @@ from datetime import datetime
 
 from django.urls import reverse
 
-from general_test import ProposalViewsTest
+from general_test import ProjectViewsTestGeneral
 from professionalskills.models import StudentFile, FileType
 from .models import Distribution, Application
 
 
-class StudentsViewsTest(ProposalViewsTest):
+class StudentsViewsTest(ProjectViewsTestGeneral):
     def setUp(self):
         self.app = 'students'
         super().setUp()

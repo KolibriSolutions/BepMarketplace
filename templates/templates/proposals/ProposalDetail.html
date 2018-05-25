@@ -11,27 +11,28 @@
         <div class="grid">
             <div class="row cells3">
                 <div class="cell colspan2">
-                    <h1 style="margin-bottom: 0;" class="capitalize">{{ proposal.Title }}</h1>
+                    <h1 style="margin-bottom: 0;" class="capitalize">{{ project.Title }}</h1>
                     <h1 style="margin-bottom: 0; margin-top: 0;" class="capitalize">
                         <small>
-                            <a href="mailto:{{ proposal.ResponsibleStaff.email }}">
-                                By {{ proposal.ResponsibleStaff.get_full_name }}
+                            <a href="mailto:{{ project.ResponsibleStaff.email }}">
+                                By {{ project.ResponsibleStaff.get_full_name }}
                             </a>
                         </small>
                     </h1>
                     <h3 style="margin-top: 0;">
-                        <small>Part of {{ proposal.Track.Name }}</small>
+                        <small>Part of {{ project.Track.Name }}</small>
                     </h3>
-                    {% if proposal.images.exists %}
+                    {% if project.images.exists %}
                         <div id="imageCarousel" class="carousel" data-role="carousel" data-height="300"
                              data-controls="true" data-markers="false" data-auto="false">
-                            {% for image in proposal.images.all %}
+                            {% for image in project.images.all %}
                                 <div class="slide">
-                                    <a href="{% url "download:proposalfile" "i" image.id %}" data-lightbox="lightbox1"
+                                    <a href="{% url "download:projectfile" "i" image.id %}" data-lightbox="lightbox1"
                                        data-title="{{ image.Caption }}">
-                                        <img data-role="fitImage" data-format="fill" src="{% url "download:proposalfile" "i" image.id %}"
+                                        <img data-role="fitImage" data-format="fill"
+                                             src="{% url "download:projectfile" "i" image.id %}"
                                              alt="{{ image.Caption }}"
-                                            referrerpolicy="no-referrer-when-downgrade"
+                                             referrerpolicy="no-referrer-when-downgrade"
                                         />
                                     </a>
                                     <div class="imageCaption">
@@ -41,29 +42,31 @@
                             {% endfor %}
                         </div>
                         <div id="imageCarousel_thumbs" class="padding10 bg-grayLighter align-center">
-                            {% for image in proposal.images.all %}
-                                <div class="thumb" data-index="{{ forloop.counter }}"><img src="{% url "download:proposalfile" "i" image.id %}"
-                                                                                           data-role="fitImage"
-                                                                                           data-format="fill"
-                                                                                           alt="{{ image.Caption }}"
-                                                                                           referrerpolicy="no-referrer-when-downgrade">
+                            {% for image in project.images.all %}
+                                <div class="thumb" data-index="{{ forloop.counter }}"><img
+                                        src="{% url "download:projectfile" "i" image.id %}"
+                                        data-role="fitImage"
+                                        data-format="fill"
+                                        alt="{{ image.Caption }}"
+                                        referrerpolicy="no-referrer-when-downgrade">
                                 </div>
                             {% endfor %}
                         </div>
 
                     {% endif %}
                     <h4>General description</h4>
-                    <p>{{ proposal.GeneralDescription|linebreaksbr }}</p>
+                    <p>{{ project.GeneralDescription|linebreaksbr }}</p>
                     <h4>Students task description</h4>
-                    <p>{{ proposal.StudentsTaskDescription|linebreaksbr }}</p>
-                    {% if proposal.attachments.exists %}
+                    <p>{{ project.StudentsTaskDescription|linebreaksbr }}</p>
+                    {% if project.attachments.exists %}
                         <h4>Attachments:</h4>
-                        {% for attachment in proposal.attachments.all %}
-                            <a href="{% url 'download:proposalfile' 'a' attachment.id %}"
+                        {% for attachment in project.attachments.all %}
+                            <a href="{% url 'download:projectfile' 'a' attachment.id %}"
                                class="command-button file-button" download
-                                referrerpolicy="no-referrer-when-downgrade">
+                               referrerpolicy="no-referrer-when-downgrade">
                                 <span class="icon mif-file-pdf"></span>
-                                {% if attachment.Caption %}{{ attachment.Caption }}{% else %}Attachment {{ forloop.counter }}{% endif %}
+                                {% if attachment.Caption %}{{ attachment.Caption }}{% else %}Attachment
+                                    {{ forloop.counter }}{% endif %}
                                 <small>{{ attachment.OriginalName }}</small>
                             </a>
                         {% endfor %}
@@ -72,33 +75,34 @@
 
                     {% if user.is_authenticated %} {# To prevent API views using sharelinks to see any buttons. #}
                         <p>
-                                {% comment %} Normal edit buttons for staff {% endcomment %}
+                            {% comment %} Normal edit buttons for staff {% endcomment %}
                             {% if user|has_group:"any" %}
                                 {% if Editlock != False %}
                                     {{ Editlock }}
                                 {% else %}
                                     <br/>
-                                        <a class="button primary" href="{% url 'proposals:edit' proposal.id %}">
-                                            <span class="mif-pencil"></span>Edit data
-                                        </a>
-                                        {% if proposal.Status != 4 %}
-                                        <a class="button primary" href="{% url 'proposals:editfile' 'i' proposal.id %}">
+                                    <a class="button primary" href="{% url 'proposals:edit' project.id %}">
+                                        <span class="mif-pencil"></span>Edit data
+                                    </a>
+                                    {% if project.Status != 4 %}
+                                        <a class="button primary" href="{% url 'proposals:editfile' 'i' project.id %}">
                                             <span class="mif-images"></span>Edit images
                                         </a>
-                                        <a class="button primary" href="{% url 'proposals:editfile' 'a' proposal.id %}">
+                                        <a class="button primary" href="{% url 'proposals:editfile' 'a' project.id %}">
                                             <span class="mif-file-pdf"></span>Edit attachments
                                         </a>
-                                        {% endif %}
+                                    {% endif %}
                                     <br>
                                 {% endif %}
                                 {# show "copy to current timeslot" button for proposals of previous timeslots.#}
-                                <br />
+                                <br/>
 
-                                <a class="button primary" href="{% url 'proposals:copy' proposal.id %}">
+                                <a class="button primary" href="{% url 'proposals:copy' project.id %}">
                                     <span class="mif-versions"></span>Copy
                                 </a>
-                                {% if user.is_superuser%}
-                                <a href="{% url 'admin:proposals_proposal_change' proposal.pk %}" class="button warning">Admin Edit</a>
+                                {% if user.is_superuser %}
+                                    <a href="{% url 'admin:proposals_proposal_change' project.pk %}"
+                                       class="button warning">Admin Edit</a>
                                 {% endif %}
                             {% endif %}
                         </p>
@@ -107,38 +111,39 @@
                             {% comment %}
                             Apply / retract buttons are inserted using a .format on the {} below.
                             {% endcomment %}
-                            {% if not user|has_group:"type4staff" and not proposal.Private.all %}
+                            {% if not user|has_group:"type4staff" and not project.Private.all %}
                                 {}
                             {% endif %}
                         {% else %}
                             {% if phasenumber < 3 and phasenumber > 0 %}
-                                {% if proposal.Status == 1 %}
+                                {% if project.Status == 1 %}
                                     {% include 'proposals/Proposal_include_upgradeButton.html' %}
-                                {% elif proposal.Status == 2 %}
-                                    {% if user|has_group:"type3staff" or user == proposal.ResponsibleStaff or proposal.Track.Head == request.user %}
+                                {% elif project.Status == 2 %}
+                                    {% if user|has_group:"type3staff" or user == project.ResponsibleStaff or project.Track.Head == request.user %}
                                         {% include 'proposals/Proposal_include_upgradeButton.html' %}
                                     {% endif %}
                                     {% include 'proposals/Proposal_include_downgradeButton.html' %}
-                                {% elif proposal.Status == 3 %}
-                                    {% if proposal.Track.Head == request.user or user|has_group:"type3staff" %}
+                                {% elif project.Status == 3 %}
+                                    {% if project.Track.Head == request.user or user|has_group:"type3staff" %}
                                         {% include 'proposals/Proposal_include_upgradeButton.html' %}
                                     {% endif %}
-                                    {% if user == proposal.ResponsibleStaff or user|has_group:"type3staff" or proposal.Track.Head == request.user %}
+                                    {% if user == project.ResponsibleStaff or user|has_group:"type3staff" or project.Track.Head == request.user %}
                                         {% include 'proposals/Proposal_include_downgradeButton.html' %}
                                     {% endif %}
-                                {% elif proposal.Status == 4 %}
-                                    {% if proposal.Track.Head == request.user or user|has_group:"type3staff" %}
+                                {% elif project.Status == 4 %}
+                                    {% if project.Track.Head == request.user or user|has_group:"type3staff" %}
                                         {% include 'proposals/Proposal_include_downgradeButton.html' %}
                                     {% endif %}
                                 {% endif %}
-                                {% if proposal.Status != 4 %}
+                                {% if project.Status != 4 %}
                                     <br/><br/>
-                                    <a href="{% url 'proposals:sharelink' proposal.id %}" class="button primary">Get
+                                    <a href="{% url 'proposals:sharelink' project.id %}" class="button primary">Get
                                         share link</a>
                                 {% endif %}
-                                {% if user|has_group:"type3staff" and proposal.Status < 3 %}
-                                        <a class="button warning" href="{% url 'proposals:askdeleteproposal' proposal.id %}">
-                                                <span class="mif-bin"></span>Delete</a>
+                                {% if user|has_group:"type3staff" and project.Status < 3 %}
+                                    <a class="button warning"
+                                       href="{% url 'proposals:askdeleteproposal' project.id %}">
+                                        <span class="mif-bin"></span>Delete</a>
                                 {% endif %}
                             {% endif %}
                         {% endif %}
@@ -149,18 +154,18 @@
                     <table class="table">
                         <tr>
                             <td>Capacity group:</td>
-                            <td>{{ proposal.get_Group_display }}</td>
+                            <td>{{ project.get_Group_display }}</td>
                         </tr>
                         <tr>
                             <td>Preferred ECTS:</td>
-                            <td>{{ proposal.ECTS }}</td>
+                            <td>{{ project.ECTS }}</td>
                         </tr>
                         <tr>
                             <td>Assistants:</td>
                             <td>
-                                {% if proposal.Assistants.all %}
+                                {% if project.Assistants.all %}
                                     <ul>
-                                        {% for assistant in proposal.Assistants.all %}
+                                        {% for assistant in project.Assistants.all %}
                                             <li>
                                                 <a href="mailto:{{ assistant.email }}">
                                                     {{ assistant.get_full_name }}
@@ -176,25 +181,25 @@
                         <tr>
                             <td>Students needed:</td>
                             <td>
-                                {% if proposal.NumstudentsMin == proposal.NumstudentsMax %}
-                                    {{ proposal.NumstudentsMax }}
+                                {% if project.NumstudentsMin == project.NumstudentsMax %}
+                                    {{ project.NumstudentsMax }}
                                 {% else %}
-                                    {{ proposal.NumstudentsMin }}-{{ proposal.NumstudentsMax }}
+                                    {{ project.NumstudentsMin }}-{{ project.NumstudentsMax }}
                                 {% endif %}
                             </td>
                         </tr>
-                        {% if proposal.Track.Name == "Automotive" and proposal.Private is None %}
+                        {% if project.Track.Name == "Automotive" and project.Private is None %}
                             <tr>
                                 <td>Warning</td>
                                 <td>Please note that AU students have priority over EE students for AU projects</td>
                             </tr>
                         {% endif %}
-                        {% if proposal.Private.all %}
+                        {% if project.Private.all %}
                             <tr>
                                 <td>Private to:</td>
                                 <td>
                                     <ul>
-                                        {% for a in proposal.Private.all %}
+                                        {% for a in project.Private.all %}
                                             <li>
                                                 {% if user|has_group:"any" %}<a href="mailto:{{ a.email }}">{% endif %}
                                                 {{ a.get_full_name }}
@@ -205,18 +210,18 @@
                                 </td>
                             </tr>
                         {% endif %}
-                        {% if proposal.Status != 4 or not proposal.curyear %}
+                        {% if project.Status != 4 or not project.curyear %}
                             <tr>
                                 <td>Status:</td>
                                 <td>
-                                    <ol>{% for opt in proposal.StatusOptions %}
-                                        <li class="{% if opt.0 == proposal.Status %}text-accent fg-navy{% else %}text-secondary{% endif %}">{{ opt.1 }}</li>{% endfor %}
+                                    <ol>{% for opt in project.StatusOptions %}
+                                        <li class="{% if opt.0 == project.Status %}text-accent fg-navy{% else %}text-secondary{% endif %}">{{ opt.1 }}</li>{% endfor %}
                                     </ol>
                                 </td>
                             </tr>
                             <tr>
                                 <td>Time slot (year):</td>
-                                <td>{{ proposal.TimeSlot|default:"Future" }}</td>
+                                <td>{{ project.TimeSlot|default:"Future" }}</td>
                             </tr>
                         {% endif %}
                         {% if user|has_group:"type3staff" %}
@@ -228,12 +233,12 @@
                                             {% for application in applications %}
                                                 <li>
                                                     <span data-role="hint"
-                                                        data-hint-background="bg-gray"
-                                                        data-hint-color="fg-white"
-                                                        data-hint-mode="2"
-                                                        data-hint="This student has applied to this project with priority {{ application.Priority }}">
+                                                          data-hint-background="bg-gray"
+                                                          data-hint-color="fg-white"
+                                                          data-hint-mode="2"
+                                                          data-hint="This student has applied to this project with priority {{ application.Priority }}">
                                                     <span
-                                                        class='tag info studentApplicationPriority'>{{ application.Priority }}
+                                                            class='tag info studentApplicationPriority'>{{ application.Priority }}
                                                     </span></span>
                                                     {{ application.Student.get_full_name }}
                                                 </li>
@@ -243,26 +248,26 @@
                                 </tr>
                             {% endif %}
                         {% endif %}
-                    {% if distributions %}
-                                <tr>
-                                    <td>Distributions:</td>
-                                    <td>
-                                        <ul>
-                                            {% for d in distributions %}
-                                                <li>
-                                                    {{ d.Student.get_full_name }}
-                                                </li>
-                                            {% endfor %}
-                                        </ul>
-                                    </td>
-                                </tr>
-                            {% endif %}
+                        {% if distributions %}
+                            <tr>
+                                <td>Distributions:</td>
+                                <td>
+                                    <ul>
+                                        {% for d in distributions %}
+                                            <li>
+                                                {{ d.Student.get_full_name }}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                            </tr>
+                        {% endif %}
                     </table>
                 </div>
             </div>
         </div>
     {% endif %}
-    {% if user|has_group:"any" and proposal.Status == 4 %}
+    {% if user|has_group:"any" and project.Status == 4 %}
         Number of uniqueviews:
         <div id="uniqueviewsnumber"></div>
     {% endif %}
@@ -299,6 +304,7 @@
 
     {{ block.super }}
     <script src="{% static "js/lightbox.js" %}"></script>
+    <script src="{% static "channels/js/websocketbridge.js" %}"></script>
     <script>
         $(document).ready(function () {
             var icar = $('#imageCarousel').data('carousel');
@@ -310,19 +316,13 @@
                 });
             });
 
-            {% if user|has_group:"any" and proposal.Status == 4 %}
-                if (window.location.protocol == "https:") {
-                    window.socket = new WebSocket("wss://" + window.location.host + "/tracking/viewnumber/{{ proposal.id }}/");
-                }
-                else {
-                    window.socket = new WebSocket("ws://" + window.location.host + "/tracking/viewnumber/{{ proposal.id }}/");
-                }
-                window.socket.onmessage = function (e) {
-                    $("#uniqueviewsnumber").html(e.data);
+            {% if user|has_group:"any" and project.Status == 4 %}
+                const webSocketBridgeViewnumber = new channels.WebSocketBridge();
+                webSocketBridgeViewnumber.connect('/tracking/viewnumber/{{ project.id }}/');
+                webSocketBridgeViewnumber.socket.onmessage = function (event) {
+                    $("#uniqueviewsnumber").html(event.data);
                 };
             {% endif %}
         });
-
-
     </script>
 {% endblock %}

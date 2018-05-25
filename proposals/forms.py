@@ -323,7 +323,7 @@ class ProposalForm(forms.ModelForm):
     def save(self, commit=True):
         if commit:
             super().save(commit=True)
-            # add assistants to proposal via email.
+            # add assistants to project via email.
             # These assistants will get an (extra) email, because they don't know marketplace yet.
             if self.cleaned_data['addAssistantsEmail'] is not None:
                 for user in self.cleaned_data['addAssistantsEmail']:

@@ -28,7 +28,7 @@
  */
 
 (function ($) {
-    $.fn.dt_wrapper = function (yadcf_filters) {
+    $.fn.dt_wrapper = function (yadcf_filters, cols) {
         var buttonCommon = {
             //function to strip the dropdowns of the headers, to not show the dropdown values in the csv/copy
             exportOptions: {
@@ -114,7 +114,7 @@
             //add default options to each column with a filter.
             for (var i = 0; i < yadcf_filters.length; i++) {
                 $.extend(yadcf_filters[i], yadcf_default_options);
-                if (yadcf_filters[i]['filter_type']==='select' || yadcf_filters[i]['filter_type']==='multi_select'){
+                if (yadcf_filters[i]['filter_type'] === 'select' || yadcf_filters[i]['filter_type'] === 'multi_select') {
                     $.extend(yadcf_filters[i], yadcf_select_options);
                 }
             }
@@ -135,6 +135,10 @@
             "stateSave": true
         };
 
+        if (cols){
+            //custom column options, like disable search, or custom column ordering
+            dt_default_options['columns'] = cols;
+        }
 
         var dt = this.DataTable(dt_default_options);  // other options can be set via data-* attributes on the table.
         if (yadcf_filters) {

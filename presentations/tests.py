@@ -7,7 +7,7 @@ class PresentationsViewsTest(ViewsTest):
     def setUp(self):
         self.app = 'presentations'
         super().setUp()
-        
+
     def test_view_status(self):
         codes_phase1234 = [
             [['presentationswizardstep1', None], self.p_forbidden],
@@ -24,9 +24,9 @@ class PresentationsViewsTest(ViewsTest):
             [['presentationswizardstep3', None], self.p_support],
             [['presentationswizardstep4', None], self.p_support],
             [['presentationsplanning', None], self.p_support],
-            [['presentationsplanningxls', None], self.p_allowed],  # only truely visible when presentations are set to public or phase =7
-            [['presentationscalendar', None], self.p_allowed],
-            [['presentationscalendarown', None], self.p_allowed],
+            [['presentationsplanningxls', None], self.p_all],  # only truely visible when presentations are set to public or phase =7
+            [['presentationscalendar', None], self.p_all],
+            [['presentationscalendarown', None], self.p_all],
         ]
 
         # not logged in users. Ignore status, only use the views column of permission matrix.

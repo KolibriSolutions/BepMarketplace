@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 
 from BepMarketplace.decorators import can_view_proposal, can_apply, student_only, can_access_professionalskills
 from professionalskills.models import StudentFile
-from proposals.utils import getProp
+from proposals.utils import get_cached_project
 from proposals.models import Proposal
 from students.models import Distribution
 from timeline.utils import get_timeslot
@@ -133,7 +133,7 @@ def apply(request, pk):
     :param request:
     :param pk: id of a proposal.
     """
-    prop = getProp(pk)
+    prop = get_cached_project(pk)
     if prop.Status < 4:
         raise PermissionDenied('This proposal is not public, application is not possible.')
 
@@ -180,7 +180,7 @@ def confirm_apply(request, pk):
     :param request:
     :param pk: id of the proposal
     """
-    prop = getProp(pk)
+    prop = get_cached_project(pk)
     if prop.Status < 4:
         raise PermissionDenied('This proposal is not public, application is not possible.')
 

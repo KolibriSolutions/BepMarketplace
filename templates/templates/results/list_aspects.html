@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block body %}
+    <h1>Aspects</h1>
+    <p>Grade aspects for category {{ cat }}</p>
+    <a href="{% url "results:add_aspect" cat.pk %}" class="button primary">Add Aspect</a>
+    <a href="{% url "results:list_categories" %}" class="button primary">List all categories</a>
+    <table class="table bordered hovered striped datatable">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Edit</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for p in aspects %}
+            <tr>
+                <td>{{ p.Name }}</td>
+                <td>{{ p.Description }}</td>
+                <td>
+                    <a href="{% url 'results:edit_aspect' p.pk %}" class="button primary">Edit</a>
+                    <a href="{% url 'results:delete_aspect' p.pk %}" class="button warning">Delete</a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <br/>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+        //live search for proposals, using datatables jquery.
+        $(document).ready(function () {
+           var dt = $('.datatable').dt_wrapper();
+        });
+    </script>
+{% endblock %}

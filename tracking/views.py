@@ -1,38 +1,14 @@
 import json
 from datetime import datetime
 
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.contrib.auth.models import User
-from django.core.cache import cache
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 
 from BepMarketplace.decorators import superuser_required
 from general_view import get_sessions
 from timeline.utils import get_timeslot
-from .models import ProposalStatusChange, UserLogin, ProposalTracking, ApplicationTracking
-
-
-def get_ProposalTracking(proposal):
-    """
-    try retrieving the object from cache, if not in cache from db, if not in db, create it. update cache accordingly
-
-    :param proposal:
-    :return:
-    """
-    ctrack = cache.get('trackprop{}'.format(proposal.id))
-    if ctrack is None:
-        try:
-            track = ProposalTracking.objects.get(Subject=proposal)
-        except ProposalTracking.DoesNotExist:
-            track = ProposalTracking()
-            track.Subject = proposal
-            track.save()
-        cache.set('trackprop{}'.format(proposal.id), track, None)
-        return track
-    else:
-        return ctrack
+from .models import ProposalStatusChange, UserLogin, ApplicationTracking
 
 
 @superuser_required()
@@ -49,7 +25,7 @@ def list_user_login(request):
 
 
 @superuser_required()
-def list_proposal_status_change(request):
+def list_project_status_change(request):
     """
     List of proposal status changes.
 
@@ -110,36 +86,3 @@ def telemetry_user_detail(request, pk):
         'telemetry': telemetry,
         'toppages': sorted(pages_count, key=pages_count.__getitem__, reverse=True)[:3],
     })
-
-
-def tracking_visit_project(project, user):
-    """
-    Add a proposal-visit to the list of visitors to count unique student views to a proposal
-
-    :param project: the proposal
-    :param user: the visiting user.
-    :return:
-    """
-    # only for students
-    if user.groups.exists() or user.is_superuser:
-        return
-
-    # only for published
-    if project.Status != 4:
-        return
-
-    # retrieve object
-    track = get_ProposalTracking(project)
-
-    # add if it is unique visitor and write to both db and cache
-    if user not in track.UniqueVisitors.all():
-        track.UniqueVisitors.add(user)
-        track.save()
-        cache.set('trackprop{}'.format(project.id), track, None)
-
-        # notify listeners
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)('viewnumber{}'.format(project.id), {
-            'type': 'update',
-            'text': str(track.UniqueVisitors.count()),
-        })

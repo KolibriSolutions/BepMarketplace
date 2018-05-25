@@ -24,7 +24,8 @@ from support.models import Track, CapacityGroupAdministration
 from timeline.models import TimeSlot, TimePhase
 
 # disable cache for all tests
-@override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}})
+@override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}},
+                   EMAIL_BACKEND='django.core.mail.backends.filebased.EmailBackend', EMAIL_FILE_PATH='./test_mail.log')
 class ViewsTest(TestCase):
     """
     Class with testclient to test views. Some functions to setup data in the database.
@@ -38,7 +39,7 @@ class ViewsTest(TestCase):
         self.debug = False
 
         # to test that each page is at least tested once, check if all urls of the app are tested.
-        urlpatterns = import_module(self.app+'.urls', 'urlpatterns').urlpatterns
+        urlpatterns = import_module(self.app + '.urls', 'urlpatterns').urlpatterns
         self.allurls = [x.name for x in urlpatterns]
 
         # the client used for testing
@@ -93,7 +94,7 @@ class ViewsTest(TestCase):
         # permissions by user. The order is the order of self.usernames. User 'god' is disabled (not tested).
                 #  usernames:  r-1  t-1  r-h  t-h  r-2  t-2  t-u  r-3  r-s  t-p  r-4  t-4  r-5  r-6  god
         self.p_forbidden =    [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403,]  # no one
-        self.p_allowed =      [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200,]  # everyone
+        self.p_all =      [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, ]  # everyone
 
         self.p_staff =        [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 200, 200, 200, 200, 200, ]  # all staff, general
         self.p_staff12345 =   [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 200, 403, 200, ]  # all staff, general, for proposal stats
@@ -128,7 +129,11 @@ class ViewsTest(TestCase):
     def create_groups(self):
         """
         Create all groups for the system.
+
+        :param self:
+        :return:
         """
+        # setup all groups
         self.group_names = [
             'type1staff',  # project responsible
             'type2staff', # project assistant
@@ -144,7 +149,6 @@ class ViewsTest(TestCase):
             # make group object accessable as a class variable. < self.type1staff > etc.
             setattr(self, g, group)
 
-
     def create_users(self):
         """
         Takes self.usernames and creates users based on this. The last character of the username determnines the group
@@ -152,7 +156,7 @@ class ViewsTest(TestCase):
         It does not assign roles (like groupadministration and trackhead models).
         """
         # create testusers using the naming-patern: [r t]-[s p 1 2 u 3 t ]
-        # r=random (any person of the given type), t=this(for this proposal)
+        # r=random (any person of the given type), t=this(for this project)
         # 1=type1, 2=type2, 3=type3, s=Student, u=Unverified-type2, h=track-Head, p=Private-student
         self.usernames = [
             'r-1',  # responsible staff
@@ -193,15 +197,15 @@ class ViewsTest(TestCase):
             elif n[-1] == '6':
                 u.groups.add(self.type6staff)
             elif n == 'god':
+                u.groups.add(self.type3staff)
                 u.is_superuser = True
                 u.is_staff = True
             u.save()
             self.users[n] = u
             m = UserMeta(User=u)
+            m.save()
             ua = UserAcceptedTerms(User=u)
             ua.save()
-            m.save()
-
 
     def links_in_view_test(self, sourceurl, skip=[]):
         """
@@ -217,15 +221,16 @@ class ViewsTest(TestCase):
                 continue
             self.client.force_login(user)
             response = self.client.get(sourceurl)
-            urls = re.findall('/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+/', str(response.content))
-            urls = [ x for x in urls if (">" not in x
-                                         and "<" not in x
-                                         and "//" not in x
-                                         and "/static/" not in x
-                                         and "/logout/" not in x
-                                         and "tracking/live/" not in x
-                                         and "tracking/viewnumber/" not in x
-                                         and x not in skip)]
+            urls = re.findall('/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+/',
+                              str(response.content))
+            urls = [x for x in urls if (">" not in x
+                                        and "<" not in x
+                                        and "//" not in x
+                                        and "/static/" not in x
+                                        and "/logout/" not in x
+                                        and "tracking/live/" not in x
+                                        and "tracking/viewnumber/" not in x
+                                        and x not in skip)]
 
             for link in urls:  # select the url in href for all a tags(links)
                 self.info['user'] = user.username
@@ -237,7 +242,7 @@ class ViewsTest(TestCase):
         Loop over the given phases and test with all codes
 
         :param phases:
-        :param codes:
+        :param codes: list of views and expected status codes
         :return:
         """
         assert isinstance(phases, list) or isinstance(phases, range)
@@ -249,7 +254,7 @@ class ViewsTest(TestCase):
                 view = self.app + ":" + page[0]
                 if any(isinstance(i, list) for i in status):
                     # we're dealing with proposals status tests here
-                    ProposalViewsTest.loop_user_status(self, view, status, page[1])
+                    ProjectViewsTestGeneral.loop_user_status(self, view, status, page[1])
                 else:
                     # normal test without proposals
                     self.loop_user(view, status, page[1])
@@ -265,14 +270,14 @@ class ViewsTest(TestCase):
         :param kw: keyword args for the given view.
         :return:
         """
-        for username in self.usernames:
-            if self.debug:
-                print("Testing user {}".format(username))
+        for i, username in enumerate(self.usernames):
             self.info['user'] = username
             self.info['kw'] = kw
             # log the user in
-            u = User.objects.get(username=username)
-            expected = status[self.usernames.index(username)]
+            u = self.users[username]
+            self.info['user-groups'] = u.groups.all()
+            self.info['user-issuper'] = u.is_superuser
+            expected = status[i]
             self.client.force_login(u)
             self.view_test_status(reverse(view, kwargs=kw), expected)
             self.client.logout()
@@ -312,16 +317,19 @@ class ViewsTest(TestCase):
                          .format(expected, response_code, link, self.info))
 
 
-class ProposalViewsTest(ViewsTest):
+class ProjectViewsTestGeneral(ViewsTest):
     """
-    Functions to test pages related to proposals
+    Functions to test pages related to proposals/projects
     """
     def setUp(self):
         """
-        Initialization test data. Do not use the testdata from ViewsTest
+        Initialization test data for proposals/projects
+
+        :param self: self
+        :return:
         """
         # create users and groups in parent function
-        super(ProposalViewsTest, self).setUp()
+        super(ProjectViewsTestGeneral, self).setUp()
 
         # Random track head r-h
         rth = User.objects.get(username='r-h')
@@ -360,6 +368,7 @@ class ProposalViewsTest(ViewsTest):
                                  Track=self.track,
                                 TimeSlot=self.ts,
         )
+
         self.privateproposal.save()
         self.ppriv = self.privateproposal.id
         self.privateproposal.Assistants.add(self.users.get('t-2'))
@@ -386,13 +395,12 @@ class ProposalViewsTest(ViewsTest):
             self.info['kw'] = kw
             # log the user in
             u = User.objects.get(username=username)
-            #self.client.login_user(u)
             self.client.force_login(u)
             # check for each given status from the status-array
             l = len(status)
             for status0 in range(0, l):
                 if self.debug:
-                    print("Testing status {}".format(self.status))
+                    print("Testing status {}".format(status0+1))
                 self.status = status0 + 1
                 self.info['status'] = self.status
                 # Expected response code
@@ -404,5 +412,4 @@ class ProposalViewsTest(ViewsTest):
                 self.privateproposal.save()
                 self.view_test_status(reverse(view, kwargs=kw), expected)
             # user logout
-            #self.client.logout_user(u)
             self.client.logout()

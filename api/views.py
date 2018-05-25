@@ -1,7 +1,5 @@
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core import signing
 from django.core.cache import cache
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
@@ -22,27 +20,6 @@ from tracking.models import ProposalStatusChange
 @login_required
 def api_info(request):
     return render(request, 'api/api.html')
-
-def view_share_link(request, token):
-    """
-    Translate a given sharelink to a proposal-detailpage.
-
-    :param request:
-    :param token: sharelink token, which includes the pk of the proposal
-    :return: proposal detail render
-    """
-    try:
-        pk = signing.loads(token, max_age=settings.MAXAGESHARELINK)
-    except signing.SignatureExpired:
-        return render(request, "base.html", {
-            "Message": "Share link has expired!"
-        })
-    except signing.BadSignature:
-        return render(request, "base.html", {
-            "Message": "Invalid token in share link!"
-        })
-    obj = get_object_or_404(Proposal, pk=pk)
-    return render(request, "proposals/ProposalDetail.html", {"proposal": obj})
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
@@ -231,7 +208,7 @@ def detail_proposal_api(request, pk):
         return HttpResponse("Not allowed", status=403)
     return JsonResponse({
         "id": prop.id,
-        "detaillink": reverse("proposals:details", args=[prop.id]),
+        "detaillink": reverse("proposals:details", kwargs={'pk': prop.id}),
         "title": prop.Title,
         "group": prop.Group,
         "track": str(prop.Track),

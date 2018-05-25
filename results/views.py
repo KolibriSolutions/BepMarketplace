@@ -2,48 +2,57 @@ from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.http import Http404
-from django.http import HttpResponse
-from django.shortcuts import render
+from django.http import Http404, HttpResponse
+from django.shortcuts import render, get_object_or_404
 from django.template.loader import get_template
+from django.db.models.aggregates import Sum
 from xhtml2pdf import pisa
 
-from BepMarketplace.decorators import group_required, get_object_or_404
-from BepMarketplace.decorators import phase7_only
+from BepMarketplace.decorators import group_required, phase_required
+from general_form import ConfirmForm
+from general_view import get_grouptype
 from timeline.utils import get_timeslot
 from .forms import *
 
 
 @group_required('type1staff', 'type3staff')
-@phase7_only
+@phase_required(6, 7)
 def finalize(request, pk, version=0):
     """
     Finalize the grades and print. Only for trackheads.
-    
-    :param version: 
-    :param request: 
-    :param pk: 
-    :return: 
+
+    :param version:
+    :param request:
+    :param pk:
+    :return:
     """
+    ts = get_timeslot()
+    if not hasattr(ts, 'resultoptions'):
+        raise PermissionDenied("Results menu is not yet visible.")
+    else:
+        if not get_timeslot().resultoptions.Visible:
+            raise PermissionDenied("Results menu is not yet visible.")
+
     dstr = get_object_or_404(Distribution, pk=pk)
     if not request.user.is_superuser and request.user != dstr.Proposal.Track.Head:
-            raise PermissionDenied("You are not the correct owner of this distribution."\
-                                     " Grades can only be finalized by track heads.")
+        raise PermissionDenied("You are not the correct owner of this distribution." \
+                               " Grades can only be finalized by track heads.")
 
     vals = [cat.is_valid() for cat in dstr.results.all()]
-    if dstr.results.count() < GradeCategory.objects.filter(TimeSlot=get_timeslot()).count() or not all(val is True for val in vals):
+    if dstr.results.count() < GradeCategory.objects.filter(TimeSlot=get_timeslot()).count() or not all(
+            val is True for val in vals):
         return render(request, "base.html", context={
-            "Message" : "Not all categories and aspects have been filled in, please complete the grading first.",
-            "return" : "results:gradeformstaff",
+            "Message": "Not all categories and aspects have been filled in, please complete the grading first.",
+            "return": "results:gradeformstaff",
             "returnget": str(pk),
         })
     version = int(version)
     if version == 0:  # The normal page summarizing the grades of the student
         return render(request, "results/printGrades.html", {
-            "dstr" : dstr,
-            "catresults" : dstr.results.all(),
-            "final" : all(f.Final is True for f in dstr.results.all()),
-            "finalgrade" : dstr.TotalGradeRounded(),
+            "dstr": dstr,
+            "catresults": dstr.results.all(),
+            "final": all(f.Final is True for f in dstr.results.all()),
+            "finalgrade": dstr.TotalGradeRounded(),
         })
     elif version == 1:  # printable page with grades
         for cat in dstr.results.all():
@@ -51,8 +60,8 @@ def finalize(request, pk, version=0):
             cat.save()
 
         return render(request, "results/printGradesStandAlone.html", {
-            "dstr" : dstr,
-            "catresults" : dstr.results.all(),
+            "dstr": dstr,
+            "catresults": dstr.results.all(),
             "finalgrade": dstr.TotalGradeRounded(),
         })
     elif version == 2:  # pdf with grades
@@ -77,31 +86,41 @@ def finalize(request, pk, version=0):
 
 
 @group_required('type1staff', 'type3staff')
-@phase7_only
+@phase_required(6, 7)
 def staff_form(request, pk, step=0):
     """
     Edit grade for a category as indexed by step. For each student as given by pk.
-    Also edit the individual aspects of each grade category. Only for trackheads
-    
-    :param request: 
+    Also edit the individual aspects of each grade category. For trackheads and responsible staff
+
+    :param request:
     :param pk: id of distribution
     :param step: number of step in the menu, index of category
-    :return: 
+    :return:
     """
+    ts = get_timeslot()
+    if not hasattr(ts, 'resultoptions'):
+        raise PermissionDenied("Results menu is not yet visible.")
+    else:
+        if not get_timeslot().resultoptions.Visible:
+            raise PermissionDenied("Results menu is not yet visible.")
+
     dstr = get_object_or_404(Distribution, pk=pk)
-    if not request.user.is_superuser and request.user != dstr.Proposal.Track.Head:
+    if not request.user.is_superuser and \
+            request.user != dstr.Proposal.Track.Head and \
+            request.user != dstr.Proposal.ResponsibleStaff and \
+            get_grouptype('3') not in request.user.groups.all():
         raise PermissionDenied("You are not the correct owner of this distribution. "
-                               "Only track heads can edit grades.")
+                               "Only track heads and responsible staff can edit grades.")
 
     cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
     numcategories = len(cats)
     step = int(step)
     if step == 0:
         return render(request, "results/wizard.html", {
-            "step" : 0,
+            "step": 0,
             "pk": pk,
             "categories": cats,
-            "dstr":dstr,
+            "dstr": dstr,
         })
     elif step <= numcategories:
         cat = cats[step - 1]
@@ -112,8 +131,8 @@ def staff_form(request, pk, step=0):
         if request.method == "POST":
             if catresult.Final:
                 return render(request, "base.html", status=410, context={
-                    "Message" : "Category Result has already been finalized! Editing is not allowed anymore. "
-                                "If this has to be lifted contact support staf"
+                    "Message": "Category Result has already been finalized! Editing is not allowed anymore. "
+                               "If this has to be lifted contact support staf"
                 })
             categoryform = CategoryResultForm(request.POST, instance=catresult, prefix='catform')
             aspectforms = []
@@ -123,8 +142,8 @@ def staff_form(request, pk, step=0):
                 except:
                     aspresult = CategoryAspectResult(CategoryResult=catresult, CategoryAspect=aspect)
                 aspectforms.append({
-                    "form" : AspectResultForm(request.POST, instance=aspresult, prefix="aspect" + str(i)),
-                    "aspect" : aspect,
+                    "form": AspectResultForm(request.POST, instance=aspresult, prefix="aspect" + str(i)),
+                    "aspect": aspect,
                 })
             vals = [form['form'].is_valid() for form in aspectforms]
             if categoryform.is_valid() and all(val is True for val in vals):
@@ -141,7 +160,7 @@ def staff_form(request, pk, step=0):
                     "aspectsforms": aspectforms,
                     "dstr": dstr,
                     "pk": pk,
-                    "saved" : True,
+                    "saved": True,
                 })
             else:
                 return render(request, "results/wizard.html", {
@@ -162,32 +181,321 @@ def staff_form(request, pk, step=0):
                 except:
                     aspresult = CategoryAspectResult(CategoryResult=catresult, CategoryAspect=aspect)
                 aspectforms.append({
-                    "form" : AspectResultForm(instance=aspresult, prefix="aspect" + str(i)),
-                    "aspect" : aspect,
+                    "form": AspectResultForm(instance=aspresult, prefix="aspect" + str(i)),
+                    "aspect": aspect,
                 })
 
             return render(request, "results/wizard.html", {
-                "step" : step,
-                "categories" : cats,
-                "category" : cat,
-                "categoryform" : categoryform,
-                "aspectsforms" : aspectforms,
-                "dstr" : dstr,
-                "pk" : pk,
-                "final" : catresult.Final,
+                "step": step,
+                "categories": cats,
+                "category": cat,
+                "categoryform": categoryform,
+                "aspectsforms": aspectforms,
+                "dstr": dstr,
+                "pk": pk,
+                "final": catresult.Final,
             })
     else:
         raise Http404("This category does not exist.")
 
 
 @login_required
-def about(request):
+def about(request, pk=None):
     """
     Explanation about grading and grade categories.
-    
-    :param request: 
-    :return: 
+
+    :param request:
+    :param pk: optional pk of a timeslot, only for support user.
+    :return:
     """
+    if pk and get_grouptype('3') in request.user.groups.all():
+        ts = get_object_or_404(TimeSlot, pk=pk)
+    else:
+        ts = get_timeslot()
     return render(request, "results/aboutgrades.html", {
-        "categories" : GradeCategory.objects.filter(TimeSlot=get_timeslot())
+        "categories": GradeCategory.objects.filter(TimeSlot=ts),
+        'ts': ts,
     })
+
+
+@group_required('type3staff')
+def list_categories(request):
+    """
+
+    :param request:
+    :return:
+    """
+    ts = get_timeslot()
+    cats = GradeCategory.objects.filter(TimeSlot=ts)
+    ws = cats.aggregate(Sum('Weight'))['Weight__sum']
+    wsa = GradeCategoryAspect.objects.filter(Category__in=cats).count()
+
+    if not hasattr(ts, 'resultoptions'):
+        r = ResultOptions(
+            TimeSlot=ts
+        )
+        r.save()
+
+    r = ts.resultoptions
+
+    if request.method == "POST":
+        form = MakeVisibleForm(request.POST, instance=r)
+        if form.is_valid():
+            options = form.save()
+            options.save()
+    else:
+        form = MakeVisibleForm(instance=r)
+
+    return render(request, "results/list_categories.html", {
+        "categories": GradeCategory.objects.filter(TimeSlot=ts),
+        'ts': ts,
+        'gsum': ws,
+        'asum': wsa,
+        'visible': r.Visible,
+        'form': form,
+    })
+
+
+@group_required('type3staff')
+def add_category(request):
+    """
+
+    :param request:
+    :return:
+    """
+    if request.method == 'POST':
+        form = GradeCategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return render(request, 'base.html',
+                          {'Message': 'Grade category added!',
+                           'return': 'results:list_categories'})
+    else:
+        form = GradeCategoryForm()
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Add grade category',
+        'buttontext': 'Save',
+    })
+
+
+@group_required('type3staff')
+def edit_category(request, pk):
+    """
+
+    :param request:
+    :param pk:
+    :return:
+    """
+    category = get_object_or_404(GradeCategory, pk=pk)
+    if request.method == 'POST':
+        form = GradeCategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            if form.has_changed():
+                tp = form.save()
+                return render(request, 'base.html', {
+                    'Message': 'Grade category saved!',
+                    'return': 'results:list_categories',
+                })
+            else:
+                return render(request, 'base.html', {
+                    'Message': 'Grade category unchanged.',
+                    'return': 'results:list_categories',
+                })
+    else:
+        form = GradeCategoryForm(instance=category)
+
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Edit grade category',
+        'buttontext': 'Save',
+    })
+
+
+@group_required('type3staff')
+def delete_category(request, pk):
+    """
+
+    :param request:
+    :param pk:
+    :return:
+    """
+    cat = get_object_or_404(GradeCategory, pk=pk)
+    if request.method == 'POST':
+        form = ConfirmForm(request.POST)
+        if form.is_valid():
+            for aspect in cat.aspects.all():
+                aspect.delete()
+            cat.delete()
+            return render(request, 'base.html', {
+                'Message': 'Grade category deleted.',
+                'return': 'results:list_categories',
+            })
+    else:
+        form = ConfirmForm()
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Delete grade category?',
+        'buttontext': 'Confirm'
+    })
+
+
+@group_required('type3staff')
+def list_aspects(request, pk):
+    """
+    List all aspects of a given grade category in the current timeslot
+
+    :param request:
+    :param pk: pk of grade category
+    :return:
+    """
+    category = get_object_or_404(GradeCategory, pk=pk)
+    aspects = GradeCategoryAspect.objects.filter(Category=category)
+    ts = get_timeslot()
+    return render(request, "results/list_aspects.html", {
+        "aspects": aspects,
+        'ts': ts,
+        'cat': category,
+    })
+
+
+@group_required('type3staff')
+def add_aspect(request, pk):
+    """
+
+    :param request:
+    :param pk:
+    :return:
+    """
+    category = get_object_or_404(GradeCategory, pk=pk)
+    if request.method == 'POST':
+        form = GradeCategoryAspectForm(request.POST)
+        if form.is_valid():
+            f = form.save(commit=False)
+            f.Category = category
+            f.save()
+            return render(request, 'base.html',
+                          {'Message': 'Grade category aspect added!',
+                           'return': 'results:list_aspects',
+                           'returnget': category.pk})
+    else:
+        form = GradeCategoryAspectForm()
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Add grade category aspect to ' + category.Name,
+        'buttontext': 'Save',
+    })
+
+
+@group_required('type3staff')
+def edit_aspect(request, pk):
+    """
+
+    :param request:
+    :param pk:
+    """
+    aspect = get_object_or_404(GradeCategoryAspect, pk=pk)
+    if request.method == 'POST':
+        form = GradeCategoryAspectForm(request.POST, instance=aspect)
+        if form.is_valid():
+            if form.has_changed():
+                form.save()
+                return render(request, 'base.html', {
+                    'Message': 'Grade category aspect saved!',
+                    'return': 'results:list_aspects',
+                    'returnget': aspect.Category.id,
+                })
+            else:
+                return render(request, 'base.html', {
+                    'Message': 'Grade category aspect unchanged.',
+                    'return': 'results:list_aspects',
+                    'returnget': aspect.Category.id,
+                })
+    else:
+        form = GradeCategoryAspectForm(instance=aspect)
+
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Edit grade category aspect of ' + aspect.Category.Name,
+        'buttontext': 'Save',
+    })
+
+
+@group_required('type3staff')
+def delete_aspect(request, pk):
+    """
+
+    :param request:
+    :param pk:
+    :return:
+    """
+    aspect = get_object_or_404(GradeCategoryAspect, pk=pk)
+    cat = aspect.Category.id
+    if request.method == 'POST':
+        form = ConfirmForm(request.POST)
+        if form.is_valid():
+            aspect.delete()
+            return render(request, 'base.html', {
+                'Message': 'Grade category aspect deleted.',
+                'return': 'results:list_aspects',
+                'returnget': cat})
+    else:
+        form = ConfirmForm()
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Delete grade category aspect?',
+        'buttontext': 'Confirm'
+    })
+
+
+@group_required('type3staff')
+def copy(request, pk=None):
+    """
+    Show a list of timeslots to import grades from.
+
+    :param request:
+    :param pk:
+    :return:
+    """
+    # do a copy
+    if pk:
+        ts = get_object_or_404(TimeSlot, pk=pk)
+        if ts == get_timeslot():
+            raise PermissionDenied("It is not possible to copy the grades from the current timeslot.")
+        if get_timeslot().gradecategories.exists():
+            return render(request, 'base.html', {
+                'Message': "The current timeslot already has grade categories."
+                           " Importing is not possible. "
+                           "Please remove the categories in the current timeslot before copying.",
+                'return': 'results:list_categories'})
+
+        if request.method == 'POST':
+            form = ConfirmForm(request.POST)
+            if form.is_valid():
+                for cat in ts.gradecategories.all():
+                    old_id = cat.id
+                    old_aspects = cat.aspects.all()
+                    cat.id = None
+                    cat.TimeSlot = get_timeslot()
+                    cat.save()
+                    for aspect in old_aspects:
+                        aspect.id = None
+                        aspect.Category = cat
+                        aspect.save()
+
+                return render(request, 'base.html',
+                              {'Message': 'Finished importing!', 'return': 'results:list_categories'})
+        else:
+            form = ConfirmForm()
+        return render(request, 'GenericForm.html', {
+            'form': form,
+            'formtitle': 'Confirm copy grade categories and aspects',
+            'buttontext': 'Confirm'
+        })
+    # list possible timeslots to copy from
+    else:
+        tss = TimeSlot.objects.filter(gradecategories__isnull=False).distinct()
+        return render(request, "results/list_copy.html", {
+            "tss": tss,
+            'ts': get_timeslot(),
+        })

@@ -42,28 +42,29 @@ def public_files(request, fileid, timeslot=None):
     return sendfile(request, obj.File.path, attachment=True, attachment_filename=obj.OriginalName)
 
 
-def project_files(request, fileid, proposalid=None, ty=None):
+def project_files(request, fileid, project_id=None, ty=None):
     """
-    proposal files, attachements or images, viewable on proposal details, model in proposals-app
-    Because proposals images and attachements are seperate models, but are stored in the same folder, the ID is not
+    project files, attachements or images, viewable on project details, model in projects-app
+    Because projects images and attachements are seperate models, but are stored in the same folder, the ID is not
     unique, therefore only the UUID is possible to get the file.
-    Mode 1: (old) proposalid gives the folder to search in, fileid is the filename (an UUID)
+    Mode 1: (old) projectid gives the folder to search in, fileid is the filename (an UUID)
     Mode 2: (new) ty is either "a" or "i" to refer to image or attachement and fileid is the ID (pk) of-
      the corresponding model
     When the file is an image, it is send inline, otherwise it is send as attachement.
 
     :param request:
-    :param fileid: id of the proposal file.
-    :param proposalid: id of the proposal, corresponds to directory name appendix.
+    :param fileid: id of the project file.
+    :param project_id: id of the project, corresponds to directory name appendix.
     :param ty: type, image or attachment
     :return: file download
     """
     if not request.user.is_authenticated:
         # allow anonymous users when viewing from a sharelink
         # make sure referrerpolicy is set on links, otherwise HTTP_REFERER might not be available.
+        # https: // bugs.chromium.org / p / chromium / issues / detail?id = 455987
         if "HTTP_REFERER" in request.META:
             ref = request.META["HTTP_REFERER"].split('/')
-            if ref[-3] == 'share' and ref[-4] == 'api':  # url  /api/share/<sharetoken>/
+            if 'share' in ref:  # url  /api/share/<sharetoken>/
                 # check if sharetoken is valid. Same as in api.views
                 try:
                     pk = signing.loads(ref[-2], max_age=settings.MAXAGESHARELINK)
@@ -72,7 +73,7 @@ def project_files(request, fileid, proposalid=None, ty=None):
                 except signing.BadSignature:
                     raise PermissionDenied('Not allowed!')
                 if not Proposal.objects.filter(pk=pk).exists():
-                    # a check whether this image/attachment belongs to this proposal would be better
+                    # a check whether this image/attachment belongs to this project would be better
                     # but is more difficult.
                     raise PermissionDenied('Not allowed!')
                 pass  # anonymous user viewing a valid share link
@@ -82,21 +83,21 @@ def project_files(request, fileid, proposalid=None, ty=None):
             raise PermissionDenied('Not allowed!')
 
     # first try filename as image, then as attachment
-    if proposalid:  # via a proposal id and a filename (UUID) as fileid, the old way
+    if project_id:  # via a project id and a filename (UUID) as fileid, the old way
         ext = get_ext(fileid)
         if ext in settings.ALLOWED_PROPOSAL_IMAGES:
-            obj = get_object_or_404(ProposalImage, File='proposal_{}/{}'.format(proposalid, fileid))
+            obj = get_object_or_404(ProposalImage, File='proposal_{}/{}'.format(project_id, fileid))
             return sendfile(request, obj.File.path, attachment=False)  # serve inline
         elif ext in settings.ALLOWED_PROPOSAL_ATTACHMENTS:
-            obj = get_object_or_404(ProposalAttachment, File='proposal_{}/{}'.format(proposalid,fileid))
+            obj = get_object_or_404(ProposalAttachment, File='proposal_{}/{}'.format(project_id, fileid))
             return sendfile(request, obj.File.path, attachment=True, attachment_filename=obj.OriginalName)
         else:
             raise PermissionDenied("File extension not allowed.")
     elif ty:  # by specifying image or attachement and a ID (pk) as fileid, the new way
-        if ty == "a":
+        if ty == "a":  # attachment, like pdf
             obj = get_object_or_404(ProposalAttachment, id=fileid)
             return sendfile(request, obj.File.path, attachment=True, attachment_filename=obj.OriginalName)
-        elif ty == "i":
+        elif ty == "i":  # image
             obj = get_object_or_404(ProposalImage, id=fileid)
             return sendfile(request, obj.File.path)
         else:

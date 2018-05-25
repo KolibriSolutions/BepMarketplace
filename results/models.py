@@ -1,11 +1,22 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-
+from django.db.models.aggregates import Sum
 from general_model import clean_text
 from timeline.utils import get_timeslot_id
 from index.models import Track
 from students.models import Distribution
 from timeline.models import TimeSlot
+from django.core.exceptions import ValidationError
+
+
+class ResultOptions(models.Model):
+    """
+    Global options and guidelines for all results
+    """
+    TimeSlot = models.OneToOneField(TimeSlot, on_delete=models.CASCADE, related_name="resultoptions")
+    Visible = models.BooleanField(default=False)
+    def __str__(self):
+        return "Result options for " + self.TimeSlot.__str__() + "."
 
 
 class GradeCategory(models.Model):
@@ -13,14 +24,26 @@ class GradeCategory(models.Model):
     A category of a final grade. A student get a subgrade for each category. A category has sub aspects.
     """
     Weight = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])
-    Name =  models.CharField(max_length=255, unique=True)
+    Name = models.CharField(max_length=255)
     TimeSlot = models.ForeignKey(TimeSlot, default=get_timeslot_id, related_name='gradecategories', blank=False,
                                  on_delete=models.PROTECT)
+
     class Meta:
         ordering = ["-Weight", "Name"]
 
     def __str__(self):
-        return self.Name + " (" + str(self.Weight) + "%)"
+        return self.Name + ' in ' + self.TimeSlot.__str__() + " (" + str(self.Weight) + "%)"
+
+    def clean(self):
+        ws = GradeCategory.objects.filter(TimeSlot=get_timeslot_id())
+        if self.id:
+            ws = ws.exclude(id=self.id)
+        try:
+            w = ws.aggregate(Sum('Weight'))['Weight__sum'] + self.Weight
+        except:
+            w = self.Weight
+        if w > 100:
+            raise ValidationError("Total weight of categories should be below 100%, it is now {}%!".format(w))
 
 
 class CategoryResult(models.Model):
@@ -51,7 +74,7 @@ class GradeCategoryAspect(models.Model):
     A aspect of a grade category. A subgrade to explain the grade of the category.
     """
     Category = models.ForeignKey(GradeCategory, on_delete=models.CASCADE, related_name='aspects')
-    Name = models.CharField(max_length=255, unique=True)
+    Name = models.CharField(max_length=255)
     Description = models.TextField()
 
     def __str__(self):

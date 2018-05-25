@@ -6,6 +6,7 @@ from ipware.ip import get_real_ip
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
+
 class TelemetryMiddleware(MiddlewareMixin):
     """
     Middleware to track users activity.
@@ -14,12 +15,13 @@ class TelemetryMiddleware(MiddlewareMixin):
 
     def createpackage(self, request, response):
         return {
-            'path'          : request.path,
-            'status_code'   : response.status_code,
-            'ip'            : get_real_ip(request),
-            'method'        : request.method,
-            'timestamp'     : int(datetime.utcnow().replace(tzinfo=utc).timestamp()),
-            'user_agent'    : request.META.get('HTTP_USER_AGENT')
+            'path': request.path,
+            'status_code': response.status_code,
+            'ip': get_real_ip(request),
+            'method': request.method,
+            'timestamp': int(datetime.utcnow().replace(tzinfo=utc).timestamp()),
+            'user_agent': request.META.get('HTTP_USER_AGENT'),
+            'referer': request.META.get('HTTP_REFERER')
         }
 
     def handleanon(self, request, response):
@@ -54,7 +56,7 @@ class TelemetryMiddleware(MiddlewareMixin):
         :return:
         """
         try:
-            try:#only exists when impersonate is active, crashes if no try except is used
+            try:  # only exists when impersonate is active, crashes if no try except is used
                 if request.user.is_impersonate:
                     return response
             except:
@@ -66,7 +68,7 @@ class TelemetryMiddleware(MiddlewareMixin):
             if request.user.is_anonymous:
                 return self.handleanon(request, response)
         except:
-            #in channels production mode, daphne does not give a user property in request
+            # in channels production mode, daphne does not give a user property in request
             # in non daphne a anonymous user object would be given\
             # because of this a try except is necesarry here
             return self.handleanon(request, response)

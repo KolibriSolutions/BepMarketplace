@@ -1,25 +1,28 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q, Count
 from django.forms import modelformset_factory
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.shortcuts import render
 from django.urls import reverse
 from render_block import render_block_to_string
 
-from BepMarketplace.decorators import group_required, can_edit_proposal, can_view_proposal, can_downgrade_proposal, can_share_proposal
+from BepMarketplace.decorators import group_required, can_edit_proposal, can_view_proposal, can_downgrade_proposal, \
+    can_share_proposal
 from api.views import upgrade_status_api, downgrade_status_api
 from distributions.utils import get_distributions
 from general_mail import mailAffectedUser, mailPrivateStudent
 from general_model import GroupOptions
 from general_view import get_grouptype, truncate_string
 from index.models import Track
-from proposals.utils import get_all_proposals, get_share_link, getProp, updatePropCache
+from proposals.models import Proposal
+from proposals.utils import get_all_proposals, get_share_link, get_cached_project, updatePropCache
 from students.views import get_all_applications
 from timeline.utils import get_timeslot, get_timephase_number
-from tracking.views import tracking_visit_project
+from tracking.utils import tracking_visit_project
 from .forms import ProposalFormEdit, ProposalFormCreate, ProposalImageForm, ProposalDowngradeMessageForm, \
     ProposalAttachmentForm, ProposalFormLimited
 from .models import Proposal, ProposalImage, ProposalAttachment
@@ -27,7 +30,7 @@ from .utils import can_edit_proposal_fn
 
 
 @login_required
-def list_public_proposals(request):
+def list_public_projects(request):
     """
     List all the public (=type4 & not-private) proposals. This is the overview for students to choose a proposal from.
 
@@ -45,7 +48,7 @@ def list_public_proposals(request):
 
 
 @can_view_proposal
-def detail_proposal(request, pk):
+def detail_project(request, pk):
     """
     Detailview page for a given proposal. Displays all information for the proposal. Used for students to choose a
     proposal from, and for staff to check. For staff it shows edit and up/downgrade buttons. For students it shows a
@@ -58,7 +61,7 @@ def detail_proposal(request, pk):
     :param pk: pk of the proposal
     :return:
     """
-    prop = getProp(pk)
+    prop = get_cached_project(pk)
 
     # if student
     if not request.user.groups.exists():
@@ -80,6 +83,7 @@ def detail_proposal(request, pk):
         cdata = cache.get("proposaldetail{}".format(pk))
         if cdata is None:
             data = {"proposal": prop,
+                    "project": prop,
                     "user": request.user
                     }
             cdata = render_block_to_string("proposals/ProposalDetail.html", 'body', data)
@@ -91,6 +95,7 @@ def detail_proposal(request, pk):
     # if staff:
     else:
         data = {"proposal": prop,
+                "project": prop,
                 "Editlock": "Editing not possible"}
         if prop.Status == 4:  # published proposal in this timeslot
             # support staff can see applications
@@ -109,7 +114,7 @@ def detail_proposal(request, pk):
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
-def create_proposal(request):
+def create_project(request):
     """
     Create a new proposal. Only for staff. Generating a new proposal for this timeslot is only allowed in the first
     timephase. In other timephases projects can only be generated for the next timeslot.
@@ -144,7 +149,7 @@ def create_proposal(request):
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
-def list_own_proposals(request):
+def list_own_projects(request):
     """
     This lists all proposals that the given user has something to do with. Either a responsible or assistant. For
     Type3staff this lists all proposals. This is the usual view for staff to view their proposals.
@@ -153,23 +158,23 @@ def list_own_proposals(request):
     :return:
     """
     # show projects from all timeslots, filtering through datatables.
-    allprops = Proposal.objects.all()
-    proposals = []
+    allprojs = Proposal.objects.all()
+    projects = []
 
     if get_grouptype("3") in request.user.groups.all() or request.user.is_superuser:
-        proposals = list(allprops)
+        projects = list(allprojs)
     else:
-        for prop in allprops:
+        for prop in allprojs:
             if request.user == prop.ResponsibleStaff or request.user in prop.Assistants.all():
-                proposals.append(prop)
+                projects.append(prop)
 
-    return render(request, 'proposals/ProposalsCustomList.html', {'proposals': proposals,
+    return render(request, 'proposals/ProposalsCustomList.html', {'proposals': projects,
                                                                   'hide_sidebar': True})
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
 @can_edit_proposal
-def edit_proposal(request, pk):
+def edit_project(request, pk):
     """
     Edit a given proposal. Only for staff that is allowed to edit the proposal. Timeslot validation is handled in form.
 
@@ -205,7 +210,7 @@ def edit_proposal(request, pk):
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
 @can_view_proposal
-def copy_proposal(request, pk):
+def copy_project(request, pk):
     """
     Copy a proposal from a previous timeslot. Only for staff that is allowed to see the proposal to copy.
 
@@ -318,7 +323,7 @@ def edit_file(request, pk, ty):
 
 
 @group_required('type3staff')
-def ask_delete_proposal(request, pk):
+def ask_delete_project(request, pk):
     """
     A confirmform for type3staff to delete a proposal. Regular staff cannot delete a proposal, as this should not
     happen. Public (=status4) proposals cannot be deleted.
@@ -339,7 +344,7 @@ def ask_delete_proposal(request, pk):
 
 
 @group_required('type3staff')
-def delete_proposal(request, pk):
+def delete_project(request, pk):
     """
     Really delete a proposal. This can only be called by type3staff after going to the confirm delete page.
 
@@ -354,7 +359,7 @@ def delete_proposal(request, pk):
                       status=403)
 
     if "HTTP_REFERER" in request.META:
-        if 'ask' in request.META["HTTP_REFERER"]:
+        if 'ask' in request.META['HTTP_REFERER']:
             # make sure previous page is askdelete
             title = obj.Title
             obj.delete()
@@ -419,15 +424,15 @@ def list_pending(request):
     :param request:
     :return:
     """
-    props = []
+    projs = []
     if get_grouptype("2") in request.user.groups.all() or get_grouptype("2u") in request.user.groups.all():
-        props = get_all_proposals().filter(Q(Assistants__id=request.user.id) & Q(Status__exact=1))
+        projs = get_all_proposals().filter(Q(Assistants__id=request.user.id) & Q(Status__exact=1))
 
     elif get_grouptype("1") in request.user.groups.all():
-        props = get_all_proposals().filter((Q(ResponsibleStaff=request.user.id) & Q(Status__exact=2)) |
+        projs = get_all_proposals().filter((Q(ResponsibleStaff=request.user.id) & Q(Status__exact=2)) |
                                            (Q(Track__Head=request.user.id) & Q(Status__exact=3)))
 
-    return render(request, "proposals/pendingProposals.html", {"proposals": props})
+    return render(request, "proposals/pendingProposals.html", {"proposals": projs})
 
 
 @group_required('type1staff')
@@ -441,9 +446,9 @@ def list_track(request):
     if not Track.objects.filter(Head=request.user).exists():
         raise PermissionDenied("This page is only for track heads.")
     objs = Track.objects.filter(Head__id=request.user.id)
-    props = get_all_proposals().filter(Track__in=objs)
+    projs = get_all_proposals().filter(Track__in=objs)
     return render(request, "proposals/ProposalsCustomList.html", {
-        "proposals": props,
+        "proposals": projs,
         "title": "Proposals of my Track"
     })
 
@@ -481,22 +486,22 @@ def stats_personal(request, step=0):
     if get_timephase_number() < 6:
         raise PermissionDenied("Proposals statistics are only available from timephase 6 onwards.")
     step = int(step)
-    allprops = get_all_proposals().filter(Status=4).order_by('-Title')
-    proposals = []
+    allprojs = get_all_proposals().filter(Status=4).order_by('-Title')
+    projects = []
 
     if get_grouptype("3") in request.user.groups.all():
-        proposals = list(allprops)
+        projects = list(allprojs)
     else:
-        for prop in allprops:
+        for prop in allprojs:
             if request.user == prop.ResponsibleStaff or request.user in prop.Assistants.all():
-                proposals.append(prop)
+                projects.append(prop)
 
     if step == 0:
         return render(request, "proposals/ProposalStats.html", {"step": 0})
     elif step == 1:
         counts = []
         tabledata = []
-        for p in proposals:
+        for p in projects:
             try:
                 counts.append(p.tracking.UniqueVisitors.count())
             except:
@@ -513,14 +518,14 @@ def stats_personal(request, step=0):
                 })
         return render(request, "proposals/ProposalStats.html", {
             "counts": counts,
-            "labels": [truncate_string(p.Title) for p in proposals],
+            "labels": [truncate_string(p.Title) for p in projects],
             "tabledata": tabledata,
             "step": 1
         })
     else:
-        if step - 3 >= len(proposals):
+        if step - 3 >= len(projects):
             return render(request, "proposals/ProposalStats.html", {"step": -1})
-        prop = proposals[step - 3]
+        prop = projects[step - 3]
         try:
             count = prop.tracking.UniqueVisitors.count()
         except:
@@ -604,3 +609,28 @@ def stats_general(request, step=0):
             "distributed": prop.distributions.count(),
             "step": step
         })
+
+
+def view_share_link(request, token):
+    """
+    Translate a given sharelink to a proposal-detailpage.
+
+    :param request:
+    :param token: sharelink token, which includes the pk of the proposal
+    :return: proposal detail render
+    """
+    try:
+        pk = signing.loads(token, max_age=settings.MAXAGESHARELINK)
+    except signing.SignatureExpired:
+        return render(request, "base.html", {
+            "Message": "Share link has expired!"
+        })
+    except signing.BadSignature:
+        return render(request, "base.html", {
+            "Message": "Invalid token in share link!"
+        })
+    obj = get_object_or_404(Proposal, pk=pk)
+    return render(request, "proposals/ProposalDetail.html", {
+        "proposal": obj,
+        "project": obj
+    })

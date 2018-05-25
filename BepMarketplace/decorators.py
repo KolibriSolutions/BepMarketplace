@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 
 from general_view import get_grouptype
 from proposals.models import Proposal
-from proposals.utils import can_edit_proposal_fn, getProp
+from proposals.utils import can_edit_proposal_fn, get_cached_project
 from support.models import CapacityGroupAdministration
 from timeline.utils import get_timephase_number, get_timeslot
 
@@ -18,6 +18,7 @@ def group_required(*group_names):
     :param group_names:
     :return:
     """
+
     def in_groups(u):
         if u.is_authenticated:
             if u.groups.filter(name__in=group_names).exists() or u.is_superuser:
@@ -56,7 +57,6 @@ def phase_required(*phase_numbers):
         login_url='index:login',
         redirect_field_name='next',
     )
-
     return actual_decorator
 
 
@@ -64,6 +64,7 @@ def superuser_required():
     """
     True if user is superuser. Redirect to login if not.
     """
+
     def is_superuser(u):
         if u.is_authenticated:
             if u.is_superuser:
@@ -85,6 +86,7 @@ def student_only():
 
     :return:
     """
+
     def is_student(u):
         if u.is_authenticated:
             if u.groups.exists():
@@ -108,12 +110,13 @@ def can_view_proposal(fn):
     :param fn:
     :return:
     """
+
     def wrapper(*args, **kw):
         if 'pk' in kw:
             pk = int(kw['pk'])
         else:
             pk = int(args[1])
-        prop = getProp(pk)
+        prop = get_cached_project(pk)
         request = args[0]
 
         # user needs to be logged in (so no need for login_required on top of this)
@@ -139,7 +142,7 @@ def can_view_proposal(fn):
                 and (not prop.Private.exists() or request.user in prop.Private.all()):
             # students only in timephase after 2
             if (not request.user.groups.exists()) and get_timephase_number() > 2 \
-               and prop.TimeSlot == get_timeslot():
+                    and prop.TimeSlot == get_timeslot():
                 return fn(*args, **kw)
             # else staff members are allowed to view in all timeslots and timephases
             if request.user.groups.exists():
@@ -161,6 +164,7 @@ def can_edit_proposal(fn):
     :param fn:
     :return:
     """
+
     def wrapper(*args, **kw):
         if 'pk' in kw:
             pk = int(kw['pk'])
@@ -173,16 +177,18 @@ def can_edit_proposal(fn):
         if not request.user.is_authenticated:
             page = args[0].path
             return redirect_to_login(
-                    next=page,
-                    login_url='index:login',
-                    redirect_field_name='next',)
+                next=page,
+                login_url='index:login',
+                redirect_field_name='next', )
 
         allowed = can_edit_proposal_fn(request.user, prop, 'ty' in kw)
         if allowed[0] == True:
             return fn(*args, **kw)
         else:
             raise PermissionDenied(allowed[1])
+
     return wrapper
+
 
 def can_share_proposal(fn):
     """
@@ -191,6 +197,7 @@ def can_share_proposal(fn):
     :param fn:
     :return:
     """
+
     def wrapper(*args, **kw):
         if 'pk' in kw:
             pk = int(kw['pk'])
@@ -203,17 +210,19 @@ def can_share_proposal(fn):
         if not request.user.is_authenticated:
             page = args[0].path
             return redirect_to_login(
-                    next=page,
-                    login_url='index:login',
-                    redirect_field_name='next',)
+                next=page,
+                login_url='index:login',
+                redirect_field_name='next', )
 
         allowed = can_edit_proposal_fn(request.user, prop, 'ty' in kw)
         if allowed[0] == True:
             return fn(*args, **kw)
-        elif (request.user == prop.ResponsibleStaff or request.user in prop.Assistants.all() or request.user == prop.Track.Head) and not prop.prevyear():
-                return fn(*args, **kw)
+        elif (
+                request.user == prop.ResponsibleStaff or request.user in prop.Assistants.all() or request.user == prop.Track.Head) and not prop.prevyear():
+            return fn(*args, **kw)
         else:
             raise PermissionDenied(allowed[1])
+
     return wrapper
 
 
@@ -224,6 +233,7 @@ def can_downgrade_proposal(fn):
     :param fn:
     :return:
     """
+
     def wrapper(*args, **kw):
         if 'pk' in kw:
             pk = int(kw['pk'])
@@ -302,15 +312,15 @@ def can_access_professionalskills(fn):
         if not request.user.is_authenticated:
             page = args[0].path
             return redirect_to_login(
-                    next=page,
-                    login_url='index:login',
-                    redirect_field_name='next',)
+                next=page,
+                login_url='index:login',
+                redirect_field_name='next', )
 
         # type 3 and 6 can always view professionalskills.
         # Everyone can view it in phase 6 (execution) and later (presenting).
         if get_timephase_number() < 6 and \
-                        get_grouptype("3") not in request.user.groups.all() and \
-                        get_grouptype("6") not in request.user.groups.all():
+                get_grouptype("3") not in request.user.groups.all() and \
+                get_grouptype("6") not in request.user.groups.all():
             raise PermissionDenied("Student files are not available in this phase")
 
         if not request.user.groups.exists() and not request.user.distributions.exists():
@@ -328,6 +338,7 @@ def can_apply(fn):
     :param fn:
     :return:
     """
+
     def wrapper(*args, **kw):
         request = args[0]
 
@@ -335,9 +346,9 @@ def can_apply(fn):
         if not request.user.is_authenticated:
             page = args[0].path
             return redirect_to_login(
-                    next=page,
-                    login_url='index:login',
-                    redirect_field_name='next',)
+                next=page,
+                login_url='index:login',
+                redirect_field_name='next', )
 
         if get_timephase_number() != 3:
             raise PermissionDenied("Not correct timephase!")
@@ -352,29 +363,5 @@ def can_apply(fn):
                 raise PermissionDenied("This proposal is private. It is already assigned.")
 
         return fn(*args, **kw)
-    return wrapper
 
-
-
-
-def phase7_only(fn):
-    """
-    Test if the system is in timephase 7
-
-    :param fn:
-    :return:
-    """
-    def wrapper(*args, **kw):
-        request = args[0]
-        # user needs to be logged in (so no need for login_required on top of this)
-        if not request.user.is_authenticated:
-            page = args[0].path
-            return redirect_to_login(
-                    next=page,
-                    login_url='index:login',
-                    redirect_field_name='next',)
-
-        if get_timephase_number() != 7:
-            raise PermissionDenied("Not correct timephase!")
-        return fn(*args, **kw)
     return wrapper

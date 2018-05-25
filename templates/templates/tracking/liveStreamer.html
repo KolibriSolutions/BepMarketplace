@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load staticfiles %}
+
 {% block body %}
     <h1>Live View Marketplace</h1>
     <div style="border:1px solid black; height:500px; overflow:scroll;" id="liveview"></div>
@@ -7,19 +9,15 @@
 
 {% block scripts %}
     {{ block.super }}
+    <script src="{% static "channels/js/websocketbridge.js" %}"></script>
+
     <script>
         $(document).ready(function () {
-            if (window.location.protocol == "https:") {
-                window.socket = new WebSocket("wss://" + window.location.host + "/tracking/live/");
+            const webSocketBridge = new channels.WebSocketBridge();
+            webSocketBridge.connect('/tracking/live/');
+            webSocketBridge.socket.onmessage = function(event) {
+                document.getElementById('liveview').insertAdjacentHTML('afterbegin', event.data + "<br/>");
             }
-            else {
-                window.socket = new WebSocket("ws://" + window.location.host + "/tracking/live/");
-            }
-            window.socket.onmessage = function (e) {
-                console.log(e.data);
-                //var info = JSON.parse(e.data);
-                document.getElementById('liveview').insertAdjacentHTML('afterbegin', e.data + "<br/>");
-            };
         });
     </script>
 {% endblock %}
