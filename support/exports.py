@@ -4,7 +4,7 @@ from django.db.models import Count, Sum
 from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 
-from general_view import timestamp
+from general_view import timestamp, get_name
 from results.models import GradeCategory
 from timeline.utils import get_timeslot
 
@@ -56,10 +56,10 @@ def get_list_students_xlsx(des, typ):
             except:
                 reslist.append('-')
         row = [d.Student.usermeta.Studentnumber, d.Student.usermeta.Fullname, d.Proposal.Title,
-               d.Proposal.ResponsibleStaff.first_name + " " + d.Proposal.ResponsibleStaff.last_name]
+               get_name(d.Proposal.ResponsibleStaff)]
         assistants = ''
         for a in d.Proposal.Assistants.all():
-            assistants += a.first_name + " " + a.last_name + "; "
+            assistants += get_name(a) + "; "
         row.append(assistants)
         row.append(d.Proposal.ECTS)
         row.append(d.Proposal.Track.Name)
@@ -163,10 +163,10 @@ def get_list_distributions_xlsx(proposals):
     for p in proposals:
         des = p.distributions.filter(Timeslot=get_timeslot())
         row = [p.Title, p.Track.__str__(), p.Group.__str__(),
-               p.ResponsibleStaff.first_name + ' ' + p.ResponsibleStaff.last_name]
+               get_name(p.ResponsibleStaff)]
         assistants = ''
         for a in p.Assistants.all():
-            assistants += a.first_name + " " + a.last_name + "; "
+            assistants += get_name(a) + "; "
         row.append(assistants)
         stds = ''
         stdsmail = ''

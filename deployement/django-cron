@@ -1,0 +1,7 @@
+# BepMarketplace specific cron jobs
+#
+PYTHON=/home/django/bepmarketplaceenv/bin/python
+INSTANCE=/home/django/BepMarketplaceELE
+
+# Sessions table cleanup
+0       0       *       *       *       root    cd $INSTANCE && $PYTHON $INSTANCE/manage.py clearsessions

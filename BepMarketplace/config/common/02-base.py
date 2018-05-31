@@ -11,6 +11,9 @@ MARKDOWNX_MARKDOWNIFY_FUNCTION = 'markdownx_custom.utils.markdownify_safe'
 # django-ipware, used in tracking.
 IPWARE_TRUSTED_PROXY_LIST = []
 
+# django-js-error-hook, fix for csrf failure on post
+JAVASCRIPT_ERROR_CSRF_EXEMPT = True
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

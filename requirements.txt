@@ -8,6 +8,7 @@ django-csp
 django-htmlmin
 django-impersonate
 django-ipware
+django-js-error-hook
 django-redis
 channels_redis
 django-render-block

@@ -2,15 +2,15 @@
 {% load custom_filters %}
 {% block body %}
     <h1>List all staff</h1>
-    <h3>Only type1 and type2 staff, responsible staff and assistants.</h3>
+    <h3>Only type1 and type2 staff, supervisor staff and assistants.</h3>
     <a href="{% url "support:liststaffXls" %}" class="button primary">Export Excel</a>
     <table class="table datatable striped">
         <thead>
         <tr>
             <th>Name</th>
             <th>Type</th>
-            <th data-searchable="false" data-sortable="false">Proposals</th>
-            <th data-searchable="false">Proposals total</th>
+            <th data-searchable="false" data-sortable="false">Projects</th>
+            <th data-searchable="false">Projects total</th>
             <th data-searchable="false" data-sortable="false">Students</th>
             <th data-searchable="false">Students total</th>
             <th data-searchable="false" data-sortable="false">Show</th>
@@ -23,30 +23,30 @@
                 <td><a href="mailto:{{ u.user.email }}">{{ u.user.first_name }} {{ u.user.last_name }}</a></td>
                 <td>
                     {% if u.user|has_group:'type1staff' %}
-                        type 1 staff
+                        Supervisor
                     {% endif %}
                     {% if u.user|has_group:'type2staff' %}
-                        type 2 staff
+                        Assistant
                     {% endif %}
                     {% if u.user|has_group:'type2staffunverified' %}
-                        type 2 staff (unverified)
+                        Assistant (unverified)
                     {% endif %}
                 </td>
                 <td>
-                    Responsible: {{ u.pt1 }}<br/>
+                    Supervisor: {{ u.pt1 }}<br/>
                     Assistant: {{ u.pt2 }}
                 </td>
                 <td>
                     {{ u.pts }}
                 </td>
                 <td>
-                    Responsible: {{ u.dt1 }}<br/>
+                    Supervisor: {{ u.dt1 }}<br/>
                     Assistant: {{ u.dt2 }}
                 </td>
                 <td>
                     {{ u.dts }}
                 </td>
-                <td><a href="{% url "support:liststaffproposals" u.user.id %}" class="button primary">show proposals</a>
+                <td><a href="{% url "support:liststaffproposals" u.user.id %}" class="button primary">show projects</a>
             </tr>
         {% endfor %}
         </tbody>

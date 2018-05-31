@@ -1,9 +1,13 @@
 {% extends "base.html" %}
 {% load custom_filters %}
 {% block body %}
-    <h1>Profile</h1>
-    <a href="{% url 'index:profile' %}" class="button primary">User Profile</a>
-    <a href="{% url 'index:changesettings' %}" class="button primary">User Settings</a>
+    {% if view_user == user %}
+        <h1>User info</h1>
+        <a href="{% url 'index:profile' %}" class="button primary">User Profile</a>
+        <a href="{% url 'index:changesettings' %}" class="button primary">User Settings</a>
+    {% else %}
+        <h1>Info of {{ view_user.get_full_name }}</h1>
+    {% endif %}
     <h2>User</h2>
     <table class="table bordered">
         {% for row in user_model %}
@@ -45,4 +49,8 @@
             </tr>
         {% endfor %}
     </table>
+    <h2>Info as JSON:</h2>
+    <textarea title="json">
+        {{ json }}
+    </textarea>
 {% endblock %}

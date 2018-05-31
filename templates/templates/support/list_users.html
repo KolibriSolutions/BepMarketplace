@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block body %}
+    {% if bodyhtml %}
+        {% autoescape off %}
+            {{ bodyhtml }}
+        {% endautoescape %}
+    {% else %}
+        <h1>List all users</h1>
+        <a href="{% url 'support:clearcacheuserlist' %}" class="button warning">Clear Cache</a>
+        <div class="double-scroll">
+            <table class="table bordered hovered striped datatable">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Type<br/></th>
+                    <th>Active<br/></th>
+                    <th data-searchable="false">Last login</th>
+                    <th>Timeslots</th>
+                    <th data-searchable="false" data-sortable="false">Edit</th>
+                    {% if user.is_superuser %}
+                        <th data-searchable="false" data-sortable="false">Impersonate</th>
+                        <th data-searchable="false" data-sortable="false">Telemetry</th>
+                    {% endif %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for u in users %}
+                    <tr>
+                        <td>{{ u.first_name }} {{ u.last_name }}</td>
+                        <td>{{ u.username }}</td>
+                        <td><a href="mailto:{{ u.email }}">{{ u.email }}</a></td>
+                        <td>
+                            {% if u.is_superuser %}
+                                superuser
+                            {% elif u.groups.exists %}
+                                {{ u.groups.all|join:" & " }}
+                            {% else %}
+                                student (no groups)
+                            {% endif %}
+                        </td>
+                        <td data-sort="{{ u.last_login|yesno:"yes,no" }}"
+                            data-search="{{ u.last_login|yesno:"yes,no" }}"><span
+                                class="mif-{{ u.last_login|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+                        <td data-sort="{{ u.last_login|date:"U" }}">{{ u.last_login }}</td>
+                        <td>
+                            <ul>
+                                {% for ts in u.usermeta.TimeSlot.all %}
+                                    <li>{{ ts }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        {% if not u.is_superuser %}
+                            <td>
+                                {% if u|has_group:'type2staff' %}
+                                    <a href="{% url 'support:upgradeuser' u.id %}" class="button primary"><span
+                                            class="mif-move-up"></span></a>
+                                {% elif u|has_group:'type2staffunverified' %}
+                                    <a href="{% url 'support:upgradeuser' u.id %}" class="button primary"><span
+                                            class="mif-user-check"></span></a>
+                                {% elif u|has_group:'type1staff' %}
+                                    <a href="{% url 'support:downgradeuser' u.id %}" class="button primary"><span
+                                            class="mif-move-down"></span></a>
+                                {% endif %}
+                                {% if u.groups.count == 0 %}
+                                    <a href="{% url 'support:overruleusermeta' u.id %}" class="button primary">Edit</a>
+                                {% endif %}
+                            </td>
+
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                        {% if user.is_superuser %}
+                            <td>
+                                <a href="{% url 'impersonate-start' u.id %}" class="button primary">Impersonate</a>
+                            </td>
+                            <td>
+                                <a href="{% url 'tracking:userdetail' u.id %}" class="button primary">Telemetry</a>
+                                <a href="{% url 'support:userinfo' u.id %}" class="button primary">Info</a>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            var dt = $('.datatable').dt_wrapper([
+                    {column_number: 0, filter_type: "text"},
+                    {column_number: 3, filter_type: "select"},
+                    {column_number: 4, filter_type: "select", html5_data: 'data-search'},
+                    {
+                        column_number: 6,
+                        filter_type: "select",
+                        column_data_type: 'html',
+                        html_data_type: 'selector',
+                        html_data_selector: 'li'
+                    }, //to parse ul-li, timeslots
+                ]
+            );
+        });
+    </script>
+{% endblock %}

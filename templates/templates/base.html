@@ -409,6 +409,9 @@
     </div>
 </div>
 {% block scripts %}
+    <script src="{% url 'js-error-handler-js' %}"></script>
+    {# for js error logging, load first to capture load errors #}
+
     <script src="{% static "js/jquery-3.2.1.min.js" %}"></script>
     <script src="{% static "js/select2.min.js" %}"></script>
     {# for top horizontal scroll bar #}

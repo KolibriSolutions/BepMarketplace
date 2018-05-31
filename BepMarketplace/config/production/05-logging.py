@@ -13,6 +13,11 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': '/home/django/saml2.log',
         },
+        'js_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': '/home/django/js_error.log',
+        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
@@ -37,6 +42,11 @@ LOGGING = {
         'saml2': {
              'handlers': ['saml_file'],
              'level': 'CRITICAL',  # to disable logging on unsolicitedresponses etc.
+        },
+        'javascript_error': {
+            'handlers': ['mail_admins', 'js_file'],
+            'level': 'ERROR',
+            'propagate': True,
         },
     },
 }

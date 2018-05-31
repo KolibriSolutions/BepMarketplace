@@ -37,7 +37,7 @@ def get_all_staff():
 
     :return:
     """
-    return User.objects.filter(groups__isnull=False)
+    return User.objects.filter(groups__isnull=False).distinct()
 
 
 def get_grouptype(shortname):
@@ -88,3 +88,16 @@ def truncate_string(data, trun_len=10):
     :return:
     """
     return (data[:trun_len] + '..') if len(data) > trun_len else data
+
+
+def get_name(user):
+    """
+    Get the name of a user.
+
+    :param user:
+    :return:
+    """
+    try:
+        return user.usermeta.get_nice_name()
+    except:
+        return user.get_full_name()

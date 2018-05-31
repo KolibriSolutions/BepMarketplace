@@ -89,4 +89,5 @@ INSTALLED_APPS = [
     'openpyxl',
     'sendfile',
     'two_factor',
+    'django_js_error_hook',
 ]

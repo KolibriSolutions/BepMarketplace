@@ -1,3 +1,6 @@
+import json
+from datetime import date, datetime
+
 from django.contrib.auth.models import User, Group
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
@@ -238,11 +241,11 @@ def list_users(request):
         key = 'listusersbodyhtml'
     bodyhtml = cache.get(key)
     if bodyhtml is None:
-        bodyhtml = render_block_to_string('support/listUsers.html', 'body', {"users": User.objects.all(),
-                                                                             "user": request.user})
+        bodyhtml = render_block_to_string('support/list_users.html', 'body', {"users": User.objects.all(),
+                                                                              "user": request.user})
         cache.set(key, bodyhtml, None)
 
-    return render(request, "support/listUsers.html", {
+    return render(request, "support/list_users.html", {
         "bodyhtml": bodyhtml,
     })
 
@@ -275,7 +278,8 @@ def usermeta_overrule(request, pk):
         'form': form,
     })
 
-@group_required('type3staff') # might be added to profile in the future.
+
+@group_required('type3staff')  # might be added to profile in the future.
 def user_info(request, pk):
     """
     Return information and privacy data of given user.
@@ -284,11 +288,25 @@ def user_info(request, pk):
     :param pk:
     :return:
     """
+
+    def json_serial(obj):
+        """JSON serializer for objects not serializable by default json code"""
+
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+
+        if isinstance(obj, (User)):
+            return obj.__str__()
+        raise TypeError("Type %s not serializable" % type(obj))
+
     user = get_object_or_404(User, pk=pk)
     user_model = [[field.name, getattr(user, field.name)] for field in user._meta.fields]
-    usermeta_model = [[field.name, getattr(user.usermeta, field.name)] for field in user.usermeta._meta.fields]
+    try:
+        usermeta_model = [[field.name, getattr(user.usermeta, field.name)] for field in user.usermeta._meta.fields]
+    except:
+        usermeta_model = []
     related = []
-    for obj in user._meta.related_objects+user._meta.many_to_many:
+    for obj in user._meta.related_objects + user._meta.many_to_many:
         if hasattr(user, obj.name):
             try:
                 related.append([obj.name, [obj2.__str__() for obj2 in getattr(user, obj.name).all()]])
@@ -304,10 +322,10 @@ def user_info(request, pk):
         for p in user.proposalsresponsible.all():
             ds += list(p.distributions.all())
         print(ds)
-    else: #student
+    else:  # student
         ds = user.distributions.all()
     for d in ds:
-        for obj in d._meta.related_objects+d._meta.many_to_many:
+        for obj in d._meta.related_objects + d._meta.many_to_many:
             if hasattr(d, obj.name):
                 try:
                     distribution.append([obj.name, [obj2.__str__() for obj2 in getattr(d, obj.name).all()]])
@@ -321,7 +339,15 @@ def user_info(request, pk):
         'usermeta_model': usermeta_model,
         'related': related,
         'distribution': distribution,
+        'json': json.dumps(
+            {
+                'user_model': user_model,
+                'usermeta_model': usermeta_model,
+                'related': related,
+                'distribution': distribution
+            }, default=json_serial),
     })
+
 
 @group_required('type3staff', 'type6staff')
 def list_staff(request):
@@ -355,7 +381,7 @@ def list_staff(request):
                        'distributions__count__sum'])
         dts = dt1 + dt2
         se.append({"user": s, "pt1": pt1, "pt2": pt2, "pts": pts, "dt1": dt1, "dt2": dt2, "dts": dts})
-    return render(request, 'support/listStaff.html', {"staff": se})
+    return render(request, 'support/list_staff.html', {"staff": se})
 
 
 @group_required('type3staff')
@@ -442,8 +468,8 @@ def list_students_xlsx(request):
             raise PermissionDenied("Students are not yet distributed")
         if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
             return render(request, "base.html", {'Message':
-                                                 "When the phase 'Distribution of projects is "
-                                                 "finished, you can view your students here."})
+                                                     "When the phase 'Distribution of projects is "
+                                                     "finished, you can view your students here."})
 
     typ = GradeCategory.objects.filter(TimeSlot=get_timeslot())
     des = get_distributions(request.user)
@@ -773,9 +799,9 @@ def delete_file(request, pk):
         form = ConfirmForm()
 
     return render(request, 'GenericForm.html', {
-        'form' : form,
-        'formtitle' : 'Confirm deleting public file {}'.format(obj),
-        'buttontext' : 'Confirm'
+        'form': form,
+        'formtitle': 'Confirm deleting public file {}'.format(obj),
+        'buttontext': 'Confirm'
     })
 
 

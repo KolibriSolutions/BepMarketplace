@@ -1,0 +1,15 @@
+# See man 5 aliases for format
+
+root: errors@kolibrisolutions.nl
+webmaster: root
+postmaster: root
+nobody: root
+hostmaster: root
+usenet: root
+news: root
+www: root
+ftp: root
+abuse: root
+noc: root
+security: root
+django: root
