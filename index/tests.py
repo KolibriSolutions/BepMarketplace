@@ -58,7 +58,7 @@ class IndexViewsTest(ViewsTest):
         :return:
         """
         self.info = {}
-        skip = [reverse('professionalskills:filetypelist')] #skip certain menu items that have a scenario which is too complicated to test for now
+        skip = [reverse('professionalskills:filetypelist'), '/js_error_hook/'] #skip certain menu items that have a scenario which is too complicated to test for now
         views = ["index:index", 'index:profile']
         for phase in range(1,8):
             self.info['phase'] = str(phase)

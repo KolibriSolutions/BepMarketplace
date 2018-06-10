@@ -44,6 +44,7 @@ class GradeCategory(models.Model):
             w = self.Weight
         if w > 100:
             raise ValidationError("Total weight of categories should be below 100%, it is now {}%!".format(w))
+        self.Name = clean_text(self.Name)
 
 
 class CategoryResult(models.Model):
@@ -90,11 +91,11 @@ class CategoryAspectResult(models.Model):
     The score of a student to a particular aspect of a category. Linked to the students categoryresult.
     """
     ResultOptions = (
-        ("E", "Excellent"),
-        ("VG", "Very Good"),
-        ("G", "Good"),
-        ("S", "Sufficient"),
         ("F", "Fail"),
+        ("S", "Sufficient"),
+        ("G", "Good"),
+        ("VG", "Very Good"),
+        ("E", "Excellent"),
     )
 
     CategoryAspect = models.ForeignKey(GradeCategoryAspect, on_delete=models.CASCADE, related_name='results')

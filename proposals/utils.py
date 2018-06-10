@@ -9,13 +9,14 @@ from timeline.utils import get_timephase_number, get_timeslot
 from .models import Proposal
 
 
-def can_edit_proposal_fn(user, prop, file):
+def can_edit_project_fn(user, prop, file):
     """
     Check if a user can edit a proposal. Used to show/hide editbuttons on detailproposal and
     for the can_edit_proposal decorator.
 
     :param user: user
     :param prop: proposal
+    :param file: whether editing a file. This is not allowed in limited edit mode (status=4)
     :return: tuple with Boolean and String.
     """
     if prop.prevyear():
@@ -28,6 +29,7 @@ def can_edit_proposal_fn(user, prop, file):
     # published proposals can only ever be edited limited. choice of form is done in view function
     if prop.Status == 4:
         if (prop.ResponsibleStaff == user or user == prop.Track.Head) and not file:
+            # file cannot be edited in limited edit.
             return True, ''  # it is the responsibility of the view that the right form is choosen
 
         if prop.nextyear() or (prop.curyear() and get_timephase_number() < 3):

@@ -1,0 +1,9 @@
+<label{% if widget.attrs.id %}
+    for="{{ widget.attrs.id }}"
+    class="input-control radio"
+{% endif %}
+>
+    {% include "django/forms/widgets/input.html" %}
+    <span class="check"></span>
+
+</label>

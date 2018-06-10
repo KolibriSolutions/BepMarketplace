@@ -1,0 +1,8 @@
+{# copied from radio.html and "django/forms/widgets/multiple_input.html" #}
+    {% for group, options, index in widget.optgroups %}
+        {% for widget in options %}
+            <td class="align-middle align-center">
+                {% include widget.template_name %}
+            </td>
+        {% endfor %}
+    {% endfor %}

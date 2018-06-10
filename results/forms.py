@@ -1,10 +1,16 @@
 from django import forms
 
 from templates import widgets
-from .models import *
+from .models import CategoryAspectResult, CategoryResult, GradeCategoryAspect, GradeCategory, ResultOptions
 
 
 class CategoryResultForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        disabled = kwargs.pop('disabled', False)
+        super().__init__(*args, **kwargs)
+        self.fields['Grade'].disabled = disabled
+        self.fields['Comments'].disabled = disabled
+
     class Meta:
         model = CategoryResult
         fields = ['Grade', 'Comments']
@@ -23,17 +29,22 @@ class CategoryResultForm(forms.ModelForm):
 
 
 class AspectResultForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        disabled = kwargs.pop('disabled', False)
+        super().__init__(*args, **kwargs)
+        self.fields['Grade'].disabled = disabled
+
     class Meta:
         model = CategoryAspectResult
         fields = ['Grade']
         widgets = {
-            'Grade': widgets.MetroSelect
+            'Grade': widgets.MetroSelectRadioTable
         }
 
 
 class GradeCategoryForm(forms.ModelForm):
     """
-    Form to edit a timeslot
+    Form to edit a gradecategory
     """
 
     class Meta:
@@ -47,7 +58,7 @@ class GradeCategoryForm(forms.ModelForm):
 
 class GradeCategoryAspectForm(forms.ModelForm):
     """
-    Form to edit/create a timephase
+    Form to edit/create a category aspect.
     """
 
     class Meta:
@@ -61,7 +72,7 @@ class GradeCategoryAspectForm(forms.ModelForm):
 
 class MakeVisibleForm(forms.ModelForm):
     """
-    Confirmform to make the presentationsplanning public in timephase 6.
+    Confirmform to make the grading forms visible
     """
 
     class Meta:

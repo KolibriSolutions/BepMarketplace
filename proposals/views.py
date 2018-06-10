@@ -26,7 +26,7 @@ from tracking.utils import tracking_visit_project
 from .forms import ProposalFormEdit, ProposalFormCreate, ProposalImageForm, ProposalDowngradeMessageForm, \
     ProposalAttachmentForm, ProposalFormLimited
 from .models import Proposal, ProposalImage, ProposalAttachment
-from .utils import can_edit_proposal_fn
+from .utils import can_edit_project_fn
 
 
 @login_required
@@ -104,7 +104,7 @@ def detail_project(request, pk):
                 # responsible / assistants can see distributions in distribution phase
             if get_timephase_number() >= 4:
                 data['distributions'] = get_distributions(request.user).filter(Proposal=prop)
-        allowed = can_edit_proposal_fn(request.user, prop, False)
+        allowed = can_edit_project_fn(request.user, prop, False)
         if allowed[0]:
             data['Editlock'] = False
         else:

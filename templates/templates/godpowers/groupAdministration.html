@@ -19,7 +19,7 @@
             $.get("{% url 'api:getgroupadmins' %}" + String($(this).val()), function(data) {
                 if (data.length === 0)
                 {
-                    $("#id_AdministrationMembers").selegct2("val", [""]);
+                    $("#id_AdministrationMembers").select2("val", [""]);
                 }
                 else {
                     $("#id_AdministrationMembers").val(data).trigger('change');

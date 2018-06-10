@@ -2,17 +2,20 @@ from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db.models.aggregates import Sum
 from django.http import Http404, HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.template.loader import get_template
-from django.db.models.aggregates import Sum
 from xhtml2pdf import pisa
 
 from BepMarketplace.decorators import group_required, phase_required
 from general_form import ConfirmForm
 from general_view import get_grouptype
+from students.models import Distribution
+from timeline.models import TimeSlot
 from timeline.utils import get_timeslot
-from .forms import *
+from .forms import MakeVisibleForm, GradeCategoryForm, GradeCategoryAspectForm, AspectResultForm, CategoryResultForm
+from .models import GradeCategory, CategoryResult, CategoryAspectResult, GradeCategoryAspect, ResultOptions
 
 
 @group_required('type1staff', 'type3staff')
@@ -56,6 +59,7 @@ def finalize(request, pk, version=0):
         })
     elif version == 1:  # printable page with grades
         for cat in dstr.results.all():
+            # set final to True, disable editing from here onward.
             cat.Final = True
             cat.save()
 
@@ -123,6 +127,7 @@ def staff_form(request, pk, step=0):
             "dstr": dstr,
         })
     elif step <= numcategories:
+        saved = False
         cat = cats[step - 1]
         try:
             catresult = CategoryResult.objects.get(Distribution=dstr, Category=cat)
@@ -132,10 +137,11 @@ def staff_form(request, pk, step=0):
             if catresult.Final:
                 return render(request, "base.html", status=410, context={
                     "Message": "Category Result has already been finalized! Editing is not allowed anymore. "
-                               "If this has to be lifted contact support staf"
+                               "If this has to be changed, contact support staff"
                 })
             categoryform = CategoryResultForm(request.POST, instance=catresult, prefix='catform')
             aspectforms = []
+
             for i, aspect in enumerate(cat.aspects.all()):
                 try:
                     aspresult = CategoryAspectResult.objects.get(CategoryResult=catresult, CategoryAspect=aspect)
@@ -145,6 +151,7 @@ def staff_form(request, pk, step=0):
                     "form": AspectResultForm(request.POST, instance=aspresult, prefix="aspect" + str(i)),
                     "aspect": aspect,
                 })
+
             vals = [form['form'].is_valid() for form in aspectforms]
             if categoryform.is_valid() and all(val is True for val in vals):
                 catresult = categoryform.save()
@@ -152,38 +159,7 @@ def staff_form(request, pk, step=0):
                     obj = form['form'].instance
                     obj.CategoryResult = catresult
                     obj.save()
-                return render(request, "results/wizard.html", {
-                    "step": step,
-                    "categories": cats,
-                    "category": cat,
-                    "categoryform": categoryform,
-                    "aspectsforms": aspectforms,
-                    "dstr": dstr,
-                    "pk": pk,
-                    "saved": True,
-                })
-            else:
-                return render(request, "results/wizard.html", {
-                    "step": step,
-                    "categories": cats,
-                    "category": cat,
-                    "categoryform": categoryform,
-                    "aspectsforms": aspectforms,
-                    "dstr": dstr,
-                    "pk": pk,
-                })
-        else:
-            categoryform = CategoryResultForm(instance=catresult, prefix='catform')
-            aspectforms = []
-            for i, aspect in enumerate(cat.aspects.all()):
-                try:
-                    aspresult = CategoryAspectResult.objects.get(CategoryResult=catresult, CategoryAspect=aspect)
-                except:
-                    aspresult = CategoryAspectResult(CategoryResult=catresult, CategoryAspect=aspect)
-                aspectforms.append({
-                    "form": AspectResultForm(instance=aspresult, prefix="aspect" + str(i)),
-                    "aspect": aspect,
-                })
+                saved = True
 
             return render(request, "results/wizard.html", {
                 "step": step,
@@ -193,10 +169,36 @@ def staff_form(request, pk, step=0):
                 "aspectsforms": aspectforms,
                 "dstr": dstr,
                 "pk": pk,
+                "saved": saved,
                 "final": catresult.Final,
+                "aspectlabels": CategoryAspectResult.ResultOptions,
+            })
+        else:
+            categoryform = CategoryResultForm(instance=catresult, prefix='catform', disabled=catresult.Final)
+            aspectforms = []
+            for i, aspect in enumerate(cat.aspects.all()):
+                try:
+                    aspresult = CategoryAspectResult.objects.get(CategoryResult=catresult, CategoryAspect=aspect)
+                except:
+                    aspresult = CategoryAspectResult(CategoryResult=catresult, CategoryAspect=aspect)
+                aspectforms.append({
+                    "form": AspectResultForm(instance=aspresult, prefix="aspect" + str(i), disabled=catresult.Final),
+                    "aspect": aspect,
+                })
+            return render(request, "results/wizard.html", {
+                "step": step,
+                "categories": cats,
+                "category": cat,
+                "categoryform": categoryform,
+                "aspectsforms": aspectforms,
+                "dstr": dstr,
+                "pk": pk,
+                "saved": False,
+                "final": catresult.Final,
+                "aspectlabels": CategoryAspectResult.ResultOptions
             })
     else:
-        raise Http404("This category does not exist.")
+        raise PermissionDenied("This category does not exist.")
 
 
 @login_required
@@ -292,7 +294,7 @@ def edit_category(request, pk):
         form = GradeCategoryForm(request.POST, instance=category)
         if form.is_valid():
             if form.has_changed():
-                tp = form.save()
+                form.save()
                 return render(request, 'base.html', {
                     'Message': 'Grade category saved!',
                     'return': 'results:list_categories',

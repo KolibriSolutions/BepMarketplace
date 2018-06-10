@@ -1,93 +1,133 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 {% block body %}
-{#{% if step != -1 and step != 0 %}#}
-{#    {% if step != 0 %}#}
-{#        <a class="button" style="left:0;" href="{% url 'results:gradeformstaff' pk=pk step=step|add:"-1" %}">Previous</a>#}
-{#    {% endif %}#}
-{#    <a class="button" style="position:absolute;right:0;" href="{% url 'results:gradeformstaff' pk=pk step=step|add:"1" %}">Next</a>#}
-{#{% endif %}#}
-<div class="grid">
-    <div class="row cells4">
-        <div class="cell">
-        <h5>Currently Editing: {{ dstr }}</h5>
-            {% for cat in categories %}
-                <a href="{% url 'results:gradeformstaff' pk forloop.counter %}" style="width:100%" class="button {% if cat != category %}primary{% endif %}">{{ cat }}</a><br/>
-            {% endfor %}
-        <br />
-        <a href="{% url 'results:about' %}" style="width:100%" class="button info">Aspects Explanation</a>
-        <a href="{% url 'results:gradefinal' pk=pk %}" style="width:100%" class="button success">Finish and Print</a>
-        <a href="{% url 'support:liststudents' %}" style="width:100%" class="button warning">Back To Menu</a>
-        </div>
-        <div class="cell colspan3">
-            {% if final %}
-            <div class="bg-darkRed fg-white padding10 margin10">
-            This category has already been finalized. Editing is disabled.
-            </div>
-        {% endif %}
-        {% if step == 0 %}
-            <p>
-            Use the buttons on the left side to grade this student.
-            </p><p>
-            The blue buttons are all aspects of the grades.
-            For more information about the aspects click on the light blue explanation button.
-            </p><p>
-            To finish the grading, click the green button. Then there is a summary to do a final check on the grades.
-            When everything is correct, the grades can be printed or exported.
-            <b>After printing or exporting, editing is no longer possbile.</b>
-            </p>
-        {% elif step == -1 %}
-            Closing text
-        {% else %}
-            {% if saved %}
-            <div class="bg-green fg-white padding10 margin10">
-            Grade saved!
-            </div>
-            {% endif %}
-            <h1>{{ category }}</h1>
-            Grades will be rounded to integers.
-            <form id="gradeform" action="" method="post" enctype="multipart/form-data" novalidate>
-            {% if not final %}
-            <button type="submit" class="button success">Save</button>
-            {% csrf_token %}
-            {% endif %}
-            <table style="width:100%;">
-                {{ categoryform.as_table }}
-                <tr><td colspan="2"><h3>Aspects:</h3></td></tr>
-                {% for entry in aspectsforms %}
-                    <tr><td colspan="2"><h4>{{ entry.aspect.Name }}</h4></td></tr>
-                    {{ entry.form.as_table }}
+    {#{% if step != -1 and step != 0 %}#}
+    {#    {% if step != 0 %}#}
+    {#        <a class="button" style="left:0;" href="{% url 'results:gradeformstaff' pk=pk step=step|add:"-1" %}">Previous</a>#}
+    {#    {% endif %}#}
+    {#    <a class="button" style="position:absolute;right:0;" href="{% url 'results:gradeformstaff' pk=pk step=step|add:"1" %}">Next</a>#}
+    {#{% endif %}#}
+    <div class="grid" xmlns:table-layout="http://www.w3.org/1999/xhtml" xmlns:width="http://www.w3.org/1999/xhtml">
+        <div class="row cells4">
+            <div class="cell">
+                <h5>Currently Editing: {{ dstr }}</h5>
+                <a href="{% url 'results:gradeformstaff' pk 0 %}" style="width:100%"
+                   class="button {% if category %} info{% endif %}">Information</a>
+                {% for cat in categories %}
+                    <a href="{% url 'results:gradeformstaff' pk forloop.counter %}" style="width:100%"
+                       class="button {% if cat != category %}primary{% endif %}">{{ cat }}</a><br/>
                 {% endfor %}
+                <br/>
+                <a href="{% url 'results:about' %}" style="width:100%" class="button info">Grading Explanation</a>
+                <a href="{% url 'results:gradefinal' pk=pk %}" style="width:100%" class="button success">Finish and
+                    Print</a>
+                <a href="{% url 'support:liststudents' %}" style="width:100%" class="button warning">Back To Menu</a>
+            </div>
+            <div class="cell colspan3">
+                {% if final %}
+                    <div class="bg-darkRed fg-white padding10 margin10">
+                        This category has already been finalized. Editing is disabled.
+                    </div>
+                {% endif %}
+                {% if step == 0 %}
+                    <p>
+                        Use the buttons on the left side to grade this student.
+                    </p><p>
+                    The dark blue buttons are all categories of the grades.
+                    Categories consist of multiple aspects.
+                    For more information about the categories and aspects click on the light blue explanation button.
+                </p><p>
+                    To finish the grading, click the green button. Then there is a summary to do a final check on the
+                    grades.
+                    When everything is correct, the grades can be printed or exported.
+                    <b>After printing or exporting, editing is no longer possible.</b>
+                </p>
+                {% elif step == -1 %}
+                    Closing text
+                {% else %}
+                    {% if saved %}
+                        <div class="bg-green fg-white padding10 margin10">
+                            Grade saved!
+                        </div>
+                    {% endif %}
+                    <h1>{{ category }}</h1>
+                    Grades will be rounded to integers.
+                    <form id="gradeform" action="" method="post" enctype="multipart/form-data" novalidate>
+                        {% if not final %}
+                            <button type="submit" class="button success">Save</button>
+                            {% csrf_token %}
+                        {% endif %}
+                        <table style="width:100%;">
+                            {{ categoryform.as_table }}
+                        </table>
+                        <br/>
+                    {% if aspectsforms %}
+                        <table style="width:100%; table-layout:fixed;" class="table bordered">
+                            <tr>
+                                <td colspan="3"><h3>Aspects</h3></td>
+                                <td class="align-middle align-center">None</td>
+                                {% for aspectlabel in aspectlabels %}
+                                    <td class="align-middle align-center">{{ aspectlabel.1 }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% for entry in aspectsforms %}
+                                <tr>
+                                    <td colspan="3">
+                                        {{ entry.aspect.Name }}
+                                            <span class="mif-question clickable"
+                                                  data-role="popover"
+                                                  data-popover-mode="click"
+                                                  data-popover-shadow="true"
+                                                  data-popover-position="right"
+                                                  data-popover-text="{{ entry.aspect.Description }}"
+                                                  data-popover-background="bg-cyan"
+                                                  data-popover-color="fg-white">
+                                </span>
 
-            </table>
-            {% if not final %}
-            <button type="submit" class="button success">Save</button>
-            {% endif %}
-            </form>
-        {% endif %}
+                                    </td>
+                                    {% for field in entry.form.visible_fields %}
+                                        {% if field.errors %}
+                                            <div class="bg-red fg-white padding10 margin10">
+                                                Aspect {{ entry.aspect.Name }} is not graded!
+                                            </div>
+                                        {% endif %}
+                                        {{ field }}
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+
+                        </table>
+                        {% else %}
+                        This category has no aspects.
+                        {% endif %}
+                        {% if not final %}
+                            <button type="submit" class="button success">Save</button>
+                        {% endif %}
+                    </form>
+                {% endif %}
+            </div>
         </div>
     </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
     {{ block.super }}
     <script src="{% static "js/php-date-formatter.min.js" %}"></script>
     <script src="{% static "js/jquery.datetimepicker.full.min.js" %}"></script>
-    <script src="{%  static "js/select2.min.js" %}"></script>
+    <script src="{% static "js/select2.min.js" %}"></script>
     <script src="{% static "js/jquery.are-you-sure.min.js" %}"></script>
     <script type="text/javascript">
-        $(function(){
+        $(function () {
             $(".select2-tag-enable").select2({
                 minimumResultsForSearch: 10
             });
         });
-      $(function() {
-        $('#gradeform').areYouSure(
-          {
-            message: 'It looks like you have been editing something.'
-          }
-        );
+        $(function () {
+            $('#gradeform').areYouSure(
+                {
+                    message: 'It looks like you have been editing something.'
+                }
+            );
         });
     </script>
 {% endblock %}

@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 
 from general_view import get_grouptype
 from proposals.models import Proposal
-from proposals.utils import can_edit_proposal_fn, get_cached_project
+from proposals.utils import can_edit_project_fn, get_cached_project
 from support.models import CapacityGroupAdministration
 from timeline.utils import get_timephase_number, get_timeslot
 
@@ -181,8 +181,8 @@ def can_edit_proposal(fn):
                 login_url='index:login',
                 redirect_field_name='next', )
 
-        allowed = can_edit_proposal_fn(request.user, prop, 'ty' in kw)
-        if allowed[0] == True:
+        allowed = can_edit_project_fn(request.user, prop, 'ty' in kw)
+        if allowed[0] is True:
             return fn(*args, **kw)
         else:
             raise PermissionDenied(allowed[1])
@@ -214,7 +214,7 @@ def can_share_proposal(fn):
                 login_url='index:login',
                 redirect_field_name='next', )
 
-        allowed = can_edit_proposal_fn(request.user, prop, 'ty' in kw)
+        allowed = can_edit_project_fn(request.user, prop, 'ty' in kw)
         if allowed[0] == True:
             return fn(*args, **kw)
         elif (

@@ -1,4 +1,4 @@
-from django.forms.widgets import PasswordInput, Select, TextInput, CheckboxInput, FileInput, DateTimeInput, TimeInput, DateInput
+from django.forms.widgets import PasswordInput, Select, TextInput, CheckboxInput, FileInput, DateTimeInput, TimeInput, DateInput, RadioSelect
 
 
 class MetroTextInput(TextInput):
@@ -80,6 +80,11 @@ class MetroSelect(Select):
     input_type = 'select'
     template_name = 'widgets/select.html'
     option_template_name = 'widgets/select_option.html'
+
+class MetroSelectRadioTable(RadioSelect):
+    input_type = 'radio'
+    template_name = 'widgets/select_radio_table.html'
+    option_template_name = 'widgets/select_radio_table_option.html'
 
 
 class MetroSelectMultiple(Select):
