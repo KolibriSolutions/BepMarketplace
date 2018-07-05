@@ -1,9 +1,9 @@
 from datetime import datetime
 
 from django.urls import reverse
+from django.utils import timezone
 
 from general_test import ProjectViewsTestGeneral
-from students.models import Distribution
 from timeline.utils import get_timeslot
 from .models import FileType, StudentGroup
 
@@ -12,6 +12,34 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
     def setUp(self):
         self.app = 'professionalskills'
         super().setUp()
+
+        # create a filetype for testing
+        f = FileType(
+            Name='testfiletype',
+            TimeSlot=get_timeslot(),
+            Deadline=datetime(year=2018, month=5, day=4)
+        )
+        f.id = 100
+        f.save()
+        g1 = StudentGroup(
+            Number=0,
+            PRV=f,
+            Max=10,
+            Start=timezone.now()
+        )
+        g1.id = 0
+        # g1.Members.add(self.users['t-p'])
+        # g1.Members.add(self.users['r-s'])
+        g1.save()
+        g2 = StudentGroup(
+            Number=1,
+            PRV=f,
+            Max=10,
+            Start=timezone.now()
+        )
+        g2.id = 1
+        g2.save()
+
 
     def test_view_status(self):
         codes_general = [
@@ -46,7 +74,7 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['filetypelist', None], self.p_all],
             [['liststudentfiles', {'pk': 1}], self.p_all_this_dist],
             [['listownfiles', None], self.p_student],
-            #[['respondfile', {'pk': 0}], self.p_all_this],# too complex to test
+            # [['respondfile', {'pk': 0}], self.p_all_this],# too complex to test
             [['mailoverduestudents', None], self.p_support_prv],
             [['printprvforms', None], self.p_support_prv],
             [['downloadall', {'pk': 100}], self.p_support_prv],
@@ -56,56 +84,6 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['listgroupmembers', {'pk': 0}], self.p_all],
             [['assignshuffle', {'pk': 100}], self.p_support_prv],
         ]
-
-        # not logged in users. Ignore status, only use the views column of permission matrix.
-        # Status should be 302 always.
-        self.info['type'] = 'not logged in'
-        for page, status in codes_general:
-            self.view_test_status(reverse(self.app + ':' + page[0], kwargs=page[1]), 302)
-        for page, status in codes_phase12345:
-            self.view_test_status(reverse(self.app + ':' + page[0], kwargs=page[1]), 302)
-
-        # create a filetype for testing
-        f = FileType(
-            Name='testfiletype',
-            TimeSlot=get_timeslot(),
-            Deadline=datetime(year=2018, month=5, day=4)
-        )
-        f.id = 100
-        f.save()
-
-        # make a distribution, this gets id 1.
-        d = Distribution(
-            Proposal=self.proposal,
-            Student=self.users['r-s'],
-            Timeslot=self.ts,
-        )
-        d.save()
-        d = Distribution(
-            Proposal=self.privateproposal,
-            Student=self.users['t-p'],
-            Timeslot=self.ts,
-        )
-        d.save()
-        g1 = StudentGroup(
-            Number=0,
-            PRV=f,
-            Max=10,
-            Start=datetime.now()
-        )
-        g1.id = 0
-        # g1.Members.add(self.users['t-p'])
-        # g1.Members.add(self.users['r-s'])
-        g1.save()
-        g2 = StudentGroup(
-            Number=1,
-            PRV=f,
-            Max=10,
-            Start=datetime.now()
-        )
-        g2.id = 1
-        g2.save()
-
         self.info['type'] = 'general'
         self.loop_phase_user(range(1, 8), codes_general)
         self.info['type'] = 'phase'

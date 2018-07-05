@@ -32,7 +32,7 @@ class GradeCategory(models.Model):
         ordering = ["-Weight", "Name"]
 
     def __str__(self):
-        return self.Name + ' in ' + self.TimeSlot.__str__() + " (" + str(self.Weight) + "%)"
+        return self.Name + " (" + str(self.Weight) + "%)"
 
     def clean(self):
         ws = GradeCategory.objects.filter(TimeSlot=get_timeslot_id())
@@ -91,11 +91,11 @@ class CategoryAspectResult(models.Model):
     The score of a student to a particular aspect of a category. Linked to the students categoryresult.
     """
     ResultOptions = (
-        ("F", "Fail"),
-        ("S", "Sufficient"),
-        ("G", "Good"),
-        ("VG", "Very Good"),
-        ("E", "Excellent"),
+        ("F", "Fail (< 6)"),
+        ("S", "Sufficient (6-7)"),
+        ("G", "Good (7-8)"),
+        ("VG", "Very Good (8-9)"),
+        ("E", "Excellent (9-10)"),
     )
 
     CategoryAspect = models.ForeignKey(GradeCategoryAspect, on_delete=models.CASCADE, related_name='results')

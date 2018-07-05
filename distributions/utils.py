@@ -16,8 +16,10 @@ def get_distributions(user):
     des_all = Distribution.objects.filter(Timeslot=get_timeslot())
     if get_grouptype("3") in user.groups.all() or user.is_superuser or get_grouptype("6") in user.groups.all():
         return des_all
-    elif user.tracks.exists():
-        tracks = Track.objects.filter(Head=user)
-        return des_all.filter(Q(Proposal__Track__in=tracks) | Q(Proposal__ResponsibleStaff=user) | Q(Proposal__Assistants__id= user.id)).distinct()
     else:
-        return des_all.filter(Q(Proposal__ResponsibleStaff=user) | Q(Proposal__Assistants__id= user.id)).distinct()
+        tracks = Track.objects.filter(Head=user)
+        # TODO only show assessors distributions after presentationsplanning is public
+        return des_all.filter(Q(Proposal__Track__in=tracks) |
+                              Q(Proposal__ResponsibleStaff=user) |
+                              Q(Proposal__Assistants__id= user.id) |
+                              Q(presentationtimeslot__Presentations__Assessors__id=user.id)).distinct()

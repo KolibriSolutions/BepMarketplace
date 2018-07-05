@@ -15,11 +15,9 @@
     </ul>
     <h4>Scores per aspect:</h4>
     <ul>
-        <li> E – Excellent</li>
-        <li> VG – Very Good</li>
-        <li> G – Good</li>
-        <li> S – Sufficient/Satisfactory</li>
-        <li>F – Fail</li>
+        {% for s in scores %}
+            <li>{{ s.0 }} - {{ s.1 }}</li>
+        {% endfor %}
     </ul>
 
     <h2>Categories and their aspects</h2>

@@ -46,15 +46,14 @@ def get_grouptype(shortname):
 
     :return:
     """
-    if shortname == "2u":
-        fullname = "type2staffunverified"
-    else:
-        fullname = "type" + shortname + "staff"
-
     gt = cache.get("gt" + shortname)
     if gt:
         return gt
     else:
+        if shortname == "2u":
+            fullname = "type2staffunverified"
+        else:
+            fullname = "type" + shortname + "staff"
         gt = Group.objects.get(name=fullname)
         cache.set("gt" + shortname, gt, settings.STATIC_OBJECT_CACHE_DURATION)
         return gt

@@ -13,7 +13,7 @@ from general_form import ConfirmForm
 from general_view import get_grouptype
 from students.models import Distribution
 from timeline.models import TimeSlot
-from timeline.utils import get_timeslot
+from timeline.utils import get_timeslot, get_timephase_number
 from .forms import MakeVisibleForm, GradeCategoryForm, GradeCategoryAspectForm, AspectResultForm, CategoryResultForm
 from .models import GradeCategory, CategoryResult, CategoryAspectResult, GradeCategoryAspect, ResultOptions
 
@@ -22,7 +22,7 @@ from .models import GradeCategory, CategoryResult, CategoryAspectResult, GradeCa
 @phase_required(6, 7)
 def finalize(request, pk, version=0):
     """
-    Finalize the grades and print. Only for trackheads.
+    Finalize the grades and print. Only for assessors.
 
     :param version:
     :param request:
@@ -36,10 +36,17 @@ def finalize(request, pk, version=0):
         if not get_timeslot().resultoptions.Visible:
             raise PermissionDenied("Results menu is not yet visible.")
 
+
     dstr = get_object_or_404(Distribution, pk=pk)
-    if not request.user.is_superuser and request.user != dstr.Proposal.Track.Head:
-        raise PermissionDenied("You are not the correct owner of this distribution." \
-                               " Grades can only be finalized by track heads.")
+
+    if not hasattr(dstr, 'presentationtimeslot'):
+        raise PermissionDenied('This student does not have a presentation planned. Please plan it first.')
+
+    if not request.user.is_superuser and \
+            request.user not in dstr.presentationtimeslot.Presentations.Assessors.all() and \
+            request.user != dstr.Proposal.Track.Head:
+        raise PermissionDenied("You are not the correct owner of this distribution."
+                               " Grades can only be finalized by assessors or track heads.")
 
     vals = [cat.is_valid() for cat in dstr.results.all()]
     if dstr.results.count() < GradeCategory.objects.filter(TimeSlot=get_timeslot()).count() or not all(
@@ -58,6 +65,8 @@ def finalize(request, pk, version=0):
             "finalgrade": dstr.TotalGradeRounded(),
         })
     elif version == 1:  # printable page with grades
+        if get_timephase_number() != 7:
+            raise PermissionDenied("Not yet possible to finalize in this timephase")
         for cat in dstr.results.all():
             # set final to True, disable editing from here onward.
             cat.Final = True
@@ -69,6 +78,8 @@ def finalize(request, pk, version=0):
             "finalgrade": dstr.TotalGradeRounded(),
         })
     elif version == 2:  # pdf with grades
+        if get_timephase_number() != 7:
+            raise PermissionDenied("Not yet possible to finalize in this timephase")
         for cat in dstr.results.all():
             cat.Final = True
             cat.save()
@@ -109,10 +120,15 @@ def staff_form(request, pk, step=0):
             raise PermissionDenied("Results menu is not yet visible.")
 
     dstr = get_object_or_404(Distribution, pk=pk)
+
+    if not hasattr(dstr, 'presentationtimeslot'):
+        raise PermissionDenied('This student does not have a presentation planned. Please plan it first.')
+
     if not request.user.is_superuser and \
             request.user != dstr.Proposal.Track.Head and \
             request.user != dstr.Proposal.ResponsibleStaff and \
-            get_grouptype('3') not in request.user.groups.all():
+            get_grouptype('3') not in request.user.groups.all() and \
+            request.user not in dstr.presentationtimeslot.Presentations.Assessors.all():
         raise PermissionDenied("You are not the correct owner of this distribution. "
                                "Only track heads and responsible staff can edit grades.")
 
@@ -214,7 +230,8 @@ def about(request, pk=None):
         ts = get_object_or_404(TimeSlot, pk=pk)
     else:
         ts = get_timeslot()
-    return render(request, "results/aboutgrades.html", {
+    return render(request, "results/about_grades.html", {
+        'scores': CategoryAspectResult.ResultOptions,
         "categories": GradeCategory.objects.filter(TimeSlot=ts),
         'ts': ts,
     })

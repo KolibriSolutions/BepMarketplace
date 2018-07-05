@@ -19,11 +19,11 @@
                 <td>{{ report.get_Status_display }}</td>
                 <td>
                     {% if report.Status != 2 %}
-                        <a href="{% url 'index:feedbackconfirm' report.id %}">
+                        <a href="{% url 'index:confirm_feedback' report.id %}">
                             <button class="button info">Confirm</button>
                         </a><br/>
                     {% endif %}
-                    <a href="{% url 'index:feedbackclose' report.id %}">
+                    <a href="{% url 'index:close_feedback' report.id %}">
                         <button class="button success">Close</button>
                     </a><br/>
                 </td>

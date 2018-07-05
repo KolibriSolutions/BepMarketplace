@@ -98,7 +98,7 @@ def list_feedback(request):
     :param request:
     :return:
     """
-    return render(request, "index/ListFeedback.html", {
+    return render(request, "index/list_feedback.html", {
         'feedback_list': FeedbackReport.objects.filter(~Q(Status=3))
     })
 
@@ -124,7 +124,7 @@ def feedback_form(request):
         "form": form,
         "formtitle": "Feedback Form",
         "buttontext": "Send",
-        "actionlink": "index:feedbackSubmit"
+        "actionlink": "index:feedback_submit"
     })
 
 
@@ -175,7 +175,7 @@ def feedback_confirm(request, pk):
     if obj.Status != 1:
         return render(request, "base.html", {
             "Message": "Report not in open status",
-            "return": "index:feedbacklist"
+            "return": "index:list_feedback"
         })
     obj.Status = 2
     obj.save()
@@ -186,7 +186,7 @@ def feedback_confirm(request, pk):
 
     return render(request, "base.html", {
         "Message": "Report confirmed and reporter notified",
-        "return": "index:feedbacklist"
+        "return": "index:list_feedback"
     })
 
 
@@ -204,7 +204,7 @@ def feedback_close(request, pk):
     if obj.Status == 3:
         return render(request, "base.html", {
             "Message": "Report already closed",
-            "return": "index:feedbacklist"
+            "return": "index:list_feedback"
         })
 
     if request.method == "POST":
@@ -222,7 +222,7 @@ def feedback_close(request, pk):
 
             return render(request, "base.html", {
                 "Message": "Report closed and reporter notified",
-                "return": "index:feedbacklist"
+                "return": "index:list_feedback"
             })
     else:
         form = CloseFeedbackReportForm(initial={

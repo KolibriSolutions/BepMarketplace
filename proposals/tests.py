@@ -30,7 +30,7 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         # setup environment
         # expected results:
         code_general = [
-            [['viewsharelink', {'token': 'blabla'}], [s.p_all]]
+            [['viewsharelink', {'token': 'blabla'}], [s.p_anonymous]]
         ]
         code_general_phase12345 = [
             [['list', None], [s.p_all]],
@@ -144,17 +144,6 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
             [['sharelink', {'pk': s.p}],              [s.p_forbidden       , s.p_forbidden         ,s.p_forbidden        , s.p_forbidden  ]],
         ]
         s.status = 1
-        # not logged in users. Ignore status, only use the views column of permission matrix.
-        # Status should be 302 always.
-        self.info['type'] = 'not logged in'
-        for page, status in code_general_phase12345:
-            s.view_test_status(reverse(self.app+':'+page[0], kwargs=page[1]), 302)
-        for page, status in code_general_phase67:
-            s.view_test_status(reverse(self.app+':'+page[0], kwargs=page[1]), 302)
-        for page, status in code_phase1:
-            s.view_test_status(reverse(self.app+':'+page[0], kwargs=page[1]), 302)
-
-        # Test general page (not proposal specific)
         self.info['type'] = 'general'
         self.loop_phase_user(range(1,6), code_general_phase12345)
         self.loop_phase_user(range(1,8), code_general)  # share link

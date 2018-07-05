@@ -19,5 +19,5 @@ for f in conffiles:
     exec(fo.read())
     fo.close()
 
-# in case of overrides
+# in case of overridessa
 DEBUG = False

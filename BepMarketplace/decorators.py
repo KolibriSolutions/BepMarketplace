@@ -300,6 +300,7 @@ def can_downgrade_proposal(fn):
 def can_access_professionalskills(fn):
     """
     Tests if it is the correct timephase and person with access rights to look at profesionalskills
+    # TODO maybe add presentation assessors??
 
     :param fn:
     :return:
@@ -316,7 +317,7 @@ def can_access_professionalskills(fn):
                 login_url='index:login',
                 redirect_field_name='next', )
 
-        # type 3 and 6 can always view professionalskills.
+        # type 3 and 6 can always view professional skills.
         # Everyone can view it in phase 6 (execution) and later (presenting).
         if get_timephase_number() < 6 and \
                 get_grouptype("3") not in request.user.groups.all() and \

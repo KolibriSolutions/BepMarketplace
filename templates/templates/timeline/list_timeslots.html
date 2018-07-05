@@ -20,8 +20,13 @@
                 <td data-sort="{{ p.Begin|date:'U' }}">{{ p.Begin }}</td>
                 <td data-sort="{{ p.End|date:'U' }}">{{ p.End }}</td>
                 <td>
-                    {% if p.End >= now %}<a href="{% url 'timeline:edit_timeslot' p.pk %}" class="button primary">Edit</a>{% endif %}
+                    {% if p.End >= now %}
+                        <a href="{% url 'timeline:edit_timeslot' p.pk %}" class="button primary">Edit</a>{% endif %}
                     <a href="{% url 'timeline:list_timephases' p.pk %}" class="button primary">List TimePhases</a>
+                    {% if user.is_superuser %}
+                        <a href="{% url 'admin:timeline_timephase_change' p.pk %}" class="button warning">Admin
+                            edit</a>{% endif %}
+
                 </td>
             </tr>
         {% endfor %}
@@ -34,7 +39,7 @@
     <script type="text/javascript">
         //live search for proposals, using datatables jquery.
         $(document).ready(function () {
-           var dt = $('.datatable').dt_wrapper();
+            var dt = $('.datatable').dt_wrapper();
         });
     </script>
 {% endblock %}

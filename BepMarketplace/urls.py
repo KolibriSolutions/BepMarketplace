@@ -1,10 +1,10 @@
 """
 BEPMarketplace URL Configuration
 """
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 from django.urls import path, include
-
 from django.views.generic.base import RedirectView
 
 admin.autodiscover()
@@ -34,13 +34,13 @@ urlpatterns = [
     path('two_factor/', include('two_factor_custom.urls')),
 ]
 
-# if settings.DEBUG and False:
-#     import debug_toolbar
-#
-#     urlpatterns = [
-#         path('debug/', include(debug_toolbar.urls)),
-#
-#     ] + urlpatterns
+if settings.DEBUG and True:
+    import debug_toolbar
+
+    urlpatterns = [
+                      path('debug/', include(debug_toolbar.urls)),
+
+                  ] + urlpatterns
 
 # static download path, for unprotected downloads. Not used.
 # + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

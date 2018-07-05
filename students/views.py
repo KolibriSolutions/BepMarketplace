@@ -139,7 +139,7 @@ def apply(request, pk):
 
     if get_all_applications(request.user).count() >= settings.MAX_NUM_APPLICATIONS:
         return render(request, 'base.html', context={
-            'Message': 'already at max ammount of applied proposals<br>'
+            'Message': 'already at max amount of applied proposals<br>'
                        'retract one first before continuing',
             'return': 'students:listapplications',
         })

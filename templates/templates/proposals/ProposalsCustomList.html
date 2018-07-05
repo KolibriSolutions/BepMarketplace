@@ -9,16 +9,18 @@
     {% else %}
         <h1>My Proposals</h1>
     {% endif %}
+    <a href="#" id="projectinfo" class="columnToggle button"><span></span> project details</a>
+
     <div class="double-scroll">
         <table class="table datatable striped" data-order='[[2, "asc"]]'>
             <thead>
             <tr>
                 <th data-priority="4" data-searchable="false" data-sortable="false">{% if phasenumber < 5 %}
                     Edit{% else %}Distributions{% endif %}</th>
-                <th>Timeslot</th>
+                <th data-visible='false' class="projectinfo">Timeslot</th>
                 <th data-priority="1">Name</th>
-                <th>Track</th>
-                <th>Group</th>
+                <th data-visible='false' class="projectinfo">Track</th>
+                <th data-visible='false' class="projectinfo">Group</th>
                 <th>Responsible staff</th>
                 <th>Assistant(s)</th>
                 <th data-priority="2">Status</th>
@@ -113,7 +115,7 @@
     {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
-            $('.datatable').dt_wrapper([
+            var dt = $('.datatable').dt_wrapper([
                     {column_number: 1, filter_type: "select"},
                     {column_number: 3, filter_type: "select"},
                     {column_number: 4, filter_type: "select"},
@@ -128,5 +130,32 @@
                     {column_number: 7, filter_type: "select"},
                 ]
             );
+            $(".columnToggle").click(function () {
+                //reset width:
+                $(".datatable").width("100%");
+                // Get the column API object
+                var columns = dt.columns("." + $(this).attr('id'));
+                // Toggle the visibility
+                if (columns.visible()[0]) {
+                    columns.visible(false);
+                    $(this).find("span").text("Show");
+                } else {
+                    columns.visible(true);
+                    $(this).find("span").text("Hide")
+                }
+                //trigger resize event for double-scroll because table width has changed.
+                $('.double-scroll').trigger('resize.doubleScroll');
+            });
+
+            //set default text for columns buttons, because datatables saves visibility in state.
+            var but = $('a.columnToggle');
+            but.each(function (i) {
+                var vis = dt.columns("." + $(this).attr('id')).visible()[0];
+                if (vis) {
+                    $(this).find("span").text("Hide")
+                } else {
+                    $(this).find("span").text("Show")
+                }
+            })
         });
     </script>  {% endblock %}

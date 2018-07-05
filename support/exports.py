@@ -7,7 +7,7 @@ from openpyxl.writer.excel import save_virtual_workbook
 from general_view import timestamp, get_name
 from results.models import GradeCategory
 from timeline.utils import get_timeslot
-
+from professionalskills.models import FileType, StaffReponse
 
 def get_list_students_xlsx(des, typ):
     """
@@ -36,6 +36,10 @@ def get_list_students_xlsx(des, typ):
     header.append("Total")
     header.append("Total rounded")
 
+    prvs = list(FileType.objects.filter(TimeSlot=get_timeslot()))
+    for prv in prvs:
+        header.append(prv.Name)
+
     ws.column_dimensions['B'].width = 25  # name
     ws.column_dimensions['C'].width = 25  # Project
     ws.column_dimensions['D'].width = 25  # responsible
@@ -48,6 +52,8 @@ def get_list_students_xlsx(des, typ):
         ws[col + '2'].style = 'Headline 3'
 
     cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
+
+
     for d in des:
         reslist = []
         for c in cats:
@@ -67,6 +73,14 @@ def get_list_students_xlsx(des, typ):
             row.append(r)
         row.append(round(d.TotalGrade(), 2))
         row.append(d.TotalGradeRounded())
+        for prv in prvs:
+            try:
+                row.append(d.files.filter(Type=prv).order_by('-id')[0].staffreponse.Status)
+            except IndexError:
+                row.append('no file')
+            except StaffReponse.DoesNotExist:
+                row.append('no grading')
+
         ws.append(row)
 
     return save_virtual_workbook(wb)

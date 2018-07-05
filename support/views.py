@@ -43,10 +43,13 @@ def list_applications_distributions(request):
     if get_timephase_number() < 3:
         raise PermissionDenied("There are no applications yet")
     elif get_timephase_number() > 5:
-        proposals = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
+        projects = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
     else:  # phase 3 & 4 & 5
-        proposals = get_all_proposals().filter(Status=4)
-    return render(request, 'support/listApplicationsDistributions.html', {"proposals": proposals})
+        projects = get_all_proposals().filter(Status=4)
+    projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
+                                                                                     'distributions__Student__usermeta')
+
+    return render(request, 'support/listApplicationsDistributions.html', {"proposals": projects})
 
 
 @not_minified_response
@@ -58,10 +61,12 @@ def list_distributions_xlsx(request):
     if get_timephase_number() < 3:
         raise PermissionDenied("There are no applications yet")
     elif get_timephase_number() > 4:
-        proposals = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
+        projects = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
     else:
-        proposals = get_all_proposals().filter(Status=4)
-    file = get_list_distributions_xlsx(proposals)
+        projects = get_all_proposals().filter(Status=4)
+    # projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
+    #                                                                                  'distributions__Student__usermeta')
+    file = get_list_distributions_xlsx(projects)
     response = HttpResponse(content=file)
     response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
     return response
@@ -247,6 +252,7 @@ def list_users(request):
 
     return render(request, "support/list_users.html", {
         "bodyhtml": bodyhtml,
+        'hide_sidebar': True,
     })
 
 
@@ -300,7 +306,8 @@ def user_info(request, pk):
         raise TypeError("Type %s not serializable" % type(obj))
 
     user = get_object_or_404(User, pk=pk)
-    user_model = [[field.name, getattr(user, field.name)] for field in user._meta.fields]
+    user_model = [[field.name, getattr(user, field.name)] for field in user._meta.fields if
+                  field.name.lower() not in ['password', 'pass', 'key', 'secret', 'token', 'signature']]
     try:
         usermeta_model = [[field.name, getattr(user.usermeta, field.name)] for field in user.usermeta._meta.fields]
     except:
@@ -435,7 +442,11 @@ def list_students(request):
     else:
         show_grades = False
     cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
-    des = get_distributions(request.user)
+    # des = get_distributions(request.user)
+    des = get_distributions(request.user).select_related('Proposal__ResponsibleStaff',
+                                                         'Proposal__Track',
+                                                         'Student__usermeta').prefetch_related('results__Category',
+                                                                                               'Proposal__Assistants')
     deslist = []
     # make grades
     for d in des:

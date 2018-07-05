@@ -13,6 +13,7 @@ from general_form import clean_file_default, FileForm, UserChoiceField, UserMult
 from general_mail import mailPrivateStudent, mail_proposal_single
 from general_model import get_ext, print_list
 from general_view import get_grouptype
+from index.models import UserMeta
 from templates import widgets
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number
@@ -36,9 +37,9 @@ def clean_image_default(self):
     picture = clean_file_default(self)
 
     # this check is done both here and in the model, needed to prevent wrong files entering get_image_dimensions()
-    if get_ext(picture.name) not in settings.ALLOWED_PROPOSAL_IMAGES:
+    if get_ext(picture.name) not in settings.ALLOWED_PROJECT_IMAGES:
         raise ValidationError('This file type is not allowed. Allowed types: '
-                              + print_list(settings.ALLOWED_PROPOSAL_IMAGES))
+                              + print_list(settings.ALLOWED_PROJECT_IMAGES))
 
     w, h = get_image_dimensions(picture)
     if w < minw or h < minh:
@@ -60,9 +61,9 @@ def clean_attachment_default(self):
     """
     file = clean_file_default(self)
     # this check is done both here and in the model
-    if get_ext(file.name) not in settings.ALLOWED_PROPOSAL_ATTACHMENTS:
+    if get_ext(file.name) not in settings.ALLOWED_PROJECT_ATTACHMENTS:
         raise ValidationError('This file type is not allowed. Allowed types: '
-                              + print_list(settings.ALLOWED_PROPOSAL_ATTACHMENTS))
+                              + print_list(settings.ALLOWED_PROJECT_ATTACHMENTS))
     return file
 
 
@@ -97,21 +98,33 @@ def create_user_from_email(self, email, username, student=False):
 
     :param self:
     :param email: emailaddres
-    :param username: username to create, usually a part of the emailaddress
+    :param username: username to create, usually a part of the email address
     :param student: whether the users is a student. If false, user is added to the assistants group
     :return: THe created user account
     """
     parts = email.split('@')[0].split('.')
+    # strip possible index number at the end.
     if parts[-1].isdigit():
         parts.pop()
-    lastname = parts.pop()
-    firstname = '.'.join(parts) + '.'
+    # get all single letters (initials etc)
+    initials = ''
+    while len(parts[0]) == 1:
+        initials += parts.pop(0) + '.'
+    # what remains is lastname. Join possible multiple last names.
+    last_name = (' '.join(parts)).title()
+    initials = initials.title()
     new_account = User.objects.create_user(username, email)
-    new_account.first_name = firstname
-    new_account.last_name = lastname
+    new_account.first_name = initials
+    new_account.last_name = last_name
     if not student:
         new_account.groups.add(get_grouptype('2u'))
     new_account.save()
+    m = UserMeta(
+        User=new_account,
+        Initials=initials,
+        Fullname="{}, {}".format(last_name, initials),
+    )
+    m.save()
     return new_account
 
 
@@ -154,6 +167,7 @@ class ProposalForm(forms.ModelForm):
     addPrivatesEmail = forms.CharField(label='Private students (email, one per line)',
                                        widget=widgets.MetroMultiTextInput,
                                        required=False)
+
     #
     # ResponsibleStaff = UserChoiceField(get_grouptype('1').user_set.all(), widget=widgets.MetroSelect,
     #                                    label='Responsible staff')
@@ -241,13 +255,15 @@ class ProposalForm(forms.ModelForm):
             for s in self.cleaned_data.get('Private'):
                 for p in s.personal_proposal.all():
                     if p.TimeSlot == self.cleaned_data.get('TimeSlot') and p.pk != self.instance.pk:
-                        raise ValidationError("Student {} (using dropdown menu) already has another private proposal!".format(s))
+                        raise ValidationError(
+                            "Student {} (using dropdown menu) already has another private proposal!".format(s))
 
         if self.cleaned_data.get('addPrivatesEmail'):  # this already is a list of users.
             for s in self.cleaned_data.get('addPrivatesEmail'):
                 for p in s.personal_proposal.all():
                     if p.TimeSlot == self.cleaned_data.get('TimeSlot') and p.pk != self.instance.pk:
-                        raise ValidationError("Student {} (using email address) already has another private proposal!".format(s))
+                        raise ValidationError(
+                            "Student {} (using email address) already has another private proposal!".format(s))
 
         return cleaned_data
 

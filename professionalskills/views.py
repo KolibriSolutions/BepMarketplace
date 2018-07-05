@@ -271,6 +271,7 @@ def mail_overdue_students(request):
 
 @group_required('type1staff', 'type2staff')
 @can_access_professionalskills
+@phase_required(6, 7)
 def respond_file(request, pk):
     """
     Form to let a staff member give a response to a students file.
@@ -352,8 +353,8 @@ def print_forms(request):
             'files': StaffReponse.objects.filter(File__Distribution=dstr).order_by('File__Type__id'),
         }
         try:
-            obj['room'] = dstr.presenationtimeslot.Presentations.AssessmentRoom
-            obj['time'] = dstr.presenationtimeslot.DateTime
+            obj['room'] = dstr.presentationtimeslot.Presentations.AssessmentRoom
+            obj['time'] = dstr.presentationtimeslot.DateTime
         except:
             pass
         pages.append(obj)

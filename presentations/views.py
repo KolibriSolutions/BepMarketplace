@@ -125,8 +125,9 @@ def wizard_step3(request):
     try:
         ts.timephases.get(Description=7)
     except:
-        raise PermissionDenied(
-            "There is no timephase for presentations defined, please define a timephase or contact the support staff.")
+        return render(request, "base.html", {
+            'Message':
+                "There is no timephase for presentations defined, please define a timephase or contact the support staff."})
 
     form = PresentationSetForm
     form_set = modelformset_factory(PresentationSet, form=form, can_delete=True, extra=4)
@@ -195,7 +196,7 @@ def wizard_step4(request):
                 slotObj.save()
         return JsonResponse({'type': 'success', 'txt': 'Data saved!'})
     else:
-        dists = Distribution.objects.filter(Q(presenationtimeslot__isnull=True) & Q(Timeslot=get_timeslot()))
+        dists = Distribution.objects.filter(Q(presentationtimeslot__isnull=True) & Q(Timeslot=get_timeslot()))
         sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts)
         opts = ts.presentationoptions
         types = PresentationTimeSlot.SlotTypes
@@ -220,7 +221,10 @@ def list_presentations(request):
     if not sets:
         return render(request, "base.html",
                       {"Message": "There is nothing planned yet. Please plan the presentations first."})
-    return render(request, "presentations/listPresentationsPlanning.html", {"sets": sets})
+    return render(request, "presentations/listPresentationsPlanning.html", {
+        "sets": sets,
+        'hide_sidebar': True}
+                  )
 
 
 @not_minified_response

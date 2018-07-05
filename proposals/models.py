@@ -84,11 +84,11 @@ class Proposal(models.Model):
 
 class ProposalFile(models.Model):
     """
-    Abstract base class for any object attached to a proposal. Used for images and attachements.
+    Abstract base class for any object attached to a project. Used for images and attachments.
     """
     def make_upload_path(instance, filename):
-        filenameNew =  filename_default(filename)
-        return 'proposal_{0}/{1}'.format(instance.Proposal.pk, filenameNew)
+        filename_new = filename_default(filename)
+        return 'proposal_{0}/{1}'.format(instance.Proposal.pk, filename_new)
     Caption = models.CharField(max_length=200, blank=True, null=True)
     OriginalName = models.CharField(max_length=200, blank=True, null=True)
 
@@ -107,12 +107,12 @@ class ProposalImage(ProposalFile):
     File = models.ImageField(default=None, upload_to=ProposalFile.make_upload_path)
 
     def save(self, *args, **kwargs):
-        #remove old image if this is a changed image
+        # remove old image if this is a changed image
         try:
             this_old = ProposalImage.objects.get(id=self.id)
             if this_old.File != self.File:
                 this_old.File.delete(save=False)
-        except: #new image object
+        except:  # new image object
             pass
         super(ProposalImage, self).save(*args, **kwargs)
 
@@ -120,7 +120,7 @@ class ProposalImage(ProposalFile):
         if self.File:
             if get_ext(self.File.name) not in settings.ALLOWED_PROPOSAL_IMAGES:
                 raise ValidationError(
-                    'This file type is not allowed. Allowed types: ' + print_list(settings.ALLOWED_PROPOSAL_IMAGES))
+                    'This file type is not allowed. Allowed types: ' + print_list(settings.ALLOWED_PROJECT_IMAGES))
 
 
 class ProposalAttachment(ProposalFile):
@@ -142,7 +142,7 @@ class ProposalAttachment(ProposalFile):
             if get_ext(self.File.name) not in settings.ALLOWED_PROPOSAL_ATTACHMENTS:
                 raise ValidationError(
                     'This file type is not allowed. Allowed types: '
-                    + print_list(settings.ALLOWED_PROPOSAL_ATTACHMENTS))
+                    + print_list(settings.ALLOWED_PROJECT_ATTACHMENTS))
 
 
 # delete image if ProposalImage Object is removed

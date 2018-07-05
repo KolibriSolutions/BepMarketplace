@@ -1,14 +1,15 @@
 {% load staticfiles %}
 {% load custom_filters %}
 {% GetPhaseNumber as phasenumber %}
-
-<!--base-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="shortcut icon" href="{% static "/favicon.ico" %}"/>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    {# fix for IE for intranet compatibility #}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="{% static "/favicon.ico" %}"/>
+
     <title>BEP Marketplace</title>
     {% block head %}
         <link href="{% static "css/metro.min.css" %}" rel="stylesheet">
@@ -242,7 +243,7 @@
                                 {% endif %}
                             </ul>
                         </li>
-                    {% elif phasenumber > 5 %}
+                    {% elif phasenumber > 5 %} {# should be hidden for undistributed students, but is not. #}
                         <li><a href="{% url 'professionalskills:filetypelist' %}"><span class="mif-widgets icon"></span>Professional
                             Skills</a></li>
                     {% endif %}
@@ -264,7 +265,7 @@
                                     </ul>
                                 </li>
                                 <li><a href="{% url 'godpowers:sessionlist' %}">Session List</a></li>
-                                <li><a href="{% url 'index:feedbacklist' %}">Feedback Reports</a></li>
+                                <li><a href="{% url 'index:list_feedback' %}">Feedback Reports</a></li>
                                 <li><a href="{% url 'godpowers:clearcache' %}">Clear Cache</a></li>
                                 <li><a href="/admin/">Django admin</a></li>
                             </ul>
@@ -394,7 +395,7 @@
     </a>
     <div class="place-left">
         {% if request.user.is_authenticated %}
-            <form method="post" action="{% url 'index:feedbackForm' %}">
+            <form method="post" action="{% url 'index:feedback_form' %}">
                 {% csrf_token %}
                 <input type="hidden" id="id_Reporter" name="id_Reporter" value="{{ request.user.id }}">
                 <input type="hidden" id="id_Url" name="id_Url" value="{{ request.path }}">
@@ -429,7 +430,7 @@
     {% if hide_sidebar %}
         <script type="text/javascript">
             $(function () {
-                hideSidebar();
+                hideSidebarFast();
             });
         </script>
     {% endif %}

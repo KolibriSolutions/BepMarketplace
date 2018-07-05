@@ -23,18 +23,8 @@ class TrackingViewsTest(ProjectViewsTestGeneral):
             Description='test',
         )
         a.save()
-
-        # make a distribution, this gets id 1.
-        d = Distribution(
-            Proposal=self.proposal,
-            Student=self.users['r-s'],
-            Timeslot=self.ts,
-        )
-        d.save()
-        v = ResultOptions(
-            TimeSlot=self.ts
-        )
-        v.save()
+        d = self.distribution_random
+        v = self.results_options
 
         codes_nophase = [
             [['about', None], self.p_all],
@@ -63,27 +53,21 @@ class TrackingViewsTest(ProjectViewsTestGeneral):
             [['gradefinal', {'pk': d.pk}], self.p_forbidden],
             [['gradefinal', {'pk': d.pk, 'version': 0}], self.p_forbidden],
         ]
+        # presentation assessors are not tested.
         codes_phase67_visible = [
             [['gradeformstaff', {'pk': d.pk}], self.p_no_assistant],
             [['gradeformstaff', {'pk': d.pk, 'step': 0}], self.p_no_assistant],
-            [['gradefinal', {'pk': d.pk}], self.p_trackhead_only],
-            [['gradefinal', {'pk': d.pk, 'version': 0}], self.p_trackhead_only],
+            [['gradefinal', {'pk': d.pk}], self.p_grade_final],
+            [['gradefinal', {'pk': d.pk, 'version': 0}], self.p_grade_final],
         ]
-
-        # not logged in users. Ignore status, only use the views column of permission matrix.
-        # Status should be 302 always.
-        self.info['type'] = 'not logged in'
-        for page, status in codes_phase12345:
-            self.view_test_status(reverse(self.app + ':' + page[0], kwargs=page[1]), 302)
-
         # Test for users
-        self.info['type'] = 'logged in'
         self.loop_phase_user(range(1, 6), codes_phase12345)
         self.loop_phase_user(range(1, 8), codes_nophase)
-
+        self.info['type'] = 'results not visible'
         self.loop_phase_user([6, 7], codes_phase67_notvisible)
         v.Visible = True
         v.save()
+        self.info['type'] = 'results visible'
         self.loop_phase_user([6, 7], codes_phase67_visible)
 
         # check if all urls are processed

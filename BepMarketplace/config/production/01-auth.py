@@ -117,6 +117,7 @@ SAML_CONFIG = {
          'contact_type': 'administrative'},
     ],
     'valid_for': 24,  # how long is our metadata valid, needs to be short because letsencrypt certs
+    'accepted_time_diff': 10, # allow max 10 seconds time difference. This should stop 1s off ToEarly saml assertions error.
 }
 
 SAML_DJANGO_USER_MAIN_ATTRIBUTE = 'email' # Use email to match saml users to django users

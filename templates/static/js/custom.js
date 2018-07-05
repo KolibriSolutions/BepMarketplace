@@ -58,6 +58,18 @@ function hideSidebar() {
     }, 400);
 }
 
+function hideSidebarFast() {
+    var c = $('#cellSidebar');
+    c.css('opacity', 0);
+    $('#toggleSidebarButtonIcon').css('transform', 'rotate(180deg)');
+    sidebarVisible = false;
+    $('#cellContent').removeClass('colspan4').addClass('colspan5');
+    $(window).trigger('resize');  // trigger the window resize event, to let jquery.DoubleScroll resize the second bar.
+    if (!sidebar) { //don't overwrite sidebar on second time calling this function.
+        sidebar = c.detach();
+    }
+}
+
 function showSidebar() {
     var c = $('#cellContent');
     c.addClass('transitionWidth');

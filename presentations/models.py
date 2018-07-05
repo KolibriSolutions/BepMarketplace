@@ -64,7 +64,7 @@ class PresentationTimeSlot(models.Model):
     )
     DateTime = models.DateTimeField()
     Presentations = models.ForeignKey(PresentationSet, on_delete=models.CASCADE, related_name="timeslots")
-    Distribution = models.OneToOneField(Distribution, on_delete=models.CASCADE, related_name="presenationtimeslot", blank=True, null=True, default=None)
+    Distribution = models.OneToOneField(Distribution, on_delete=models.CASCADE, related_name="presentationtimeslot", blank=True, null=True, default=None)
     CustomType = models.IntegerField(choices=SlotTypes, default=0, null=True)
     CustomDuration = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)], blank=True, null=True, default=None)
 

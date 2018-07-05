@@ -5,7 +5,7 @@ from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q, Count
 from django.forms import modelformset_factory
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.urls import reverse
 from render_block import render_block_to_string
@@ -18,7 +18,6 @@ from general_mail import mailAffectedUser, mailPrivateStudent
 from general_model import GroupOptions
 from general_view import get_grouptype, truncate_string
 from index.models import Track
-from proposals.models import Proposal
 from proposals.utils import get_all_proposals, get_share_link, get_cached_project, updatePropCache
 from students.views import get_all_applications
 from timeline.utils import get_timeslot, get_timephase_number
@@ -41,6 +40,7 @@ def list_public_projects(request):
     body_html = cache.get('listproposalsbodyhtml')
     if body_html is None:
         proposals = get_all_proposals().filter(Q(Status=4) & Q(Private=None))
+        proposals = proposals.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants')
         body_html = render_block_to_string("proposals/ProposalList.html", 'body',
                                            {"proposals": proposals, 'domain': settings.DOMAIN})
         cache.set('listproposalsbodyhtml', body_html, None)
@@ -157,16 +157,17 @@ def list_own_projects(request):
     :param request:
     :return:
     """
-    # show projects from all timeslots, filtering through datatables.
-    allprojs = Proposal.objects.all()
-    projects = []
-
-    if get_grouptype("3") in request.user.groups.all() or request.user.is_superuser:
-        projects = list(allprojs)
+    if get_grouptype("3") in request.user.groups.all():
+        projects = Proposal.objects.all()
     else:
-        for prop in allprojs:
-            if request.user == prop.ResponsibleStaff or request.user in prop.Assistants.all():
-                projects.append(prop)
+        projects = Proposal.objects.filter(Q(ResponsibleStaff=request.user) |
+                                           Q(Assistants=request.user)).distinct()
+
+    if get_timephase_number() < 5:
+        projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants')
+    else:
+        projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
+                                                                                         'distributions__Student__usermeta')
 
     return render(request, 'proposals/ProposalsCustomList.html', {'proposals': projects,
                                                                   'hide_sidebar': True})

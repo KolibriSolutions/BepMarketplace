@@ -20,7 +20,10 @@
                 <td data-sort="{{ p.Begin|date:'U' }}">{{ p.Begin }}</td>
                 <td data-sort="{{ p.End|date:'U' }}">{{ p.End }}</td>
                 <td data-sort="{{ p.CountdownEnd|date:"U" }}">{{ p.CountdownEnd }}</td>
-                <td>{% if p.End >= now %}<a href="{% url 'timeline:edit_timephase' p.pk %}" class="button primary">Edit</a>{% endif %}</td>
+                <td>
+                    {% if p.End >= now %}<a href="{% url 'timeline:edit_timephase' p.pk %}" class="button primary">Edit</a>{% endif %}
+                    {% if user.is_superuser %}<a href="{% url 'admin:timeline_timephase_change' p.pk %}" class="button warning">Admin edit</a>{% endif %}
+                </td>
             </tr>
         {% endfor %}
         </tbody>

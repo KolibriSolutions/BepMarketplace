@@ -307,14 +307,16 @@
     <script src="{% static "channels/js/websocketbridge.js" %}"></script>
     <script>
         $(document).ready(function () {
-            var icar = $('#imageCarousel').data('carousel');
-            var thumbs = $('#imageCarousel_thumbs > .thumb');
-            $.each(thumbs, function () {
-                var thumb = $(this), index = thumb.data('index') - 1;
-                thumb.on('click', function () {
-                    icar.slideTo(index);
+            {% if project.images.all|length > 1 %}
+                var icar = $('#imageCarousel').data('carousel');
+                var thumbs = $('#imageCarousel_thumbs > .thumb');
+                $.each(thumbs, function () {
+                    var thumb = $(this), index = thumb.data('index') - 1;
+                    thumb.on('click', function () {
+                        icar.slideTo(index);
+                    });
                 });
-            });
+            {% endif %}
 
             {% if user|has_group:"any" and project.Status == 4 %}
                 const webSocketBridgeViewnumber = new channels.WebSocketBridge();

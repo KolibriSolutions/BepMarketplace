@@ -7,9 +7,13 @@ from templates import widgets
 class TwoFactorAuthTokenForm(AuthenticationTokenForm):
     otp_token = forms.IntegerField(widget=widgets.MetroNumberInput, label="Token", min_value=1,
                                    max_value=int('9' * totp_digits()))
+    otp_token.widget.attrs.update({'autofocus': 'autofocus'})
+
 
 class TowFactorBackupTokenForm(AuthenticationTokenForm):
     otp_token = forms.CharField(label="Token", widget=widgets.MetroTextInput)
+    otp_token.widget.attrs.update({'autofocus': 'autofocus'})
+
 
 class TwoFactorAuthenticationForm(AuthenticationForm):
     username = forms.CharField(
@@ -23,8 +27,12 @@ class TwoFactorAuthenticationForm(AuthenticationForm):
         widget=widgets.MetroPasswordInput,
     )
 
+
 class TwoFactorDeviceValidationForm(DeviceValidationForm):
-    token = forms.IntegerField(label="Token", min_value=1, max_value=int('9' * totp_digits()), widget=widgets.MetroNumberInput)
+    token = forms.IntegerField(label="Token", min_value=1, max_value=int('9' * totp_digits()),
+                               widget=widgets.MetroNumberInput)
+
 
 class TwoFactorTOTPDeviceForm(TOTPDeviceForm):
-    token = forms.IntegerField(label="Token", min_value=0, max_value=int('9' * totp_digits()), widget=widgets.MetroNumberInput)
+    token = forms.IntegerField(label="Token", min_value=0, max_value=int('9' * totp_digits()),
+                               widget=widgets.MetroNumberInput)

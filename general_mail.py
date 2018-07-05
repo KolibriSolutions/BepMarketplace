@@ -78,7 +78,7 @@ def mailAffectedUser(request, proposal, message=''):
     :param proposal: The proposal that is changed
     :param message: Message string
     :return:
-    """
+x    """
     emails = []
     if proposal.Status == 1:
         for assistant in proposal.Assistants.all():

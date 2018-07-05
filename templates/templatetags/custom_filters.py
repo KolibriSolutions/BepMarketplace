@@ -31,6 +31,34 @@ def index(List, i):
 def tolist(object):
     return list(object)
 
+#
+# @register.filter(name='has_group')
+# def has_group(user, group_names):
+#     """
+#
+#     :param user:
+#     :param group_names:
+#     :return:
+#     """
+#     if user.is_superuser:
+#         return True
+#     if group_names == "any":
+#         if user.groups.exists():
+#             if Group.objects.get(name='type4staff') not in user.groups.all() and \
+#                 Group.objects.get(name='type5staff') not in user.groups.all() and \
+#                 Group.objects.get(name='type6staff') not in user.groups.all():
+#                 return True
+#             if user.groups.count() > 1:
+#                 return True
+#             return False
+#         else:
+#             return False
+#     for group_name in group_names.split(';'):
+#         group = Group.objects.get(name=group_name)
+#         if group in user.groups.all():
+#             return True
+#
+#     return False
 
 @register.filter(name='has_group')
 def has_group(user, group_names):
@@ -44,9 +72,9 @@ def has_group(user, group_names):
         return True
     if group_names == "any":
         if user.groups.exists():
-            if Group.objects.get(name='type4staff') not in user.groups.all() and \
-                Group.objects.get(name='type5staff') not in user.groups.all() and \
-                Group.objects.get(name='type6staff') not in user.groups.all():
+            if get_grouptype('4') not in user.groups.all() and \
+                    get_grouptype('5') not in user.groups.all() and \
+                    get_grouptype('6') not in user.groups.all():
                 return True
             if user.groups.count() > 1:
                 return True
@@ -54,10 +82,13 @@ def has_group(user, group_names):
         else:
             return False
     for group_name in group_names.split(';'):
-        group = Group.objects.get(name=group_name)
+        if group_name == 'type2staffunverified':
+            shortname = '2u'
+        else:
+            shortname = group_name[4]
+        group = get_grouptype(shortname)
         if group in user.groups.all():
             return True
-
     return False
 
 

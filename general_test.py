@@ -16,12 +16,16 @@ from django.test import TestCase, Client
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.module_loading import import_module
+from django.utils import timezone
 
 from general_model import GroupOptions
-from index.models import UserMeta, UserAcceptedTerms
+from index.models import UserMeta, UserAcceptedTerms, Track
 from proposals.models import Proposal
-from support.models import Track, CapacityGroupAdministration
+from support.models import CapacityGroupAdministration
 from timeline.models import TimeSlot, TimePhase
+from results.models import ResultOptions, CategoryAspectResult, CategoryResult
+from students.models import Distribution
+from presentations.models import PresentationOptions, PresentationTimeSlot, PresentationSet, Room
 
 # disable cache for all tests
 @override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}},
@@ -46,9 +50,6 @@ class ViewsTest(TestCase):
         self.client = Client()
         # info string to show debug info in case of test assertion failure
         self.info = {}
-        # Create groups
-        self.create_groups()
-        self.create_users()
 
         # The timeslot used for testing proposal of current timeslot
         self.ts = TimeSlot(Begin=datetime.now(), End=datetime.now()+timedelta(days=3), Name='thisyear')
@@ -65,6 +66,10 @@ class ViewsTest(TestCase):
         # The timeslot used for testing proposal of previous timeslot
         self.pts = TimeSlot(Begin=datetime.now()-timedelta(days=5), End=datetime.now()-timedelta(days=3), Name='prevyear')
         self.pts.save()
+
+        # Create groups and users
+        self.create_groups()
+        self.create_users()
 
         # Track for automotive, with trackhead t-h. Automotive track must exist because it is special. (distributions)
         th = User.objects.get(username='t-h')
@@ -92,38 +97,42 @@ class ViewsTest(TestCase):
         # s=student, p=private-student, r=responsible, a=assistant, n = assistant_not_verified t=trackhead, u=support
         # matrix with different types of permissions, set for each user of the array self.usernames
         # permissions by user. The order is the order of self.usernames. User 'god' is disabled (not tested).
-                #  usernames:  r-1  t-1  r-h  t-h  r-2  t-2  t-u  r-3  r-s  t-p  r-4  t-4  r-5  r-6  god
-        self.p_forbidden =    [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403,]  # no one
-        self.p_all =      [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, ]  # everyone
+                #  usernames:  r-1  t-1  r-h  t-h  r-2  t-2  t-u  r-3  r-s  t-p  r-4  t-4  r-5  r-6  ra1  ta1  sup, ano
+        self.p_forbidden =    [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 302]  # no one
+        self.p_superuser =    [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # no one
+        self.p_all =          [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 302]  # everyone
+        self.p_anonymous =    [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200]  # everyone
 
-        self.p_staff =        [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 200, 200, 200, 200, 200, ]  # all staff, general
-        self.p_staff12345 =   [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 200, 403, 200, ]  # all staff, general, for proposal stats
-        self.p_staff_prop =   [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 403, 403, 200,]  # all staff, to create proposals
-        self.p_staff_prop_nou=[200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 403, 403, 403, 403, 200,]  # all staff, to create proposals, no unverified
-        self.p_staff_stud =   [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 403, 403, 403, 200, 200,]  # all staff that can see students (1,2,3,6)
+        self.p_staff =        [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 200, 200, 200, 200, 200, 200, 200, 302]  # all staff, general
+        self.p_staff12345 =   [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 200, 403, 200, 200, 200, 302]  # all staff, general, for proposal stats
+        self.p_staff_prop =   [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 403, 403, 200, 200, 200, 302]  # all staff, to create proposals
+        self.p_staff_prop_nou=[200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 403, 403, 403, 403, 200, 200, 200, 302]  # all staff, to create proposals, no unverified
+        self.p_staff_stud =   [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 403, 403, 403, 200, 200, 200, 200, 302]  # all staff that can see students (1,2,3,6)
 
-        self.p_all_this =     [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 403, 403, 403, 200,]  # staff of this proposal
-        self.p_all_this_dist= [403, 200, 403, 200, 403, 200, 200, 200, 200, 403, 403, 403, 403, 200, 200,]  # staff of this proposal, as distributed to r-s (not t-p!). Also type6 for prv
-        self.p_no_assistant = [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 200,]  # staff of this proposal except assistants
-        self.p_all_this_view =[403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 200,]  # staff of this proposal including view only users (type4)
+        self.p_all_this =     [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal
+        self.p_all_this_dist= [403, 200, 403, 200, 403, 200, 200, 200, 200, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # staff of this proposal, as distributed to r-s (not t-p!). Also type6 for prv (NOT YET ASSESSOR)
+        self.p_no_assistant = [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal except assistants
+        self.p_all_this_view =[403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 403, 200, 302]  # staff of this proposal including view only users (type4)
 
-        self.p_private =      [403, 200, 403, 200, 403, 200, 200, 200, 403, 200, 403, 200, 403, 403, 200,]  # private proposal view status 4
-        self.p_trackhead =    [403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 200,]  # trackhead of proposal and support
-        self.p_trackhead_only=[403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200,]  # trackhead of proposal
-        self.p_track =        [403, 403, 200, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403,]  # any trackhead
-        self.p_pending =      [200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 403, 403, 403, 200,]  # staff with pending proposals
+        self.p_private =      [403, 200, 403, 200, 403, 200, 200, 200, 403, 200, 403, 200, 403, 403, 403, 403, 200, 302]  # private proposal view status 4
+        self.p_trackhead =    [403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # trackhead of proposal and support
+        self.p_grade_final =  [403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # Trackhead and assessor can finalize grades.
+        self.p_grade_staff =  [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal except assistants, for grading
+        self.p_track =        [403, 403, 200, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 302]  # any trackhead
+        self.p_pending =      [200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 200, 302]  # staff with pending proposals
 
-        self.p_support      = [403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 200,]  # type3 support
-        self.p_support_prv  = [403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200, 200,]  # 3+6
+        self.p_support      = [403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # type3 support
+        self.p_support_prv  = [403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # 3+6
 
-        self.p_cgadmin      = [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 200,]  # type4
-        self.p_study        = [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 200,]  # type5
-        self.p_prv =          [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, ]  # 6
+        self.p_cgadmin      = [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 403, 403, 200, 302]  # type4
+        self.p_study        = [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 200, 302]  # type5
+        self.p_prv =          [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # 6
 
-        self.p_student =      [403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 403, 403, 200,]  # any student
-        self.p_studentnotpriv=[403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200,]  # student without private proposal
+        self.p_student =      [403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 403, 403, 403, 403, 403, 302]  # any student
+        self.p_studentnotpriv=[403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 302]  # student without private proposal
 
-        self.p_404=           [404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404,]  # used to test filesdownload
+        self.p_download_share=[404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 403]  # used to test filesdownload (with sharelink proposals)
+        self.p_404 =          [404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 302]  # used to test filesdownload
 
 
     def create_groups(self):
@@ -173,39 +182,46 @@ class ViewsTest(TestCase):
             't-4',  # Capacity group administration of group of tested proposal
             'r-5',  # Study advisor
             'r-6',  # Prof skill administration
-            #'god',  # god user (superuser) # DISABLED, god is too hard to test and not necessary
+            'ra1',  # type1 and assessor of other project
+            'ta1',  # type1 and assessor of project
+            'sup',  # god user (superuser)
+            'ano',  # anonymous user, not yet tested.
         ]
         # Create the users and assign groups/roles.
         self.users = {}
         for n in self.usernames:
-            u = User(username=n)
-            u.save()
-            if n[-1] == '1':
-                u.groups.add(self.type1staff)
-            elif n[-1] == 'h':  # trackhead
-                u.groups.add(self.type1staff)
-            elif n[-1] == '2':
-                u.groups.add(self.type2staff)
-            elif n[-1] == 'u':
-                u.groups.add(self.type2staffunverified)
-            elif n[-1] == '3':
-                u.groups.add(self.type3staff)
-            elif n[-1] == '4':
-                u.groups.add(self.type4staff)
-            elif n[-1] == '5':
-                u.groups.add(self.type5staff)
-            elif n[-1] == '6':
-                u.groups.add(self.type6staff)
-            elif n == 'god':
-                u.groups.add(self.type3staff)
-                u.is_superuser = True
-                u.is_staff = True
-            u.save()
-            self.users[n] = u
-            m = UserMeta(User=u)
-            m.save()
-            ua = UserAcceptedTerms(User=u)
-            ua.save()
+            if n != 'ano':
+                u = User(username=n)
+                u.save()
+                if n[-1] == '1':
+                    u.groups.add(self.type1staff)
+                elif n[-1] == 'h':  # trackhead
+                    u.groups.add(self.type1staff)
+                elif n[-1] == '2':
+                    u.groups.add(self.type2staff)
+                elif n[-1] == 'u':
+                    u.groups.add(self.type2staffunverified)
+                elif n[-1] == '3':
+                    u.groups.add(self.type3staff)
+                elif n[-1] == '4':
+                    u.groups.add(self.type4staff)
+                elif n[-1] == '5':
+                    u.groups.add(self.type5staff)
+                elif n[-1] == '6':
+                    u.groups.add(self.type6staff)
+                elif n == 'sup':
+                    u.groups.add(self.type3staff)
+                    u.is_superuser = True
+                    u.is_staff = True
+                u.save()
+                self.users[n] = u
+                m = UserMeta(User=u,
+                             EnrolledBEP=True,)
+                m.save()
+                m.TimeSlot.add(self.ts)
+                m.save()
+                ua = UserAcceptedTerms(User=u)
+                ua.save()
 
     def links_in_view_test(self, sourceurl, skip=[]):
         """
@@ -230,9 +246,12 @@ class ViewsTest(TestCase):
                                         and "/logout/" not in x
                                         and "tracking/live/" not in x
                                         and "tracking/viewnumber/" not in x
+                                        and "js_error_hook" not in x
                                         and x not in skip)]
 
             for link in urls:  # select the url in href for all a tags(links)
+                if link in skip:
+                    continue
                 self.info['user'] = user.username
                 self.view_test_status(link, 200)
             self.client.logout()
@@ -251,6 +270,9 @@ class ViewsTest(TestCase):
             self.tp.save()
             self.info['phase'] = str(phase)
             for page, status in codes:
+                if self.debug:
+                    self.info['reverse'] = str(page)
+                    self.info['statuscodes'] = status
                 view = self.app + ":" + page[0]
                 if any(isinstance(i, list) for i in status):
                     # we're dealing with proposals status tests here
@@ -273,14 +295,18 @@ class ViewsTest(TestCase):
         for i, username in enumerate(self.usernames):
             self.info['user'] = username
             self.info['kw'] = kw
+            if self.debug:
+                self.info['user-index'] = i
             # log the user in
-            u = self.users[username]
-            self.info['user-groups'] = u.groups.all()
-            self.info['user-issuper'] = u.is_superuser
-            expected = status[i]
-            self.client.force_login(u)
-            self.view_test_status(reverse(view, kwargs=kw), expected)
-            self.client.logout()
+            if username != 'ano':
+                u = self.users[username]
+                if self.debug:
+                    self.info['user-groups'] = u.groups.all()
+                    self.info['user-issuper'] = u.is_superuser
+                self.client.force_login(u)
+            self.view_test_status(reverse(view, kwargs=kw), status[i])
+            if username != 'ano':
+                self.client.logout()
 
     def view_test_status(self, link, expected):
         """
@@ -302,7 +328,7 @@ class ViewsTest(TestCase):
                         exception = list(response.context[0])[0]["Message"]
                     except:
                         # exception = response.context  # this is a large amount of information
-                        exception = 'html'
+                        exception = 'Reason not found in context!'
                 self.info['exception'] = exception
             else:
                 self.info['exception'] = "no 403"
@@ -321,6 +347,7 @@ class ProjectViewsTestGeneral(ViewsTest):
     """
     Functions to test pages related to proposals/projects
     """
+
     def setUp(self):
         """
         Initialization test data for proposals/projects
@@ -376,7 +403,56 @@ class ProjectViewsTestGeneral(ViewsTest):
         self.privateproposal.Private.add(self.users.get('t-p'))
         self.privateproposal.save()
 
-        print("Private prop id: " + str(self.ppriv) + "; Public prop id:"+str(self.p))
+        # make a distribution, this gets id 1.
+        self.distribution_random = Distribution(
+            Proposal=self.proposal,
+            Student=self.users['r-s'],  # assign the student without private proposal
+            Timeslot=self.ts,
+        )
+        self.distribution_random.save()
+        dp = Distribution(
+            Proposal=self.proposal,
+            Student=self.users['t-p'],  # assign the student with private proposal
+            Timeslot=self.ts,
+        )
+        dp.save()
+        self.results_options = ResultOptions(
+            TimeSlot=self.ts
+        )
+        self.results_options.save()
+
+        po = PresentationOptions(
+            TimeSlot=self.ts,
+        )
+        po.save()
+
+        r = Room(
+            Name='Test-room',
+
+        )
+        r.save()
+
+        p = PresentationSet(
+            PresentationOptions=po,
+            PresentationRoom=r,
+            AssessmentRoom=r,
+            DateTime=timezone.now(),
+        )
+        p.save()
+        p.Assessors.add(self.users['ta1'])
+
+        ptsr = PresentationTimeSlot(
+            Presentations=p,
+            Distribution=self.distribution_random,
+            DateTime=timezone.now()+timedelta(hours=2)
+        )
+        ptsr.save()
+        ptsp = PresentationTimeSlot(
+            Presentations=p,
+            Distribution=dp,
+            DateTime=timezone.now() + timedelta(hours=3)
+        )
+        ptsp.save()
 
     def loop_user_status(self, view, status, kw=None):
         """
@@ -388,14 +464,18 @@ class ProjectViewsTestGeneral(ViewsTest):
         :return:
         """
         assert isinstance(status, list)
-        for username in self.usernames:
-            if self.debug:
-                print("Testing user {}".format(username))
+        for i, username in enumerate(self.usernames):
             self.info['user'] = username
             self.info['kw'] = kw
+            if self.debug:
+                self.info['user-index'] = i
             # log the user in
-            u = User.objects.get(username=username)
-            self.client.force_login(u)
+            if username != 'ano':
+                u = self.users[username]
+                if self.debug:
+                    self.info['user-groups'] = u.groups.all()
+                    self.info['user-issuper'] = u.is_superuser
+                self.client.force_login(u)
             # check for each given status from the status-array
             l = len(status)
             for status0 in range(0, l):
@@ -404,7 +484,7 @@ class ProjectViewsTestGeneral(ViewsTest):
                 self.status = status0 + 1
                 self.info['status'] = self.status
                 # Expected response code
-                expected = status[status0][self.usernames.index(username)]
+                expected = status[status0][i]
                 # Reset the proposal status, because it changes after a test call to upgrade/downgrade
                 self.proposal.Status = self.status
                 self.proposal.save()
@@ -412,4 +492,6 @@ class ProjectViewsTestGeneral(ViewsTest):
                 self.privateproposal.save()
                 self.view_test_status(reverse(view, kwargs=kw), expected)
             # user logout
-            self.client.logout()
+            if username != 'ano':
+                self.client.logout()
+

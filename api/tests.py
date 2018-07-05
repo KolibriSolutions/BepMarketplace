@@ -11,17 +11,18 @@ class ApiViewsTest(ProjectViewsTestGeneral):
         self.app = 'api'
         super().setUp()
 
+        self.dummy = User(username='dummy')
+        self.dummy.save()
+        m = UserMeta(User=self.dummy)
+        m.save()
+
     def test_view_status(self):
         s = self
-        # anonymous pages
-        codes_anonymous_phase1234567=[
-            [['viewsharelink', {'token': 'blabla'}], s.p_all]  # depricated, moved to proposals.
-        ]
         # not related to proposals
         codes_general_phase1234567 = [
-            [['verifyassistant', {'pk': 100}], s.p_support],  # use a dummy user without type2staffunverified
-            [['getgroupadmins', None], s.p_forbidden],  # god only
-            [['getgroupadminsarg', {'group': GroupOptions[0][0]}], s.p_forbidden],
+            [['verifyassistant', {'pk': self.dummy.id}], s.p_support],  # use a dummy user without type2staffunverified
+            [['getgroupadmins', None], s.p_superuser],  # god only
+            [['getgroupadminsarg', {'group': GroupOptions[0][0]}], s.p_superuser],
             [['listpublished', None], s.p_all],
             [['listpublishedpergroup', None], s.p_all],
             [['listpublishedtitles', None], s.p_all],
@@ -56,29 +57,10 @@ class ApiViewsTest(ProjectViewsTestGeneral):
             [['upgradestatus', {'pk': s.p}],   [s.p_forbidden       , s.p_forbidden         ,s.p_forbidden        , s.p_forbidden]],
             [['downgradestatus', {'pk': s.p}], [s.p_forbidden       , s.p_forbidden         ,s.p_forbidden        , s.p_forbidden  ]],
         ]
-        # not logged in users. Ignore status, only use the views column of permission matrix.
-        # Status should be 302 always.
-        self.info['type'] = 'not logged in'
-        for page, status in codes_anonymous_phase1234567:
-            self.view_test_status(reverse(self.app+':' + page[0], kwargs=page[1]), 200)
-        for page, status in codes_general_phase1234567:
-            self.view_test_status(reverse(self.app+':' + page[0], kwargs=page[1]), 302)
-        for page, status in codes_prop_notpublic:
-            self.view_test_status(reverse(self.app+':' + page[0], kwargs=page[1]), 302)
-        for page, status in codes_phase1:
-            s.view_test_status(reverse(self.app+':' + page[0], kwargs=page[1]), 302)
 
-        u = User(username='dummy')
-        u.id = 100
-        u.save()
-        m = UserMeta(User=u)
-        m.save()
-
-        # Test for users
-        self.info['type'] = 'logged in'
         self.loop_phase_user(range(1,8), codes_general_phase1234567)
         self.loop_phase_user(range(1,8), codes_prop_notpublic)
-        self.loop_phase_user(range(1, 8), codes_anonymous_phase1234567)
+        # self.loop_phase_user(range(1, 8), codes_anonymous_phase1234567)
         self.proposal.Status = 4
         self.proposal.save()
         self.loop_phase_user(range(1,8), codes_prop_public)
