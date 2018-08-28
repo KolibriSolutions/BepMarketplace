@@ -25,6 +25,6 @@ class DownloadViewsTest(ProjectViewsTestGeneral):
             [['student_files', {'distid': 0, 'fileid': '9b73c48b-e05f-4e08-9db5-c8100119f673.pdf'}], self.p_404],
         ]
         # Test for users, testing with nonexistent files for simplicity. So this always returns 404
-        self.loop_phase_user(range(1, 8), codes_phase1234567)
+        self.loop_phase_code_user(range(1, 8), codes_phase1234567)
 
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

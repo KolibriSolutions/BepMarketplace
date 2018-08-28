@@ -90,7 +90,8 @@ def detail_project(request, pk):
             cache.set('proposaldetail{}'.format(pk), cdata, None)
 
         tracking_visit_project(prop, request.user)  # always log visits from students
-        return render(request, "proposals/ProposalDetail.html", {"bodyhtml": cdata.format(button)})
+        return render(request, "proposals/ProposalDetail.html",
+                      {"bodyhtml": cdata.format(button), 'project': prop})  # send project for if statement in scripts.
 
     # if staff:
     else:
@@ -164,9 +165,9 @@ def list_own_projects(request):
                                            Q(Assistants=request.user)).distinct()
 
     if get_timephase_number() < 5:
-        projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants')
+        projects = projects.select_related('ResponsibleStaff', 'Track__Head', 'TimeSlot').prefetch_related('Assistants')
     else:
-        projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
+        projects = projects.select_related('ResponsibleStaff', 'Track__Head', 'TimeSlot').prefetch_related('Assistants',
                                                                                          'distributions__Student__usermeta')
 
     return render(request, 'proposals/ProposalsCustomList.html', {'proposals': projects,
@@ -465,7 +466,7 @@ def share(request, pk):
     :param pk: Proposal pk to get sharelink for
     :return:
     """
-    link = get_share_link(request, pk)
+    link = get_share_link(pk)
     return render(request, "base.html", {
         "Message": "Share link created: <a href=\"{}\">{}</a> <br/> "
                    "Use this to show the proposal to anybody without an account. "

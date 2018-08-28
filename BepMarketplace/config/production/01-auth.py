@@ -60,6 +60,9 @@ SAML_CONFIG = {
                 ],
             },
             'allow_unsolicited': False, # disable to stop replay attack.
+
+            'want_response_signed': False,  # TU/e does not sign its responses, so disable signing check.
+
             # These don't seem to be needed:
 
             # attributes that this project need to identify a user

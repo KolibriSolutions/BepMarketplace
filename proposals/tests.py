@@ -145,22 +145,22 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         ]
         s.status = 1
         self.info['type'] = 'general'
-        self.loop_phase_user(range(1,6), code_general_phase12345)
-        self.loop_phase_user(range(1,8), code_general)  # share link
-        self.loop_phase_user([6, 7], code_general_phase67)
+        self.loop_phase_code_user(range(1, 6), code_general_phase12345)
+        self.loop_phase_code_user(range(1, 8), code_general)  # share link
+        self.loop_phase_code_user([6, 7], code_general_phase67)
 
         # Testing proposal specific pages
         # TimePhase 1
         if s.debug:
             print("Testing phase1")
         self.info['type'] = 'proposal phase1'
-        self.loop_phase_user([1], code_phase1)
+        self.loop_phase_code_user([1], code_phase1)
         # TimePhase 2
         self.info['type'] = 'proposal phase2'
-        self.loop_phase_user([2], code_phase2)
+        self.loop_phase_code_user([2], code_phase2)
         # TimePhase 3+
         self.info['type'] = 'proposal phase34567'
-        self.loop_phase_user([3, 4, 5, 6, 7], code_phase34567)
+        self.loop_phase_code_user([3, 4, 5, 6, 7], code_phase34567)
 
         # Test proposal in next timeslot, permissions should be as a proposal in this timeslot in phase 1, except upgrading to status4
         # Change the proposal timeslot to next year
@@ -170,7 +170,7 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         s.privateproposal.save()
         # All phases test with permissions of phase1 of current timeslot.
         self.info['type'] = 'proposal next timeslot'
-        self.loop_phase_user(range(1, 8), code_next_ts)
+        self.loop_phase_code_user(range(1, 8), code_next_ts)
 
         # Test proposal in previous timeslot, permissions locked
         # Change the proposal timeslot to next year
@@ -180,7 +180,7 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         s.privateproposal.save()
         # All phases test with permissions of phase1 of current timeslot.
         self.info['type'] = 'proposal previous timeslot'
-        self.loop_phase_user(range(1, 8), code_prev_ts)
+        self.loop_phase_code_user(range(1, 8), code_prev_ts)
 
         # make sure all urls of this app are tested.
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

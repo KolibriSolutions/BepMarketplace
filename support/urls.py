@@ -43,4 +43,7 @@ urlpatterns = [
 
     path('overruleusermeta/<int:pk>/', views.usermeta_overrule, name='overruleusermeta'),
     path('verifyassistants/', views.verify_assistants, name='verifyassistants'),
+
+    path('nonfull/', views.list_non_full_proposals, name='listnonfullprojects'),
+    path('nonfull/<int:timeslot>', views.list_non_full_proposals_xlsx, name='listnonfullprojectsxlsx'),
 ]

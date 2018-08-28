@@ -67,18 +67,18 @@ class SupportViewsTest(ViewsTest):
             [['userinfo', {'pk': self.dummy.id}], self.p_support]
         ]
 
-        self.loop_phase_user(range(1, 8), codes_nophase_phase1234567)
+        self.loop_phase_code_user(range(1, 8), codes_nophase_phase1234567)
 
-        self.loop_phase_user([1, 2], codes_dist_phase12)
-        self.loop_phase_user([3, 4, 5, 6, 7], codes_dist_phase34567)
-        self.loop_phase_user([1, 2, 3], codes_stud_phase123)
-        self.loop_phase_user([4, 5, 6, 7], codes_stud_phase4567)
+        self.loop_phase_code_user([1, 2], codes_dist_phase12)
+        self.loop_phase_code_user([3, 4, 5, 6, 7], codes_dist_phase34567)
+        self.loop_phase_code_user([1, 2, 3], codes_stud_phase123)
+        self.loop_phase_code_user([4, 5, 6, 7], codes_stud_phase4567)
 
-        self.loop_phase_user(range(1, 8), codes_users_phase1234567)
+        self.loop_phase_code_user(range(1, 8), codes_users_phase1234567)
         # create dummy public file for edit and delete
         pf = PublicFile(File='/home/django/dummy.txt')
         pf.save()
-        self.loop_phase_user(range(1, 8), codes_pubfile_phase1234567)
+        self.loop_phase_code_user(range(1, 8), codes_pubfile_phase1234567)
 
         # check if all urls are processed
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

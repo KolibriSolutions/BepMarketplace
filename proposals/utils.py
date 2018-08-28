@@ -96,7 +96,7 @@ def get_all_proposals(old=False):
         return Proposal.objects.filter(TimeSlot=get_timeslot()).distinct()
 
 
-def get_share_link(request, pk):
+def get_share_link(pk):
     """
     Create a share link for a proposal detail page.
     Used to let unauthenticated users view a proposal, possibly before the proposal is public.

@@ -344,7 +344,7 @@ def list_second_choice(request):
     props = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=get_timeslot()
                                                                                , num_distr__lt=F(
             'NumstudentsMax')).order_by('Title')
-    sharelinks = [get_share_link(request, x.pk) for x in props]
+    sharelinks = [get_share_link(x.pk) for x in props]
 
     return render(request, 'distributions/secondChoiseList.html', {
         'distributions': Distribution.objects.filter(Timeslot=get_timeslot(),

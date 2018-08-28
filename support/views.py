@@ -5,7 +5,7 @@ from django.contrib.auth.models import User, Group
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Sum
-from django.db.models import Q
+from django.db.models import Q, F
 from django.forms import modelformset_factory
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -20,11 +20,13 @@ from general_model import GroupOptions
 from general_view import get_all_students, get_all_staff, get_grouptype
 from index.models import Track, UserMeta
 from osirisdata.data import osirisData
+from proposals.models import Proposal
 from proposals.utils import get_all_proposals
 from results.models import GradeCategory
 from support import check_content_policy
+from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number
-from .exports import get_list_students_xlsx, get_list_staff_xlsx, get_list_distributions_xlsx
+from .exports import get_list_students_xlsx, get_list_staff_xlsx, get_list_distributions_xlsx, get_list_proposals_xlsx
 from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm
 from .models import CapacityGroupAdministration, PublicFile
 
@@ -68,6 +70,7 @@ def list_distributions_xlsx(request):
     #                                                                                  'distributions__Student__usermeta')
     file = get_list_distributions_xlsx(projects)
     response = HttpResponse(content=file)
+    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
     return response
 
@@ -246,8 +249,9 @@ def list_users(request):
         key = 'listusersbodyhtml'
     bodyhtml = cache.get(key)
     if bodyhtml is None:
-        bodyhtml = render_block_to_string('support/list_users.html', 'body', {"users": User.objects.all(),
-                                                                              "user": request.user})
+        bodyhtml = render_block_to_string('support/list_users.html', 'body', {
+            "users": User.objects.all().prefetch_related('groups', 'usermeta', 'usermeta__TimeSlot'),
+            "user": request.user})
         cache.set(key, bodyhtml, None)
 
     return render(request, "support/list_users.html", {
@@ -376,7 +380,8 @@ def list_staff(request):
         else:
             return int(nr)
 
-    staff = get_all_staff().filter(Q(groups=get_grouptype("2")) | Q(groups=get_grouptype("1")))
+    staff = get_all_staff().filter(Q(groups=get_grouptype("2")) | Q(groups=get_grouptype("1"))).prefetch_related(
+        'proposalsresponsible', 'proposals')
     se = []
     for s in staff:
         pt1 = s.proposalsresponsible.count()
@@ -398,9 +403,12 @@ def list_staff_projects(request, pk):
     """
     user = get_all_staff().get(id=pk)
 
-    proposals = user.proposalsresponsible.all() | user.proposals.all()
+    projects = user.proposalsresponsible.all() | user.proposals.all()
+    projects = projects.select_related('ResponsibleStaff', 'Track', 'TimeSlot'). \
+        prefetch_related('Assistants', 'distributions', 'applications')
+
     return render(request, 'proposals/ProposalsCustomList.html',
-                  {"title": "Proposals from " + user.get_full_name(), "proposals": proposals})
+                  {"title": "Proposals from " + user.get_full_name(), "proposals": projects})
 
 
 @not_minified_response
@@ -412,7 +420,40 @@ def list_staff_xlsx(request):
     staff = get_all_staff().filter(Q(groups=get_grouptype("2")) | Q(groups=get_grouptype("1")))
     file = get_list_staff_xlsx(staff)
     response = HttpResponse(content=file)
+    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     response['Content-Disposition'] = 'attachment; filename=marketplace-staff-list.xlsx'
+    return response
+
+
+@group_required('type3staff')
+def list_non_full_proposals(request):
+    """
+    Show page with button to download excel with non full proposals of a timeslot.
+
+    :param request:
+    :return:
+    """
+    return render(request, "support/non_full_proposals.html", {'timeslots': TimeSlot.objects.all()})
+
+
+@not_minified_response
+@group_required('type3staff')
+def list_non_full_proposals_xlsx(request, timeslot):
+    """
+    Export excel of all proposals with space left.
+
+    :param request:
+    :param timeslot: The timeslot to get proposals from.
+    """
+    ts = get_object_or_404(TimeSlot, pk=timeslot)
+    props = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=ts
+                                                                               , num_distr__lt=F(
+            'NumstudentsMax')).order_by('Title')
+
+    file = get_list_proposals_xlsx(props)
+    response = HttpResponse(content=file)
+    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    response['Content-Disposition'] = 'attachment; filename=non-full-proposals-{}.xlsx'.format(ts.Name)
     return response
 
 
@@ -445,8 +486,9 @@ def list_students(request):
     # des = get_distributions(request.user)
     des = get_distributions(request.user).select_related('Proposal__ResponsibleStaff',
                                                          'Proposal__Track',
-                                                         'Student__usermeta').prefetch_related('results__Category',
-                                                                                               'Proposal__Assistants')
+                                                         'Student__usermeta').prefetch_related(
+        'results__Category',
+        'Proposal__Assistants')
     deslist = []
     # make grades
     for d in des:
@@ -487,6 +529,7 @@ def list_students_xlsx(request):
     file = get_list_students_xlsx(des, typ)
 
     response = HttpResponse(content=file)
+    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     response['Content-Disposition'] = 'attachment; filename=students-grades.xlsx'
     return response
 

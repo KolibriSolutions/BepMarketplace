@@ -71,15 +71,15 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
         f.save()
 
         self.info['type'] = 'general'
-        self.loop_phase_user([1, 2], code_general_phase12)
-        self.loop_phase_user([3, 4, 5], code_general_phase345)
-        self.loop_phase_user([6, 7], code_general_phase67)
+        self.loop_phase_code_user([1, 2], code_general_phase12)
+        self.loop_phase_code_user([3, 4, 5], code_general_phase345)
+        self.loop_phase_code_user([6, 7], code_general_phase67)
 
         if s.debug:
             print("Testing proposal apply")
         self.info['type'] = 'apply this timeslot'
-        self.loop_phase_user([1, 2, 4, 5, 6, 7], code_phase124567)
-        self.loop_phase_user([3], code_phase3)
+        self.loop_phase_code_user([1, 2, 4, 5, 6, 7], code_phase124567)
+        self.loop_phase_code_user([3], code_phase3)
 
         # Proposal specific for proposal of other timeslot, never allow apply
         self.info['type'] = 'apply prev timeslot'
@@ -88,14 +88,14 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
         s.privateproposal.TimeSlot = s.pts
         s.privateproposal.save()
         # this code matrix has forbidden everywhere (because apply is not possible for other timeslot)
-        self.loop_phase_user(range(1, 8), code_phase124567)
+        self.loop_phase_code_user(range(1, 8), code_phase124567)
 
         self.info['type'] = 'apply next timeslot'
         s.proposal.TimeSlot = s.nts
         s.proposal.save()
         s.privateproposal.TimeSlot = s.nts
         s.privateproposal.save()
-        self.loop_phase_user(range(1, 8), code_phase124567)
+        self.loop_phase_code_user(range(1, 8), code_phase124567)
 
         # make sure all urls are tested.
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

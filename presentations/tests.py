@@ -28,7 +28,7 @@ class PresentationsViewsTest(ViewsTest):
             [['presentationscalendarown', None], self.p_all],
         ]
 
-        self.loop_phase_user([1, 2, 3, 4], codes_phase1234)
-        self.loop_phase_user([5, 6, 7], codes_phase567)
+        self.loop_phase_code_user([1, 2, 3, 4], codes_phase1234)
+        self.loop_phase_code_user([5, 6, 7], codes_phase567)
 
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

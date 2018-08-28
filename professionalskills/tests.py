@@ -85,10 +85,10 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['assignshuffle', {'pk': 100}], self.p_support_prv],
         ]
         self.info['type'] = 'general'
-        self.loop_phase_user(range(1, 8), codes_general)
+        self.loop_phase_code_user(range(1, 8), codes_general)
         self.info['type'] = 'phase'
-        self.loop_phase_user([1, 2, 3, 4, 5], codes_phase12345)
+        self.loop_phase_code_user([1, 2, 3, 4, 5], codes_phase12345)
         # self.loop_phase_user([5], codes_phase5)
-        self.loop_phase_user([6, 7], codes_phase67)
+        self.loop_phase_code_user([6, 7], codes_phase67)
 
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

@@ -23,5 +23,5 @@ class GodpowersViewsTest(ProjectViewsTestGeneral):
             [['sessionlist', None], self.p_superuser],
             [['killsession', {'pk': self.users['sup'].id}], self.p_superuser],
         ]
-        self.loop_phase_user(range(1, 8), codes_phase1234567)
+        self.loop_phase_code_user(range(1, 8), codes_phase1234567)
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

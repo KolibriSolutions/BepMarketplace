@@ -58,22 +58,22 @@ class ApiViewsTest(ProjectViewsTestGeneral):
             [['downgradestatus', {'pk': s.p}], [s.p_forbidden       , s.p_forbidden         ,s.p_forbidden        , s.p_forbidden  ]],
         ]
 
-        self.loop_phase_user(range(1,8), codes_general_phase1234567)
-        self.loop_phase_user(range(1,8), codes_prop_notpublic)
+        self.loop_phase_code_user(range(1, 8), codes_general_phase1234567)
+        self.loop_phase_code_user(range(1, 8), codes_prop_notpublic)
         # self.loop_phase_user(range(1, 8), codes_anonymous_phase1234567)
         self.proposal.Status = 4
         self.proposal.save()
-        self.loop_phase_user(range(1,8), codes_prop_public)
+        self.loop_phase_code_user(range(1, 8), codes_prop_public)
 
         # proposal up/downgrade
         self.info['type'] = 'proposal phase1'
-        self.loop_phase_user([1], codes_phase1)
+        self.loop_phase_code_user([1], codes_phase1)
         # TimePhase 2
         self.info['type'] = 'proposal phase2'
-        self.loop_phase_user([2], codes_phase2)
+        self.loop_phase_code_user([2], codes_phase2)
         # TimePhase 3+
         self.info['type'] = 'proposal phase34567'
-        self.loop_phase_user([3, 4, 5, 6, 7], codes_phase34567)
+        self.loop_phase_code_user([3, 4, 5, 6, 7], codes_phase34567)
 
         # Test proposal in next timeslot, permissions should be as a proposal in this timeslot in phase 1, except upgrading to status4
         # Change the proposal timeslot to next year
@@ -83,7 +83,7 @@ class ApiViewsTest(ProjectViewsTestGeneral):
         s.privateproposal.save()
         # All phases test with permissions of phase1 of current timeslot.
         self.info['type'] = 'proposal next timeslot'
-        self.loop_phase_user(range(1, 8), codes_next_ts)
+        self.loop_phase_code_user(range(1, 8), codes_next_ts)
 
         # Test proposal in previous timeslot, permissions locked
         # Change the proposal timeslot to next year
@@ -93,6 +93,6 @@ class ApiViewsTest(ProjectViewsTestGeneral):
         s.privateproposal.save()
         # All phases test with permissions of phase1 of current timeslot.
         self.info['type'] = 'proposal previous timeslot'
-        self.loop_phase_user(range(1, 8), codes_prev_ts)
+        self.loop_phase_code_user(range(1, 8), codes_prev_ts)
 
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

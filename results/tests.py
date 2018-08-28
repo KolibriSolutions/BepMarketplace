@@ -61,14 +61,14 @@ class TrackingViewsTest(ProjectViewsTestGeneral):
             [['gradefinal', {'pk': d.pk, 'version': 0}], self.p_grade_final],
         ]
         # Test for users
-        self.loop_phase_user(range(1, 6), codes_phase12345)
-        self.loop_phase_user(range(1, 8), codes_nophase)
+        self.loop_phase_code_user(range(1, 6), codes_phase12345)
+        self.loop_phase_code_user(range(1, 8), codes_nophase)
         self.info['type'] = 'results not visible'
-        self.loop_phase_user([6, 7], codes_phase67_notvisible)
+        self.loop_phase_code_user([6, 7], codes_phase67_notvisible)
         v.Visible = True
         v.save()
         self.info['type'] = 'results visible'
-        self.loop_phase_user([6, 7], codes_phase67_visible)
+        self.loop_phase_code_user([6, 7], codes_phase67_visible)
 
         # check if all urls are processed
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

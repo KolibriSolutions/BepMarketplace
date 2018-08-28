@@ -2,30 +2,26 @@
 General functions/classes used in tests.
 """
 import re
-import re
 import sys
 import traceback
 from datetime import datetime, timedelta
 
-from django.conf import settings
-from django.contrib.auth import login, logout
 from django.contrib.auth.models import User, Group
-from django.contrib.sessions.models import Session
-from django.http import HttpRequest
 from django.test import TestCase, Client
 from django.test import override_settings
 from django.urls import reverse
-from django.utils.module_loading import import_module
 from django.utils import timezone
+from django.utils.module_loading import import_module
 
 from general_model import GroupOptions
 from index.models import UserMeta, UserAcceptedTerms, Track
+from presentations.models import PresentationOptions, PresentationTimeSlot, PresentationSet, Room
 from proposals.models import Proposal
+from results.models import ResultOptions
+from students.models import Distribution
 from support.models import CapacityGroupAdministration
 from timeline.models import TimeSlot, TimePhase
-from results.models import ResultOptions, CategoryAspectResult, CategoryResult
-from students.models import Distribution
-from presentations.models import PresentationOptions, PresentationTimeSlot, PresentationSet, Room
+
 
 # disable cache for all tests
 @override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}},
@@ -97,7 +93,7 @@ class ViewsTest(TestCase):
         # s=student, p=private-student, r=responsible, a=assistant, n = assistant_not_verified t=trackhead, u=support
         # matrix with different types of permissions, set for each user of the array self.usernames
         # permissions by user. The order is the order of self.usernames. User 'god' is disabled (not tested).
-                #  usernames:  r-1  t-1  r-h  t-h  r-2  t-2  t-u  r-3  r-s  t-p  r-4  t-4  r-5  r-6  ra1  ta1  sup, ano
+                #  usernames:  r-1  t-1  r-h  t-h  r-2  t-2  t-u  r-3  r-s  t-p  r-4  t-4  r-5  r-6  ra-1  ta-1  sup, ano
         self.p_forbidden =    [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 302]  # no one
         self.p_superuser =    [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # no one
         self.p_all =          [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 302]  # everyone
@@ -182,10 +178,10 @@ class ViewsTest(TestCase):
             't-4',  # Capacity group administration of group of tested proposal
             'r-5',  # Study advisor
             'r-6',  # Prof skill administration
-            'ra1',  # type1 and assessor of other project
-            'ta1',  # type1 and assessor of project
+            'ra-1',  # type1 and assessor of other project
+            'ta-1',  # type1 and assessor of project
             'sup',  # god user (superuser)
-            'ano',  # anonymous user, not yet tested.
+            'ano',  # anonymous user
         ]
         # Create the users and assign groups/roles.
         self.users = {}
@@ -193,26 +189,29 @@ class ViewsTest(TestCase):
             if n != 'ano':
                 u = User(username=n)
                 u.save()
-                if n[-1] == '1':
+                x = n.split('-')[-1]
+                if x == '1':
                     u.groups.add(self.type1staff)
-                elif n[-1] == 'h':  # trackhead
+                elif x == 'h':  # trackhead
                     u.groups.add(self.type1staff)
-                elif n[-1] == '2':
+                elif x == '2':
                     u.groups.add(self.type2staff)
-                elif n[-1] == 'u':
+                elif x == 'u':
                     u.groups.add(self.type2staffunverified)
-                elif n[-1] == '3':
+                elif x == '3':
                     u.groups.add(self.type3staff)
-                elif n[-1] == '4':
+                elif x == '4':
                     u.groups.add(self.type4staff)
-                elif n[-1] == '5':
+                elif x == '5':
                     u.groups.add(self.type5staff)
-                elif n[-1] == '6':
+                elif x == '6':
                     u.groups.add(self.type6staff)
                 elif n == 'sup':
                     u.groups.add(self.type3staff)
                     u.is_superuser = True
                     u.is_staff = True
+                # else: # student
+                    # nothing
                 u.save()
                 self.users[n] = u
                 m = UserMeta(User=u,
@@ -256,7 +255,7 @@ class ViewsTest(TestCase):
                 self.view_test_status(link, 200)
             self.client.logout()
 
-    def loop_phase_user(self, phases, codes):
+    def loop_phase_code_user(self, phases, codes):
         """
         Loop over the given phases and test with all codes
 
@@ -269,19 +268,28 @@ class ViewsTest(TestCase):
             self.tp.Description = phase
             self.tp.save()
             self.info['phase'] = str(phase)
-            for page, status in codes:
-                if self.debug:
-                    self.info['reverse'] = str(page)
-                    self.info['statuscodes'] = status
-                view = self.app + ":" + page[0]
-                if any(isinstance(i, list) for i in status):
-                    # we're dealing with proposals status tests here
-                    ProjectViewsTestGeneral.loop_user_status(self, view, status, page[1])
-                else:
-                    # normal test without proposals
-                    self.loop_user(view, status, page[1])
-                # remove the page from the list of urls of this app.
-                if page[0] in self.allurls: self.allurls.remove(page[0])
+            self.loop_code_user(codes)
+
+    def loop_code_user(self, codes):
+        """
+        Test all views for all users
+
+        :param codes: list of views and expected status codes
+        :return:
+        """
+        for page, status in codes:
+            if self.debug:
+                self.info['reverse'] = str(page)
+                self.info['statuscodes'] = status
+            view = self.app + ":" + page[0]
+            if any(isinstance(i, list) for i in status):
+                # we're dealing with proposals status tests here
+                ProjectViewsTestGeneral.loop_user_status(self, view, status, page[1])
+            else:
+                # normal test without proposals
+                self.loop_user(view, status, page[1])
+            # remove the page from the list of urls of this app.
+            if page[0] in self.allurls: self.allurls.remove(page[0])
 
     def loop_user(self, view, status, kw=None):
         """
@@ -439,7 +447,7 @@ class ProjectViewsTestGeneral(ViewsTest):
             DateTime=timezone.now(),
         )
         p.save()
-        p.Assessors.add(self.users['ta1'])
+        p.Assessors.add(self.users['ta-1'])
 
         ptsr = PresentationTimeSlot(
             Presentations=p,
@@ -469,8 +477,8 @@ class ProjectViewsTestGeneral(ViewsTest):
             self.info['kw'] = kw
             if self.debug:
                 self.info['user-index'] = i
-            # log the user in
             if username != 'ano':
+                # log the user in
                 u = self.users[username]
                 if self.debug:
                     self.info['user-groups'] = u.groups.all()
@@ -480,12 +488,12 @@ class ProjectViewsTestGeneral(ViewsTest):
             l = len(status)
             for status0 in range(0, l):
                 if self.debug:
-                    print("Testing status {}".format(status0+1))
+                    print("Testing status {}".format(status0 + 1))
                 self.status = status0 + 1
                 self.info['status'] = self.status
                 # Expected response code
                 expected = status[status0][i]
-                # Reset the proposal status, because it changes after a test call to upgrade/downgrade
+                # Reset the project status, because it changes after a test call to upgrade/downgrade
                 self.proposal.Status = self.status
                 self.proposal.save()
                 self.privateproposal.Status = self.status
@@ -494,4 +502,3 @@ class ProjectViewsTestGeneral(ViewsTest):
             # user logout
             if username != 'ano':
                 self.client.logout()
-

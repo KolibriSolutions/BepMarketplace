@@ -117,7 +117,7 @@ def mailPrivateStudent(request, proposal, student, message=''):
         'domain'    : domain,
         'proposal'  : proposal,
         'message'   : message,
-        'sharelink' : get_share_link(request, proposal.id)
+        'sharelink' : get_share_link(proposal.id)
     }
     send_mail("email/private_student_mail_subject.txt", "email/private_student_email.html", context,
               email,

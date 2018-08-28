@@ -255,6 +255,7 @@ def export_presentations(request):
 
     file = listPresentationsXls(sets)
     response = HttpResponse(content=file)
+    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     response['Content-Disposition'] = 'attachment; filename=presentations-planning.xlsx'
     return response
 
