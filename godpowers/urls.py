@@ -8,7 +8,6 @@ urlpatterns = [
     url(r'^visitoroverview/(?P<pk>[0-9]+)/$', views.visitorOverview, name='visitoroverview'),
     url(r'^visitors/$', views.visitorsMenu, name='visitorsmenu'),
     url(r'^clearcache/$', views.clearCache, name='clearcache'),
-    url(r'^groupadministration/$', views.groupAdministration, name='groupadministration'),
     url(r'^getvisitors/(?P<pk>[0-9]+)/$', views.getVisitors, name='getvisitors'),
     url(r'^sessions/list/$', views.sessionList, name='sessionlist'),
     url(r'^sessions/kill/(?P<pk>[0-9]+)/$', views.killSession, name='killsession'),

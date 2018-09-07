@@ -18,7 +18,7 @@ X_FRAME_OPTIONS = 'DENY'
 CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'")
 CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")
 CSP_IMG_SRC = ("'self'", "data:")  # base64 images are used by lightbox
-CSP_FONT_SRC = ("'self'", "https://themes.googleusercontent.com")  # metro uses google fonts.
+CSP_FONT_SRC = ("'self'")
 CSP_CONNECT_SRC = ("'self'", "wss://"+HOSTNAME)  # websockets and ajax. Make sure wss:// is set and not ws://.
 CSP_FRAME_ANCESTORS = ("'none'")
 CSP_FORM_ACTION = ("'self'")  # where form action=URI can point to

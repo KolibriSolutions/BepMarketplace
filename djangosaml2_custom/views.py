@@ -234,16 +234,11 @@ def assertion_consumer_service(request,
     _set_subject_id(request.session, session_info['name_id'])
     logger.debug("User %s authenticated via SSO.", user)
 
-    #TODO, this signal is not send correctly: https://github.com/knaperek/djangosaml2/issues/117
-    logger.debug('Sending the post_authenticated signal')
-    post_authenticated.send_robust(sender=user, session_info=session_info)
-
-    #TODO after signal is send correctly, move all loging to the signal function in handlers.py
+    # signal is not send correctly: https://github.com/knaperek/djangosaml2/issues/117, removed from code.
     # log the login
     log = UserLogin()
     log.Subject = user
     log.save()
-
 
     # redirect the user to the view where he came from
     default_relay_state = get_custom_setting('ACS_DEFAULT_REDIRECT_URL',
@@ -252,7 +247,7 @@ def assertion_consumer_service(request,
     if not relay_state:
         logger.warning('The RelayState parameter exists but is empty')
         relay_state = default_relay_state
-    if not is_safe_url(url=relay_state, host=request.get_host()):
+    if not is_safe_url(url=relay_state, allowed_hosts=[settings.DOMAIN]):
         relay_state = settings.LOGIN_REDIRECT_URL
     logger.debug('Redirecting to the RelayState: %s', relay_state)
     return HttpResponseRedirect(relay_state)

@@ -1,11 +1,10 @@
 {% extends 'base.html' %}
-{% load staticfiles %}
+{% load static %}
 {% block body %}
     <h1>Telemetry of user: {{ target.get_full_name }}</h1>
     <div class="tabcontrol2" data-role="tabcontrol">
         <ul class="tabs">
             <li><a href="#numbers">Numbers</a></li>
-            <li><a href="#live">Live</a></li>
             <li><a href="#history">History</a></li>
         </ul>
 
@@ -38,9 +37,6 @@
                     </tr>
                 </table>
             </div>
-            <div class="frame" id="live">
-                <div style="border:1px solid black; height:500px; overflow:scroll;" id="liveview"></div>
-            </div>
             <div class="frame" id="history">
                 <table class="table bordered striped hovered datatable">
                     <thead>
@@ -71,7 +67,6 @@
 
 {% block scripts %}
     {{ block.super }}
-    <script src="{% static "channels/js/websocketbridge.js" %}"></script>
     <script>
         $(document).ready(function () {
             $('.datatable').dt_wrapper([
@@ -79,11 +74,6 @@
                 {column_number: 2, filter_type: "select"},
                 {column_number: 3, filter_type: "select"},
             ]);
-            const webSocketBridge = new channels.WebSocketBridge();
-            webSocketBridge.connect("/tracking/telemetry/user/{{ target.id }}/");
-            webSocketBridge.socket.onmessage = function(event) {
-                document.getElementById('liveview').insertAdjacentHTML('afterbegin', event.data + "<br/>");
-            };
         });
     </script>
 {% endblock %}

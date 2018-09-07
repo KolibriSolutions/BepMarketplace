@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load staticfiles %}
+{% load static %}
 {% block body %}
     {% if final %}
         <div class="bg-darkRed fg-white padding10 margin10">
@@ -57,6 +57,6 @@
             </tr>
         </table>
     {% endblock %}
-    <a href="{% url 'results:gradefinal' dstr.id 2 %}" class="button primary">Download Pdf</a><br/>
+    <a href="{% url 'results:gradefinal' dstr.id 2 %}" class="button primary">Download PDF</a><br/>
     <a href="{% url 'results:gradefinal' dstr.id 1 %}" class="button primary">Printable Page</a>
 {% endblock %}

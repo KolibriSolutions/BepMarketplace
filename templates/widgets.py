@@ -71,6 +71,17 @@ class MetroNumberInputInteger(MetroNumberInput):
         super(MetroNumberInputInteger, self).__init__(*args, **kwargs)
 
 
+class MetroNumberInputGrade(MetroNumberInput):
+    """
+    Client side validation for grades, number from 0 to 10 in steps of 0.05
+    # TODO validate stepsize with education council for rounding.
+
+    """
+    def __init__(self, *args, **kwargs):
+        kwargs['attrs'] = {'step': 0.05, 'min': 0, 'max': 10}
+        super(MetroNumberInputGrade, self).__init__(*args, **kwargs)
+
+
 class MetroMultiTextInput(TextInput):
     input_type = 'text'
     template_name = 'widgets/multitext.html'

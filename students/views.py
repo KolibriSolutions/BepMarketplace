@@ -101,6 +101,7 @@ def prio_down(request, application_id):
 def retract_application(request, application_id):
     """
     Let a user un-apply / retract an application.
+    Also possible for projects of other year and non-active projects. To be able to remove false applications.
 
     :param request:
     :param application_id: Application id

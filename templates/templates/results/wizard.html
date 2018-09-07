@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load staticfiles %}
+{% load static %}
 {% block body %}
     {#{% if step != -1 and step != 0 %}#}
     {#    {% if step != 0 %}#}
@@ -51,7 +51,7 @@
                         </div>
                     {% endif %}
                     <h1>{{ category }}</h1>
-                    Grades will be rounded to integers.
+{# TODO                    Grades will be rounded to integers.#}
                     <form id="gradeform" action="" method="post" enctype="multipart/form-data" novalidate>
                         {% if not final %}
                             <button type="submit" class="button success">Save</button>

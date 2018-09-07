@@ -7,6 +7,8 @@ from djangosaml2.signals import pre_user_save
 from index.models import UserMeta
 
 logger = logging.getLogger('djangosaml2')
+
+
 @receiver(pre_user_save, sender=User)
 def custom_update_instance(sender, instance, attributes, user_modified, **kwargs):
     """
@@ -34,7 +36,8 @@ def custom_update_instance(sender, instance, attributes, user_modified, **kwargs
     try:
         meta.Initials = attributes["Initials"][0]
         instance.last_name = attributes["urn:mace:dir:attribute-def:sn"][0]
-        instance.first_name = attributes["urn:mace:dir:attribute-def:givenName"][0].split(' ')[0]  # take first if multiple.
+        instance.first_name = attributes["urn:mace:dir:attribute-def:givenName"][0].split(' ')[
+            0]  # take first if multiple.
     except:
         instance.last_name = meta.Fullname
 

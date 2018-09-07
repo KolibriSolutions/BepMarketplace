@@ -169,7 +169,6 @@ def list_own_projects(request):
     else:
         projects = projects.select_related('ResponsibleStaff', 'Track__Head', 'TimeSlot').prefetch_related('Assistants',
                                                                                          'distributions__Student__usermeta')
-
     return render(request, 'proposals/ProposalsCustomList.html', {'proposals': projects,
                                                                   'hide_sidebar': True})
 
@@ -381,7 +380,7 @@ def upgrade_status(request, pk):
     """
     obj = get_object_or_404(Proposal, pk=pk)
     r = upgrade_status_api(request, pk)
-    return render(request, "proposals/ProposalMessage.html", {"Message": r.content, "Proposal": obj},
+    return render(request, "proposals/ProposalMessage.html", {"Message": r.content.decode(), "Proposal": obj},
                   status=r.status_code)
 
 

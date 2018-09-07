@@ -18,7 +18,6 @@ class GodpowersViewsTest(ProjectViewsTestGeneral):
             [['visitoroverview', {'pk': self.users['sup'].id}], self.p_superuser],
             [['visitorsmenu', None], self.p_superuser],
             [['clearcache', None], self.p_superuser],
-            [['groupadministration', None], self.p_superuser],
             [['getvisitors', {'pk': self.tracking.id}], self.p_superuser],
             [['sessionlist', None], self.p_superuser],
             [['killsession', {'pk': self.users['sup'].id}], self.p_superuser],

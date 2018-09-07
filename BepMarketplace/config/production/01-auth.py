@@ -1,11 +1,11 @@
 import saml2
 
 ## Login
-LOGIN_REDIRECT_URL = '/' # after login go to homepage
+LOGIN_REDIRECT_URL = '/'  # after login go to homepage
 LOGIN_URL = '/login/'  # for saml login
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',  # for superusers, and 2fa.
-    'djangosaml2.backends.Saml2Backend', # for all users (TUE with single signon)
+    'djangosaml2.backends.Saml2Backend',  # for all users (TUE with single signon)
 )
 
 # Password validation
@@ -59,17 +59,16 @@ SAML_CONFIG = {
                     (DOMAIN + '/saml2/ls/post', saml2.BINDING_HTTP_POST),
                 ],
             },
-            'allow_unsolicited': False, # disable to stop replay attack.
-
+            'allow_unsolicited': False,  # disable to stop replay attack.
             'want_response_signed': False,  # TU/e does not sign its responses, so disable signing check.
 
             # These don't seem to be needed:
 
             # attributes that this project need to identify a user
-            #'required_attributes': [''],
+            # 'required_attributes': [''],
 
             # attributes that may be useful to have but not required
-            #'optional_attributes': [''],
+            # 'optional_attributes': [''],
 
             # in this section the list of IdPs we talk to are defined
             # NOT USED, see https://github.com/knaperek/djangosaml2/issues/116
@@ -85,7 +84,7 @@ SAML_CONFIG = {
             #             saml2.BINDING_HTTP_REDIRECT: 'https://sts.tue.nl/adfs/ls/?wa=wsignout1.0',
             #         },
             #     },
-            #},
+            # },
         },
     },
 
@@ -120,17 +119,18 @@ SAML_CONFIG = {
          'contact_type': 'administrative'},
     ],
     'valid_for': 24,  # how long is our metadata valid, needs to be short because letsencrypt certs
-    'accepted_time_diff': 10, # allow max 10 seconds time difference. This should stop 1s off ToEarly saml assertions error.
+    'accepted_time_diff': 10,
+    # allow max 10 seconds time difference. This should stop 1s off ToEarly saml assertions error.
 }
 
-SAML_DJANGO_USER_MAIN_ATTRIBUTE = 'email' # Use email to match saml users to django users
+SAML_DJANGO_USER_MAIN_ATTRIBUTE = 'email'  # Use email to match saml users to django users
 SAML_DJANGO_USER_MAIN_ATTRIBUTE_LOOKUP = '__iexact'
 SAML_CREATE_UNKOWN_USER = True
 SAML_USE_NAME_ID_AS_USERNAME = False
 SAML_LOGOUT_REQUEST_PREFERRED_BINDING = saml2.BINDING_HTTP_REDIRECT
 # all other mappings (the less simple ones) are done in djangosaml2_custom/signals/handler.py
 SAML_ATTRIBUTE_MAPPING = {
-    'urn:mace:dir:attribute-def:uid': ('username', ),
-    'urn:mace:dir:attribute-def:mail': ('email', ),
+    'urn:mace:dir:attribute-def:uid': ('username',),
+    'urn:mace:dir:attribute-def:mail': ('email',),
 }
 SAML_ACS_FAILURE_RESPONSE_FUNCTION = 'djangosaml2_custom.acs_failures.template_failure'

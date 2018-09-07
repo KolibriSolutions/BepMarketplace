@@ -11,6 +11,7 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
     def setUp(self):
         self.app = 'students'
         super().setUp()
+        # self.debug = True
 
     def test_view_status(self):
         """
@@ -20,42 +21,13 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
         """
         # Track for the proposal, with trackhead t-h
         s = self
-        # General pages
-        code_general_phase12 = [
-            [['listapplications', None], [s.p_forbidden]],
-            [['addfile', None], [s.p_forbidden]],
-            [['editfile', {'pk': 0}], [s.p_forbidden]],
-        ]
-        code_general_phase345 = [
-            [['listapplications', None], [s.p_student]],
-            [['addfile', None], [s.p_forbidden]],
-            [['editfile', {'pk': 0}], [s.p_forbidden]],
-        ]
-        code_general_phase67 = [
-            [['listapplications', None], [s.p_student]],
-            [['addfile', None], [s.p_student]],
-            [['editfile', {'pk': 0}], [s.p_student]],
-        ]
+        a = Application(
+            Priority=1,
+            Proposal=s.proposal,
+            Student=self.users['r-s'],
+        )
+        a.save()
 
-        # Proposal specific pages
-        code_phase124567 = [
-            [['apply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
-            [['confirmapply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
-        ]
-        code_phase3 = [
-            [['apply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_studentnotpriv]],
-            [['apply', {'pk': s.ppriv}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
-            [['confirmapply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_studentnotpriv]],
-            [['confirmapply', {'pk': s.ppriv}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
-        ]
-        code_application_none = [
-            [['retractapplication', {'application_id': 0}],
-             [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
-            [['prioUp', {'application_id': 0}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
-            [['prioDown', {'application_id': 0}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]]
-        ]
-
-        s.status = 1
         t = FileType(
             Description='type 0',
             Deadline=datetime.now(),
@@ -67,8 +39,40 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
             Caption='File 0',
             Type=t,
         )
-        f.pk = 0
         f.save()
+
+        s.status = 1
+
+        # General pages
+        code_general_phase12 = [
+            [['listapplications', None], s.p_forbidden],
+            [['addfile', None], s.p_forbidden],
+            [['editfile', {'pk': f.pk}], s.p_forbidden],
+        ]
+        code_general_phase345 = [
+            [['listapplications', None], s.p_student],
+            [['addfile', None], s.p_forbidden],
+            [['editfile', {'pk': f.pk}], s.p_forbidden],
+        ]
+        code_general_phase67 = [
+            [['listapplications', None], s.p_student],
+            [['addfile', None], s.p_student],
+            [['editfile', {'pk': f.pk}], s.p_student],
+        ]
+
+        # Proposal specific pages
+        code_phase124567 = [
+            [['apply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
+            [['confirmapply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
+            [['apply', {'pk': s.ppriv}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
+            [['confirmapply', {'pk': s.ppriv}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
+        ]
+        code_phase3 = [
+            [['apply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_studentnotpriv]],
+            [['apply', {'pk': s.ppriv}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
+            [['confirmapply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_studentnotpriv]],
+            [['confirmapply', {'pk': s.ppriv}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
+        ]
 
         self.info['type'] = 'general'
         self.loop_phase_code_user([1, 2], code_general_phase12)
@@ -98,7 +102,9 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
         self.loop_phase_code_user(range(1, 8), code_phase124567)
 
         # make sure all urls are tested.
-        self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")
+        # prio up / down and retract are not tested.
+        self.assertListEqual(self.allurls, ['prioUp', 'prioDown', 'retractapplication'], msg="Not all URLs of this app are tested!")
+
 
     def test_apply_retract(self):
         """

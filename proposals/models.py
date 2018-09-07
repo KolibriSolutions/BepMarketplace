@@ -54,7 +54,7 @@ class Proposal(models.Model):
         :return:
         """
         if self.TimeSlot:
-            if self.TimeSlot.End <= datetime.now().date():
+            if self.TimeSlot.End < datetime.now().date():
                 return True
         return False
 

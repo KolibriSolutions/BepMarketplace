@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
 {% load custom_filters %}
 {% GetPhaseNumber as phasenumber %}
 <!DOCTYPE html>
@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="{% static "/favicon.ico" %}"/>
 
-    <title>BEP Marketplace</title>
+    <title>{{ NAME }}</title>
     {% block head %}
         <link href="{% static "css/metro.min.css" %}" rel="stylesheet">
         <link href="{% static "css/metro-icons.min.css" %}" rel="stylesheet">
@@ -34,7 +34,7 @@
     <![endif]-->
     {% block menu %}
         <div class="app-bar" data-role="appbar">
-            <div class="app-bar-element branding">BEP Marketplace</div>
+            <div class="app-bar-element branding">{{ NAME }}</div>
 
             <ul class="app-bar-menu">
                 <li><a href="/"><span class="mif-home icon"></span>Home</a></li>
@@ -153,7 +153,8 @@
                                             <li><a href="{% url 'support:privateproposals' %}">All Private Proposals</a>
                                             </li>
                                             <li><a href="{% url 'support:liststaff' %}">All Staff</a></li>
-                                            <li><a href="{% url 'support:listnonfullprojects' %}">Non Full Proposals</a> </li>
+                                            <li><a href="{% url 'support:listnonfullprojects' %}">Non Full Proposals</a>
+                                            </li>
                                         </ul>
                                     </li>
                                     <li><a href="{% url 'support:mailinglist' %}">Mailing List</a></li>
@@ -171,11 +172,8 @@
                                     {#                                    {% if phasenumber < 6 %}#}
                                     {#                                        <li><a href="{% url 'support:ectsform' %}">Students ECTS</a></li>#}
                                     {#                                    {% endif %}#}
-                                    {% if phasenumber < 7 %}
-                                        <li><a href="{% url 'support:contentpolicy' %}">Content Policy
-                                            Violations</a></li>
-                                    {% endif %}
-                                    <li><a href="{% url 'support:verifyassistants' %}">Verify assistants</a></li>
+                                    <li><a href="{% url 'support:contentpolicy' %}">Content Policy Violations</a></li>
+                                    {#                                    <li><a href="{% url 'support:verifyassistants' %}">Verify assistants</a></li>#}
                                     <li>
                                         <a href="" class="dropdown-toggle">Public files</a>
                                         <ul class="d-menu" data-role="dropdown">
@@ -184,6 +182,8 @@
                                         </ul>
                                     </li>
                                     <li><a href="{% url 'timeline:list_timeslots' %}">Timeline edit</a></li>
+                                    <li><a href="{% url 'support:capacitygroupadministration' %}">Group Administration</a>
+                                    </li>
                                     <li><a href="{% url 'index:edit_tracks' %}">Track Head edit</a></li>
                                     <li><a href="{% url 'results:list_categories' %}">Grading</a></li>
                                 </ul>
@@ -252,7 +252,6 @@
                         <li>
                             <a href="" class="dropdown-toggle"><span class="mif-wrench"></span>GodPowers</a>
                             <ul class="d-menu" data-role="dropdown">
-                                <li><a href="{% url 'godpowers:groupadministration' %}">Group Administration</a></li>
                                 <li>
                                     <a href="#" class="dropdown-toggle">Tracking</a>
                                     <ul class="d-menu" data-role="dropdown">
@@ -262,7 +261,6 @@
                                         <li><a href="{% url 'tracking:listuserlog' %}">Users login log</a></li>
                                         <li><a href="{% url 'tracking:statuslist' %}">Project status change</a></li>
                                         <li><a href="{% url 'tracking:applicationlist' %}">Application tracking</a></li>
-                                        <li><a href="{% url 'tracking:livestreamer' %}">Live Streamer</a></li>
                                     </ul>
                                 </li>
                                 <li><a href="{% url 'godpowers:sessionlist' %}">Session List</a></li>

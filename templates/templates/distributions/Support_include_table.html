@@ -51,7 +51,7 @@
                             <li class="application-student-click clickable"
                                 data-student="{{ application.Student.usermeta.Fullname }}">
                                 {# The list of students that has applied to this Proposal. #}
-                                {# if this Student is chosen for this Proposal #}
+                                {# if this Student is chosen for this Proposal (this is db-heavy..) #}
                                 <span class="{% if application.distributions in proposal.distributions.all %} icon mif-link {% endif %} applicationChosenLinkIcon"
                                       data-student="{{ application.Student.pk }}"></span>
                                 <span class="tag info">{{ application.Priority }}</span>

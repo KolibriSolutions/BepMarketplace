@@ -8,7 +8,7 @@ from django.urls import reverse
 
 from BepMarketplace.decorators import group_required, can_edit_proposal, superuser_required, can_downgrade_proposal
 from api.utils import getStatStr
-from general_mail import mailAffectedUser
+from general_mail import mailAffectedUser, send_mail
 from general_model import GroupOptions
 from general_view import get_grouptype
 from proposals.models import Proposal
@@ -16,6 +16,7 @@ from proposals.utils import get_all_proposals
 from support.models import CapacityGroupAdministration
 from timeline.utils import get_timeslot, get_timephase_number
 from tracking.models import ProposalStatusChange
+
 
 @login_required
 def api_info(request):
@@ -67,11 +68,9 @@ def upgrade_status_api(request, pk):
         if obj.Status == 3:
             for assistant in obj.Assistants.all():
                 if get_grouptype("2u") in assistant.groups.all():
-                    account_group = User.groups.through.objects.get(user=assistant)
-                    account_group.group = get_grouptype("2")
-                    account_group.save()
-        # put the object in cache if status goes from 3->4
+                    verify_assistant_fn(assistant)
         if obj.Status == 4:
+            # put the object in cache if status goes from 3->4
             cache.set('proposal_{}'.format(pk), obj, None)
             cache.delete('listproposalsbodyhtml')
         return HttpResponse(getStatStr(obj.Status))
@@ -130,14 +129,34 @@ def verify_assistant(request, pk):
     if get_grouptype("2u") not in account.groups.all():
         return HttpResponse("This account is already verified")
 
-    account_group = User.groups.through.objects.get(user=account)
+    if verify_assistant_fn(account):
+        return HttpResponse("Account verified!")
+    else:
+        return HttpResponse("Verify failed!")
+
+
+def verify_assistant_fn(user):
+    """
+    Verify an unverified user and mail a confirmation.
+
+    :param user:
+    :return:
+    """
+    account_group = User.groups.through.objects.get(user=user)
     account_group.group = get_grouptype("2")
     account_group.save()
+    # inform the user of verification.
+    send_mail("BEP Marketplace user groups changed", "email/user_groups_changed.html",
+              {'oldgroups': 'type2staff unverified',
+               'newgroups': 'type2staff',
+               'message': 'Your account is now verified!',
+               'user': user},
+              user.email, html_email_template_name="email/user_groups_changed.html",)
 
-    return HttpResponse("Account verified!")
+    return True
 
 
-@superuser_required()
+@group_required('type3staff')
 def get_group_admins(request, group=""):
     """
     Get all capacity group administration members as JSON

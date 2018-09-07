@@ -21,11 +21,16 @@ from results.models import ResultOptions
 from students.models import Distribution
 from support.models import CapacityGroupAdministration
 from timeline.models import TimeSlot, TimePhase
-
+from django.conf import settings
 
 # disable cache for all tests
 @override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}},
-                   EMAIL_BACKEND='django.core.mail.backends.filebased.EmailBackend', EMAIL_FILE_PATH='./test_mail.log')
+                   EMAIL_BACKEND='django.core.mail.backends.filebased.EmailBackend', EMAIL_FILE_PATH='./test_mail.log',
+                   )
+@override_settings(
+    MIDDLEWARE_CLASSES=[mc for mc in settings.MIDDLEWARE
+                        if mc != 'tracking.middleware.TelemetryMiddleware']
+)
 class ViewsTest(TestCase):
     """
     Class with testclient to test views. Some functions to setup data in the database.
@@ -120,7 +125,7 @@ class ViewsTest(TestCase):
         self.p_support      = [403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # type3 support
         self.p_support_prv  = [403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # 3+6
 
-        self.p_cgadmin      = [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 403, 403, 200, 302]  # type4
+        self.p_cgadmin      = [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 403, 403, 404, 302]  # type4 (not superuser)
         self.p_study        = [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 200, 302]  # type5
         self.p_prv =          [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # 6
 
@@ -233,6 +238,10 @@ class ViewsTest(TestCase):
             if (user.username == 't-u' or user.username == 'r-u') and \
                     self.tp.Description > 3:
                 # ignore unverfied assistants in later timephases
+                continue
+            if (user.username == 't-p' or user.username == 't-s') and \
+                    self.tp.Description < 3:
+                # ignore students in first timephases
                 continue
             self.client.force_login(user)
             response = self.client.get(sourceurl)
@@ -487,8 +496,6 @@ class ProjectViewsTestGeneral(ViewsTest):
             # check for each given status from the status-array
             l = len(status)
             for status0 in range(0, l):
-                if self.debug:
-                    print("Testing status {}".format(status0 + 1))
                 self.status = status0 + 1
                 self.info['status'] = self.status
                 # Expected response code

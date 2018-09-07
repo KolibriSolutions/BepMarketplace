@@ -18,7 +18,7 @@ from django.utils.html import strip_tags
 from proposals.utils import get_all_proposals, get_share_link
 from index.models import Track
 from index.models import UserMeta
-
+from templates import context_processors
 
 def send_mail(subject_template_name, email_template_name,
               context, to_email, html_email_template_name=None):
@@ -31,10 +31,12 @@ def send_mail(subject_template_name, email_template_name,
         subject = subject_template_name
 
     from_email = settings.FROM_EMAIL_ADDRESS
+    # TODO Replace custom context with context_processors.general()
     context['email'] = settings.CONTACT_EMAIL
     context['domain'] = settings.DOMAIN
     context['name'] = settings.NAME_PRETTY
     context['toemail'] = to_email
+    context = {**context, **context_processors.general()}
     # Email subject *must not* contain newlines
     subject = ''.join(subject.splitlines())
     body = loader.render_to_string(email_template_name, context)

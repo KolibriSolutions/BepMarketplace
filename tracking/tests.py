@@ -14,7 +14,6 @@ class TrackingViewsTest(ViewsTest):
             [['statuslist', None], self.p_superuser],  # god only
             [['applicationlist', None], self.p_superuser],  # god only
             [['listuserlog', None], self.p_superuser],
-            [['livestreamer', None], self.p_superuser],
             [['userdetail', {'pk': self.users['sup'].id}], self.p_superuser],
         ]
 

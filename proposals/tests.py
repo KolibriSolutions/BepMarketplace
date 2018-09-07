@@ -33,22 +33,22 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
             [['viewsharelink', {'token': 'blabla'}], [s.p_anonymous]]
         ]
         code_general_phase12345 = [
-            [['list', None], [s.p_all]],
-            [['create', None],                     [s.p_staff_prop]],
-            [['chooseedit', None],                 [s.p_staff_prop]],
-            [['pending', None],                    [s.p_pending]],
-            [['stats', None],                      [s.p_forbidden]],  #TODO s.p_staff12345
-            [['statsgeneral', None],               [s.p_forbidden]],  #TODO s.p_staff12345
-            [['listtrackproposals', None],          [s.p_track]],
+            [['list', None],  s.p_all],
+            [['create', None],                     s.p_staff_prop],
+            [['chooseedit', None],                 s.p_staff_prop],
+            [['pending', None],                    s.p_pending],
+            [['stats', None],                      s.p_forbidden],  #TODO s.p_staff12345
+            [['statsgeneral', None],               s.p_forbidden],  #TODO s.p_staff12345
+            [['listtrackproposals', None],         s.p_track],
         ]
         code_general_phase67 =  [
             [['list', None], [s.p_all]],
-            [['create', None],                     [s.p_staff_prop]],
-            [['chooseedit', None],                 [s.p_staff_prop]],
-            [['pending', None],                    [s.p_pending]],
-            [['stats', None],                      [s.p_staff_prop]],
-            [['statsgeneral', None],               [s.p_staff_prop]],
-            [['listtrackproposals', None],          [s.p_track]],
+            [['create', None],                     s.p_staff_prop],
+            [['chooseedit', None],                 s.p_staff_prop],
+            [['pending', None],                    s.p_pending],
+            [['stats', None],                      s.p_staff_prop],
+            [['statsgeneral', None],               s.p_staff_prop],
+            [['listtrackproposals', None],         s.p_track],
         ]
 
         # These permissions are for a given proposal, which is active in this timeslot (this year).
@@ -158,6 +158,7 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         # TimePhase 2
         self.info['type'] = 'proposal phase2'
         self.loop_phase_code_user([2], code_phase2)
+
         # TimePhase 3+
         self.info['type'] = 'proposal phase34567'
         self.loop_phase_code_user([3, 4, 5, 6, 7], code_phase34567)
@@ -252,11 +253,6 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         # assistants will all be verified
         s.usernames.remove('t-u')
 
-        # Distribute the student, such that professionalskills files becomes available.
-        d = Distribution(Proposal=Proposal.objects.get(id=1), Student=s.users.get('r-s'), Timeslot=s.ts)
-        d.save()
-        dp = Distribution(Proposal=Proposal.objects.get(id=2), Student=s.users.get('t-p'), Timeslot=s.ts)
-        dp.save()
         if s.debug:
             print("Testing all links for users")
 

@@ -368,10 +368,12 @@ def print_forms(request):
     })
 
     buffer = BytesIO()
-    pisaStatus = pisa.CreatePDF(htmlblock.encode('utf-8'), dest=buffer, encoding='utf-8')  # TODO check pisaStatus
+    pisaStatus = pisa.CreatePDF(htmlblock.encode('utf-8'), dest=buffer, encoding='utf-8')
+    if pisaStatus.err:
+        raise Exception("Pisa Failed PDF creation in print PRV results")
     buffer.seek(0)
     response = HttpResponse(buffer, 'application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="prvs.pdf"'
+    response['Content-Disposition'] = 'attachment; filename="Professional-Skills-export.pdf"'
     return response
 
 

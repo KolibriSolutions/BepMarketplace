@@ -20,12 +20,14 @@ class groupAdministrationForm(forms.Form):
         obj = CapacityGroupAdministration.objects.get(Group=cleaned_data['Group'])
 
         for member in obj.Members.all():
+            # remove type4staff for removed members
             if member not in cleaned_data['AdministrationMembers']:
                 member.groups.remove(Group.objects.get(name='type4staff'))
                 obj.Members.remove(member)
                 member.save()
 
         for member in cleaned_data['AdministrationMembers']:
+            # add type4staff to new members
             if member not in obj.Members.all():
                 member.groups.add(Group.objects.get(name='type4staff'))
                 obj.Members.add(member)

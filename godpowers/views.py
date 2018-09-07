@@ -87,31 +87,6 @@ def clearCache(request):
 
 
 @superuser_required()
-def groupAdministration(request):
-    """
-    Administration page for admins. Used to to attach users to a research group as administration of that group.
-
-    :param request:
-    """
-    if request.method == 'POST':
-        form = groupAdministrationForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return render(request, "base.html", {
-                "Message" : "Group administration updated",
-                "return"  : "godpowers:groupadministration",
-            })
-    else:
-        form = groupAdministrationForm()
-
-    return render(request, "godpowers/groupAdministration.html", {
-        "form" : form,
-        "formtitle" : "Group Administrators",
-        "buttontext" : "save",
-    })
-
-
-@superuser_required()
 def sessionList(request):
     """
     List all active sessions (logged in users) with the possibility to kill a session (logout the user)

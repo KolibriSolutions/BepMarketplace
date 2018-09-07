@@ -15,17 +15,17 @@ class CategoryResultForm(forms.ModelForm):
         model = CategoryResult
         fields = ['Grade', 'Comments']
         widgets = {
-            'Grade': widgets.MetroNumberInputInteger,
+            'Grade': widgets.MetroNumberInputGrade,
             'Comments': widgets.MetroMultiTextInput,
         }
 
     def clean_Grade(self):
         """
-        Grades are rounded to integers.
+        TODO set rounding based on education committee advice.
 
         :return: rounded grade.
         """
-        return round(self.cleaned_data['Grade'], 0)
+        return round(self.cleaned_data['Grade'], 2)
 
 
 class AspectResultForm(forms.ModelForm):

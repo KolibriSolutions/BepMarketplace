@@ -3,15 +3,22 @@ from datetime import datetime
 from pytz import utc
 from django.utils.deprecation import MiddlewareMixin
 from ipware.ip import get_real_ip
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
 
 
 class TelemetryMiddleware(MiddlewareMixin):
     """
     Middleware to track users activity.
-    It sends the users information to a seperate systemd service to log the data.
     """
+
+    def WriteLog(self, data):
+        type = data.pop('type')
+        message = json.dumps(data)
+        if type == 'user':
+            with open('tracking/telemetry/data/{}.log'.format(data['user']), 'a') as stream:
+                stream.write(message + '\n')
+        elif type == 'anon_404':
+            with open('tracking/telemetry/data/404.log', 'a') as stream:
+                stream.write(message + '\n')
 
     def createpackage(self, request, response):
         return {
@@ -28,23 +35,19 @@ class TelemetryMiddleware(MiddlewareMixin):
         if response.status_code == 404:
             data = self.createpackage(request, response)
             data['type'] = 'anon_404'
-            channel_layer = get_channel_layer()
-            async_to_sync(channel_layer.group_send)('telemetry', {"type": 'update', 'text': json.dumps(data)})
+            self.WriteLog(data)
 
         return response
 
     def handleuser(self, request, response):
+        if '/js_error_hook/' in request.path:
+            return response
+
         data = self.createpackage(request, response)
         data['user'] = request.user.username
         data['type'] = 'user'
+        self.WriteLog(data)
 
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)('telemetry', {"type": 'update', 'text': json.dumps(data)})
-        data.pop('user_agent', None)
-        data['timestamp'] = datetime.now().strftime("%H:%M:%S")
-        async_to_sync(channel_layer.group_send)('live_{}'.format(request.user.username),
-                                                {"type": 'update', 'text': json.dumps(data)})
-        async_to_sync(channel_layer.group_send)('liveview_telemetry', {"type": 'update', 'text': json.dumps(data)})
         return response
 
     def process_response(self, request, response):

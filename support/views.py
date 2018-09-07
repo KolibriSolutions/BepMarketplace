@@ -2,7 +2,6 @@ import json
 from datetime import date, datetime
 
 from django.contrib.auth.models import User, Group
-from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Sum
 from django.db.models import Q, F
@@ -10,7 +9,6 @@ from django.forms import modelformset_factory
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from htmlmin.decorators import not_minified_response
-from render_block import render_block_to_string
 
 from BepMarketplace.decorators import group_required
 from distributions.utils import get_distributions
@@ -27,7 +25,8 @@ from support import check_content_policy
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number
 from .exports import get_list_students_xlsx, get_list_staff_xlsx, get_list_distributions_xlsx, get_list_proposals_xlsx
-from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm
+from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm, UserGroupsForm, \
+    CapacityGroupAdministrationForm
 from .models import CapacityGroupAdministration, PublicFile
 
 
@@ -46,10 +45,18 @@ def list_applications_distributions(request):
         raise PermissionDenied("There are no applications yet")
     elif get_timephase_number() > 5:
         projects = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
+        projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
+                                                                                         'Private',
+                                                                                         'distributions__Application',
+                                                                                         'distributions__Student__usermeta')
+
     else:  # phase 3 & 4 & 5
         projects = get_all_proposals().filter(Status=4)
-    projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
-                                                                                     'distributions__Student__usermeta')
+        projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
+                                                                                         'Private',
+                                                                                         'applications__Student__usermeta',
+                                                                                         'distributions__Application',
+                                                                                         'distributions__Student__usermeta')
 
     return render(request, 'support/listApplicationsDistributions.html', {"proposals": projects})
 
@@ -208,7 +215,7 @@ def mailing(request):
 @group_required('type3staff')
 def mail_track_heads(request):
     """
-    Mail all track heads with their todo actions
+    Mail all track heads with their actions
 
     :param request:
     :return:
@@ -243,19 +250,20 @@ def list_users(request):
     :param request:
     :return:
     """
-    if request.user.is_superuser:
-        key = 'listusersbodyhtmladmin'
-    else:
-        key = 'listusersbodyhtml'
-    bodyhtml = cache.get(key)
-    if bodyhtml is None:
-        bodyhtml = render_block_to_string('support/list_users.html', 'body', {
-            "users": User.objects.all().prefetch_related('groups', 'usermeta', 'usermeta__TimeSlot'),
-            "user": request.user})
-        cache.set(key, bodyhtml, None)
+    # DEPRICATED, cache is no longer needed because of prefetch.
+    # if request.user.is_superuser:
+    #     key = 'listusersbodyhtmladmin'
+    # else:
+    #     key = 'listusersbodyhtml'
+    # bodyhtml = cache.get(key)
+    # if bodyhtml is None:
+    #     bodyhtml = render_block_to_string('support/list_users.html', 'body', {
+    #         "users": User.objects.all().prefetch_related('groups', 'usermeta', 'usermeta__TimeSlot'),
+    #         "user": request.user})
+    #     cache.set(key, bodyhtml, None)
 
     return render(request, "support/list_users.html", {
-        "bodyhtml": bodyhtml,
+        "users": User.objects.all().prefetch_related('groups', 'usermeta', 'usermeta__TimeSlot'),
         'hide_sidebar': True,
     })
 
@@ -486,7 +494,7 @@ def list_students(request):
     # des = get_distributions(request.user)
     des = get_distributions(request.user).select_related('Proposal__ResponsibleStaff',
                                                          'Proposal__Track',
-                                                         'Student__usermeta').prefetch_related(
+                                                         'Student__usermeta', ).prefetch_related(
         'results__Category',
         'Proposal__Assistants')
     deslist = []
@@ -538,6 +546,7 @@ def list_students_xlsx(request):
 def verify_assistants(request):
     """
     Page to let support staff give type2staffunverified the type2staff status.
+    Can also be done using the userlist.
 
     :param request:
     :return:
@@ -595,103 +604,164 @@ def list_private_projects(request):
 
 
 @group_required('type3staff')
-def upgrade_user(request, pk):
+def edit_user_groups(request, pk):
     """
-    Upgrade a user from type2staff to type1staff
+    Change the groups of a given user.
 
     :param request:
-    :param pk: id of the user.
+    :param pk: user id
     :return:
     """
     usr = get_object_or_404(User, pk=pk)
-
-    # verify type 2 unverified
+    if not usr.groups.exists():
+        if not usr.is_superuser:
+            raise PermissionDenied("This user is a student. Students cannot have groups.")
     if get_grouptype("2u") in usr.groups.all():
-        if get_grouptype("2") in usr.groups.all():
-            usr.groups.remove(get_grouptype("2"))
-        if get_grouptype("2u") in usr.groups.all():
-            usr.groups.remove(get_grouptype("2u"))
-        usr.groups.add(get_grouptype("2"))
-        usr.save()
-        return render(request, "base.html", {
-            "Message": "Type2staff unverifed is now verified.",
-            "return": "support:listusers"
-        })
+        raise PermissionDenied("This user is not yet verified. Please verify first in the user list.")
 
-    if not get_grouptype("2") in usr.groups.all():
-        return render(request, "base.html", {
-            "Message": "Only type2staff can be upgraded.",
-            "return": "support:listusers"
-        })
-
-    if get_grouptype("3") in usr.groups.all():
-        return render(request, "base.html", {
-            "Message": "User is supportstaff!",
-            "return": "support:listusers"
-        })
-
-    if get_grouptype("1") not in usr.groups.all():
-        if get_grouptype("2") in usr.groups.all():
-            usr.groups.remove(get_grouptype("2"))
-        if get_grouptype("2u") in usr.groups.all():
-            usr.groups.remove(get_grouptype("2u"))
-        usr.groups.add(get_grouptype("1"))
-        usr.save()
+    if request.method == "POST":
+        form = UserGroupsForm(request.POST, instance=usr)
+        if form.is_valid():
+            obj = form.save()
+            obj.save()
+            return render(request, 'base.html', {
+                'Message': 'User groups saved!',
+                'return': 'support:listusers',
+            })
     else:
-        return render(request, "base.html", {
-            "Message": "User is already upgraded!",
-            "return": "support:listusers"
-        })
-
-    if cache.has_key('listusersbodyhtml'):
-        cache.delete('listusersbodyhtml')
-    if cache.has_key('listusersbodyhtmladmin'):
-        cache.delete('listusersbodyhtmladmin')
-
-    return render(request, "base.html", {
-        "Message": "User upgraded!",
-        "return": "support:listusers"
+        form = UserGroupsForm(instance=usr)
+    return render(request, 'support/user_groups_form.html', {
+        'formtitle': 'Set user groups for {}'.format(usr.username),
+        'form': form,
     })
 
 
 @group_required('type3staff')
-def downgrade_user(request, pk):
+def capacity_group_administration(request):
     """
-    Change a user from type1staff to type2staff
+    Used to to attach users to a research group as administration of that group.
 
     :param request:
-    :param pk: id of the staff user.
-    :return:
     """
-    usr = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        form = CapacityGroupAdministrationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return render(request, "base.html", {
+                "Message": "Capacity Group administration updated",
+                "return": "support:capacitygroupadministration",
+            })
+    else:
+        form = CapacityGroupAdministrationForm()
 
-    if not get_grouptype("1") in usr.groups.all():
-        return render(request, "base.html", {
-            "Message": "Only type1staff can be downgraded.",
-            "return": "support:listusers"
-        })
-
-    if get_grouptype("3") in usr.groups.all():
-        return render(request, "base.html", {
-            "Message": "User is support staff!",
-            "return": "support:listusers"
-        })
-
-    if get_grouptype("2") not in usr.groups.all() and get_grouptype("2u") not in usr.groups.all():
-        if get_grouptype("1") in usr.groups.all():
-            usr.groups.remove(get_grouptype("1"))
-        usr.groups.add(get_grouptype("2"))
-        usr.save()
-
-    if cache.has_key('listusersbodyhtml'):
-        cache.delete('listusersbodyhtml')
-    if cache.has_key('listusersbodyhtmladmin'):
-        cache.delete('listusersbodyhtmladmin')
-
-    return render(request, "base.html", {
-        "Message": "User downgraded!",
-        "return": "support:listusers"
+    return render(request, "support/capacity_group_administration.html", {
+        "form": form,
+        "formtitle": "Capacity Group Administrators",
+        "buttontext": "save",
     })
+
+
+#
+# @group_required('type3staff')
+# def upgrade_user(request, pk):
+#     """
+#     Upgrade a user from type2staff to type1staff
+#
+#     :param request:
+#     :param pk: id of the user.
+#     :return:
+#     """
+#     usr = get_object_or_404(User, pk=pk)
+#
+#     # verify type 2 unverified
+#     if get_grouptype("2u") in usr.groups.all():
+#         if get_grouptype("2") in usr.groups.all():
+#             usr.groups.remove(get_grouptype("2"))
+#         if get_grouptype("2u") in usr.groups.all():
+#             usr.groups.remove(get_grouptype("2u"))
+#         usr.groups.add(get_grouptype("2"))
+#         usr.save()
+#         return render(request, "base.html", {
+#             "Message": "Type2staff unverifed is now verified.",
+#             "return": "support:listusers"
+#         })
+#
+#     if not get_grouptype("2") in usr.groups.all():
+#         return render(request, "base.html", {
+#             "Message": "Only type2staff can be upgraded.",
+#             "return": "support:listusers"
+#         })
+#
+#     if get_grouptype("3") in usr.groups.all():
+#         return render(request, "base.html", {
+#             "Message": "User is supportstaff!",
+#             "return": "support:listusers"
+#         })
+#
+#     if get_grouptype("1") not in usr.groups.all():
+#         if get_grouptype("2") in usr.groups.all():
+#             usr.groups.remove(get_grouptype("2"))
+#         if get_grouptype("2u") in usr.groups.all():
+#             # this line should never hit. Just to be sure.
+#             usr.groups.remove(get_grouptype("2u"))
+#         usr.groups.add(get_grouptype("1"))
+#         usr.save()
+#
+#     else:
+#         return render(request, "base.html", {
+#             "Message": "User is already upgraded!",
+#             "return": "support:listusers"
+#         })
+#
+#     if cache.has_key('listusersbodyhtml'):
+#         cache.delete('listusersbodyhtml')
+#     if cache.has_key('listusersbodyhtmladmin'):
+#         cache.delete('listusersbodyhtmladmin')
+#
+#     return render(request, "base.html", {
+#         "Message": "User upgraded!",
+#         "return": "support:listusers"
+#     })
+#
+#
+# @group_required('type3staff')
+# def downgrade_user(request, pk):
+#     """
+#     Change a user from type1staff to type2staff
+#
+#     :param request:
+#     :param pk: id of the staff user.
+#     :return:
+#     """
+#     usr = get_object_or_404(User, pk=pk)
+#
+#     if not get_grouptype("1") in usr.groups.all():
+#         return render(request, "base.html", {
+#             "Message": "Only type1staff can be downgraded.",
+#             "return": "support:listusers"
+#         })
+#
+#     if get_grouptype("3") in usr.groups.all():
+#         return render(request, "base.html", {
+#             "Message": "User is support staff!",
+#             "return": "support:listusers"
+#         })
+#
+#     if get_grouptype("2") not in usr.groups.all() and get_grouptype("2u") not in usr.groups.all():
+#         if get_grouptype("1") in usr.groups.all():
+#             usr.groups.remove(get_grouptype("1"))
+#         usr.groups.add(get_grouptype("2"))
+#         usr.save()
+#
+#     if cache.has_key('listusersbodyhtml'):
+#         cache.delete('listusersbodyhtml')
+#     if cache.has_key('listusersbodyhtmladmin'):
+#         cache.delete('listusersbodyhtmladmin')
+#
+#     return render(request, "base.html", {
+#         "Message": "User downgraded!",
+#         "return": "support:listusers"
+#     })
 
 
 #######
@@ -742,10 +812,13 @@ def content_policy(request):
     :param request:
     """
     data = {
-        "regexViolations": check_content_policy.regexTest(),
-        "diffViolations": check_content_policy.diffTest(),
+        'pattern_violations': check_content_policy.cpv_regex(),
+        'length_violations': check_content_policy.cpv_length(),
+        'diff_violations': check_content_policy.cpv_diff(),
+        'pattern_policies': check_content_policy.content_policies,
+        'length_requirements': check_content_policy.length_requirements.items(),
     }
-    return render(request, "support/contentPolicyCheck.html", data)
+    return render(request, 'support/content_policy_violations.html', data)
 
 
 # deprecated due to osirisdata
@@ -858,32 +931,19 @@ def delete_file(request, pk):
         'buttontext': 'Confirm'
     })
 
-
 #######
 # Cache#
 #######
-
-@group_required('type3staff', 'type6staff')
-def list_users_clear_cache(request):
-    """
-    Clear cache for list users
-
-    :param request:
-    :return:
-    """
-    cache.delete('listusersbodyhtmladmin')
-    cache.delete('listusersbodyhtml')
-
-    return render(request, 'base.html', {'Message': 'Cache cleared for userlist', "return": "support:listusers"})
-
 #
 # @group_required('type3staff', 'type6staff')
-# def clearCacheAllStudentsList(request):
+# def list_users_clear_cache(request):
 #     """
-#     Clear the cache for listStudents on OASE
+#     Clear cache for list users
 #
 #     :param request:
 #     :return:
 #     """
-#     cache.delete('listallstudentsbodyhtml')
-#     return render(request, 'base.html', {'Message': 'cache cleared for all students list'})
+#     cache.delete('listusersbodyhtmladmin')
+#     cache.delete('listusersbodyhtml')
+#
+#     return render(request, 'base.html', {'Message': 'Cache cleared for userlist', "return": "support:listusers"})

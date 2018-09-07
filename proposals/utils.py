@@ -75,6 +75,16 @@ def can_edit_project_fn(user, prop, file):
     return False, 'You are not allowed to edit this proposal.'
 
 
+def get_all_projects(old=False):
+    """
+    Link to get_all_proposals for consistency with mastermarketplace
+
+    :param old:
+    :return:
+    """
+    return get_all_proposals(old)
+
+
 def get_all_proposals(old=False):
     """
     All proposals in this timeslot. Cached after timephase 5.

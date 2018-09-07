@@ -9,7 +9,7 @@ from proposals.models import Proposal
 from proposals.utils import can_edit_project_fn, get_cached_project
 from support.models import CapacityGroupAdministration
 from timeline.utils import get_timephase_number, get_timeslot
-
+from students.models import Application
 
 def group_required(*group_names):
     """
@@ -362,7 +362,6 @@ def can_apply(fn):
             prop = get_object_or_404(Proposal, pk=pk)
             if prop.Private.exists():
                 raise PermissionDenied("This proposal is private. It is already assigned.")
-
         return fn(*args, **kw)
 
     return wrapper

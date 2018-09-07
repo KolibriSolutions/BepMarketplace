@@ -17,11 +17,11 @@ migrations/
 templates/static/admin/*
 templates/static/channels/*
 BepMarketplace/config/secret.py
-BepMarketplace/config/secret.py
-telemetry_cli/telemetry_key.py
+tracking/telemetry/*
 *.lock
 *.csv
 Pipfile
 Pipfile.lock
 /node_modules/
 /start_redis.bat
+*.sql

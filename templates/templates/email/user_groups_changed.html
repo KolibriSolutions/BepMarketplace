@@ -1,0 +1,16 @@
+{% extends "email/base_email.html" %}
+
+{% block header %}
+Dear {{ user.get_full_name }},<br/><br/>
+{% endblock %}
+
+{% block body %}
+    A message from the {{ NAME }} (<a href="{{ DOMAIN }}">{{ DOMAIN }}</a>):<br />
+    {{ message }}
+<br />
+    Your user groups (rights) have changed.<br />
+    Previous: {{ oldgroups }} <br />
+    New: {{ newgroups }}
+
+    <br/><br/>
+{% endblock %}

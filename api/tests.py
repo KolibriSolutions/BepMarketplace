@@ -21,8 +21,8 @@ class ApiViewsTest(ProjectViewsTestGeneral):
         # not related to proposals
         codes_general_phase1234567 = [
             [['verifyassistant', {'pk': self.dummy.id}], s.p_support],  # use a dummy user without type2staffunverified
-            [['getgroupadmins', None], s.p_superuser],  # god only
-            [['getgroupadminsarg', {'group': GroupOptions[0][0]}], s.p_superuser],
+            [['getgroupadmins', None], s.p_support],
+            [['getgroupadminsarg', {'group': GroupOptions[0][0]}], s.p_support],
             [['listpublished', None], s.p_all],
             [['listpublishedpergroup', None], s.p_all],
             [['listpublishedtitles', None], s.p_all],

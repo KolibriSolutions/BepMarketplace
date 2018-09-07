@@ -1,92 +1,89 @@
 {% extends "base.html" %}
 {% load custom_filters %}
 {% block body %}
-    {% if bodyhtml %}
-        {% autoescape off %}
-            {{ bodyhtml }}
-        {% endautoescape %}
-    {% else %}
-        <h1>List all users</h1>
-        <a href="{% url 'support:clearcacheuserlist' %}" class="button warning">Clear Cache</a>
-        <div class="double-scroll">
-            <table class="table bordered hovered striped datatable">
-                <thead>
+    {# cache is removed, prefetch is fast enough. #}
+    {#    {% if bodyhtml %}#}
+    {#        {% autoescape off %}#}
+    {#            {{ bodyhtml }}#}
+    {#        {% endautoescape %}#}
+    {#    {% else %}#}
+    <h1>List all users</h1>
+    <a href="{% url 'support:capacitygroupadministration' %}" class="button primary">Capacity Group Administration</a>
+    <a href="{% url 'index:edit_tracks' %}" class="button primary">Track heads</a>
+    <a href="{% url 'support:verifyassistants' %}" class="button primary">Verify type2staffunverified</a>
+
+    <div class="double-scroll">
+        <table class="table bordered hovered striped datatable">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Type<br/></th>
+                <th>Active<br/></th>
+                <th data-searchable="false">Last login</th>
+                <th>Timeslots</th>
+                <th data-searchable="false" data-sortable="false">Edit</th>
+                {% if user.is_superuser %}
+                    <th data-searchable="false" data-sortable="false">Godpowers</th>
+                {% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for u in users %}
                 <tr>
-                    <th>Name</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Type<br/></th>
-                    <th>Active<br/></th>
-                    <th data-searchable="false">Last login</th>
-                    <th>Timeslots</th>
-                    <th data-searchable="false" data-sortable="false">Edit</th>
+                    <td>
+                        {% if u == user %}<span class="mif-user"></span>{% endif %}{{ u.first_name }} {{ u.last_name }}
+                    </td>
+                    <td>{{ u.username }}</td>
+                    <td><a href="mailto:{{ u.email }}">{{ u.email }}</a></td>
+                    <td>
+                        {% if u.groups.exists or u.is_superuser%}
+                            {{ u.groups.all|join:" & " }}{% if u.is_superuser %} & superuser{% endif %}
+                        {% else %}
+                            student (no groups)
+                        {% endif %}
+                    </td>
+                    <td data-sort="{{ u.last_login|yesno:"yes,no" }}"
+                        data-search="{{ u.last_login|yesno:"yes,no" }}"><span
+                            class="mif-{{ u.last_login|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+                    <td data-sort="{{ u.last_login|date:"U" }}">{{ u.last_login }}</td>
+                    <td>
+                        <ul>
+                            {% for ts in u.usermeta.TimeSlot.all %}
+                                <li>{{ ts }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td>
+                        {% if u.groups.exists or u.is_superuser %}
+                            {# staff #}
+                            {% if u|has_group:'type2staffunverified' and not u.is_superuser %}
+                                <a class="button success" id="userverify{{ u.id }}"
+                                   onclick="verify({{ u.id }}, this);">Verify
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'support:usergroups' u.id %}" class="button primary">Groups</a>
+                        {% else %}
+                            {# student #}
+                            <a href="{% url 'support:overruleusermeta' u.id %}" class="button primary">Edit</a>
+                        {% endif %}
+                    </td>
+
                     {% if user.is_superuser %}
-                        <th data-searchable="false" data-sortable="false">Impersonate</th>
-                        <th data-searchable="false" data-sortable="false">Telemetry</th>
+                        <td>
+                            <a href="{% url 'impersonate-start' u.id %}" class="button primary">Impersonate</a>
+                            <a href="{% url 'tracking:userdetail' u.id %}" class="button primary">Telemetry</a>
+                            <a href="{% url 'support:userinfo' u.id %}" class="button primary">Info</a>
+                            <a href="{% url 'admin:auth_user_change' u.id %}" class="button warning">Admin edit</a>
+                        </td>
                     {% endif %}
                 </tr>
-                </thead>
-                <tbody>
-                {% for u in users %}
-                    <tr>
-                        <td>{{ u.first_name }} {{ u.last_name }}</td>
-                        <td>{{ u.username }}</td>
-                        <td><a href="mailto:{{ u.email }}">{{ u.email }}</a></td>
-                        <td>
-                            {% if u.is_superuser %}
-                                superuser
-                            {% elif u.groups.exists %}
-                                {{ u.groups.all|join:" & " }}
-                            {% else %}
-                                student (no groups)
-                            {% endif %}
-                        </td>
-                        <td data-sort="{{ u.last_login|yesno:"yes,no" }}"
-                            data-search="{{ u.last_login|yesno:"yes,no" }}"><span
-                                class="mif-{{ u.last_login|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
-                        <td data-sort="{{ u.last_login|date:"U" }}">{{ u.last_login }}</td>
-                        <td>
-                            <ul>
-                                {% for ts in u.usermeta.TimeSlot.all %}
-                                    <li>{{ ts }}</li>
-                                {% endfor %}
-                            </ul>
-                        </td>
-                        {% if not u.is_superuser %}
-                            <td>
-                                {% if u|has_group:'type2staff' %}
-                                    <a href="{% url 'support:upgradeuser' u.id %}" class="button primary"><span
-                                            class="mif-move-up"></span></a>
-                                {% elif u|has_group:'type2staffunverified' %}
-                                    <a href="{% url 'support:upgradeuser' u.id %}" class="button primary"><span
-                                            class="mif-user-check"></span></a>
-                                {% elif u|has_group:'type1staff' %}
-                                    <a href="{% url 'support:downgradeuser' u.id %}" class="button primary"><span
-                                            class="mif-move-down"></span></a>
-                                {% endif %}
-                                {% if u.groups.count == 0 %}
-                                    <a href="{% url 'support:overruleusermeta' u.id %}" class="button primary">Edit</a>
-                                {% endif %}
-                            </td>
-
-                        {% else %}
-                            <td></td>
-                        {% endif %}
-                        {% if user.is_superuser %}
-                            <td>
-                                <a href="{% url 'impersonate-start' u.id %}" class="button primary">Impersonate</a>
-                            </td>
-                            <td>
-                                <a href="{% url 'tracking:userdetail' u.id %}" class="button primary">Telemetry</a>
-                                <a href="{% url 'support:userinfo' u.id %}" class="button primary">Info</a>
-                            </td>
-                        {% endif %}
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {#    {% endif %}#}
 {% endblock %}
 {% block scripts %}
     {{ block.super }}
@@ -106,5 +103,23 @@
                 ]
             );
         });
+
+        function verify(id, button) {
+            $.get("/api/verify/assistant/" + String(id), function (data) {
+                $.Notify({
+                    caption: 'Result',
+                    content: data,
+                    type: 'info'
+                });
+                $('#userverify' + String(id)).remove();
+            }).fail(function () {
+                $.Notify({
+                    caption: 'Server error',
+                    content: 'Please refresh this page (F5) or contact system administrator',
+                    icon: "<span class='mif-warning'></span>",
+                    type: "alert"
+                });
+            });
+        }
     </script>
 {% endblock %}

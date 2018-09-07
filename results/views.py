@@ -94,6 +94,8 @@ def finalize(request, pk, version=0):
 
         buffer = BytesIO()
         pisaStatus = pisa.CreatePDF(htmlblock.encode('utf-8'), dest=buffer, encoding='utf-8')
+        if pisaStatus.err:
+            raise Exception("Pisa Failed PDF creation in print final grade for distr {}.".format(dstr.id))
         buffer.seek(0)
         response = HttpResponse(buffer, 'application/pdf')
         response['Content-Disposition'] = 'attachment; filename="bepresult_{}.pdf"'.format(dstr.Student.get_full_name())

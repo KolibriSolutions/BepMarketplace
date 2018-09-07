@@ -78,7 +78,7 @@
                             </td>
                             {% if show_grades %}
                                 {% for g in d.1 %}
-                                    <td>{{ g|floatformat:"1" }}</td>
+                                    <td>{{ g|floatformat:"2" }}</td>
                                 {% endfor %}
 
                                 <td>{{ d.0.TotalGrade|floatformat:"2" }}</td>

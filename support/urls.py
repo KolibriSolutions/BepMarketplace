@@ -22,9 +22,12 @@ urlpatterns = [
     # lists
     path('users/', views.list_users, name='listusers'),
     path('users/<int:pk>', views.user_info, name='userinfo'),
-    path('users/clearcache/', views.list_users_clear_cache, name='clearcacheuserlist'),
-    path('users/upgrade/<int:pk>/', views.upgrade_user, name='upgradeuser'),
-    path('users/downgrade/<int:pk>/', views.downgrade_user, name='downgradeuser'),
+    # path('users/clearcache/', views.list_users_clear_cache, name='clearcacheuserlist'),
+    # path('users/upgrade/<int:pk>/', views.upgrade_user, name='upgradeuser'),
+    # path('users/downgrade/<int:pk>/', views.downgrade_user, name='downgradeuser'),
+    path('users/overruleusermeta/<int:pk>/', views.usermeta_overrule, name='overruleusermeta'),
+    path('users/groups/<int:pk>/', views.edit_user_groups, name='usergroups'),
+    path('capacitygroupadministration/', views.capacity_group_administration, name='capacitygroupadministration'),
 
     path('applicationsdistributions/', views.list_applications_distributions, name='SupportListApplicationsDistributions'),
     path('distributions/xlsx/', views.list_distributions_xlsx, name='SupportListDistributionsXls'),
@@ -41,7 +44,6 @@ urlpatterns = [
     # path('liststudentsldap/', views.listStudentsLdap, name='liststudentsldap'),# might be re-introduced when OSIRIS link is finished.
     # path('clearcacheallstudentslist/', views.clearCacheAllStudentsList, name='clearcacheallstudentslist'),
 
-    path('overruleusermeta/<int:pk>/', views.usermeta_overrule, name='overruleusermeta'),
     path('verifyassistants/', views.verify_assistants, name='verifyassistants'),
 
     path('nonfull/', views.list_non_full_proposals, name='listnonfullprojects'),

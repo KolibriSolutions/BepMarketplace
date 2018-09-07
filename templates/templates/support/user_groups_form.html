@@ -1,0 +1,55 @@
+{% extends 'GenericForm.html' %}
+{% block formheader %}
+    A user cannot have more than two groups. In most cases, one group is sufficient.
+    <h3>The following group types are available</h3>
+    <table class="table striped hovered">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Rights</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>type1staff</td>
+            <td>'Responsible Staff' for a project, can upgrade a proposal up to status 3. Type1staff can also be
+                assistant to a proposal, like type2staff. Type1staff can also be <a
+                        href="{% url 'index:edit_tracks' %}">trackhead</a>. Trackheads can upgrade proposals to status 4
+                (public / active).
+            </td>
+        </tr>
+        <tr>
+            <td>type2staff unverified</td>
+            <td>'Assistant' for a project, the daily supervisor. This is what new users automatically become on
+                first login. The user can later be verified to normal type2staff, meaning they are approved as
+                type2staff. It is not possible to assign this group to a user.
+            </td>
+        </tr>
+        <tr>
+            <td>type2staff</td>
+            <td>'Assistant' for a project, the daily supervisor.</td>
+        </tr>
+        <tr>
+            <td>type3staff</td>
+            <td>Support user, makes the distributions and is able to make do all kind of management tasks. <b>Be
+                careful, this group gives the users a lot of power!</b></td>
+        </tr>
+        <tr>
+            <td>type4staff</td>
+            <td>Capacity group administration. Can see all projects for their capacity group. Edit the capacity group in
+                <a
+                        href="{% url 'support:capacitygroupadministration' %}">Capacity Group administration</a></td>
+        </tr>
+        <tr>
+            <td>type5staff</td>
+            <td>Study advisor. Can see all projects.</td>
+        </tr>
+        <tr>
+            <td>type6staff</td>
+            <td>Professional skills administration. Can view and edit all professional skills.</td>
+        </tr>
+        </tbody>
+
+    </table>
+    <br/>
+{% endblock %}

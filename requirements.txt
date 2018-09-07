@@ -1,4 +1,4 @@
-asgiref
+asgiref>=2
 asgi_redis
 bleach
 channels>=2
@@ -14,16 +14,15 @@ channels_redis
 django-render-block
 django-sendfile
 django-two-factor-auth
-djangosaml2==0.16.11
+djangosaml2>=0.16.11
 docutils
 openpyxl
 pillow
 pip
 psycopg2
-pysaml2==4.4.*
+pysaml2
 pytz
 service_identity
 Sphinx
-websocket-client
 xhtml2pdf>=0.2b1
 phonenumbers

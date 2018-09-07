@@ -1,7 +1,7 @@
 from django.conf import settings
 
 
-def general(request):
+def general(request=None):
     return {
         'DOMAIN': settings.DOMAIN,
         'CONTACT_EMAIL': settings.CONTACT_EMAIL,
@@ -9,10 +9,9 @@ def general(request):
     }
 
 
-def debugsetting(request):
+def debugsetting(request=None):
     """
 
-    :param request:
     :return:
     """
     return {

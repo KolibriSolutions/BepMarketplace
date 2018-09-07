@@ -51,22 +51,11 @@ def list_application_change(request):
 
 
 @superuser_required()
-def live_streamer(request):
-    """
-    Show the livestreamer. This pages shows events like a user logging in. Using websockets.
-
-    :param request:
-    :return:
-    """
-    return render(request, "tracking/liveStreamer.html")
-
-
-@superuser_required()
 def telemetry_user_detail(request, pk):
     user = get_object_or_404(User, pk=pk)
 
     try:
-        with open('telemetry_cli/data/{}.log'.format(user.username), 'r') as stream:
+        with open('tracking/telemetry/data/{}.log'.format(user.username), 'r') as stream:
             telemetry = json.loads('[{}]'.format(','.join(stream.readlines())).replace('\n', ''))
     except:
         telemetry = []
