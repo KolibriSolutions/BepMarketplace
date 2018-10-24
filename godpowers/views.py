@@ -16,7 +16,6 @@ from general_view import get_grouptype, get_all_students
 from timeline.utils import get_timeslot
 from tracking.models import ProposalTracking
 from tracking.models import UserLogin
-from .forms import groupAdministrationForm
 
 
 @superuser_required()
@@ -29,7 +28,7 @@ def getVisitors(request, pk):
     :return:
     """
     obj = get_object_or_404(ProposalTracking, pk=pk)
-    return render(request, 'godpowers/visitorslist.html', {'track' : obj})
+    return render(request, 'godpowers/visitorslist.html', {'track': obj})
 
 
 @superuser_required()
@@ -40,10 +39,11 @@ def visitorsProposalOverview(request):
     :param request:
     :return:
     """
-    props = ProposalTracking.objects.filter(Subject__TimeSlot=get_timeslot()).annotate(q_count=Count('UniqueVisitors')).order_by('-q_count')
+    props = ProposalTracking.objects.filter(Subject__TimeSlot=get_timeslot()).annotate(
+        q_count=Count('UniqueVisitors')).order_by('-q_count')
 
     return render(request, 'godpowers/visitorsoverview.html', {
-        'props' : props,
+        'props': props,
     })
 
 
@@ -59,7 +59,7 @@ def visitorOverview(request, pk):
     usr = get_object_or_404(User, pk=pk)
     props = [trk.Subject for trk in ProposalTracking.objects.filter(UniqueVisitors=usr)]
 
-    return render(request, 'proposals/ProposalList.html', {'proposals' : props, 'usrsubject' : usr})
+    return render(request, 'proposals/ProposalList.html', {'proposals': props, 'usrsubject': usr})
 
 
 @superuser_required()
@@ -71,7 +71,7 @@ def visitorsMenu(request):
     :return:
     """
 
-    return render(request, 'godpowers/visitorsmenu.html', {'students' : get_all_students()})
+    return render(request, 'godpowers/visitorsmenu.html', {'students': get_all_students()})
 
 
 @superuser_required()
@@ -83,7 +83,7 @@ def clearCache(request):
     :return:
     """
     cache.clear()
-    return render(request, "base.html", {"Message":"Cache cleared!"})
+    return render(request, "base.html", {"Message": "Cache cleared!"})
 
 
 @superuser_required()
@@ -137,4 +137,4 @@ def killSession(request, pk):
             request = HttpRequest()
             request.session = init_session(session.session_key)
             auth_logout(request)
-    return render(request, "base.html", {"Message" : "User logged out", "return":"godpowers:sessionlist"})
+    return render(request, "base.html", {"Message": "User logged out", "return": "godpowers:sessionlist"})

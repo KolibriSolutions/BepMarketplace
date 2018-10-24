@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.urls import reverse
 from django.utils import timezone
 
 from general_test import ProjectViewsTestGeneral
@@ -40,7 +39,6 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
         g2.id = 1
         g2.save()
 
-
     def test_view_status(self):
         codes_general = [
             [['filetypecreate', None], self.p_support_prv],
@@ -52,7 +50,7 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['editgroup', {'pk': 0}], self.p_support_prv],
             [['listgroups', {'pk': 100}], self.p_support_prv],
         ]
-        codes_phase12345 = [
+        codes_phase12345 = [  # also no-timephase
             [['listfileoftype', {'pk': 100}], self.p_forbidden],
             [['listmissingoftype', {'pk': 100}], self.p_forbidden],
             [['filetypelist', None], self.p_support_prv],
@@ -85,9 +83,9 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['assignshuffle', {'pk': 100}], self.p_support_prv],
         ]
         self.info['type'] = 'general'
-        self.loop_phase_code_user(range(1, 8), codes_general)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes_general)
         self.info['type'] = 'phase'
-        self.loop_phase_code_user([1, 2, 3, 4, 5], codes_phase12345)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5], codes_phase12345)
         # self.loop_phase_user([5], codes_phase5)
         self.loop_phase_code_user([6, 7], codes_phase67)
 

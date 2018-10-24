@@ -58,6 +58,8 @@
                     <p>{{ project.GeneralDescription|linebreaksbr }}</p>
                     <h4>Students task description</h4>
                     <p>{{ project.StudentsTaskDescription|linebreaksbr }}</p>
+                    <h4>Student task description for extension (if applicable)</h4>
+                    <p>{{ project.ExtensionDescription }}</p>
                     {% if project.attachments.exists %}
                         <h4>Attachments:</h4>
                         {% for attachment in project.attachments.all %}
@@ -116,6 +118,7 @@
                             {% endif %}
                         {% else %}
                             {% if phasenumber < 3 and phasenumber > 0 %}
+                                {# Note, groupadministrators can sometimes see a downgradebutton, but cannot downgrade. #}
                                 {% if project.Status == 1 %}
                                     {% include 'proposals/Proposal_include_upgradeButton.html' %}
                                 {% elif project.Status == 2 %}
@@ -131,7 +134,7 @@
                                         {% include 'proposals/Proposal_include_downgradeButton.html' %}
                                     {% endif %}
                                 {% elif project.Status == 4 %}
-                                    {% if project.Track.Head == request.user or user|has_group:"type3staff" %}
+                                    {% if project.Track.Head == request.user or user|has_group:"type3staff" or phasenumber == 1 %}
                                         {% include 'proposals/Proposal_include_downgradeButton.html' %}
                                     {% endif %}
                                 {% endif %}
@@ -155,10 +158,6 @@
                         <tr>
                             <td>Capacity group:</td>
                             <td>{{ project.get_Group_display }}</td>
-                        </tr>
-                        <tr>
-                            <td>Preferred ECTS:</td>
-                            <td>{{ project.ECTS }}</td>
                         </tr>
                         <tr>
                             <td>Assistants:</td>
@@ -256,6 +255,7 @@
                                         {% for d in distributions %}
                                             <li>
                                                 {{ d.Student.get_full_name }}
+                                            {% if d.Student in project.Private.all %}(private){% endif %}
                                             </li>
                                         {% endfor %}
                                     </ul>

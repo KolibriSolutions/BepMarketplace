@@ -1,20 +1,18 @@
-from channels.generic.websocket import AsyncWebsocketConsumer
-from django.contrib.auth.models import Group, User
-from .models import TelemetryKey
-from tracking.utils import get_ProposalTracking
-from django.shortcuts import get_object_or_404
-from django.contrib import auth
+
 from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
+from django.contrib import auth
+from django.contrib.auth.models import Group
+
 from proposals.utils import get_cached_project
-
-
+from tracking.utils import get_ProposalTracking
 
 
 def checkauthcurrentviewnumber(user, track):
     if user != track.Subject.ResponsibleStaff and \
-                    user not in track.Subject.Assistants.all() and \
-                    auth.models.Group.objects.get(name="type3staff") not in user.groups.all() and \
-                    not user.is_superuser:
+            user not in track.Subject.Assistants.all() and \
+            auth.models.Group.objects.get(name="type3staff") not in user.groups.all() and \
+            not user.is_superuser:
         return True
     return False
 
@@ -33,9 +31,9 @@ class CurrentViewNumberConsumer(AsyncWebsocketConsumer):
             return
 
         await self.channel_layer.group_add(
-                'viewnumber{}'.format(self.pk),
-                self.channel_name
-            )
+            'viewnumber{}'.format(self.pk),
+            self.channel_name
+        )
         await self.accept()
         await self.send(text_data=str(await database_sync_to_async(self.track.UniqueVisitors.count)()))
 

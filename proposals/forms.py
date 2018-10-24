@@ -10,7 +10,7 @@ from django.core.files.images import get_image_dimensions
 from django.forms import ValidationError
 
 from general_form import clean_file_default, FileForm, UserChoiceField, UserMultipleChoiceField
-from general_mail import mailPrivateStudent, mail_proposal_single
+from general_mail import mail_proposal_private, mail_proposal_single
 from general_model import get_ext, print_list
 from general_view import get_grouptype
 from index.models import UserMeta
@@ -203,21 +203,21 @@ class ProposalForm(forms.ModelForm):
                   'addAssistantsEmail',
                   'Track',
                   'Group',
-                  'ECTS',
                   'NumstudentsMin',
                   'NumstudentsMax',
                   'GeneralDescription',
                   'StudentsTaskDescription',
+                  'ExtensionDescription',
                   'TimeSlot',
                   'addPrivatesEmail'
                   ]
 
         labels = {
-            'ECTS': 'Preferred ECTS',
             'NumstudentsMin': 'Minimum number of students',
             'NumstudentsMax': 'Maximum number of students',
             'GeneralDescription': 'General description',
             'StudentsTaskDescription': 'Students task description',
+            'ExtensionDescription' : 'Description for extension work',
             'TimeSlot': 'Timeslot (year)',
             'Private': 'Change private students',
         }
@@ -227,11 +227,11 @@ class ProposalForm(forms.ModelForm):
             'Assistants': widgets.MetroSelectMultiple,
             'Track': widgets.MetroSelect,
             'Group': widgets.MetroSelect,
-            'ECTS': widgets.MetroSelect,
             'NumstudentsMin': widgets.MetroNumberInputInteger,
             'NumstudentsMax': widgets.MetroNumberInputInteger,
             'GeneralDescription': widgets.MetroMultiTextInput,
             'StudentsTaskDescription': widgets.MetroMultiTextInput,
+            'ExtensionDescription' : widgets.MetroMultiTextInput,
             'TimeSlot': widgets.MetroSelect,
             'Private': widgets.MetroSelectMultiple
         }
@@ -345,8 +345,7 @@ class ProposalForm(forms.ModelForm):
                 for user in self.cleaned_data['addAssistantsEmail']:
                     if user not in self.instance.Assistants.all():
                         self.instance.Assistants.add(user)
-                        mail_proposal_single(self.request, self.instance, user,
-                                             'You were added as assistant to:')
+                        mail_proposal_single(self.instance, user, 'You were added as assistant to:')
 
             # add private students to proposal via email, which are converted to user in clean_addPrivatesEmail
             if self.cleaned_data['addPrivatesEmail'] is not None:
@@ -394,27 +393,26 @@ class ProposalFormEdit(ProposalForm):
                 # assistant removed via dropdown
                 for ass in self.instance.Assistants.all():
                     if ass not in self.cleaned_data['Assistants']:
-                        mail_proposal_single(self.request, self.instance, ass, 'You were removed as assistant from:')
+                        mail_proposal_single(self.instance, ass, 'You were removed as assistant from:')
                 # new assistant added via dropdown
                 for ass in self.cleaned_data['Assistants']:
                     if ass not in self.instance.Assistants.all():
-                        mail_proposal_single(self.request, self.instance, ass, 'You were added as assistant to:')
+                        mail_proposal_single(self.instance, ass, 'You were added as assistant to:')
 
             if 'Private' in self.changed_data:
                 # private student removed via dropdown
                 for std in self.instance.Private.all():
                     if std not in self.cleaned_data['Private']:
                         # self.instance.Private.remove(std)
-                        mailPrivateStudent(self.request, self.instance, std,
-                                           'You were removed from your private proposal. '
-                                           'If this is unexpected, please contact your supervisor.')
+                        mail_proposal_private(self.instance, std, 'You were removed from your private proposal. '
+                                                                  'If this is unexpected, please contact your supervisor.')
                 # no email on add, because student gets update email in views.py on edit
 
             if 'ResponsibleStaff' in self.changed_data:
                 if self.instance.ResponsibleStaff != self.oldResponsibleStaff:
-                    mail_proposal_single(self.request, self.instance, self.oldResponsibleStaff,
+                    mail_proposal_single(self.instance, self.oldResponsibleStaff,
                                          'You were removed as responsible staff from:')
-                    mail_proposal_single(self.request, self.instance, self.instance.ResponsibleStaff,
+                    mail_proposal_single(self.instance, self.instance.ResponsibleStaff,
                                          'You were added as responsible staff to:')
             # only save here, because old data is needed to determine changed privates.
             super().save(commit=True)

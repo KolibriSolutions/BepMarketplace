@@ -1,9 +1,11 @@
-from django.contrib.auth.models import Group
+from django.forms import Form
+from two_factor.forms import MethodForm, PhoneNumberForm, YubiKeyDeviceForm
 from two_factor.views.core import LoginView, SetupView
 from two_factor.views.profile import DisableView
 
 from tracking.models import UserLogin
-from .forms import *
+from .forms import TwoFactorAuthenticationForm, TwoFactorAuthTokenForm, TwoFactorBackupTokenForm, \
+    TwoFactorDeviceValidationForm, TwoFactorTOTPDeviceForm
 
 
 class TwoFactorLoginView(LoginView):
@@ -13,7 +15,7 @@ class TwoFactorLoginView(LoginView):
     form_list = (
         ('auth', TwoFactorAuthenticationForm),
         ('token', TwoFactorAuthTokenForm),
-        ('backup', TowFactorBackupTokenForm),
+        ('backup', TwoFactorBackupTokenForm),
     )
 
     def done(self, form_list, **kwargs):

@@ -25,6 +25,7 @@ class osirisPerson:
 
 
 class osirisData:
+    # TODO remove hardcoded file
     FILE = 'osiris.csv'
 
     def __init__(self):

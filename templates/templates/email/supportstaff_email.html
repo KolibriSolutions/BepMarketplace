@@ -1,4 +1,7 @@
 {% extends "email/base_email.html" %}
+{% block header %}
+Dear {{ user.get_full_name }},<br/>
+{% endblock %}
 {% block body %}
 Message from the administration:<br/><br/>
 {% autoescape off %}

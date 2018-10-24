@@ -5,11 +5,13 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
 from general_view import get_grouptype
+from presentations.models import PresentationTimeSlot
+from presentations.utils import planning_public
 from proposals.models import Proposal
 from proposals.utils import can_edit_project_fn, get_cached_project
 from support.models import CapacityGroupAdministration
 from timeline.utils import get_timephase_number, get_timeslot
-from students.models import Application
+
 
 def group_required(*group_names):
     """
@@ -32,7 +34,6 @@ def group_required(*group_names):
         login_url='index:login',
         redirect_field_name='next',
     )
-
     return actual_decorator
 
 
@@ -40,7 +41,7 @@ def phase_required(*phase_numbers):
     """
     Check whether the system is in any of the given timephases
 
-    :param group_names:
+    :param phase_numbers: list of ints of allowed phases.
     :return:
     """
 
@@ -49,7 +50,7 @@ def phase_required(*phase_numbers):
             if get_timephase_number() in phase_numbers:
                 return True
             else:
-                raise PermissionDenied("This page is not available in the current timephase.")
+                raise PermissionDenied("This page is not available in the current time phase.")
         return False
 
     actual_decorator = user_passes_test(
@@ -110,7 +111,6 @@ def can_view_proposal(fn):
     :param fn:
     :return:
     """
-
     def wrapper(*args, **kw):
         if 'pk' in kw:
             pk = int(kw['pk'])
@@ -138,17 +138,28 @@ def can_view_proposal(fn):
             return fn(*args, **kw)
 
         # if project is published, non private and its the right time phase
-        if prop.Status == 4 \
-                and (not prop.Private.exists() or request.user in prop.Private.all()):
-            # students only in timephase after 2
-            if (not request.user.groups.exists()) and get_timephase_number() > 2 \
-                    and prop.TimeSlot == get_timeslot():
-                return fn(*args, **kw)
-            # else staff members are allowed to view in all timeslots and timephases
-            if request.user.groups.exists():
-                return fn(*args, **kw)
+        if prop.Status == 4:
+            if not prop.Private.exists() or request.user in prop.Private.all():  # only non-private proposals
+                # else staff members are allowed to view public proposals in all timeslots and timephases
+                # this includes assessors as they are type1 or type2.
+                if request.user.groups.exists():
+                    return fn(*args, **kw)
+                # students view public proposals or private student views his proposal: Only in timephase after 2
+                elif get_timephase_number() > 2 and prop.TimeSlot == get_timeslot():
+                    return fn(*args, **kw)
+            # assessors are allowed to view status4 private projects if they have to assess it.
+            elif planning_public() and \
+                    prop.Private.exists() and \
+                    request.user.groups.exists() and \
+                    prop.TimeSlot == get_timeslot():
+                for dist in prop.distributions.all():
+                    try:
+                        if request.user in dist.presentationtimeslot.Presentations.Assessors.all():
+                            return fn(*args, **kw)
+                    except PresentationTimeSlot.DoesNotExist:
+                        continue
 
-        # user is secretary (type4) and its the right group
+        # user is secretary (type4) and its the right capacity group
         if CapacityGroupAdministration.objects.filter(Q(Members__in=[request.user]) & Q(Group=prop.Group)).exists():
             return fn(*args, **kw)
 
@@ -215,10 +226,11 @@ def can_share_proposal(fn):
                 redirect_field_name='next', )
 
         allowed = can_edit_project_fn(request.user, prop, 'ty' in kw)
-        if allowed[0] == True:
+        if allowed[0] is True:
             return fn(*args, **kw)
         elif (
-                request.user == prop.ResponsibleStaff or request.user in prop.Assistants.all() or request.user == prop.Track.Head) and not prop.prevyear():
+                request.user == prop.ResponsibleStaff or request.user in prop.Assistants.all() or
+                request.user == prop.Track.Head) and not prop.prevyear():
             return fn(*args, **kw)
         else:
             raise PermissionDenied(allowed[1])
@@ -271,8 +283,8 @@ def can_downgrade_proposal(fn):
             if get_timephase_number() > 2 and not get_grouptype("3") in request.user.groups.all():
                 raise PermissionDenied("Proposal is frozen in this timeslot")
 
-            # if status is 3 Responsible can downgrade 3-2 in timephase 1
-            if prop.Status == 3 and prop.ResponsibleStaff == request.user and get_timephase_number() == 1:
+            # if status is 3 or 4 Responsible can downgrade 3-2 in timephase 1 only
+            if prop.Status >= 3 and prop.ResponsibleStaff == request.user and get_timephase_number() == 1:
                 return fn(*args, **kw)
 
             # Track head can downgrade in phase 1 and 2

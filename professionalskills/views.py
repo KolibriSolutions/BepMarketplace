@@ -15,7 +15,7 @@ from xhtml2pdf import pisa
 
 from BepMarketplace.decorators import can_access_professionalskills, group_required, student_only, phase_required
 from distributions.utils import get_distributions
-from general_mail import send_mail, EmailThreadMultipleTemplate
+from general_mail import send_mail, EmailThreadTemplate
 from general_view import get_grouptype, get_all_students
 from students.models import Distribution
 from timeline.utils import get_timeslot
@@ -248,7 +248,7 @@ def mail_overdue_students(request):
                     mails.append({
                         'template': 'email/overdueprvstudent.html',
                         'email': dist.Student.email,
-                        'subject': 'Overdue PRV delivery',
+                        'subject': 'Overdue professional skill delivery',
                         'context': {
                             'student': dist.Student,
                             'project': dist.Proposal,
@@ -256,9 +256,9 @@ def mail_overdue_students(request):
                         }
                     })
 
-            EmailThreadMultipleTemplate(mails).start()
+            EmailThreadTemplate(mails).start()
 
-            return render(request, "support/emailProgress.html")
+            return render(request, "support/email_progress.html")
     else:
         form = ConfirmForm()
 
@@ -301,12 +301,12 @@ def respond_file(request, pk):
         form = StaffReponseForm(request.POST, instance=responseobj)
         if form.is_valid():
             if form.cleaned_data['Status'] != statusorig:
-                send_mail('Prv Feedback', 'email/prvresponse.html', {
+                send_mail('Professional skill feedback', 'email/prvresponse.html', {
                     'student': fileobj.Distribution.Student,
                     'status': form.cleaned_data['Status'],
                     'explanation': form.cleaned_data['Explanation'],
                     'type': fileobj.Type.Name,
-                }, fileobj.Distribution.Student.email, 'email/prvresponse.html')
+                }, fileobj.Distribution.Student.email)
             form.save()
             return render(request, 'base.html', {
                 'Message': 'Response saved!',

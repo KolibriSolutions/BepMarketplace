@@ -5,15 +5,15 @@ Dear {{ supervisor.get_full_name }},<br />
 {% endblock %}
 
 {% block body %}
-Distribution of projects on the {{ name }} has finished. <br/>
+Distribution of projects on the {{ NAME }} has finished. <br/>
 The results for you projects are listed below. If you think we made an error, please let us know <u>within a week</u>.
-<br/><br/>
+<br /><br />
 
 Projects for which you are responsible:<br/>
 {% for project in projects %}
-    <i>{{ project }}</i>:<br/>
+    <br /><i>{{ project }}</i>:<br/>
     {% if project.distributions.count == 0 %}
-        <br/>Unfortunately no students have been distributed to this project.<br/><br/>
+        Unfortunately no students have been distributed to this project.<br/>
     {% else %}
         <ul>
         {% for dist in project.distributions.all %}
@@ -23,5 +23,5 @@ Projects for which you are responsible:<br/>
     {% endif %}
 {% endfor %}
 <br/><br/>
-We will publish statistics about how your project did in the {{ name }} later this year.
+We will publish statistics about how your project did in the {{ NAME }} later this year.
 {% endblock %}

@@ -12,14 +12,14 @@ class MailProgressConsumer(AsyncWebsocketConsumer):
             await self.close()
         else:
             await self.channel_layer.group_add(
-                'emailprogress',
+                'email_progress',
                 self.channel_name
             )
             await self.accept()
 
     async def disconnect(self, code):
-        await self.channel_layer.group_discard (
-            'emailprogress',
+        await self.channel_layer.group_discard(
+            'email_progress',
             self.channel_name
         )
 

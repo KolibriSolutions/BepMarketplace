@@ -14,7 +14,7 @@ from BepMarketplace.decorators import group_required, can_edit_proposal, can_vie
     can_share_proposal
 from api.views import upgrade_status_api, downgrade_status_api
 from distributions.utils import get_distributions
-from general_mail import mailAffectedUser, mailPrivateStudent
+from general_mail import mail_proposal_all, mail_proposal_private
 from general_model import GroupOptions
 from general_view import get_grouptype, truncate_string
 from index.models import Track
@@ -127,13 +127,13 @@ def create_project(request):
         form = ProposalFormCreate(request.POST, request=request)
         if form.is_valid():
             prop = form.save()
-            mailAffectedUser(request, prop)
+            mail_proposal_all(request, prop)
             if prop.Private.all():
                 for std in prop.Private.all():
-                    mailPrivateStudent(request, prop, std, "A private proposal was created for you.")
+                    mail_proposal_private(prop, std, "A private proposal was created for you.")
             return render(request, "proposals/ProposalMessage.html", {"Message": "Proposal created!", "Proposal": prop})
     else:
-        init = {'ECTS': "15"}
+        init = {}
         if get_grouptype("1") in request.user.groups.all():
             init["ResponsibleStaff"] = request.user.id
         elif get_grouptype("2") in request.user.groups.all() or get_grouptype('2u'):
@@ -168,7 +168,7 @@ def list_own_projects(request):
         projects = projects.select_related('ResponsibleStaff', 'Track__Head', 'TimeSlot').prefetch_related('Assistants')
     else:
         projects = projects.select_related('ResponsibleStaff', 'Track__Head', 'TimeSlot').prefetch_related('Assistants',
-                                                                                         'distributions__Student__usermeta')
+                                                                                                           'distributions__Student__usermeta')
     return render(request, 'proposals/ProposalsCustomList.html', {'proposals': projects,
                                                                   'hide_sidebar': True})
 
@@ -198,7 +198,7 @@ def edit_project(request, pk):
                 updatePropCache(obj)
                 if obj.Private.all():
                     for std in obj.Private.all():
-                        mailPrivateStudent(request, obj, std, "Your private proposal was edited.")
+                        mail_proposal_private(obj, std, "Your private proposal was edited.")
             return render(request, "proposals/ProposalMessage.html", {"Message": "Proposal saved!", "Proposal": obj})
     else:
         if obj.Status == 4:
@@ -219,15 +219,16 @@ def copy_project(request, pk):
     :param request:
     :return:
     """
+    
     if request.method == 'POST':
         form = ProposalFormCreate(request.POST, request=request)
         if form.is_valid():
             prop = form.save()
 
-            mailAffectedUser(request, prop)
+            mail_proposal_all(request, prop)
             if prop.Private.all():
                 for std in prop.Private.all():
-                    mailPrivateStudent(request, prop, std, "A private proposal was created for you.")
+                    mail_proposal_private(prop, std, "A private proposal was created for you.")
             return render(request, "proposals/ProposalMessage.html", {"Message": "Proposal created!", "Proposal": prop})
     else:
         old_proposal = get_object_or_404(Proposal, pk=pk)
@@ -411,7 +412,7 @@ def downgrade_status(request, pk):
             return render(request, 'GenericForm.html',
                           {'form': form, 'formtitle': 'Message for downgrade proposal ' + obj.Title,
                            'buttontext': 'Downgrade and send message'})
-    else:
+    else:  # assistant downgrade does not get the message field.
         r = downgrade_status_api(request, pk)
         return render(request, "proposals/ProposalMessage.html", {"Message": r.content.decode(), "Proposal": obj},
                       status=r.status_code)
@@ -427,11 +428,15 @@ def list_pending(request):
     """
     projs = []
     if get_grouptype("2") in request.user.groups.all() or get_grouptype("2u") in request.user.groups.all():
+        # type2 can only be assistant
         projs = get_all_proposals().filter(Q(Assistants__id=request.user.id) & Q(Status__exact=1))
 
     elif get_grouptype("1") in request.user.groups.all():
-        projs = get_all_proposals().filter((Q(ResponsibleStaff=request.user.id) & Q(Status__exact=2)) |
-                                           (Q(Track__Head=request.user.id) & Q(Status__exact=3)))
+        # type1 can be responsible, trackhead or assistant
+        projs = get_all_proposals().filter((Q(Assistants__id=request.user.id) & Q(Status__exact=1)) |
+                                           (Q(ResponsibleStaff=request.user.id) & Q(Status__exact=2)) |
+                                           (Q(Track__Head=request.user.id) & Q(Status__exact=3))
+                                           ).distinct()
 
     return render(request, "proposals/pendingProposals.html", {"proposals": projs})
 

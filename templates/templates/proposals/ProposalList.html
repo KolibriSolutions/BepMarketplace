@@ -17,7 +17,6 @@
                     <th>Research group</th>
                     <th>Responsible staff</th>
                     <th>Assistants</th>
-                    <th>ECTS</th>
                     <th data-visible='false'>URL</th>
                 </tr>
                 </thead>
@@ -41,7 +40,6 @@
                                 {% endfor %}
                             </ul>
                         </td>
-                        <td>{{ proposal.ECTS }}</td>
                         <td>{{ domain }}{% url 'proposals:details' proposal.id %}</td>
                     </tr>
                 {% endfor %}
@@ -59,14 +57,7 @@
                     {column_number: 1, filter_type: "select"},
                     {column_number: 2, filter_type: "select"},
                     {column_number: 3, filter_type: "select", column_data_type: 'html'},  // to parse mailto links
-                    {
-                        column_number: 4,
-                        filter_type: "select",
-                        column_data_type: 'html',
-                        html_data_type: 'selector',
-                        html_data_selector: 'li'
-                    }, //to parse ul-li
-                    {column_number: 5, filter_type: "select"}
+                    {column_number: 4, filter_type: "select"}
                 ]
             );
         });

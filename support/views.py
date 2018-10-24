@@ -13,8 +13,8 @@ from htmlmin.decorators import not_minified_response
 from BepMarketplace.decorators import group_required
 from distributions.utils import get_distributions
 from general_form import ConfirmForm
-from general_mail import EmailThread, MailTrackHeadsPending
-from general_model import GroupOptions
+from general_mail import EmailThreadTemplate, mail_track_heads_pending, send_mail
+from general_model import GroupOptions, print_list
 from general_view import get_all_students, get_all_staff, get_grouptype
 from index.models import Track, UserMeta
 from osirisdata.data import osirisData
@@ -42,7 +42,7 @@ def list_applications_distributions(request):
     Used for support staff as an overview.
     """
     if get_timephase_number() < 3:
-        raise PermissionDenied("There are no applications yet")
+        raise PermissionDenied("There are no applications or distributions yet.")
     elif get_timephase_number() > 5:
         projects = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
         projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
@@ -124,84 +124,93 @@ def mailing(request):
     if request.method == 'POST':
         form = ChooseMailingList(request.POST, options=options)
         if form.is_valid():
-            emails = set()
+            recipients = set()
 
             # iterate through all selected users
             if form.cleaned_data['people_all']:
                 # users
                 for user in list(get_all_students()) + list(get_all_staff()):
-                    emails.add(user.email)
+                    recipients.add(user)
             if form.cleaned_data['people_type1']:
                 # all type1staff
                 for user in get_all_staff().filter(groups=get_grouptype("1")):
-                    emails.add(user.email)
+                    recipients.add(user)
             if form.cleaned_data['people_type2']:
                 # type2staff
                 for user in get_all_staff().filter(groups=get_grouptype("2")):
-                    emails.add(user.email)
+                    recipients.add(user)
             if form.cleaned_data['people_type2un']:
                 # type2unverifiedstaff
                 for user in get_all_staff().filter(groups=get_grouptype("2u")):
-                    emails.add(user.email)
+                    recipients.add(user)
             if form.cleaned_data['people_staffnonfinishedprop']:
                 # staff with projects of stats < 3
                 props = get_all_proposals().filter(Status__lt=3)
                 for prop in props:
-                    emails.add(prop.ResponsibleStaff.email)
+                    recipients.add(prop.ResponsibleStaff)
                     for ass in prop.Assistants.all():
-                        emails.add(ass.email)
+                        recipients.add(ass)
             if form.cleaned_data['people_type3']:
                 # type3staff
                 for user in get_all_staff().filter(groups=get_grouptype("3")):
-                    emails.add(user.email)
+                    recipients.add(user)
             if form.cleaned_data['people_osirisstudents']:
                 # students on osiris
                 data = osirisData()
                 for email in data.getallEmail():
-                    emails.add(email)
+                    recipients.add(email)
             if form.cleaned_data['people_allstudents']:
                 # all students on marketplace
                 for user in get_all_students():
-                    emails.add(user.email)
+                    recipients.add(user)
             if form.cleaned_data['people_10ectsstud']:
                 # all students marketplace 10ects
                 for user in get_all_students().filter(usermeta__EnrolledExt=False):
-                    emails.add(user.email)
+                    recipients.add(user)
             if form.cleaned_data['people_15ectsstud']:
                 # all students marketplace 15ects
                 for user in get_all_students().filter(usermeta__EnrolledExt=True):
-                    emails.add(user.email)
+                    recipients.add(user)
             if form.cleaned_data['people_nostudprof']:
                 # professors with no students
                 props = get_all_proposals().filter(distributions__isnull=True).distinct()
                 for prop in props:
-                    emails.add(prop.ResponsibleStaff.email)
+                    recipients.add(prop.ResponsibleStaff)
             if form.cleaned_data['people_staffdistr']:
                 # staff with students
                 props = get_all_proposals().filter(distributions__isnull=False).distinct()
                 for prop in props:
-                    emails.add(prop.ResponsibleStaff.email)
+                    recipients.add(prop.ResponsibleStaff)
                     for ass in prop.Assistants.all():
-                        emails.add(ass.email)
+                        recipients.add(ass)
 
             # add support staff and study advisors
             for sup in list(get_grouptype("3").user_set.all()):
-                emails.add(sup.email)
+                recipients.add(sup)
             for sup in list(Group.objects.get(name='type5staff').user_set.all()):
-                emails.add(sup.email)
+                recipients.add(sup)
             for sup in list(Group.objects.get(name='type6staff').user_set.all()):
-                emails.add(sup.email)
+                recipients.add(sup)
 
-            context = {
-                'message': form.cleaned_data['message'],
-            }
-            if form.cleaned_data['subject'] != '':
-                subject = form.cleaned_data['subject']
-            else:
-                subject = "email/supportstaff_email_subject.txt"
-            EmailThread(subject, "email/supportstaff_email.html", context,
-                        emails).start()
-            return render(request, "support/emailProgress.html")
+            # always send copy to admins
+            for user in User.objects.filter(is_superuser=True):
+                recipients.add(user)
+
+            # loop over all collected email addresses to create a message
+            mails = []
+            subject = form.cleaned_data['subject'] or 'message from support staff'
+            for recipient in recipients:
+                mails.append({
+                    'template': 'email/supportstaff_email.html',
+                    'email': recipient.email,
+                    'subject': subject,
+                    'context': {
+                        'message': form.cleaned_data['message'],
+                        'user': recipient,
+                    }
+                })
+            EmailThreadTemplate(mails).start()
+            return render(request, "support/email_progress.html")
     else:
         form = ChooseMailingList(options=options)
 
@@ -225,7 +234,7 @@ def mail_track_heads(request):
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
         if form.is_valid():
-            MailTrackHeadsPending()
+            mail_track_heads_pending()
             return render(request, "base.html", {"Message": "Track Heads mailed!"})
     else:
         form = ConfirmForm()
@@ -250,18 +259,6 @@ def list_users(request):
     :param request:
     :return:
     """
-    # DEPRICATED, cache is no longer needed because of prefetch.
-    # if request.user.is_superuser:
-    #     key = 'listusersbodyhtmladmin'
-    # else:
-    #     key = 'listusersbodyhtml'
-    # bodyhtml = cache.get(key)
-    # if bodyhtml is None:
-    #     bodyhtml = render_block_to_string('support/list_users.html', 'body', {
-    #         "users": User.objects.all().prefetch_related('groups', 'usermeta', 'usermeta__TimeSlot'),
-    #         "user": request.user})
-    #     cache.set(key, bodyhtml, None)
-
     return render(request, "support/list_users.html", {
         "users": User.objects.all().prefetch_related('groups', 'usermeta', 'usermeta__TimeSlot'),
         'hide_sidebar': True,
@@ -477,8 +474,8 @@ def list_students(request):
     :return:
     """
 
-    if get_timephase_number() < 0:
-        if get_timeslot() is None:
+    if get_timephase_number() < 0:  # no timephase
+        if get_timeslot() is None:  # no timeslot
             raise PermissionDenied("System is closed.")
     else:
         if get_timephase_number() < 4:
@@ -486,7 +483,7 @@ def list_students(request):
         if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
             return render(request, "base.html", {'Message':
                                                      "When the phase 'Distribution of projects' is finished, you can view your students here."})
-    if get_timephase_number() == 0 or get_timephase_number() >= 6:
+    if get_timephase_number() == -1 or get_timephase_number() >= 6:  # also show grades when timeslot but no timephase.
         show_grades = True
     else:
         show_grades = False
@@ -622,10 +619,22 @@ def edit_user_groups(request, pk):
     if request.method == "POST":
         form = UserGroupsForm(request.POST, instance=usr)
         if form.is_valid():
-            obj = form.save()
-            obj.save()
+            if form.has_changed():
+                # call print list here to force query execute
+                old = print_list(usr.groups.all().values_list('name', flat=True))
+                form.save()
+                new = print_list(usr.groups.all().values_list('name', flat=True))
+                send_mail("user groups changed", "email/user_groups_changed.html",
+                          {'oldgroups': old,
+                           'newgroups': new,
+                           'user': usr},
+                          usr.email)
+                return render(request, 'base.html', {
+                    'Message': 'User groups saved!',
+                    'return': 'support:listusers',
+                })
             return render(request, 'base.html', {
-                'Message': 'User groups saved!',
+                'Message': 'No changes made.',
                 'return': 'support:listusers',
             })
     else:
@@ -657,7 +666,7 @@ def capacity_group_administration(request):
     return render(request, "support/capacity_group_administration.html", {
         "form": form,
         "formtitle": "Capacity Group Administrators",
-        "buttontext": "save",
+        "buttontext": "Save",
     })
 
 

@@ -2,7 +2,7 @@
 Mail all trackheads with the proposal that they have to check. (All pending proposals)
 This script can be used to automatically mail track heads in (for instance) a cron job.
 """
-from general_mail import MailTrackHeadsPending
+from general_mail import mail_track_heads_pending
 
 if __name__ == '__main__':
     import django
@@ -25,4 +25,4 @@ if __name__ == '__main__':
 
     django.setup()
 
-    MailTrackHeadsPending(stdout=True)
+    mail_track_heads_pending(stdout=True)

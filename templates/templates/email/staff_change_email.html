@@ -1,7 +1,7 @@
 {% extends "email/base_email.html" %}
 
 {% block body %}
-A message from the BEP marketplace (<a href="{{ domain }}">{{ domain }}</a>):<br />
+A message from the {{ NAME }} (<a href="{{ DOMAIN }}">{{ DOMAIN }}</a>):<br />
     {{ message }}
     <br />
     <table>
@@ -55,5 +55,5 @@ A message from the BEP marketplace (<a href="{{ domain }}">{{ domain }}</a>):<br
     </tr>
     </table>
     <br />
-    Please login to the BEP marketplace to see all your proposals.
+    Please login to the {{ NAME }} to see all your proposals.
 {% endblock %}

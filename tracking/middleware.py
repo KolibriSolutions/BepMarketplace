@@ -1,8 +1,9 @@
 import json
 from datetime import datetime
-from pytz import utc
+
 from django.utils.deprecation import MiddlewareMixin
 from ipware.ip import get_real_ip
+from pytz import utc
 
 
 class TelemetryMiddleware(MiddlewareMixin):
@@ -51,7 +52,6 @@ class TelemetryMiddleware(MiddlewareMixin):
         return response
 
     def process_response(self, request, response):
-
         """
 
         :param request:

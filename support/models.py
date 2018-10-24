@@ -19,7 +19,7 @@ class CapacityGroupAdministration(models.Model):
     Group = models.CharField(max_length=3, choices=GroupOptions)
     Members = models.ManyToManyField(User, related_name='groupadministrations', blank=True)
 
-    def Proposals(self):
+    def proposals(self):
         return get_all_proposals().filter(Group=self.Group)
 
     def __str__(self):
@@ -30,7 +30,6 @@ class PublicFile(models.Model):
     """
     Public file. Support staff can upload these and the files are shown for each user on the frontpage.
     """
-
     def make_upload_path(instance, filename):
         """
         Upload path for a public file. Stored in /media/public_files/{timeslot-id}/{uuid.ext}
@@ -57,12 +56,12 @@ class PublicFile(models.Model):
         return str(self.OriginalName) + " - " + str(self.Caption)
 
     def save(self, *args, **kwargs):
-        # remove old image if this is a changed image
+        # remove old file if this is a changed file
         try:
             this_old = PublicFile.objects.get(id=self.id)
             if this_old.File != self.File:
                 this_old.File.delete(save=False)
-        except:  # new image object
+        except PublicFile.DoesNotExist:  # new image object
             pass
         super(PublicFile, self).save(*args, **kwargs)
 

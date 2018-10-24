@@ -22,15 +22,15 @@ from students.models import Distribution
 from support.models import CapacityGroupAdministration
 from timeline.models import TimeSlot, TimePhase
 from django.conf import settings
+from general_view import get_timephase_number
+
 
 # disable cache for all tests
 @override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}},
                    EMAIL_BACKEND='django.core.mail.backends.filebased.EmailBackend', EMAIL_FILE_PATH='./test_mail.log',
+                   MIDDLEWARE_CLASSES=[mc for mc in settings.MIDDLEWARE
+                                       if mc != 'tracking.middleware.TelemetryMiddleware']
                    )
-@override_settings(
-    MIDDLEWARE_CLASSES=[mc for mc in settings.MIDDLEWARE
-                        if mc != 'tracking.middleware.TelemetryMiddleware']
-)
 class ViewsTest(TestCase):
     """
     Class with testclient to test views. Some functions to setup data in the database.
@@ -53,19 +53,22 @@ class ViewsTest(TestCase):
         self.info = {}
 
         # The timeslot used for testing proposal of current timeslot
-        self.ts = TimeSlot(Begin=datetime.now(), End=datetime.now()+timedelta(days=3), Name='thisyear')
+        self.ts = TimeSlot(Begin=datetime.now(), End=datetime.now() + timedelta(days=3), Name='thisyear')
         self.ts.save()
 
         # The timephase used for testing. The Description is changed every test.
-        self.tp = TimePhase(Begin=datetime.now(), End=datetime.now()+timedelta(days=3), Timeslot=self.ts, Description=1 )
+        self.tp = TimePhase(Begin=datetime.now(), End=datetime.now() + timedelta(days=3), Timeslot=self.ts,
+                            Description=1)
         self.tp.save()
 
         # The timeslot used for testing proposal of next timeslot
-        self.nts = TimeSlot(Begin=datetime.now()+timedelta(days=5), End=datetime.now()+timedelta(days=8), Name='nextyear')
+        self.nts = TimeSlot(Begin=datetime.now() + timedelta(days=5), End=datetime.now() + timedelta(days=8),
+                            Name='nextyear')
         self.nts.save()
 
         # The timeslot used for testing proposal of previous timeslot
-        self.pts = TimeSlot(Begin=datetime.now()-timedelta(days=5), End=datetime.now()-timedelta(days=3), Name='prevyear')
+        self.pts = TimeSlot(Begin=datetime.now() - timedelta(days=5), End=datetime.now() - timedelta(days=3),
+                            Name='prevyear')
         self.pts.save()
 
         # Create groups and users
@@ -96,6 +99,7 @@ class ViewsTest(TestCase):
         # expected results:
         # r=random, t=this(for this proposal)
         # s=student, p=private-student, r=responsible, a=assistant, n = assistant_not_verified t=trackhead, u=support
+        # ta = assessor of presentation, 4=groupadministration, 5=studyadvisor, 6=profskill
         # matrix with different types of permissions, set for each user of the array self.usernames
         # permissions by user. The order is the order of self.usernames. User 'god' is disabled (not tested).
                 #  usernames:  r-1  t-1  r-h  t-h  r-2  t-2  t-u  r-3  r-s  t-p  r-4  t-4  r-5  r-6  ra-1  ta-1  sup, ano
@@ -103,6 +107,7 @@ class ViewsTest(TestCase):
         self.p_superuser =    [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # no one
         self.p_all =          [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 302]  # everyone
         self.p_anonymous =    [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200]  # everyone
+        self.p_redirect =        [302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302]  # everyone
 
         self.p_staff =        [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 200, 200, 200, 200, 200, 200, 200, 302]  # all staff, general
         self.p_staff12345 =   [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 200, 403, 200, 200, 200, 302]  # all staff, general, for proposal stats
@@ -111,11 +116,14 @@ class ViewsTest(TestCase):
         self.p_staff_stud =   [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 403, 403, 403, 200, 200, 200, 200, 302]  # all staff that can see students (1,2,3,6)
 
         self.p_all_this =     [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal
-        self.p_all_this_dist= [403, 200, 403, 200, 403, 200, 200, 200, 200, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # staff of this proposal, as distributed to r-s (not t-p!). Also type6 for prv (NOT YET ASSESSOR)
-        self.p_no_assistant = [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal except assistants
+        self.p_all_this_pres= [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal including ta-1
+        self.p_all_this_dist= [403, 200, 403, 200, 403, 200, 200, 200, 200, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # staff of this proposal, as distributed to r-s (not t-p!). Also type6. For prv (NOT YET ASSESSORS!)
+        self.p_no_assistant = [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal except assistants. For up/downgrading and edit proposal.
+        self.p_staff_results =[403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal except assistants including assessors. For results staff grading form.
         self.p_all_this_view =[403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 403, 200, 302]  # staff of this proposal including view only users (type4)
 
         self.p_private =      [403, 200, 403, 200, 403, 200, 200, 200, 403, 200, 403, 200, 403, 403, 403, 403, 200, 302]  # private proposal view status 4
+        self.p_private_pres=  [403, 200, 403, 200, 403, 200, 200, 200, 403, 200, 403, 200, 403, 403, 403, 200, 200, 302]  # private proposal view status 4, in phase 7 or if presentation is public.
         self.p_trackhead =    [403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # trackhead of proposal and support
         self.p_grade_final =  [403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # Trackhead and assessor can finalize grades.
         self.p_grade_staff =  [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal except assistants, for grading
@@ -146,7 +154,7 @@ class ViewsTest(TestCase):
         # setup all groups
         self.group_names = [
             'type1staff',  # project responsible
-            'type2staff', # project assistant
+            'type2staff',  # project assistant
             'type2staffunverified',  # unverified assistant
             'type3staff',  # support staff
             'type4staff',  # Capacity group administration
@@ -193,6 +201,7 @@ class ViewsTest(TestCase):
         for n in self.usernames:
             if n != 'ano':
                 u = User(username=n)
+                u.email = n + '@' + settings.STAFF_EMAIL_DOMAINS[0]
                 u.save()
                 x = n.split('-')[-1]
                 if x == '1':
@@ -215,12 +224,12 @@ class ViewsTest(TestCase):
                     u.groups.add(self.type3staff)
                     u.is_superuser = True
                     u.is_staff = True
-                # else: # student
-                    # nothing
+                else:  # student
+                    u.email = n + '@' + settings.STUDENT_EMAIL_DOMAINS[0]
                 u.save()
                 self.users[n] = u
                 m = UserMeta(User=u,
-                             EnrolledBEP=True,)
+                             EnrolledBEP=True, )
                 m.save()
                 m.TimeSlot.add(self.ts)
                 m.save()
@@ -274,9 +283,16 @@ class ViewsTest(TestCase):
         """
         assert isinstance(phases, list) or isinstance(phases, range)
         for phase in phases:
-            self.tp.Description = phase
-            self.tp.save()
-            self.info['phase'] = str(phase)
+            if phase != get_timephase_number():
+                if phase == -1:
+                    self.tp.Begin = datetime.now() + timedelta(days=1)
+                    self.tp.save()
+                    self.info['phase'] = 'No Phase'
+                else:
+                    self.tp.Begin = datetime.now()
+                    self.tp.Description = phase
+                    self.tp.save()
+                    self.info['phase'] = str(phase)
             self.loop_code_user(codes)
 
     def loop_code_user(self, codes):
@@ -389,10 +405,9 @@ class ProjectViewsTestGeneral(ViewsTest):
                                  GeneralDescription="Test general description",
                                  StudentsTaskDescription="Test student task description",
                                  Status=1,
-                                 ECTS=15,
                                  Track=self.track,
                                  TimeSlot=self.ts,
-        )
+                                 )
 
         self.proposal.save()
         self.p = self.proposal.id
@@ -401,17 +416,16 @@ class ProjectViewsTestGeneral(ViewsTest):
         self.proposal.save()
         # make private proposal
         self.privateproposal = Proposal(Title="privateproposaltest",
-                                 ResponsibleStaff=self.users.get('t-1'),
-                                 Group=GroupOptions[0][0],
-                                 NumstudentsMin=1,
-                                 NumstudentsMax=1,
-                                 GeneralDescription="Test general description",
-                                 StudentsTaskDescription="Test student task description",
-                                 Status=1,
-                                 ECTS=15,
-                                 Track=self.track,
-                                TimeSlot=self.ts,
-        )
+                                        ResponsibleStaff=self.users.get('t-1'),
+                                        Group=GroupOptions[0][0],
+                                        NumstudentsMin=1,
+                                        NumstudentsMax=1,
+                                        GeneralDescription="Test general description",
+                                        StudentsTaskDescription="Test student task description",
+                                        Status=1,
+                                        Track=self.track,
+                                        TimeSlot=self.ts,
+                                        )
 
         self.privateproposal.save()
         self.ppriv = self.privateproposal.id
@@ -428,7 +442,7 @@ class ProjectViewsTestGeneral(ViewsTest):
         )
         self.distribution_random.save()
         dp = Distribution(
-            Proposal=self.proposal,
+            Proposal=self.privateproposal,
             Student=self.users['t-p'],  # assign the student with private proposal
             Timeslot=self.ts,
         )
@@ -448,7 +462,7 @@ class ProjectViewsTestGeneral(ViewsTest):
 
         )
         r.save()
-
+        # one presentation set with two presentationtimeslots. ta-1 is assessor of the set.
         p = PresentationSet(
             PresentationOptions=po,
             PresentationRoom=r,
@@ -457,13 +471,14 @@ class ProjectViewsTestGeneral(ViewsTest):
         )
         p.save()
         p.Assessors.add(self.users['ta-1'])
-
+        # presentation timeslot student r
         ptsr = PresentationTimeSlot(
             Presentations=p,
             Distribution=self.distribution_random,
-            DateTime=timezone.now()+timedelta(hours=2)
+            DateTime=timezone.now() + timedelta(hours=2)
         )
         ptsr.save()
+        # presentation timeslot student p
         ptsp = PresentationTimeSlot(
             Presentations=p,
             Distribution=dp,

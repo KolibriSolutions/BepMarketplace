@@ -1,12 +1,6 @@
 {% extends "base.html" %}
 {% load custom_filters %}
 {% block body %}
-    {# cache is removed, prefetch is fast enough. #}
-    {#    {% if bodyhtml %}#}
-    {#        {% autoescape off %}#}
-    {#            {{ bodyhtml }}#}
-    {#        {% endautoescape %}#}
-    {#    {% else %}#}
     <h1>List all users</h1>
     <a href="{% url 'support:capacitygroupadministration' %}" class="button primary">Capacity Group Administration</a>
     <a href="{% url 'index:edit_tracks' %}" class="button primary">Track heads</a>
@@ -22,7 +16,7 @@
                 <th>Type<br/></th>
                 <th>Active<br/></th>
                 <th data-searchable="false">Last login</th>
-                <th>Timeslots</th>
+                <th>Time slots</th>
                 <th data-searchable="false" data-sortable="false">Edit</th>
                 {% if user.is_superuser %}
                     <th data-searchable="false" data-sortable="false">Godpowers</th>
@@ -38,7 +32,7 @@
                     <td>{{ u.username }}</td>
                     <td><a href="mailto:{{ u.email }}">{{ u.email }}</a></td>
                     <td>
-                        {% if u.groups.exists or u.is_superuser%}
+                        {% if u.groups.exists or u.is_superuser %}
                             {{ u.groups.all|join:" & " }}{% if u.is_superuser %} & superuser{% endif %}
                         {% else %}
                             student (no groups)
@@ -66,7 +60,7 @@
                             <a href="{% url 'support:usergroups' u.id %}" class="button primary">Groups</a>
                         {% else %}
                             {# student #}
-                            <a href="{% url 'support:overruleusermeta' u.id %}" class="button primary">Edit</a>
+                            <a href="{% url 'support:overruleusermeta' u.id %}" class="button primary">User Meta</a>
                         {% endif %}
                     </td>
 
@@ -83,7 +77,6 @@
             </tbody>
         </table>
     </div>
-    {#    {% endif %}#}
 {% endblock %}
 {% block scripts %}
     {{ block.super }}

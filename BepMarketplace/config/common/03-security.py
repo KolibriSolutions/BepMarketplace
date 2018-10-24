@@ -18,15 +18,16 @@ X_FRAME_OPTIONS = 'DENY'
 CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'")
 CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")
 CSP_IMG_SRC = ("'self'", "data:")  # base64 images are used by lightbox
-CSP_FONT_SRC = ("'self'")
 CSP_CONNECT_SRC = ("'self'", "wss://"+HOSTNAME)  # websockets and ajax. Make sure wss:// is set and not ws://.
+CSP_BASE_URI = ("'self'")
 CSP_FRAME_ANCESTORS = ("'none'")
 CSP_FORM_ACTION = ("'self'")  # where form action=URI can point to
 
-
 ## Impersonate
-IMPERSONATE_REQUIRE_SUPERUSER = True
-IMPERSONATE_DISABLE_LOGGING = True
+IMPERSONATE = {
+    'REQUIRE_SUPERUSER': True,
+    'DISABLE_LOGGING': True,
+}
 
 
 ## Media
@@ -51,6 +52,6 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True  # if x_forwarde_protocol fails, redirect to:
     SECURE_SSL_HOST = 'the-nginx-config-is-failing.test'
 
-    SECURE_HSTS_SECONDS = 86400*7  # 7 days
+    SECURE_HSTS_SECONDS = 63072000  # half year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True

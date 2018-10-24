@@ -23,6 +23,10 @@ SECRET_KEY = SECRET_KEY_IMPORT
 SETTINGS_DIR = 'BepMarketplace'
 
 CONTACT_EMAIL = 'bepmarketplace@tue.nl'
+
+SUPPORT_NAME = 'Sjoerd Hulshof'
+SUPPORT_EMAIL = 's.hulshof@tue.nl'
+
 DEV_EMAIL = 'bepmarketplace@kolibrisolutions.nl'
 
 ADMINS = [('Kolibri Solutions', DEV_EMAIL)]
@@ -31,6 +35,7 @@ MANAGERS = ADMINS  # to mail broken links to, not used now.
 NAME_CODE = 'BEPMarketplace'
 NAME_PRETTY = 'BEP Marketplace'
 
+TESTING=False
 
 # General settings for the projects
 ####################################
@@ -45,9 +50,13 @@ ALLOWED_PROJECT_IMAGES = ['jpg', 'jpeg', 'png', 'bmp', 'gif']  # allowed files a
 ALLOWED_PROPOSAL_IMAGES = ALLOWED_PROJECT_IMAGES
 ALLOWED_PUBLIC_FILES = ['pdf','jpg', 'jpeg', 'png', 'bmp', 'gif','doc','docx','xls','xlsx','odt','ods','odp','ppt','pptx','tex','txt','rtf']
 ALLOWED_STUDENT_FILES = ALLOWED_PUBLIC_FILES
-ALLOWED_PROJECT_ASSISTANT_DOMAINS = ['tue.nl', ]
+# to check when a user is staff on saml login.
+STAFF_EMAIL_DOMAINS = ['tue.nl', ]
+# to check whether a email address can be used to add an assistant
+ALLOWED_PROJECT_ASSISTANT_DOMAINS = STAFF_EMAIL_DOMAINS
 ALLOWED_PROPOSAL_ASSISTANT_DOMAINS = ALLOWED_PROJECT_ASSISTANT_DOMAINS
-ALLOWED_PRIVATE_STUDENT_DOMAINS = ['student.tue.nl', ]
+STUDENT_EMAIL_DOMAINS = ['student.tue.nl', ]
+ALLOWED_PRIVATE_STUDENT_DOMAINS = STUDENT_EMAIL_DOMAINS
 
 
 # How long to cache models that are assumed static. (Group types, timeslots, timphases)

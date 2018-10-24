@@ -1,0 +1,14 @@
+mastermp:
+  script:
+    - virtualenv bepmarketplaceenv
+    - . bepmarketplaceenv/bin/activate
+    - python -V
+    - pip -V
+    - pip install -r requirements.txt
+    - pip install -r requirements_development.txt
+    - pip install tblib
+    - python general_generate_secret_key.py
+    - python manage.py makemigrations proposals --settings=BepMarketplace.settings_development
+    - python manage.py makemigrations proposals distributions download godpowers index osirisdata presentations professionalskills results students support timeline tracking --settings=BepMarketplace.settings_development
+    - mkdir -p tracking/telemetry/data/
+    - python manage.py test --settings=BepMarketplace.settings_development

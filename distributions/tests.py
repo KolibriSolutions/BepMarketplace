@@ -33,10 +33,9 @@ class DistributionsViewsTest(ViewsTest):
             [['secondchoice', None], self.p_support],
             [['deleterandoms', None], self.p_support],
         ]
-        self.loop_phase_code_user([1, 2, 3, 6, 7], codes_phase12367)
-        self.loop_phase_code_user([1, 2, 3, 7], codes_phase1237)
+        self.loop_phase_code_user([-1, 1, 2, 3, 6, 7], codes_phase12367)
+        self.loop_phase_code_user([-1, 1, 2, 3, 7], codes_phase1237)
         self.loop_phase_code_user([4, 5, 6], codes_phase456)
         self.loop_phase_code_user([4, 5], codes_phase45)
-
         # check if all urls are processed
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

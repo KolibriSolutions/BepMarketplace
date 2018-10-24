@@ -1,7 +1,7 @@
 {% extends "email/base_email.html" %}
 {% block body %}
-Proposal <a href="{{ domain }}{% url 'proposals:details' proposal.id %}">{{ proposal.Title }}</a> requires your attention due to status changed to {{  proposal.get_Status_display }}<br/>
-You can use the direct link or go to your <a href="{{ domain }}{% url 'proposals:pending' %}">pending list</a> to attend to this.
+Proposal <a href="{{ DOMAIN }}{% url 'proposals:details' proposal.id %}">{{ proposal.Title }}</a> requires your attention due to status changed to '{{  proposal.get_Status_display }}'<br/>
+You can use the direct link or go to your <a href="{{ DOMAIN }}{% url 'proposals:pending' %}">pending list</a> to attend to this.
     {% if message %}
         The following comment was made on this proposal:
         <p><i>{{ message }}</i></p>

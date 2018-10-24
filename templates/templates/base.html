@@ -5,6 +5,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="description" content="TU/e {{ NAME }}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     {# fix for IE for intranet compatibility #}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,12 +20,10 @@
         <link href="{% static "css/metro-colors.min.css" %}" rel="stylesheet">
         <link href="{% static "css/custom.css" %}" rel="stylesheet">
         {% block stylesheets %}
-
         {% endblock %}
     {% endblock %}
 </head>
-<body {% block bodytag %} {% endblock %}>
-
+<body {% block bodytag %}  {% endblock %}>
 <div id="wrapper">
     {# This conditional comment is support until IE9. Newer IE won't see it. #}
     <!--[if IE]>
@@ -32,6 +31,13 @@
         <b>Your browser is not compatible with this website. Please update your browser or use another browser.</b>
         </div>
     <![endif]-->
+
+    <noscript>
+        <div class="warning-banner">
+            Your JavaScript is disabled. This website uses JavaScript for some functionality. Please enable JavaScript
+            to use all functionality.
+        </div>
+    </noscript>
     {% block menu %}
         <div class="app-bar" data-role="appbar">
             <div class="app-bar-element branding">{{ NAME }}</div>
@@ -182,7 +188,8 @@
                                         </ul>
                                     </li>
                                     <li><a href="{% url 'timeline:list_timeslots' %}">Timeline edit</a></li>
-                                    <li><a href="{% url 'support:capacitygroupadministration' %}">Group Administration</a>
+                                    <li><a href="{% url 'support:capacitygroupadministration' %}">Group
+                                        Administration</a>
                                     </li>
                                     <li><a href="{% url 'index:edit_tracks' %}">Track Head edit</a></li>
                                     <li><a href="{% url 'results:list_categories' %}">Grading</a></li>
@@ -311,10 +318,10 @@
                     {% GetBroadcastStatus user as status %}
                     {% if status %}
                         <div class="panel">
-                            <div class="heading" style="font-size: 100%;">
+                            <div class="heading">
                                 <span class="title">Announcements</span>
                             </div>
-                            <div class="content" style="font-size: 110%;">
+                            <div class="content padding5">
                                 {% GetBroadcast user %}
                             </div>
                         </div>
@@ -323,49 +330,62 @@
                     <p>Current phase: {% GetPhase %}</p>
                     {% if user.is_authenticated %}
                         {% if user|has_group:"type1staff;type2staff;type2staffunverified" %}
+                            {# Staff #}
+                            {% if user|has_group:"type2staffunverified" and not user.is_superuser %}
+                                <p><strong>
+                                    You have an unverified type2staff account.<br/>
+                                    Your type2staff account will be verified by the supportstaff or when a proposals
+                                    made by
+                                    you is approved by the type1staff (Responsible professor).
+                                    This unverified status has no further implications.
+                                </strong></p>
+                            {% endif %}
+
                             {% if phasenumber < 3 %}
                                 <p>
                                     Pending proposals: {% getPending user %}
                                 </p>
                             {% elif phasenumber > 5 %}
-                                {% GetPresentationStaff user %}
+                                <div class="panel"> {# staff presentations inside a panel for more clarity #}
+                                    <div class="heading">
+                                        <span class="title">Presentations:</span>
+                                    </div>
+                                    <div class="content padding5">
+                                        {% GetPresentationStaff user %}
+                                    </div>
+                                </div>
                             {% endif %}
-                        {% endif %}
-                        {% if user|has_group:"type2staffunverified" and not user.is_superuser %}
-                            <p><strong>
-                                You have an unverified type2staff account.<br/>
-                                Your type2staff account will be verified by the supportstaff or when a proposals made by
-                                you is approved by the type1staff (Responsible professor).
-                                This unverified status has no further implications.
-                            </strong></p>
-                        {% endif %}
-
-                        {% if user.personal_proposal.all %}
-                            <p>
-                                {% if user.personal_proposal.all|length_is:"1" %}
-                                    There is a personal (private) proposal for you. You can view all proposals in the
-                                    "proposals" menu but you don't have to do anything with it.
-                                {% else %}
-                                    There are multiple private proposals for you. Please contact the support staff to
-                                    remove you from one.
-                                {% endif %}
-                                <br/>
-                                {% for p in user.personal_proposal.all %}
-                                    <a href="{% url 'proposals:details' p.pk %} "
-                                       class="button primary">{{ p.Title|truncatechars:30 }}</a>
+                        {% else %}
+                            {# Students #}
+                            {% if user.personal_proposal.all %}
+                                <p>
+                                    {% if user.personal_proposal.all|length_is:"1" %}
+                                        There is a personal (private) proposal for you. You can view all proposals in
+                                        the
+                                        "proposals" menu but you don't have to do anything with it.
+                                    {% else %}
+                                        There are multiple private proposals for you. Please contact the support staff
+                                        to
+                                        remove you from one.
+                                    {% endif %}
                                     <br/>
-                                {% endfor %}
-                            </p>
-                        {% endif %}
+                                    {% for p in user.personal_proposal.all %}
+                                        <a href="{% url 'proposals:details' p.pk %} "
+                                           class="button primary">{{ p.Title|truncatechars:30 }}</a>
+                                        <br/>
+                                    {% endfor %}
+                                </p>
+                            {% endif %}
 
-                        {% if phasenumber > 4 %}
-                            {% if user.distributions.exists %}
-                                {# only students #}
-                                {% GetDistribution user %}
-                                {% if phasenumber == 5 %}
-                                    If you do not agree with your distribution, please contact the support staff.
-                                {% else %} {# phase 6 or 7 #}
-                                    {% GetPresentationStudent user %}
+                            {% if phasenumber > 4 %}
+                                {% if user.distributions.exists %}
+                                    {# only students #}
+                                    {% GetDistribution user %}
+                                    {% if phasenumber == 5 %}
+                                        If you do not agree with your distribution, please contact the support staff.
+                                    {% else %} {# phase 6 or 7 #}
+                                        {% GetPresentationStudent user %}
+                                    {% endif %}
                                 {% endif %}
                             {% endif %}
                         {% endif %}
@@ -425,7 +445,6 @@
     <script src="{% static "js/metro.min.js" %}"></script>
     {# custom #}
     <script src="{% static "js/custom.js" %}"></script>
-
     {% if hide_sidebar %}
         <script type="text/javascript">
             $(function () {

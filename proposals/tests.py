@@ -3,8 +3,6 @@ from django.urls import reverse
 
 from general_test import ViewsTest, ProjectViewsTestGeneral
 from students.models import Application
-from students.models import Distribution
-from .models import Proposal
 
 
 class ProposalViewsTest(ProjectViewsTestGeneral):
@@ -12,6 +10,7 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
     All tests for proposal views
 
     """
+
     def setUp(self):
         self.app = 'proposals'
         super().setUp()
@@ -41,7 +40,7 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
             [['statsgeneral', None],               s.p_forbidden],  #TODO s.p_staff12345
             [['listtrackproposals', None],         s.p_track],
         ]
-        code_general_phase67 =  [
+        code_general_phase67 = [
             [['list', None], [s.p_all]],
             [['create', None],                     s.p_staff_prop],
             [['chooseedit', None],                 s.p_staff_prop],
@@ -73,7 +72,7 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
             [['details', {'pk': s.ppriv}],            [s.p_all_this_view ,     s.p_all_this_view  , s.p_all_this_view ,   s.p_all_this_view ]],
             [['copy', {'pk': s.ppriv}],               [s.p_all_this      ,     s.p_all_this       , s.p_all_this      ,   s.p_all_this ]],
             [['upgradestatus', {'pk': s.p}],          [s.p_all_this      ,     s.p_no_assistant   , s.p_trackhead     ,   s.p_forbidden]],
-            [['downgradestatusmessage', {'pk': s.p}], [s.p_forbidden     ,     s.p_all_this       , s.p_no_assistant  ,   s.p_trackhead]],
+            [['downgradestatusmessage', {'pk': s.p}], [s.p_forbidden     ,     s.p_all_this       , s.p_no_assistant  ,   s.p_no_assistant]],
             [['deleteproposal', {'pk': s.p}],         [s.p_forbidden     ,     s.p_forbidden      , s.p_forbidden     ,   s.p_forbidden]],
             [['askdeleteproposal', {'pk': s.p}],      [s.p_support       ,     s.p_support        , s.p_forbidden     ,   s.p_forbidden]],
             [['sharelink', {'pk': s.p}],              [s.p_all_this      ,     s.p_all_this       , s.p_all_this      ,   s.p_all_this  ]],
@@ -94,7 +93,7 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
             [['askdeleteproposal', {'pk': s.p}],      [s.p_support          ,     s.p_support        , s.p_forbidden        ,   s.p_forbidden]],
             [['sharelink', {'pk': s.p}],              [s.p_all_this         ,     s.p_all_this       , s.p_all_this         ,   s.p_all_this  ]],
         ]
-        # TimePhase 3 and later
+        # TimePhase 3 and later, except proposaldetails for private proposal.
         code_phase34567 = [
             [['addfile', {'ty': 'i', 'pk': s.p}],     [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],
             [['addfile', {'ty': 'a', 'pk': s.p}],     [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],
@@ -103,7 +102,33 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
             [['edit', {'pk': s.p}],                   [s.p_support       , s.p_support         ,s.p_support        , s.p_no_assistant  ]],
             [['copy', {'pk': s.p}],                   [s.p_all_this      , s.p_all_this        ,s.p_all_this       , s.p_staff_prop  ]],
             [['details', {'pk': s.p}], [s.p_all_this_view , s.p_all_this_view   , s.p_all_this_view  , s.p_all]],
-            [['details', {'pk': s.ppriv}],            [s.p_all_this_view , s.p_all_this_view   ,s.p_all_this_view  , s.p_private  ]],
+            [['upgradestatus', {'pk': s.p}],          [s.p_support       , s.p_support         ,s.p_support        , s.p_forbidden]],
+            [['downgradestatusmessage', {'pk': s.p}], [s.p_forbidden     , s.p_support         ,s.p_support        , s.p_support  ]],
+            [['deleteproposal', {'pk': s.p}],         [s.p_forbidden     , s.p_forbidden       ,s.p_forbidden      , s.p_forbidden]],
+            [['askdeleteproposal', {'pk': s.p}],      [s.p_support       , s.p_support         ,s.p_forbidden      , s.p_forbidden]],
+            [['sharelink', {'pk': s.p}],              [s.p_all_this      , s.p_all_this        ,s.p_all_this       , s.p_all_this  ]],
+        ]
+        # checks for proposal private details in phase 3456 and 7 seperate. Because assessor can view private proposal in phase 7.
+        code_phase3456 = [
+            [['details', {'pk': s.ppriv}], [s.p_all_this_view, s.p_all_this_view, s.p_all_this_view, s.p_private]],
+            [['copy', {'pk': s.ppriv}], [s.p_all_this, s.p_all_this, s.p_all_this, s.p_all_this]],
+
+        ]
+        code_phase7 = [
+            [['details', {'pk': s.ppriv}], [s.p_all_this_view, s.p_all_this_view, s.p_all_this_view, s.p_private_pres]],
+            [['copy', {'pk': s.ppriv}], [s.p_all_this, s.p_all_this, s.p_all_this, s.p_all_this_pres]],
+
+        ]
+        # no phase. Same as "TimePhase 3 and later" but without student rights.
+        code_phase_nophase = [
+            [['addfile', {'ty': 'i', 'pk': s.p}],     [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],
+            [['addfile', {'ty': 'a', 'pk': s.p}],     [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],
+            [['editfile', {'ty': 'i', 'pk': s.p}],    [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],
+            [['editfile', {'ty': 'a', 'pk': s.p}],    [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],
+            [['edit', {'pk': s.p}],                   [s.p_support       , s.p_support         ,s.p_support        , s.p_no_assistant  ]],
+            [['copy', {'pk': s.p}],                   [s.p_all_this      , s.p_all_this        ,s.p_all_this       , s.p_staff_prop  ]],
+            [['details', {'pk': s.p}],                [s.p_all_this_view , s.p_all_this_view   , s.p_all_this_view  , s.p_staff]],
+            [['details', {'pk': s.ppriv}],            [s.p_all_this_view , s.p_all_this_view   ,s.p_all_this_view  , s.p_all_this_view]],
             [['copy', {'pk': s.ppriv}],               [s.p_all_this      , s.p_all_this        ,s.p_all_this       , s.p_all_this  ]],
             [['upgradestatus', {'pk': s.p}],          [s.p_support       , s.p_support         ,s.p_support        , s.p_forbidden]],
             [['downgradestatusmessage', {'pk': s.p}], [s.p_forbidden     , s.p_support         ,s.p_support        , s.p_support  ]],
@@ -145,11 +170,16 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         ]
         s.status = 1
         self.info['type'] = 'general'
-        self.loop_phase_code_user(range(1, 6), code_general_phase12345)
-        self.loop_phase_code_user(range(1, 8), code_general)  # share link
+        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5], code_general_phase12345)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], code_general)  # share link
         self.loop_phase_code_user([6, 7], code_general_phase67)
 
         # Testing proposal specific pages
+        # no timephase:
+
+        self.info['type'] = 'proposal no phase'
+        self.loop_phase_code_user([-1], code_phase_nophase)
+
         # TimePhase 1
         if s.debug:
             print("Testing phase1")
@@ -162,6 +192,10 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         # TimePhase 3+
         self.info['type'] = 'proposal phase34567'
         self.loop_phase_code_user([3, 4, 5, 6, 7], code_phase34567)
+        self.info['type'] = 'proposal details private phase3456'
+        self.loop_phase_code_user([3, 4, 5, 6], code_phase3456)
+        self.info['type'] = 'proposal details private phase7'
+        self.loop_phase_code_user([7], code_phase7)
 
         # Test proposal in next timeslot, permissions should be as a proposal in this timeslot in phase 1, except upgrading to status4
         # Change the proposal timeslot to next year
@@ -171,7 +205,7 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         s.privateproposal.save()
         # All phases test with permissions of phase1 of current timeslot.
         self.info['type'] = 'proposal next timeslot'
-        self.loop_phase_code_user(range(1, 8), code_next_ts)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], code_next_ts)
 
         # Test proposal in previous timeslot, permissions locked
         # Change the proposal timeslot to next year
@@ -181,14 +215,13 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         s.privateproposal.save()
         # All phases test with permissions of phase1 of current timeslot.
         self.info['type'] = 'proposal previous timeslot'
-        self.loop_phase_code_user(range(1, 8), code_prev_ts)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], code_prev_ts)
 
         # make sure all urls of this app are tested.
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")
 
     # def test_edit_form(self): #TODO: test if the correct form is shown with self.client.post to a field allowed
     #                                   in the full form but not in the shorter
-
 
     def test_apply_buttons(s):
         """
@@ -259,4 +292,3 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         view = "proposals:details"
 
         ViewsTest.links_in_view_test(s, reverse(view, kwargs={"pk": s.proposal.id}))
-

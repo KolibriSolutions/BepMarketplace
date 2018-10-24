@@ -1,5 +1,7 @@
+from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from two_factor.forms import *
+from two_factor.forms import AuthenticationTokenForm, DeviceValidationForm, TOTPDeviceForm
+from two_factor.utils import totp_digits
 
 from templates import widgets
 
@@ -10,7 +12,7 @@ class TwoFactorAuthTokenForm(AuthenticationTokenForm):
     otp_token.widget.attrs.update({'autofocus': 'autofocus'})
 
 
-class TowFactorBackupTokenForm(AuthenticationTokenForm):
+class TwoFactorBackupTokenForm(AuthenticationTokenForm):
     otp_token = forms.CharField(label="Token", widget=widgets.MetroTextInput)
     otp_token.widget.attrs.update({'autofocus': 'autofocus'})
 

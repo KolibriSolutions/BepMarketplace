@@ -17,7 +17,7 @@ var sidebarVisible = true;
 //display warning for unsupported browsers
 window.onload = function () {
     if (!("MutationObserver" in window)) {
-        document.body.innerHTML += "<div style=\"background-color: #e00;text-align: center;position:absolute;top:0;width:100%;color:#FFF;\">" +
+        document.body.innerHTML += "<div style=\"warning-banner\">" +
             "Your browser is outdated and may not be compatible with this website. Please update your browser or use another browser." +
             "</div>"
     }

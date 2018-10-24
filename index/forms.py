@@ -32,7 +32,7 @@ class CloseFeedbackReportForm(forms.Form):
     message = forms.CharField(max_length=1024, label='Message:', widget=widgets.MetroMultiTextInput)
 
 
-class settingsForm(forms.ModelForm):
+class SettingsForm(forms.ModelForm):
     class Meta:
         model = UserMeta
         fields = [
@@ -50,6 +50,7 @@ class TrackForm(forms.ModelForm):
     """
     Form for tracks, used in modelformsetfactory
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['Name'].disabled = True

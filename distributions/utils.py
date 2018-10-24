@@ -4,6 +4,7 @@ from general_view import get_grouptype
 from index.models import Track
 from students.models import Distribution
 from timeline.utils import get_timeslot
+from presentations.utils import planning_public
 
 
 def get_distributions(user):
@@ -18,8 +19,12 @@ def get_distributions(user):
         return des_all
     else:
         tracks = Track.objects.filter(Head=user)
-        # TODO only show assessors distributions after presentationsplanning is public
-        return des_all.filter(Q(Proposal__Track__in=tracks) |
-                              Q(Proposal__ResponsibleStaff=user) |
-                              Q(Proposal__Assistants__id= user.id) |
-                              Q(presentationtimeslot__Presentations__Assessors__id=user.id)).distinct()
+        if planning_public():
+            return des_all.filter(Q(Proposal__Track__in=tracks) |
+                                  Q(Proposal__ResponsibleStaff=user) |
+                                  Q(Proposal__Assistants__id=user.id) |
+                                  Q(presentationtimeslot__Presentations__Assessors__id=user.id)).distinct()
+        else:
+            return des_all.filter(Q(Proposal__Track__in=tracks) |
+                                  Q(Proposal__ResponsibleStaff=user) |
+                                  Q(Proposal__Assistants__id=user.id)).distinct()

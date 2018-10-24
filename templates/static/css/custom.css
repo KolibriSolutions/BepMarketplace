@@ -47,16 +47,17 @@ html, body {
     animation-iteration-count: 1;
 }
 
-.transitionWidth{
+.transitionWidth {
     transition: width 0.4s ease-out;
 }
-#toggleSidebarButtonIcon{
+
+#toggleSidebarButtonIcon {
     transition: transform 0.8s ease-in-out;
 }
-#cellSidebar{
+
+#cellSidebar {
     transition: opacity 0.4s linear;
 }
-
 
 .capitalize {
     text-transform: capitalize;
@@ -72,11 +73,22 @@ html, body {
     text-transform: capitalize;
 }
 
+/*Warning banner for no javascript or old javascript etc.*/
+.warning-banner {
+    background-color: #e00;
+    text-align: center;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    color: #FFF;
+    z-index: 1000;
+}
+
 /*!*hide multi select inputs as they are replace by select2 plugin
     This is done here, because the default select2 css is not included.
 *!*/
-.select2-tag-enable ,
-.select2-hidden-accessible{
+.select2-tag-enable,
+.select2-hidden-accessible {
     visibility: hidden;
     height: 0 !important;
     padding: 0 !important;
@@ -92,8 +104,9 @@ th > select {
 .input-control {
     width: 90% !important;
 }
+
 /*full height select2 dropdowns, for multiple select*/
-.input-control.select{
+.input-control.select {
     height: 100%;
 }
 
@@ -101,9 +114,10 @@ th > select {
 th {
     text-align: left;
 }
+
 /*Normal margin on lists in table cells */
-table.datatable ul{
-    padding-left:0;
+table.datatable ul {
+    padding-left: 0;
 }
 
 /* Validation error input fields are given an div with 'input-error-wrapper'. The input in this div gets a red border.
@@ -135,15 +149,17 @@ table.datatable ul{
     overflow-x: auto; /* for horizontal scrolling if too wide table*/
     min-width: 100%; /* for auto-resize when screen resize or sidebar hide*/
 }
+
 /*set the sort arrow on the top of the header row, so it does not interfere with the select boxes.*/
 .dataTable .sorting.sort-asc::after,
 .dataTable .sorting.sort-desc::after,
 .dataTable .sorting_asc::after,
-.dataTable .sorting_desc::after{
-    position:absolute;
+.dataTable .sorting_desc::after {
+    position: absolute;
     top: 0;
-    margin-top:0.25em;
+    margin-top: 0.25em;
 }
+
 /*Set a larger margin on yadcf text-boxes to look like metro-ui-css*/
 input[type=text].yadcf-filter {
     margin: 0.325rem 0;
@@ -178,26 +194,29 @@ td.error {
 
 /* double scroll tables*/
 
-.double-scroll>div{
+.double-scroll > div {
     width: 100%;
     overflow: visible;
 }
-.double-scroll{
+
+.double-scroll {
     overflow-x: scroll;
 
 }
 
 /*panel headers normal text size*/
-.panel>.heading{
+.panel > .heading {
     font-size: 100%;
 }
+
 /*Promotion text in sidebar*/
-img.promotionlogo{
+img.promotionlogo {
     max-width: 50%;
     max-height: 100px;
     margin: 5px;
 }
-.star-favorite{
+
+.star-favorite {
     cursor: pointer;
 }
 
@@ -227,8 +246,10 @@ img.promotionlogo{
     font-family: "Open Sans Bold";
     font-style: normal;
     font-weight: 700;
-    src: local("Segoe UI Bold"), local("Open Sans Bold"), local("OpenSans-Bold"), url(/static/fonts/k3k702ZOKiLJc3WVjuplzJ1r3JsPcQLi8jytr04NNhU.woff) format('woff')!important
+    src: local("Segoe UI Bold"), local("Open Sans Bold"), local("OpenSans-Bold"), url(/static/fonts/k3k702ZOKiLJc3WVjuplzJ1r3JsPcQLi8jytr04NNhU.woff) format('woff') !important
 }
+
 /* Original setup (removed from metro.min.css):
 @font-face{font-family:"PT Serif Caption";font-style:normal;font-weight:400;src:local("Cambria"),local("PT Serif Caption"),local("PTSerif-Caption"),url(https://themes.googleusercontent.com/static/fonts/ptserifcaption/v6/7xkFOeTxxO1GMC1suOUYWWhBabBbEjGd1iRmpyoZukE.woff)format('woff')}@font-face{font-family:"Open Sans Light";font-style:normal;font-weight:300;src:local("Segoe UI Light"),local("Open Sans Light"),local("OpenSans-Light"),url(https://themes.googleusercontent.com/static/fonts/opensans/v8/DXI1ORHCpsQm3Vp6mXoaTZ1r3JsPcQLi8jytr04NNhU.woff)format('woff')}@font-face{font-family:"Open Sans";font-style:normal;font-weight:400;src:local("Segoe UI"),local("Open Sans"),local("OpenSans"),url(https://themes.googleusercontent.com/static/fonts/opensans/v8/K88pR3goAWT7BTt32Z01mz8E0i7KZn-EPnyo3HZu7kw.woff)format('woff')}@font-face{font-family:"Open Sans Bold";font-style:normal;font-weight:700;src:local("Segoe UI Bold"),local("Open Sans Bold"),local("OpenSans-Bold"),url(https://themes.googleusercontent.com/static/fonts/opensans/v8/k3k702ZOKiLJc3WVjuplzJ1r3JsPcQLi8jytr04NNhU.woff)format('woff')}
  */
+

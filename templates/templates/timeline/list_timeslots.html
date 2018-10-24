@@ -24,7 +24,7 @@
                         <a href="{% url 'timeline:edit_timeslot' p.pk %}" class="button primary">Edit</a>{% endif %}
                     <a href="{% url 'timeline:list_timephases' p.pk %}" class="button primary">List TimePhases</a>
                     {% if user.is_superuser %}
-                        <a href="{% url 'admin:timeline_timephase_change' p.pk %}" class="button warning">Admin
+                        <a href="{% url 'admin:timeline_timeslot_change' p.pk %}" class="button warning">Admin
                             edit</a>{% endif %}
 
                 </td>

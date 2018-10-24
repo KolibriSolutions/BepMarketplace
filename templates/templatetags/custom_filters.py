@@ -11,7 +11,7 @@ from django.utils.html import format_html
 from general_view import get_grouptype
 from proposals.utils import get_all_proposals
 from index.models import Broadcast
-from presentations.models import PresentationTimeSlot, PresentationSet
+from presentations.models import PresentationTimeSlot, PresentationSet, PresentationOptions
 from timeline.utils import get_timeslot, get_timephase, get_timephase_number
 
 register = template.Library()
@@ -27,9 +27,11 @@ def index(List, i):
     """
     return List[int(i)]
 
+
 @register.filter(name='tolist')
 def tolist(object):
     return list(object)
+
 
 #
 # @register.filter(name='has_group')
@@ -114,10 +116,11 @@ def getPending(user):
     :param user:
     :return:
     """
-    html = "<a href='"+reverse("proposals:pending")+"'><button class=\"button danger loading-pulse\">Pending: {}</button></a>"
+    html = "<a href='" + reverse(
+        "proposals:pending") + "'><button class=\"button danger loading-pulse\">Pending: {}</button></a>"
     num = 0
 
-    if get_grouptype("2")in user.groups.all():
+    if get_grouptype("2") in user.groups.all():
         num += get_all_proposals().filter(Q(Assistants__id=user.id) & Q(Status__exact=1)).count()
     if get_grouptype("1") in user.groups.all():
         num += get_all_proposals().filter(Q(ResponsibleStaff=user.id) & Q(Status__exact=2)).count()
@@ -196,9 +199,9 @@ def GetBroadcast(user):
     :return:
     """
     msgs = Broadcast.objects.filter((Q(DateBegin__lte=datetime.now()) | Q(DateBegin__isnull=True)) &
-                             (Q(DateEnd__gte=datetime.now()) | Q(DateEnd__isnull=True)) &
-                             (Q(Private=user) | Q(Private__isnull=True))
-                             )
+                                    (Q(DateEnd__gte=datetime.now()) | Q(DateEnd__isnull=True)) &
+                                    (Q(Private=user) | Q(Private__isnull=True))
+                                    )
     if not msgs.exists():
         return "No announcements"
 
@@ -223,9 +226,9 @@ def GetBroadcastStatus(user):
     if not user.is_authenticated:
         return False
     if Broadcast.objects.filter((Q(DateBegin__lte=datetime.now()) | Q(DateBegin__isnull=True)) &
-                             (Q(DateEnd__gte=datetime.now()) | Q(DateEnd__isnull=True)) &
-                             (Q(Private=user) | Q(Private__isnull=True))
-                             ).exists():
+                                (Q(DateEnd__gte=datetime.now()) | Q(DateEnd__isnull=True)) &
+                                (Q(Private=user) | Q(Private__isnull=True))
+                                ).exists():
         return True
     else:
         return False
@@ -238,10 +241,7 @@ def GetDistribution(user):
     :param user:
     :return:
     """
-    if not user.is_authenticated:
-        return False
-    # check if student
-    if user.groups.exists():
+    if not user.is_authenticated or user.groups.exists():
         return False
     # check if user has distributions
     timeslot = get_timeslot()
@@ -249,10 +249,9 @@ def GetDistribution(user):
         dist = user.distributions.get(Timeslot=timeslot)
     except:
         return False
-
     url = reverse('proposals:details', args=[dist.Proposal.pk])
     html = '<p>You are distributed to the proposal:</p><a href="{}" class ="button primary">{}</a></p>'
-    title =  truncatechars(dist.Proposal.Title,30)
+    title = truncatechars(dist.Proposal.Title, 30)
     st = format_html(html, url, title)
     return st
 
@@ -277,40 +276,38 @@ def GetPresentationStudent(user):
     :param user:
     :return:
     """
-    if not user.is_authenticated:
+    if not user.is_authenticated or user.groups.exists():
+        # anonymous or not student
         return False
-    # check if student
-    if user.groups.exists():
-        return False
-    timeslot = get_timeslot()
-    tp = get_timephase()
+    ts = get_timeslot()
     try:
-        if timeslot.presentationoptions.Public or tp == 7:
-            #check if user has presentations
-            try:
-                t = PresentationTimeSlot.objects.get(Q(Distribution__Student=user) &
-                                                     Q(Presentations__PresentationOptions__TimeSlot=get_timeslot()))
-                start = timezone.localtime(t.DateTime).strftime("%A %d %B %Y %H:%M")
-                room = t.Presentations.PresentationRoom
-            except:
-                return "Your presentation is not (yet) planned."
-
-            url = reverse('presentations:presentationscalendar')
-            title = "View all presentations"
-            html = '<p>Your presentation is on {} in {}</p>' \
-                   '<a href="{}" class ="button primary">{}</a></p>'
-            st = format_html(html, start, room, url, title)
-            return st
-        else:
-            return "Your presentation timeslot will appear here when the planning becomes public."
-    except:
-        return "Your presentation timeslot will appear here when the planning becomes public."
+        options = ts.presentationoptions
+    except PresentationOptions.DoesNotExist:
+        return "Your presentation is not yet planned."
+    if options.Public or get_timephase_number() == 7:
+        # check if user has presentations
+        try:
+            t = PresentationTimeSlot.objects.get(Q(Distribution__Student=user) &
+                                                 Q(Presentations__PresentationOptions__TimeSlot=ts))
+        except (PresentationTimeSlot.DoesNotExist, PresentationTimeSlot.MultipleObjectsReturned):
+            return "Your presentation is not (yet) planned."
+        start = timezone.localtime(t.DateTime).strftime("%A %d %B %Y %H:%M")
+        room = t.Presentations.PresentationRoom
+        url = reverse('presentations:presentationscalendar')
+        title = "View all presentations"
+        html = '<p>Your presentation is on {} in {}</p>' \
+               '<a href="{}" class ="button primary">{}</a></p>'
+        st = format_html(html, start, room, url, title)
+        return st
+    else:
+        return "Your presentation time slot will appear here when the planning becomes public."
 
 
 @register.simple_tag
 def GetPresentationStaff(user):
     """
     Displays the presentation for a staff member
+    Only show sets, not individual presentations.
 
     :param user:
     :return:
@@ -320,61 +317,59 @@ def GetPresentationStaff(user):
     # check if not student
     if not user.groups.exists():
         return False
-    timeslot = get_timeslot()
-    tp = get_timephase()
-
+    ts = get_timeslot()
     try:
-        if timeslot.presentationoptions.Public or tp == 7:
-            if is_trackhead(user):
-                # check if trackhead has presentations
-                try:
-                    t= timeslot.presentationoptions.presentationsets.filter(Track__in=user.tracks.all())
-                except:
-                    return "The presentations for your track are not yet planned"
-                if t.count() > 0:
-                    html = '<p>Your tracks presentations are on:</p><ul>'
-                    for p in t:
-                        start = timezone.localtime(p.DateTime).strftime("%A %d %B %Y %H:%M")
-                        room = p.PresentationRoom
-                        html += "<li>"+str(p.Track)+ ": " + str(start) + " in " + str(room) + "</li>"
-                    html += "</ul>"
-                else:
-                    html = "<p>You do not have presentations for your track to attend</p>"
+        options = ts.presentationoptions
+    except PresentationOptions.DoesNotExist:
+        return "The presentations are not yet planned."  # hide if no options yet.
 
+    if options.Public or get_timephase_number() == 7:
+        # check if trackhead has presentations. Show set only.
+        html = ''
+        if is_trackhead(user):
+            try:
+                sets = options.presentationsets.filter(Track__in=user.tracks.all())
+            except PresentationSet.DoesNotExist:
+                return "The presentations for your track are not yet planned"
+            if sets.exists():
+                html += '<p>Your tracks presentations are starting on:</p><ul>'
+                for set in sets:
+                    start = timezone.localtime(set.DateTime).strftime("%A %d %B %H:%M")
+                    room = set.PresentationRoom
+                    html += "<li> {}: {} in {} </li>".format(set.Track, start, room)
+                html += "</ul>"
             else:
-                # check if user has presentations, for responsible and assistants that are not trackhead
-                try:
-                    t = PresentationTimeSlot.objects.filter((Q(Distribution__Proposal__ResponsibleStaff=user) | Q(Distribution__Proposal__Assistants=user))
-                                                            & Q(Presentations__PresentationOptions__TimeSlot=get_timeslot()))
-                except:
-                    return "Your presentations are not (yet) planned."
-                if t.count() > 0:
-                    html = '<p>Your presentations as supervisor are on:</p><ul>'
-                    for p in t:
-                        start = timezone.localtime(p.DateTime).strftime("%A %d %B %Y %H:%M")
-                        room = p.Presentations.PresentationRoom
-                        html += "<li>"+str(start)+" in "+str(room)+"</li>"
-                    html += "</ul>"
-                else:
-                    html = "<p>You do not have any presentations to attend as supervisor.</p>"
+                html += "<p>You do not have presentations for your track to attend</p>"
 
-            for set in timeslot.presentationoptions.presentationsets.all():
-                if user in set.Assessors.all():  # ugly way to check if a user has to assess anything
-                    html += '<p>You are assessor for presentations on:</p><ul>'
-                    for set_in in timeslot.presentationoptions.presentationsets.all():
-                        if user in set_in.Assessors.all():
-                            start = timezone.localtime(set_in.DateTime).strftime("%A %d %B %Y %H:%M")
-                            room = set_in.PresentationRoom
-                            html += "<li>"+str(set_in.Track)+ ": " + str(start) + " in " + str(room) + "</li>"
-                    html += "</ul>"
-                    break
-
-            html += '<a href="{}" class ="button primary">{}</a>'
-            url = reverse('presentations:presentationscalendarown')
-            title = "View all your presentations"
-            st = format_html(html, url, title)
-            return st
+        # check if user has presentations, for responsible and assistants. Show each presentation.
+        t = PresentationTimeSlot.objects.filter(
+            (Q(Distribution__Proposal__ResponsibleStaff=user) | Q(Distribution__Proposal__Assistants=user))
+            & Q(Presentations__PresentationOptions=options)).distinct()
+        if t.exists():
+            html += '<p>Your presentations as supervisor are:</p><ul>'
+            for presentation in t:
+                start = timezone.localtime(presentation.DateTime).strftime("%A %d %B %H:%M")
+                room = presentation.Presentations.PresentationRoom
+                html += "<li> {} at {} in {} </li>".format(presentation.Distribution.Student.usermeta.Fullname, start, room)
+            html += "</ul>"
         else:
-            return "Your presentation timeslot will appear here when the planning becomes public."
-    except:
-        return "Your presentation timeslot will appear here when the planning becomes public."
+            html += "<p>You do not have any presentations to attend as supervisor.</p>"
+
+        for pset in options.presentationsets.all():
+            if user in pset.Assessors.all():  # ugly way to check if a user has to assess anything
+                html += '<p>You are assessor for presentations starting on:</p><ul>'
+                for set_in in options.presentationsets.all():
+                    if user in set_in.Assessors.all():
+                        start = timezone.localtime(set_in.DateTime).strftime("%A %d %B %H:%M")
+                        room = set_in.PresentationRoom
+                        html += "<li>" + str(set_in.Track) + ": " + str(start) + " in " + str(room) + "</li>"
+                html += "</ul>"
+                break
+
+        html += '<a href="{}" class ="button primary">{}</a>'
+        url = reverse('presentations:presentationscalendarown')
+        title = "Presentations"
+        st = format_html(html, url, title)
+        return st
+    else:
+        return "Your presentation time slot will appear here when the planning becomes public."

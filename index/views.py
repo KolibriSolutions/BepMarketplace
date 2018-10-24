@@ -9,13 +9,14 @@ from django.forms import modelformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
+from django.utils import timezone
 
 from BepMarketplace.decorators import superuser_required, group_required
 from general_form import ConfirmForm
 from general_mail import send_mail
 from support.models import PublicFile
 from timeline.utils import get_timephase, get_timephase_number, get_timeslot
-from .forms import TrackForm, CloseFeedbackReportForm, FeedbackForm, settingsForm
+from .forms import TrackForm, CloseFeedbackReportForm, FeedbackForm, SettingsForm
 from .models import FeedbackReport, Track, UserMeta, Term, UserAcceptedTerms
 
 
@@ -146,13 +147,12 @@ def feedback_submit(request):
         feedback.Reporter = request.user
         feedback.Status = 1
         feedback.save()
-        send_mail("email/feedback_report_email_subject.txt", "email/feedback_report_email_created.html", {
+        send_mail("feedback report created", "email/feedback_report_email_created.html", {
             "report": feedback
-        }, feedback.Reporter.email,
-                  html_email_template_name="email/feedback_report_email_created.html")
-        send_mail("New Feedback report created", "email/feedback_report_admin.html", {
+        }, feedback.Reporter.email)
+        send_mail("feedback report created", "email/feedback_report_admin.html", {
             "report": feedback
-        }, settings.CONTACT_EMAIL, html_email_template_name="email/feedback_report_admin.html")
+        }, settings.CONTACT_EMAIL)
         return render(request, "base.html", {
             "Message": "Feedback saved, thank you for taking the time to improve the system!"
         })
@@ -179,10 +179,9 @@ def feedback_confirm(request, pk):
         })
     obj.Status = 2
     obj.save()
-    send_mail("email/feedback_report_email_subject.txt", "email/feedback_report_email_statuschange.html", {
+    send_mail("feedback report", "email/feedback_report_email_statuschange.html", {
         "report": obj
-    }, obj.Reporter.email,
-              html_email_template_name="email/feedback_report_email_statuschange.html")
+    }, obj.Reporter.email)
 
     return render(request, "base.html", {
         "Message": "Report confirmed and reporter notified",
@@ -214,11 +213,10 @@ def feedback_close(request, pk):
         if form.is_valid():
             obj.Status = 3
             obj.save()
-            send_mail("email/feedback_report_email_subject.txt", "email/feedback_report_email_statuschange.html", {
+            send_mail("feedback report", "email/feedback_report_email_statuschange.html", {
                 "report": obj,
                 "message": form.cleaned_data["message"],
-            }, obj.Reporter.email,
-                      html_email_template_name="email/feedback_report_email_statuschange.html")
+            }, obj.Reporter.email)
 
             return render(request, "base.html", {
                 "Message": "Report closed and reporter notified",
@@ -256,7 +254,7 @@ def profile(request):
 
     tracks = Track.objects.filter(Head=request.user)
     groups = request.user.groups
-    if groups.exists():
+    if groups.exists() or request.user.is_superuser:
         if groups.filter(name="type2staff").exists():
             type2 = True
         elif groups.filter(name="type2staffunverified").exists():
@@ -264,7 +262,7 @@ def profile(request):
         else:
             type2 = False
 
-        pvars = {
+        vars = {
             "student": False,
             "type1": groups.filter(name="type1staff").exists(),
             "type2": type2,
@@ -275,14 +273,14 @@ def profile(request):
             "SuppressStatusMails": meta.SuppressStatusMails,
         }
         if tracks.count() > 0:
-            pvars["tracks"] = tracks
+            vars["tracks"] = tracks
     else:
-        pvars = {
+        vars = {
             "student": True,
             "meta": meta,
             "SuppressStatusMails": meta.SuppressStatusMails,
         }
-    return render(request, "index/profile.html", pvars)
+    return render(request, "index/profile.html", vars)
 
 
 @login_required
@@ -302,7 +300,7 @@ def user_settings(request):
         request.user.save()
 
     if request.method == 'POST':
-        form = settingsForm(request.POST, instance=meta)
+        form = SettingsForm(request.POST, instance=meta)
         if form.is_valid():
             form.save()
             return render(request, "base.html", {
@@ -310,7 +308,7 @@ def user_settings(request):
                 'return': 'index:profile',
             })
     else:
-        form = settingsForm(instance=meta)
+        form = SettingsForm(instance=meta)
 
     return render(request, "GenericForm.html", {
         "form": form,
@@ -328,22 +326,23 @@ def terms_form(request):
     :return:
     """
     try:
+        # already accepted, redirect user to login
         obj = request.user.termsaccepted
-        if obj.Stamp <= datetime.now():
+        if obj.Stamp <= timezone.now():
             return HttpResponseRedirect('/')
-    except:
+    except UserAcceptedTerms.DoesNotExist:
         pass
 
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
         if form.is_valid():
-            obj = UserAcceptedTerms(User=request.user)
-            obj.save()
+            # user accepted terms. Possible already accepted terms in a parallel session, so get_or_create.
+            UserAcceptedTerms.objects.get_or_create(User=request.user)
             return HttpResponseRedirect('/')
     else:
         form = ConfirmForm()
 
-    return render(request, 'index/Terms.html', {
+    return render(request, 'index/terms.html', {
         'form': form,
         'formtitle': 'I have read and accepted the Terms of Services',
         'buttontext': 'Confirm',
@@ -378,6 +377,7 @@ def error400(request, exception):
     http 400 page, for instance wrong hostname
 
     :param request:
+    :param exception: needed param by django.
     :return:
     """
     return render(request, "400.html", status=400)
@@ -399,7 +399,7 @@ def error404(request, exception):
     http 404 page
 
     :param request:
-    :param exception:
+    :param exception: needed param by django.
     :return:
     """
     return render(request, "base.html", status=404, context={

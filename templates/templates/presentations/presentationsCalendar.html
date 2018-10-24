@@ -23,13 +23,13 @@
     <p>
         <a href="{% url "presentations:presentationsplanningxls" %}" class="button primary">Export Excel</a>
     {% if not own %}
-        <a href="{% url 'presentations:presentationscalendarown' %}" class="button primary">List Own Only</a>
+        <a href="{% url 'presentations:presentationscalendarown' %}" class="button primary">Show own set only</a>
     {% else %}
-        <a href="{% url 'presentations:presentationscalendar' %}" class="button primary">List All</a>
+        <a href="{% url 'presentations:presentationscalendar' %}" class="button primary">Show all presentations</a>
     {% endif %}
     </p>
     {% if own %}
-    Only showing the presentations you have to be at.<br/><br/>
+        Only showing the presentation set(s) you are in.<br/><br/>
     {% endif %}
     {# form to make the calendar public for type3 staff #}
     {% if form %}
@@ -155,7 +155,7 @@
                                     title: '{{ slot.Distribution.Student.usermeta.Fullname }} ({{ slot.Distribution.Student.usermeta.Studentnumber }})',
                                     backgroundColor: "{{ setcolor }}",
                                     location: '{{ set.PresentationRoom }}',
-                                    proposal: '{{ slot.Distribution.Proposal.Title }}',
+                                    proposal: '<a href="{% url 'proposals:details' slot.Distribution.Proposal.pk %}" title="view project">{{ slot.Distribution.Proposal.Title }}</a>',
                                     responsible: '{{ slot.Distribution.Proposal.ResponsibleStaff.usermeta.get_nice_name }}',
                                     assistants: '{% for a in slot.Distribution.Proposal.Assistants.all %}<li>{{ a.usermeta.get_nice_name }}</li>{% endfor %}',
                                     assessors: '{% for a in set.Assessors.all %}<li>{{ a.usermeta.get_nice_name }}</li>{% endfor %}',

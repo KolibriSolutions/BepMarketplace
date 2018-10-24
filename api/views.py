@@ -6,9 +6,9 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from BepMarketplace.decorators import group_required, can_edit_proposal, superuser_required, can_downgrade_proposal
+from BepMarketplace.decorators import group_required, can_edit_proposal, can_downgrade_proposal
 from api.utils import getStatStr
-from general_mail import mailAffectedUser, send_mail
+from general_mail import mail_proposal_all, send_mail
 from general_model import GroupOptions
 from general_view import get_grouptype
 from proposals.models import Proposal
@@ -44,7 +44,7 @@ def upgrade_status_api(request, pk):
     elif get_timephase_number() > 2 and \
             obj.TimeSlot == get_timeslot() and \
             get_grouptype('3') not in request.user.groups.all():
-        return HttpResponse("Proposal frozen in this timeslot", status=403)
+        return HttpResponse("Proposal frozen in this timeslot. The timephase of editing has ended.", status=403)
 
     elif request.user in obj.Assistants.all() and obj.Status >= 2:
         return HttpResponse("You are an assistant and not allowed to increase status further", status=403)
@@ -53,16 +53,22 @@ def upgrade_status_api(request, pk):
     #     return HttpResponse("Not allowed to publish as non track head", status=403)
 
     else:
+        oldstatus = obj.Status
+        if oldstatus == 2:
+            #per default go to publish from 4, 3 is only used if it is explicitly downgraded
+            newstatus = 4
+        else:
+            newstatus = obj.Status + 1
 
-        obj.Status += 1
+        obj.Status = newstatus
         obj.save()
-        mailAffectedUser(request, obj)
+        mail_proposal_all(request, obj)
 
         notification = ProposalStatusChange()
         notification.Subject = obj
         notification.Actor = request.user
-        notification.StatusFrom = obj.Status - 1
-        notification.StatusTo = obj.Status
+        notification.StatusFrom = oldstatus
+        notification.StatusTo = newstatus
         notification.save()
 
         if obj.Status == 3:
@@ -88,28 +94,36 @@ def downgrade_status_api(request, pk, message=''):
     :return:
     """
     obj = get_object_or_404(Proposal, pk=pk)
-    # Status 2 always allowed
-    # Status 3: (timephase 1 responsible+trackhead) (timephase 2 only trackhead)
-    # Status 4: trackhead
-    obj.Status -= 1
+    oldstatus = obj.Status
+
+    if oldstatus == 4:
+        #track head downgrade to 3, owner downgrade to 4
+        if request.user == obj.Track.Head:
+            newstatus = 3
+        else:
+            newstatus = 2
+    else:
+        newstatus = oldstatus - 1
+
+    obj.Status = newstatus
     obj.save()
-    mailAffectedUser(request, obj, message)
+    mail_proposal_all(request, obj, message)
 
     notification = ProposalStatusChange()
     notification.Subject = obj
     notification.Message = message
     notification.Actor = request.user
-    notification.StatusFrom = obj.Status + 1
-    notification.StatusTo = obj.Status
+    notification.StatusFrom = oldstatus
+    notification.StatusTo = newstatus
     notification.save()
 
-    # destroy the cache for this if the status went from 4->3
-    if obj.Status == 3:
-        if cache.has_key('listproposalsbodyhtml'):
+    # destroy the cache for this if oldstatus was published
+    if oldstatus == 4:
+        if 'listproposalsbodyhtml' in cache:
             cache.delete('listproposalsbodyhtml')
-        if cache.has_key('proposal_{}'.format(pk)):
+        if 'proposal_{}'.format(pk) in cache:
             cache.delete('proposal_{}'.format(pk))
-        if cache.has_key('proposaldetail{}'.format(pk)):
+        if 'proposaldetail{}'.format(pk) in cache:
             cache.delete('proposaldetail{}'.format(pk))
 
     return HttpResponse(getStatStr(obj.Status))
@@ -146,13 +160,12 @@ def verify_assistant_fn(user):
     account_group.group = get_grouptype("2")
     account_group.save()
     # inform the user of verification.
-    send_mail("BEP Marketplace user groups changed", "email/user_groups_changed.html",
+    send_mail("user groups changed", "email/user_groups_changed.html",
               {'oldgroups': 'type2staff unverified',
                'newgroups': 'type2staff',
                'message': 'Your account is now verified!',
                'user': user},
-              user.email, html_email_template_name="email/user_groups_changed.html",)
-
+              user.email)
     return True
 
 
@@ -231,7 +244,6 @@ def detail_proposal_api(request, pk):
         "title": prop.Title,
         "group": prop.Group,
         "track": str(prop.Track),
-        "ECTS": prop.ECTS,
         "reponsible": str(prop.ResponsibleStaff),
         "assistants": [str(u) for u in list(prop.Assistants.all())],
         "generaldescription": prop.GeneralDescription,
@@ -248,16 +260,15 @@ def list_published_api(request):
     :return:
     """
     props = get_all_proposals().filter(Q(Status=4) & Q(Private__isnull=True))
-    l = []
+    prop_list = []
     for prop in props:
-        l.append({
+        prop_list.append({
             "id": prop.id,
             "detaillink": reverse("proposals:details", args=[prop.id]),
             "title": prop.Title,
             "group": prop.Group,
             "track": str(prop.Track),
-            "ECTS": prop.ECTS,
             "reponsible": str(prop.ResponsibleStaff),
             "assistants": [str(u) for u in list(prop.Assistants.all())],
         })
-    return JsonResponse(l, safe=False)
+    return JsonResponse(prop_list, safe=False)

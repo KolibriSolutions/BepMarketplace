@@ -1,10 +1,10 @@
 {% extends "email/base_email.html" %}
 {% block body %}
-The following proposal are ready to be approved by you as track head for the track {{ Track.Name }}:
+The following proposal are ready to be approved by you as track head for the track {{ track.Name }}:
 <ul>
     {% for proposal in proposals %}
-        <li>Proposal <a href="{{ domain }}{% url 'proposals:details' proposal.id %}">{{ proposal.Title }}</a> from {{ proposal.ResponsibleStaff.get_full_name }}</li>
+        <li>Proposal <a href="{{ DOMAIN }}{% url 'proposals:details' proposal.id %}">{{ proposal.Title }}</a> from {{ proposal.ResponsibleStaff.get_full_name }}</li>
     {% endfor %}
 </ul>
-You can use the direct link or go to your <a href="{{ domain }}{% url 'proposals:pending' %}">pending list</a> to attend to them.
+You can use the direct link or go to your <a href="{{ DOMAIN }}{% url 'proposals:pending' %}">pending list</a> to attend to them.
 {% endblock %}

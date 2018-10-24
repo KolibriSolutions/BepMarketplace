@@ -104,7 +104,7 @@ class PresentationRoomForm(forms.ModelForm):
 
 class MakePublicForm(forms.ModelForm):
     """
-    Confirmform to make the presentationsplanning public in timephase 6.
+    ConfirmForm to make the presentationsplanning public in timephase 6.
     """
     class Meta:
         model = PresentationOptions

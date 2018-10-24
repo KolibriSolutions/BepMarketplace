@@ -1,10 +1,10 @@
 {% extends "email/base_email.html" %}
 
 {% block body %}
-A message from the BEP marketplace (<a href="{{ domain }}">{{ domain }}</a>):<br />
+A message from the {{ NAME }} (<a href="{{ DOMAIN }}">{{ DOMAIN }}</a>):<br />
     {{ message }}
     <br />
-    You can can login to the BEP marketplace as soon as the it is open for students, this will be announced by email and on the BEP kick-off meeting.<br/>
+    You can can login to the {{ NAME }} as soon as the it is open for students, this will be announced by email and on the kick-off meeting.<br/>
     You can view the proposal now on the marketplace via this <a href="{{ sharelink }}">temporary sharelink</a> (valid for seven days).
     <br />
     <table>

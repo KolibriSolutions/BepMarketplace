@@ -21,6 +21,6 @@ class TrackingViewsTest(ViewsTest):
         u = UserLogin(Subject=User.objects.get(username='r-s'))
         u.save()
 
-        self.loop_phase_code_user(range(1, 8), codes)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes)
         # check if all urls are processed
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

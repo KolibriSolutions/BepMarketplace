@@ -36,12 +36,13 @@ class IndexViewsTest(ProjectViewsTestGeneral):
             [['confirm_feedback', {'pk': self.fb.id}], self.p_superuser],  # god only
             [['close_feedback', {'pk': self.fb.id}], self.p_superuser],  # god only
             [['changesettings', None], self.p_all],
-            [['termsaccept', None], self.p_all],
+            [['termsaccept', None], self.p_redirect],
             [['edit_tracks', None], self.p_support],
+            [['robots', None], self.p_anonymous],
+
         ]
 
-        phases = range(1, 8)
-        self.loop_phase_code_user(phases, codes_status)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes_status)
         # check if all urls are processed, except login and logout
         self.assertListEqual(self.allurls, ['login', 'logout'], msg="Not all URLs of this app are tested!")
 

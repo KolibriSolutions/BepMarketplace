@@ -3,8 +3,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from general_model import clean_text
-from timeline.utils import get_timeslot_id
 from timeline.models import TimeSlot
+from timeline.utils import get_timeslot_id
 
 
 class Track(models.Model):
@@ -27,7 +27,8 @@ class Broadcast(models.Model):
     Message = models.CharField(max_length=512)
     DateBegin = models.DateField(blank=True, null=True)
     DateEnd = models.DateField(blank=True, null=True)
-    Private = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True, related_name="private_broadcasts")
+    Private = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True,
+                                related_name="private_broadcasts")
 
     def __str__(self):
         return self.Message
@@ -103,6 +104,7 @@ class Term(models.Model):
 
     def __str__(self):
         return "Term {}".format(self.id)
+
 
 class UserAcceptedTerms(models.Model):
     User = models.OneToOneField(User, on_delete=models.CASCADE, related_name='termsaccepted')

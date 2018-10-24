@@ -17,7 +17,6 @@
                 window.socket = new WebSocket("ws://" + window.location.host + "/support/mailprogress/");
             }
             window.socket.onmessage = function (e) {
-                console.log(e.data);
                 var pb = $("#progressbar").data('progress');
                 var info = JSON.parse(e.data);
                 document.getElementById('liveview').insertAdjacentHTML('afterbegin', info['email'] + "<br/>");

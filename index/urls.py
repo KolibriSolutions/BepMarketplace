@@ -1,3 +1,4 @@
+from django.shortcuts import HttpResponse
 from django.urls import path
 from djangosaml2.views import login
 
@@ -18,4 +19,6 @@ urlpatterns = [
     path('profile/settings/', views.user_settings, name='changesettings'),
     path('terms/', views.terms_form, name='termsaccept'),
     path('track/', views.edit_tracks, name='edit_tracks'),
+    path('robots.txt', lambda r: HttpResponse("User-agent: *\nAllow: /", content_type="text/plain"), name='robots')
+    # allow all robots.
 ]

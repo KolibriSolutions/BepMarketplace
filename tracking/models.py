@@ -6,6 +6,7 @@ from os import urandom
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils.timezone import localtime
 
 from general_model import clean_text
 from proposals.models import Proposal
@@ -17,7 +18,7 @@ class UserLogin(models.Model):
     Twofactor = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.Subject.get_full_name() + "@" + self.Timestamp.strftime("%H:%M %d-%m-%Y")
+        return self.Subject.get_full_name() + "@" + localtime(self.Timestamp).strftime("%H:%M %d-%m-%Y")
 
 
 class ProposalStatusChange(models.Model):

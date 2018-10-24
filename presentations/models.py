@@ -30,8 +30,10 @@ class PresentationOptions(models.Model):
     TimeSlot = models.OneToOneField(TimeSlot, on_delete=models.CASCADE, related_name="presentationoptions")
     PresentationDuration = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)], default=15)
     AssessmentDuration = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)], default=15)
-    PresentationsBeforeAssessment = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)], default=3)
+    PresentationsBeforeAssessment = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)],
+                                                        default=3)
     Public = models.BooleanField(default=False)
+
     def __str__(self):
         return "Presentation options for " + self.TimeSlot.__str__() + "."
 
@@ -40,7 +42,8 @@ class PresentationSet(models.Model):
     """
     A set of presentations. A set is a number of presentations in the same room for one track.
     """
-    PresentationOptions = models.ForeignKey(PresentationOptions, on_delete=models.CASCADE, related_name="presentationsets")
+    PresentationOptions = models.ForeignKey(PresentationOptions, on_delete=models.CASCADE,
+                                            related_name="presentationsets")
     PresentationRoom = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="presentationroom")
     AssessmentRoom = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="assessmentroom")
     Track = models.ForeignKey(Track, on_delete=models.CASCADE, blank=True, null=True)
@@ -64,9 +67,11 @@ class PresentationTimeSlot(models.Model):
     )
     DateTime = models.DateTimeField()
     Presentations = models.ForeignKey(PresentationSet, on_delete=models.CASCADE, related_name="timeslots")
-    Distribution = models.OneToOneField(Distribution, on_delete=models.CASCADE, related_name="presentationtimeslot", blank=True, null=True, default=None)
+    Distribution = models.OneToOneField(Distribution, on_delete=models.CASCADE, related_name="presentationtimeslot",
+                                        blank=True, null=True, default=None)
     CustomType = models.IntegerField(choices=SlotTypes, default=0, null=True)
-    CustomDuration = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)], blank=True, null=True, default=None)
+    CustomDuration = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)], blank=True,
+                                         null=True, default=None)
 
     class Meta:
         ordering = ['DateTime']
@@ -74,6 +79,7 @@ class PresentationTimeSlot(models.Model):
     def Duration(self):
         """
         Duration of this timeslot
+
         :return:
         """
         if self.CustomDuration:
@@ -88,7 +94,7 @@ class PresentationTimeSlot(models.Model):
         End time of this timeslot
         :return:
         """
-        return self.DateTime+timedelta(minutes=self.Duration())
+        return self.DateTime + timedelta(minutes=self.Duration())
 
     def __str__(self):
-        return str(self.Distribution) + " @ "+str(self.DateTime)
+        return str(self.Distribution) + " @ " + str(self.DateTime)

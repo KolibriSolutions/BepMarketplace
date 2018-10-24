@@ -10,17 +10,19 @@ from django.shortcuts import render
 from django.urls import reverse
 from htmlmin.decorators import not_minified_response
 
-from BepMarketplace.decorators import group_required
+from BepMarketplace.decorators import group_required, phase_required
 from general_view import get_grouptype
 from index.models import Track
 from students.models import Distribution
 from timeline.utils import get_timephase_number
 from .exports import listPresentationsXls
 from .forms import PresentationOptionsForm, PresentationRoomForm, PresentationSetForm, get_timeslot, MakePublicForm
-from .models import Room, PresentationSet, PresentationTimeSlot
+from .models import Room, PresentationSet, PresentationTimeSlot, PresentationOptions
+from .utils import planning_public
 
 
 @group_required("type3staff")
+@phase_required(5, 6, 7)
 def wizard_step1(request):
     """
     Step 1 of the planning of the presentations for the projects.
@@ -30,36 +32,24 @@ def wizard_step1(request):
     :param request:
     :return:
     """
-    if get_timephase_number() <= 4:
-        raise PermissionDenied("Projects are not yet distributed.")
-
-    ts = get_timeslot()
+    ts = get_timeslot()  # if no timeslot, the phase_required decorator blocks this view.
     try:
         options = ts.presentationoptions
-    except:
+    except PresentationOptions.DoesNotExist:
         options = None
     if request.method == 'POST':
         form = PresentationOptionsForm(request.POST, instance=options)
         if form.is_valid():
             # if something changed or if nothing exists yet.
-            if form.changed_data or not hasattr(ts, 'presentationoptions'):
-                # create new
+            if form.changed_data or options is None:
                 options = form.save()
-                try:
-                    options.Timeslot = get_timeslot()
-                    # check for errors
-                    options.validate_unique()
-                except:
-                    return render(request, "base.html", {
-                        "Message": "Presentation options failed. Please try again or contact support staff.",
-                        "return": reverse("presentations:presentationswizardstep2")})
+                options.Timeslot = ts
                 options.save()
                 return render(request, "base.html", {"Message": "Presentation options saved. <br />\
                 If there were already presentations planned and you changed the durations, "
                                                                 "please recalculate the timings in 'step 4' and re-save the presentations! \
                 <br /><a class='button success' href='" + reverse(
                     "presentations:presentationswizardstep2") + "'>Go to next step</a>"})
-
             return render(request, "base.html", {"Message": "No changes in presentation options. <br />\
             <a class='button success' href='" + reverse(
                 "presentations:presentationswizardstep2") + "'>Go to next step</a>"})
@@ -70,6 +60,7 @@ def wizard_step1(request):
 
 
 @group_required("type3staff")
+@phase_required(5, 6, 7)
 def wizard_step2(request):
     """
     Step 2 of the planning of the presentations for the projects.
@@ -78,9 +69,6 @@ def wizard_step2(request):
     :param request:
     :return:
     """
-    if get_timephase_number() <= 4:
-        raise PermissionDenied("Projects are not yet distributed.")
-
     ts = get_timeslot()
     if not hasattr(ts, 'presentationoptions'):
         return render(request, "base.html", {
@@ -104,6 +92,7 @@ def wizard_step2(request):
 
 
 @group_required("type3staff")
+@phase_required(5, 6, 7)
 def wizard_step3(request):
     """
     Step 3 of the planning of the presentations for the projects.
@@ -113,9 +102,6 @@ def wizard_step3(request):
     :param request:
     :return:
     """
-    if get_timephase_number() <= 4:
-        raise PermissionDenied("Projects are not yet distributed.")
-
     ts = get_timeslot()
     if not hasattr(ts, 'presentationoptions'):
         return render(request, "base.html", {
@@ -149,6 +135,7 @@ def wizard_step3(request):
 
 
 @group_required("type3staff")
+@phase_required(5, 6, 7)
 def wizard_step4(request):
     """
     Step 4 of the planning of the presentations for the projects.
@@ -159,15 +146,12 @@ def wizard_step4(request):
     :param request:
     :return:
     """
-    if get_timephase_number() <= 4:
-        raise PermissionDenied("Projects are not yet distributed.")
-
     ts = get_timeslot()
     if not hasattr(ts, 'presentationoptions'):
         return render(request, "base.html", {
             "Message": "There are no presentation options yet, please <a class='button success' href='" + reverse(
                 "presentations:presentationswizardstep1") + "'>go back to step 1</a>"})
-    if ts.presentationoptions.presentationsets.count() == 0:
+    if not ts.presentationoptions.presentationsets.exists():
         return render(request, "base.html", {
             "Message": "There are no presentation sets yet, please <a class='button success' href='" + reverse(
                 "presentations:presentationswizardstep3") + "'>go back to step 3</a>"})
@@ -206,6 +190,7 @@ def wizard_step4(request):
 
 
 @group_required('type3staff')
+@phase_required(5, 6, 7)
 def list_presentations(request):
     """
     Table view of all presentations in this timeslot. Way too much unorganized information, so mostly used for debugging
@@ -214,9 +199,6 @@ def list_presentations(request):
     :param request:
     :return:
     """
-    if get_timephase_number() <= 4:
-        raise PermissionDenied("Projects are not yet distributed.")
-
     sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=get_timeslot())
     if not sets:
         return render(request, "base.html",
@@ -261,6 +243,7 @@ def export_presentations(request):
 
 
 @login_required
+@phase_required(5, 6, 7)
 def calendar(request, own=False):
     """
     Calendar view of the presentations planning, public visible in phase 7, otherwise only if 'public==True'
@@ -269,19 +252,9 @@ def calendar(request, own=False):
     :param own:
     :return:
     """
-
-    if get_timephase_number() <= 4:
-        raise PermissionDenied("Projects are not yet distributed.")
-
-    if get_timephase_number() != 7:
-        if get_grouptype("3") not in request.user.groups.all():
-            try:
-                public = get_timeslot().presentationoptions.Public
-            except:
-                return render(request, 'base.html', {'Message': 'The Presentations are not yet planned.'})
-            if not public:
-                return render(request, 'base.html', {'Message': 'The Presentationsplanning is not yet public'})
-
+    if get_timephase_number() < 7 and get_grouptype("3") not in request.user.groups.all() and not planning_public():
+        # in phase 5 and 6, planning is only visible for type3, except when it is set to public.
+        return render(request, 'base.html', {'Message': 'The Presentationsplanning is not yet public'})
     ts = get_timeslot()
     sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts).order_by('DateTime')
     if own:
@@ -289,10 +262,10 @@ def calendar(request, own=False):
                            Q(timeslots__Distribution__Proposal__Assistants=request.user) |
                            Q(Assessors=request.user) |
                            Q(timeslots__Distribution__Student=request.user)).distinct()
-
     if not sets:
         if own:
-            return render(request, "base.html", {"Message": "There are no presentations that you have to attend!"})
+            return render(request, "base.html", {"Message": "There are no presentations that you have to attend.",
+                                                 'return': 'presentations:presentationscalendar'})
         else:
             return render(request, "base.html", {"Message": "The presentations are not yet planned."})
 

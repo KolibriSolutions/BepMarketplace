@@ -103,6 +103,20 @@
                     <td><span class="mif-checkmark fg-green"></span></td>
                 </tr>
             {% endif %}
+
+            {% if user.groupadministrations.exists %}
+                <tr>
+                    <td>User is administrator of groups:</td>
+                    <td>
+                        <ul>
+                            {% for group in user.groupadministrations.all %}
+                                <li>{{ group.Group }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+            {% endif %}
+
         </table>
 
     {% else %}

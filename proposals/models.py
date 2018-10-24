@@ -22,7 +22,7 @@ class Proposal(models.Model):
     StatusOptions = (
         (1, 'Draft, awaiting completion by type 2 (assistant)'),
         (2, 'Draft, awaiting approval by type 1 (professor)'),
-        (3, 'Final draft, awaiting approval track head'),
+        (3, 'On hold, awaiting approval track head'),
         (4, 'Active proposal'),
     )
 
@@ -33,11 +33,12 @@ class Proposal(models.Model):
     NumstudentsMax = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(10)])
     GeneralDescription = models.TextField()
     StudentsTaskDescription = models.TextField()
-    ECTS = models.IntegerField(choices=((10, 10), (15, 15)))
+    ExtensionDescription = models.TextField(null=True, blank=True)
     Track = models.ForeignKey(Track, on_delete=models.PROTECT)
     Private = models.ManyToManyField(User, blank=True, related_name='personal_proposal')
     Assistants = models.ManyToManyField(User, related_name='proposals', blank=True)
-    Status = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(4)], choices=StatusOptions)
+    Status = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(4)],
+                                 choices=StatusOptions)
     TimeSlot = models.ForeignKey(TimeSlot, related_name='proposals', null=True, blank=True, on_delete=models.PROTECT)
     TimeStamp = models.DateTimeField(auto_now=True, null=True)
     Created = models.DateTimeField(auto_now_add=True, null=True)
@@ -45,7 +46,7 @@ class Proposal(models.Model):
     def __str__(self):
         return self.Title + ' from ' + self.ResponsibleStaff.username
 
-    def nDistributions(self):
+    def num_distributions(self):
         return int(self.distributions.count())
 
     def prevyear(self):
@@ -86,9 +87,11 @@ class ProposalFile(models.Model):
     """
     Abstract base class for any object attached to a project. Used for images and attachments.
     """
+
     def make_upload_path(instance, filename):
         filename_new = filename_default(filename)
         return 'proposal_{0}/{1}'.format(instance.Proposal.pk, filename_new)
+
     Caption = models.CharField(max_length=200, blank=True, null=True)
     OriginalName = models.CharField(max_length=200, blank=True, null=True)
 
@@ -112,7 +115,7 @@ class ProposalImage(ProposalFile):
             this_old = ProposalImage.objects.get(id=self.id)
             if this_old.File != self.File:
                 this_old.File.delete(save=False)
-        except:  # new image object
+        except ProposalImage.DoesNotExist:  # new image object
             pass
         super(ProposalImage, self).save(*args, **kwargs)
 
@@ -133,7 +136,7 @@ class ProposalAttachment(ProposalFile):
             this_old = ProposalAttachment.objects.get(id=self.id)
             if this_old.File != self.File:
                 this_old.File.delete(save=False)
-        except:  # new image object
+        except ProposalAttachment.DoesNotExist:  # new file object
             pass
         super(ProposalAttachment, self).save(*args, **kwargs)
 

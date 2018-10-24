@@ -1,11 +1,8 @@
-from django.urls import reverse
-
 from general_test import ProjectViewsTestGeneral
-from students.models import Distribution
-from .models import GradeCategoryAspect, GradeCategory, ResultOptions
+from .models import GradeCategoryAspect, GradeCategory
 
 
-class TrackingViewsTest(ProjectViewsTestGeneral):
+class ResultsViewsTest(ProjectViewsTestGeneral):
     def setUp(self):
         self.app = 'results'
         super().setUp()
@@ -26,9 +23,8 @@ class TrackingViewsTest(ProjectViewsTestGeneral):
         d = self.distribution_random
         v = self.results_options
 
-        codes_nophase = [
+        codes_general = [
             [['about', None], self.p_all],
-
             [['list_categories', None], self.p_support],
             [['add_category', None], self.p_support],
             [['edit_category', {'pk': c.pk}], self.p_support],
@@ -55,14 +51,14 @@ class TrackingViewsTest(ProjectViewsTestGeneral):
         ]
         # presentation assessors are not tested.
         codes_phase67_visible = [
-            [['gradeformstaff', {'pk': d.pk}], self.p_no_assistant],
-            [['gradeformstaff', {'pk': d.pk, 'step': 0}], self.p_no_assistant],
+            [['gradeformstaff', {'pk': d.pk}], self.p_staff_results],
+            [['gradeformstaff', {'pk': d.pk, 'step': 0}], self.p_staff_results],
             [['gradefinal', {'pk': d.pk}], self.p_grade_final],
             [['gradefinal', {'pk': d.pk, 'version': 0}], self.p_grade_final],
         ]
         # Test for users
-        self.loop_phase_code_user(range(1, 6), codes_phase12345)
-        self.loop_phase_code_user(range(1, 8), codes_nophase)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5], codes_phase12345)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes_general)
         self.info['type'] = 'results not visible'
         self.loop_phase_code_user([6, 7], codes_phase67_notvisible)
         v.Visible = True

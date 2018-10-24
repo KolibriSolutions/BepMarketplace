@@ -5,7 +5,7 @@ Dear {{ student.get_full_name }},<br/>
 {% endblock %}
 
 {% block body %}
-Congratulations, you have been distributed to the project <a href="{{ domain }}{% url 'proposals:details' project.id %}">{{ project }}</a>.<br/>
+Congratulations, you have been distributed to the project <a href="{{ DOMAIN }}{% url 'proposals:details' project.id %}">{{ project }}</a>.<br/>
 <br/>
 Please contact the supervisors of this project to start.<br/>
 If you think that this distribution is in error, please notify us by email <u>before the end of the 'Gather and Process Objections' phase</u>. <br/>

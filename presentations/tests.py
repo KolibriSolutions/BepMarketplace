@@ -7,7 +7,7 @@ class PresentationsViewsTest(ViewsTest):
         super().setUp()
 
     def test_view_status(self):
-        codes_phase1234 = [
+        codes_phase1234 = [  # also in no-timephase everything should be forbidden.
             [['presentationswizardstep1', None], self.p_forbidden],
             [['presentationswizardstep2', None], self.p_forbidden],
             [['presentationswizardstep3', None], self.p_forbidden],
@@ -28,7 +28,7 @@ class PresentationsViewsTest(ViewsTest):
             [['presentationscalendarown', None], self.p_all],
         ]
 
-        self.loop_phase_code_user([1, 2, 3, 4], codes_phase1234)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4], codes_phase1234)
         self.loop_phase_code_user([5, 6, 7], codes_phase567)
 
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

@@ -38,16 +38,21 @@ def get_timephase():
     if tp:
         return tp
     else:
-        tp = TimePhase.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now()))
-        if not tp:
+        # act as if there isn't a timephase when there is no timeslot.
+        if get_timeslot() is not None:
+            tp = TimePhase.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now()))
+            if not tp:
+                return None
+            cache.set('timephase', tp[0], settings.STATIC_OBJECT_CACHE_DURATION)
+            return tp[0]
+        else:
             return None
-        cache.set('timephase', tp[0], settings.STATIC_OBJECT_CACHE_DURATION)
-        return tp[0]
 
 
 def get_timephase_number():
     """
     return the number of the current timephase, used in a lot of checks. Return -1 if no timephase.
+    TimePhase is a number in [-1, 1, 2, 3, 4, 5, 6, 7], so not zero.
 
     :return:
     """

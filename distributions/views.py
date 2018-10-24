@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -10,13 +9,12 @@ from django.shortcuts import render
 
 from BepMarketplace.decorators import group_required, phase_required
 from general_form import ConfirmForm
-from general_mail import EmailThreadMultipleTemplate
+from general_mail import EmailThreadTemplate
 from general_view import get_all_students, get_all_staff
 from proposals.models import Proposal
 from proposals.utils import get_all_proposals, get_share_link, get_cached_project
 from students.models import Application, Distribution
 from students.views import get_all_applications
-from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number
 from . import distribution
 
@@ -128,7 +126,7 @@ def api_redistribute(request):
             try:
                 dist.Application = get_all_applications(dist.Student).get(Proposal=dist.Proposal)
                 applprio = dist.Application.Priority
-            except:
+            except Application.DoesNotExist:
                 dist.Application = None
                 applprio = -1
             dist.full_clean()
@@ -157,14 +155,14 @@ def mail_distributions(request):
         form = ConfirmForm(request.POST)
         if form.is_valid():
             mails = []
-            ts = TimeSlot.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now()))
+            ts = get_timeslot()
             # iterate through projects, put students directly in the mail list
             for prop in get_all_proposals().filter(Q(distributions__isnull=False)):
                 for dist in prop.distributions.filter(Timeslot=ts):
                     mails.append({
                         'template': 'email/studentdistribution.html',
                         'email': dist.Student.email,
-                        'subject': 'BEP Marketplace Distribution',
+                        'subject': 'distribution',
                         'context': {
                             'project': prop,
                             'student': dist.Student,
@@ -177,7 +175,7 @@ def mail_distributions(request):
                     mails.append({
                         'template': 'email/assistantdistribution.html',
                         'email': usr.email,
-                        'subject': 'BEP Marketplace Distribution',
+                        'subject': 'distribution',
                         'context': {
                             'supervisor': usr,
                             'projects': usr.proposals.filter(TimeSlot=get_timeslot()).distinct(),
@@ -187,7 +185,7 @@ def mail_distributions(request):
                     mails.append({
                         'template': 'email/supervisordistribution.html',
                         'email': usr.email,
-                        'subject': 'BEP Marketplace Distribution',
+                        'subject': 'distribution',
                         'context': {
                             'supervisor': usr,
                             'projects': usr.proposalsresponsible.filter(TimeSlot=get_timeslot()).distinct(),
@@ -195,19 +193,18 @@ def mail_distributions(request):
                     })
 
             # UNCOMMENT THIS TO MAIL NOT_DISTRIBUTED STUDENTS WITH 'action required'
-            # iterate all students and find those with no distributions
             # for usr in get_all_students().filter(distributions__isnull=True):
             #     mails.append({
             #         'template': 'email/studentnodistribution.html',
             #         'email': usr.email,
-            #         'subject': 'BEP Marketplace Action Required',
+            #         'subject': 'action required',
             #         'context': {
             #             'student': usr,
             #         }
             #     })
-            EmailThreadMultipleTemplate(mails).start()
+            EmailThreadTemplate(mails).start()
 
-            return render(request, 'support/emailProgress.html')
+            return render(request, 'support/email_progress.html')
     else:
         form = ConfirmForm()
 
@@ -261,7 +258,7 @@ def automatic(request, dtype):
                                                        Q(Proposal=dist['proposal']) &
                                                        Q(Priority=dist['preference']) &
                                                        Q(Proposal__TimeSlot=get_timeslot()))[0]
-                    except:
+                    except Application.DoesNotExist:
                         dstdbobj.Application = None
                 else:
                     dstdbobj.Application = None
@@ -341,9 +338,9 @@ def list_second_choice(request):
     :param request:
     :return:
     """
-    props = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=get_timeslot()
-                                                                               , num_distr__lt=F(
-            'NumstudentsMax')).order_by('Title')
+    props = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=get_timeslot(),
+                                                                               num_distr__lt=F('NumstudentsMax')) \
+        .order_by('Title')
     sharelinks = [get_share_link(x.pk) for x in props]
 
     return render(request, 'distributions/secondChoiseList.html', {

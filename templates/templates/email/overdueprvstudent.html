@@ -5,13 +5,14 @@ Dear {{ student.get_full_name }},<br/><br/>
 {% endblock %}
 
 {% block body %}
-You have overdue PRV handins for your project {{ project }} of the following type:<br/>
+You have overdue professional skill hand ins for your project {{ project }} of the following type:<br/>
 <ul>
     {% for type in types %}
         <li>{{ type.Description }}</li>
     {% endfor %}
 </ul>
 <br/>
-Please upload your deliverables to the marketplace as soon as possible. If you fail to do this you can not complete your PRV's.<br/>
-Note that your supervisor has to grade your PRV with at least a sufficient in order for you to pass.
+Please upload your deliverables to the {{ NAME }} as soon as possible. If you fail to do this you can not complete your
+    professional skills.<br/>
+Note that your supervisor has to grade your professional skill with at least a sufficient in order for you to pass.
 {% endblock %}

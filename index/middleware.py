@@ -1,8 +1,10 @@
-from django.utils.deprecation import MiddlewareMixin
 from django.core.cache import cache
-from .models import UserAcceptedTerms
 from django.http import HttpResponseRedirect
 from django.shortcuts import reverse
+from django.utils.deprecation import MiddlewareMixin
+
+from .models import UserAcceptedTerms
+
 
 class TermsMiddleware(MiddlewareMixin):
     """
@@ -15,32 +17,28 @@ class TermsMiddleware(MiddlewareMixin):
         :param request:
         :return:
         """
-        try:
-            user = request.user
-        except:
+        user = request.user
+        if user.is_superuser or user.is_anonymous or user.is_impersonate:
+            # these users do not need to accept terms.
             return
-
-        try:#only exists when impersonate is active, crashes if no try except is used
-            if user.is_impersonate:
-                return
-            if user.is_superuser or user.is_anonymous:
-                return
-        except:
-            pass
-
-        if reverse('index:termsaccept') in request.path:
+        # urls that should be available if terms are not yet accepted.
+        # Allow self, logout and issue #118, promotionfiles on termsaccept.
+        if reverse('index:termsaccept') in request.path or \
+                '/download/promotionfile/' in request.path or \
+                reverse('index:logout') in request.path:
             return
 
         acceptedusers = cache.get('termsaccepted', [])
-
         if user.username in acceptedusers:
+            # already accepted
             return
         try:
+            # user has accepted terms, but was not yet in cache.
             obj = UserAcceptedTerms.objects.get(User=user)
             acceptedusers.append(user.username)
             return
         except UserAcceptedTerms.DoesNotExist:
+            # not yet accepted, redirect to index:termsaccept
             pass
-
         cache.set('termsaccepted', acceptedusers, None)
         return HttpResponseRedirect(reverse('index:termsaccept'))
