@@ -28,7 +28,7 @@
                 <td {% if file.TimeStamp.date <= type.Deadline %} class="success" {% else %}class="error"{% endif %}
                                                                   data-sort="{{ file.TimeStamp|date:"U" }}">{{ file.TimeStamp }}</td>
                 <td {% if file.TimeStamp.date <= type.Deadline %} class="success"
-                                                                  {% else %}class="error"{% endif %} >{{ file.Distribution.Student.get_full_name }}</td>
+                                                                  {% else %}class="error"{% endif %} >{{ file.Distribution.Student.usermeta.get_nice_name }}</td>
                 <td>
                     {{ file.Distribution.Proposal.ResponsibleStaff.email }}<br/>
                     {% for ass in file.Distribution.Proposal.Assistants.all %}

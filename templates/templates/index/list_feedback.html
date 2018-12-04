@@ -13,7 +13,7 @@
         {% for report in feedback_list %}
             <tr>
                 <td data-sort="{{ report.Timestamp|date:"U" }}">{{ report.Timestamp }}</td>
-                <td>{{ report.Reporter.get_full_name }}</td>
+                <td>{{ report.Reporter.usermeta.get_nice_name }}</td>
                 <td>{{ report.Url }}</td>
                 <td>{{ report.Feedback }}</td>
                 <td>{{ report.get_Status_display }}</td>

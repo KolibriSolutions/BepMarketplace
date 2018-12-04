@@ -14,12 +14,12 @@
     {% endif %}
     <a class="button primary" href="{% url 'results:gradeformstaff' dstr.id %}">Go back to editing</a>
     {% block report %}
-        <h1>Results for <i>{{ dstr.Student.get_full_name }}</i> for project <i>{{ dstr.Proposal.Title }}</i></h1>
-        <h3>Responsible Staff member: {{ dstr.Proposal.ResponsibleStaff.get_full_name }}</h3>
+        <h1>Results for <i>{{ dstr.Student.usermeta.get_nice_name }}</i> for project <i>{{ dstr.Proposal.Title }}</i></h1>
+        <h3>Responsible Staff member: {{ dstr.Proposal.ResponsibleStaff.usermeta.get_nice_name }}</h3>
         <h3>Assistants:</h3>
         <ul>
             {% for assistant in dstr.Proposal.Assistants.all %}
-                <li>{{ assistant.get_full_name }}</li>
+                <li>{{ assistant.usermeta.get_nice_name }}</li>
             {% endfor %}
         </ul>
         <h3>Grades per Category:</h3>

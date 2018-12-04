@@ -12,12 +12,12 @@
               data-hint-position="right"
               data-hint-color="fg-black"
               data-hint-mode="2"
-              data-hint="{{ d.Proposal.Title }}<br />{{ d.Proposal.ResponsibleStaff.get_full_name }}<br />
+              data-hint="{{ d.Proposal.Title }}<br />{{ d.Proposal.ResponsibleStaff.usermeta.get_nice_name }}<br />
             |Assistants:<ul class='no-padding-left no-margin' style='list-style:none'>
 
                       {#  the tag warning span, is only for double-checking that the list order is correct. It prints the Priority which should be equal to its index number. #}
                     {% for assistant in d.Proposal.Assistants.all %}
-                        <li>{{ assistant.get_full_name }}</li>
+                        <li>{{ assistant.usermeta.get_nice_name }}</li>
                     {% endfor %}</ul>">
             {#  an student with project #}
             <span class='tag info startTime'>{% if slot %}{{ slot.DateTime|date:"H:i" }}{% else %}..{% endif %}</span>
@@ -25,7 +25,7 @@
                   style="display:none;">Too much presentations in a row!</span>
             {{ d.Student.usermeta.Fullname }}<br/>
             <span class='tag default tracktag fg-black'>{{ d.Proposal.Track }}</span> {{ d.Proposal.Title|truncatechars:"30" }}<br/>
-            <b>{{ d.Proposal.ResponsibleStaff.get_full_name|truncatechars:"30" }}</b>
+            <b>{{ d.Proposal.ResponsibleStaff.usermeta.get_nice_name|truncatechars:"30" }}</b>
         </span>
     </div>
 </li>

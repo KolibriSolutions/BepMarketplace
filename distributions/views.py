@@ -71,7 +71,7 @@ def api_distribute(request):
             dist.save()
         except Exception as e:
             return JsonResponse({'type': 'warning', 'txt': warningString, 'exception': str(e)})
-        return JsonResponse({'type': 'success', 'txt': 'Distributed Student ' + dist.Student.get_full_name() +
+        return JsonResponse({'type': 'success', 'txt': 'Distributed Student ' + dist.Student.usermeta.get_nice_name() +
                                                        ' to Proposal ' + dist.Proposal.Title, 'prio': applprio})
     else:
         raise PermissionDenied('You don\'t know what you\'re doing!')
@@ -96,7 +96,7 @@ def api_undistribute(request):
             n = dist.delete()
             if n[0] == 1:
                 return JsonResponse(
-                    {'type': 'success', 'txt': 'Undistributed Student ' + dist.Student.get_full_name()})
+                    {'type': 'success', 'txt': 'Undistributed Student ' + dist.Student.usermeta.get_nice_name()})
             else:
                 return JsonResponse({'type': 'warning', 'txt': warningString + ' (distributions not deleted)'})
         except Exception as e:
@@ -133,7 +133,7 @@ def api_redistribute(request):
             dist.save()
         except Exception as e:
             return JsonResponse({'type': 'warning', 'txt': warningString, 'exception': str(e)})
-        return JsonResponse({'type': 'success', 'txt': 'Changed distributed Student ' + dist.Student.get_full_name() +
+        return JsonResponse({'type': 'success', 'txt': 'Changed distributed Student ' + dist.Student.usermeta.get_nice_name() +
                                                        ' to Proposal ' + dist.Proposal.Title, 'prio': applprio})
     else:
         raise PermissionDenied('You don\'t know what you\'re doing!')
@@ -279,52 +279,81 @@ def automatic(request, dtype):
         else:
             return render(request, 'base.html', {'Message': 'invalid type'})
         # convert to django models from db
+        # and make scatter chart data
+        scatter = []
         for obj in distobjs:
+            student = get_all_students().get(pk=obj.StudentID)
+            scatter.append({
+                'x': student.usermeta.ECTS,
+                'y': obj.Preference,
+            })
             dists.append({
                 # this will fail if a student does not have a timeslot, which should not happen.
-                'student': get_all_students().get(pk=obj.StudentID),
+                'student': student,
                 'proposal': get_all_proposals().get(pk=obj.ProjectID),
                 'preference': obj.Preference,
             })
 
-    # calculate stats
-    prefs = {
-        'total': [x['preference'] for x in dists],
-    }
-    stats = {
-        'total': []
-    }
-    cohorts = distribution.get_cohorts()
-
-    for c in cohorts:
-        stats[c] = []
-        prefs[c] = []
-
-    for c in cohorts:
-        for obj in dists:
-            if obj['student'].usermeta.Cohort == int(c):
-                prefs[c].append(obj['preference'])
-
-    for n in range(0, settings.MAX_NUM_APPLICATIONS + 1):
-        for k in stats.keys():
-            try:
-                stats[k].append(round((prefs[k].count(n) / len(prefs[k])) * 100))
-            except:
-                stats[k].append(0)
-
     if int(dtype) == 1:
         typename = 'Calculated by student'
     elif int(dtype) == 2:
-        typename = 'Calculated calculated by project'
+        typename = 'Calculated by project'
     else:
-        typename = 'invalid'
+        raise PermissionDenied("Invalid type")
+
+    cohorts = distribution.get_cohorts()
+
+    # calculate stats
+    prefs = {
+        'Total': [x['preference'] for x in dists],
+    }
+    columns = ['Total']
+    for c in cohorts:
+        columns.append(c)
+        prefs[c] = []
+        for obj in dists:
+            if obj['student'].usermeta.Cohort == int(c):
+                prefs[c].append(obj['preference'])  # list of all individual preferences in this cohort
+
+    # make a table
+    table = []
+    pref_options = list(range(-1, settings.MAX_NUM_APPLICATIONS + 1))
+    for pref in pref_options:  # each preference, each row.
+        # set first column
+        if pref == -1:
+            this_row = ['Random']
+        elif pref == 0:
+            this_row = ['Private']
+        else:
+            this_row = [str(pref), ]  # application preference
+        # set other columns
+        for k in columns:  # add columns to the row.
+            num = prefs[k].count(pref)
+            try:
+                this_row.append('{}% ({})'.format(round(num / len(prefs[k]) * 100), num))
+            except ZeroDivisionError:
+                this_row.append('{}% ({})'.format(0, 0))
+
+        # add row the the table
+        table.append(this_row)
+    # last row with totals.
+    this_row = ['Totals']
+    for k in columns:
+        this_row.append(len(prefs[k]))
+    table.append(this_row)
+
+    # show the tables for testing.
+    if settings.TESTING:
+        return columns, table
 
     data = [obj.as_json() for obj in distobjs]
     return render(request, 'distributions/distributionProposal.html', {
         'typename': typename,
         'distributions': dists,
         'form': form,
-        'stats': stats,
+        'stats': table,
+        'stats_header': columns,
+        'scatter': scatter,
         'jsondata': json.dumps(data),
     })
 

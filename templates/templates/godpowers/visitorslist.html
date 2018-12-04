@@ -1,6 +1,6 @@
 <h4>{{ track.Subject.Title }}</h4>
 <ul>
     {% for visitor in track.UniqueVisitors.all %}
-        <li><a href="{% url 'godpowers:visitoroverview' visitor.id %}">{{ visitor.get_full_name }}</a></li>
+        <li><a href="{% url 'godpowers:visitoroverview' visitor.id %}">{{ visitor.usermeta.get_nice_name }}</a></li>
     {% endfor %}
 </ul>

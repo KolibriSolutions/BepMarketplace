@@ -10,7 +10,7 @@
         <tbody>
         {% for student in students %}
             <tr>
-                <td><a href="{% url 'godpowers:visitoroverview' student.id %}">{{ student.get_full_name }}</a></td>
+                <td><a href="{% url 'godpowers:visitoroverview' student.id %}">{{ student.usermeta.get_nice_name }}</a></td>
             </tr>
         {% endfor %}
         </tbody>

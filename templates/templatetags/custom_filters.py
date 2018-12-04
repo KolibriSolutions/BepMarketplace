@@ -251,7 +251,7 @@ def GetDistribution(user):
         return False
     url = reverse('proposals:details', args=[dist.Proposal.pk])
     html = '<p>You are distributed to the proposal:</p><a href="{}" class ="button primary">{}</a></p>'
-    title = truncatechars(dist.Proposal.Title, 30)
+    title = truncatechars(dist.Proposal.Title, 25)
     st = format_html(html, url, title)
     return st
 

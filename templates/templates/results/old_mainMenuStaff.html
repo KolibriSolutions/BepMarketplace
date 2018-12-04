@@ -8,7 +8,7 @@
     </thead>
     <tbody>
     {% for distr in distrbutions %}
-        <tr><td><a class="button primary" href="{% url 'results:gradeformstaff' distr.id %}">{{ distr.Student.get_full_name }}</a> </td></tr>
+        <tr><td><a class="button primary" href="{% url 'results:gradeformstaff' distr.id %}">{{ distr.Student.usermeta.get_nice_name }}</a> </td></tr>
     {% endfor %}
     </tbody>
 </table>

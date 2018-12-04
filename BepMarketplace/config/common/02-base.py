@@ -61,7 +61,7 @@ WSGI_APPLICATION = SETTINGS_DIR + '.wsgi.application'
 LANGUAGE_CODE = 'en-US'
 TIME_ZONE = 'Europe/Amsterdam'
 USE_I18N = False  # translation backend, not used, so False.
-USE_L10N = False # number formatting based on user's browser locale
+USE_L10N = False  # number formatting based on user's browser locale
 USE_TZ = True
 
 # overrides (only used if USE_L10N is False)

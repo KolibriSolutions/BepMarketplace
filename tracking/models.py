@@ -18,7 +18,7 @@ class UserLogin(models.Model):
     Twofactor = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.Subject.get_full_name() + "@" + localtime(self.Timestamp).strftime("%H:%M %d-%m-%Y")
+        return self.Subject.usermeta.get_nice_name() + "@" + localtime(self.Timestamp).strftime("%H:%M %d-%m-%Y")
 
 
 class ProposalStatusChange(models.Model):

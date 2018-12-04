@@ -11,33 +11,8 @@ from django.core.cache import cache
 from django.db.models import Q
 from django.utils import timezone
 
+from index.models import UserMeta
 from timeline.utils import get_timeslot, get_timephase_number
-
-
-def get_all_students(undistributed=False):
-    """
-    Return all active students in marketplace, used for instance for mailing.
-
-    :param undistributed: Also return undistributed students in phase 6 and later.
-    :return: user objects
-    """
-
-    users = User.objects.filter(
-        Q(usermeta__EnrolledBEP=True) & Q(groups=None) & Q(usermeta__TimeSlot=get_timeslot())).distinct()
-    if get_timephase_number() < 6 or undistributed:
-        return users
-    else:
-        # only students with a distributions
-        return users.filter(Q(distributions__Timeslot=get_timeslot()))
-
-
-def get_all_staff():
-    """
-    Get all currently active staff.
-
-    :return:
-    """
-    return User.objects.filter(groups__isnull=False).distinct()
 
 
 def get_grouptype(shortname):
@@ -57,6 +32,31 @@ def get_grouptype(shortname):
         gt = Group.objects.get(name=fullname)
         cache.set("gt" + shortname, gt, settings.STATIC_OBJECT_CACHE_DURATION)
         return gt
+
+
+def get_all_students(undistributed=False):
+    """
+    Return all active students in marketplace, used for instance for mailing.
+
+    :param undistributed: Also return undistributed students in phase 6 and later.
+    :return: user objects
+    """
+    users = User.objects.filter(
+        Q(usermeta__EnrolledBEP=True) & Q(groups=None) & Q(usermeta__TimeSlot=get_timeslot())).distinct()
+    if get_timephase_number() < 6 or undistributed:
+        return users
+    else:
+        # only students with a distributions
+        return users.filter(Q(distributions__Timeslot=get_timeslot()))
+
+
+def get_all_staff():
+    """
+    Get all currently active staff.
+
+    :return:
+    """
+    return User.objects.filter(groups__isnull=False).distinct()
 
 
 def get_sessions(user):
@@ -89,14 +89,15 @@ def truncate_string(data, trun_len=10):
     return (data[:trun_len] + '..') if len(data) > trun_len else data
 
 
-def get_name(user):
-    """
-    Get the name of a user.
-
-    :param user:
-    :return:
-    """
-    try:
-        return user.usermeta.get_nice_name()
-    except:
-        return user.get_full_name()
+# Assume all users have usermeta
+# def get_name(user):
+#     """
+#     Get the name of a user.
+#
+#     :param user:
+#     :return:
+#     """
+#     try:
+#         return user.usermeta.get_nice_name()
+#     except UserMeta.DoesNotExist:
+#         return user.get_full_name()

@@ -21,7 +21,7 @@
             <td>{{ proposal.Track }}</td>
             <td>{{ proposal.Group }}</td>
             <td>
-                <a href="mailto:{{ proposal.ResponsibleStaff.email }}">{{ proposal.ResponsibleStaff.get_full_name }}</a>
+                <a href="mailto:{{ proposal.ResponsibleStaff.email }}">{{ proposal.ResponsibleStaff.usermeta.get_nice_name }}</a>
             </td>
             {% if phasenumber < 6 %}
                 <td data-sort="{{ proposal.NumstudentsMin }}">
@@ -76,7 +76,7 @@
                 <td>
                     <ul>
                         {% for assistant in proposal.Assistants.all %}
-                            <li><a href="mailto:{{ assistant.email }}">{{ assistant.get_full_name }}</a></li>
+                            <li><a href="mailto:{{ assistant.email }}">{{ assistant.usermeta.get_nice_name }}</a></li>
                         {% endfor %}
                     </ul>
                 </td>

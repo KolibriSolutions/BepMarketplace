@@ -15,7 +15,7 @@
             <tr>
                 <td data-sort="{{ tracking.Timestamp|date:"U" }}">{{ tracking.Timestamp }}</td>
                 <td>{{ tracking.get_Type_display }}</td>
-                <td>{{ tracking.Student.get_full_name }}</td>
+                <td>{{ tracking.Student.usermeta.get_nice_name }}</td>
                 <td><a href="{% url 'proposals:details' tracking.Proposal_id %}">{{ tracking.Proposal }}</a></td>
             </tr>
         {% endfor %}

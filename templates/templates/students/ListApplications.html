@@ -29,12 +29,12 @@
                         {% endif %}
                     </td>
                     <td><a href="{% url 'proposals:details' appl.Proposal.id %}">{{ appl.Proposal.Title }}</a></td>
-                    <td>{{ appl.Proposal.ResponsibleStaff.get_full_name }}</td>
+                    <td>{{ appl.Proposal.ResponsibleStaff.usermeta.get_nice_name }}</td>
                     <td>
                         <ul class="no-margin">
                             {% for assistant in appl.Proposal.Assistants.all %}
                                 <li>
-                                    {{ assistant.get_full_name }}
+                                    {{ assistant.usermeta.get_nice_name }}
                                 </li>
                             {% endfor %}
                         </ul>

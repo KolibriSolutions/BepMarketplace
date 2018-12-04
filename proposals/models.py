@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from django.conf import settings
@@ -13,12 +14,13 @@ from index.models import Track
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot
 
+logger = logging.getLogger('django')
+
 
 class Proposal(models.Model):
     """
-    A project proposal for a student.
+    Model for a project.
     """
-
     StatusOptions = (
         (1, 'Draft, awaiting completion by type 2 (assistant)'),
         (2, 'Draft, awaiting approval by type 1 (professor)'),
@@ -28,6 +30,7 @@ class Proposal(models.Model):
 
     Title = models.CharField(max_length=100)
     ResponsibleStaff = models.ForeignKey(User, on_delete=models.PROTECT, related_name='proposalsresponsible')
+    Assistants = models.ManyToManyField(User, related_name='proposals', blank=True)
     Group = models.CharField(max_length=3, choices=GroupOptions)
     NumstudentsMin = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(10)])
     NumstudentsMax = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(10)])
@@ -36,15 +39,14 @@ class Proposal(models.Model):
     ExtensionDescription = models.TextField(null=True, blank=True)
     Track = models.ForeignKey(Track, on_delete=models.PROTECT)
     Private = models.ManyToManyField(User, blank=True, related_name='personal_proposal')
-    Assistants = models.ManyToManyField(User, related_name='proposals', blank=True)
     Status = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(4)],
                                  choices=StatusOptions)
-    TimeSlot = models.ForeignKey(TimeSlot, related_name='proposals', null=True, blank=True, on_delete=models.PROTECT)
+    TimeSlot = models.ForeignKey(TimeSlot, related_name='proposals', null=True, blank=True, on_delete=models.PROTECT, help_text='The year this proposal is used. Set to "--" to save the proposal for a future time. Only the proposals of the current timeslot can be used in the current timeslot.')
     TimeStamp = models.DateTimeField(auto_now=True, null=True)
     Created = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return self.Title + ' from ' + self.ResponsibleStaff.username
+        return self.Title + " from " + self.ResponsibleStaff.username
 
     def num_distributions(self):
         return int(self.distributions.count())
@@ -81,6 +83,15 @@ class Proposal(models.Model):
         self.Title = clean_text(self.Title)
         self.GeneralDescription = clean_text(self.GeneralDescription)
         self.StudentsTaskDescription = clean_text(self.StudentsTaskDescription)
+
+        min_std = self.NumstudentsMin
+        max_std = self.NumstudentsMax
+        if min_std and max_std:
+            if min_std > max_std:
+                raise ValidationError("Minimum number of students cannot be higher than maximum.")
+        else:
+            raise ValidationError("Min or max number of students cannot be empty")
+
 
 
 class ProposalFile(models.Model):
@@ -121,7 +132,7 @@ class ProposalImage(ProposalFile):
 
     def clean(self):
         if self.File:
-            if get_ext(self.File.name) not in settings.ALLOWED_PROPOSAL_IMAGES:
+            if get_ext(self.File.name) not in settings.ALLOWED_PROJECT_IMAGES:
                 raise ValidationError(
                     'This file type is not allowed. Allowed types: ' + print_list(settings.ALLOWED_PROJECT_IMAGES))
 
@@ -142,10 +153,29 @@ class ProposalAttachment(ProposalFile):
 
     def clean(self):
         if self.File:
-            if get_ext(self.File.name) not in settings.ALLOWED_PROPOSAL_ATTACHMENTS:
+            if get_ext(self.File.name) not in settings.ALLOWED_PROJECT_ATTACHMENTS:
                 raise ValidationError(
                     'This file type is not allowed. Allowed types: '
                     + print_list(settings.ALLOWED_PROJECT_ATTACHMENTS))
+
+
+class Favorite(models.Model):
+    """
+    users favourite a project.
+    """
+    Project = models.ForeignKey(Proposal, on_delete=models.CASCADE, related_name='favorites')
+    User = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    Timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.User.get_username() + " to " + self.Project.__str__()
+
+    # class Meta:
+    #     ordering = ["User"]
+
+    def clean(self):
+        if self.User.favorites.filter(Project=self.Project).exists():
+            raise ValidationError("You already favorite this project")
 
 
 # delete image if ProposalImage Object is removed

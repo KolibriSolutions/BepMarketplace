@@ -45,4 +45,4 @@ class Distribution(models.Model):
         return round(self.TotalGrade()*2, 0)/2
 
     def __str__(self):
-        return self.Proposal.Title + " to " + self.Student.get_full_name() + " (" + self.Student.username + ")"
+        return self.Proposal.Title + " to " + self.Student.usermeta.get_nice_name() + " (" + self.Student.username + ")"

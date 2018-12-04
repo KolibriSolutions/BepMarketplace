@@ -14,8 +14,8 @@
                 <th>Username</th>
                 <th>Email</th>
                 <th>Type<br/></th>
-                <th>Active<br/></th>
                 <th data-searchable="false">Last login</th>
+                <th>Other</th>
                 <th>Time slots</th>
                 <th data-searchable="false" data-sortable="false">Edit</th>
                 {% if user.is_superuser %}
@@ -26,9 +26,7 @@
             <tbody>
             {% for u in users %}
                 <tr>
-                    <td>
-                        {% if u == user %}<span class="mif-user"></span>{% endif %}{{ u.first_name }} {{ u.last_name }}
-                    </td>
+                    <td>{{ u.usermeta.get_nice_name }}</td>
                     <td>{{ u.username }}</td>
                     <td><a href="mailto:{{ u.email }}">{{ u.email }}</a></td>
                     <td>
@@ -38,10 +36,19 @@
                             student (no groups)
                         {% endif %}
                     </td>
-                    <td data-sort="{{ u.last_login|yesno:"yes,no" }}"
-                        data-search="{{ u.last_login|yesno:"yes,no" }}"><span
-                            class="mif-{{ u.last_login|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+
                     <td data-sort="{{ u.last_login|date:"U" }}">{{ u.last_login }}</td>
+                    <td>
+                        {% if u.groups.exists %}
+                            {% if u.administratorgroups.exists %}
+                                Group admin of {% for group in u.groupadministratorthrough_set.all %}
+                                {{ group.Group.ShortName }} ({{ group.Super|yesno:"rw,r" }})
+                            {% endfor %}
+                            {% endif %}
+                        {% else %}
+                            Cohort: {{ u.registration.Cohort|default:"None" }}
+                        {% endif %}
+                    </td>
                     <td>
                         <ul>
                             {% for ts in u.usermeta.TimeSlot.all %}
@@ -63,13 +70,13 @@
                             <a href="{% url 'support:overruleusermeta' u.id %}" class="button primary">User Meta</a>
                         {% endif %}
                     </td>
-
                     {% if user.is_superuser %}
                         <td>
                             <a href="{% url 'impersonate-start' u.id %}" class="button primary">Impersonate</a>
                             <a href="{% url 'tracking:userdetail' u.id %}" class="button primary">Telemetry</a>
                             <a href="{% url 'support:userinfo' u.id %}" class="button primary">Info</a>
                             <a href="{% url 'admin:auth_user_change' u.id %}" class="button warning">Admin edit</a>
+                            <a href="{% url 'admin:index_usermeta_change' u.usermeta.id %}" class="button warning">Meta edit</a>
                         </td>
                     {% endif %}
                 </tr>
@@ -85,7 +92,7 @@
             var dt = $('.datatable').dt_wrapper([
                     {column_number: 0, filter_type: "text"},
                     {column_number: 3, filter_type: "select"},
-                    {column_number: 4, filter_type: "select", html5_data: 'data-search'},
+                    {column_number: 5, filter_type: "select", html5_data: 'data-search'},
                     {
                         column_number: 6,
                         filter_type: "select",

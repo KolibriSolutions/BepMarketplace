@@ -413,7 +413,7 @@ def list_staff_projects(request, pk):
         prefetch_related('Assistants', 'distributions', 'applications')
 
     return render(request, 'proposals/ProposalsCustomList.html',
-                  {"title": "Proposals from " + user.get_full_name(), "proposals": projects})
+                  {"title": "Proposals from " + user.usermeta.get_nice_name(), "proposals": projects})
 
 
 @not_minified_response

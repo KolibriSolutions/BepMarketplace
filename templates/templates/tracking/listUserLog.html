@@ -12,7 +12,7 @@
         <tbody>
         {% for log in userlogs %}
             <tr>
-                <td><a href="mailto:{{ log.Subject.email }}">{{ log.Subject.get_full_name }}</a></td>
+                <td><a href="mailto:{{ log.Subject.email }}">{{ log.Subject.usermeta.get_nice_name }}</a></td>
                 <td data-sort="{{ log.Timestamp|date:"U" }}">{{ log.Timestamp }}</td>
                 <td><a href="{% url 'tracking:userdetail' log.Subject.id %}" class="button primary">Telemetry</a></td>
             </tr>

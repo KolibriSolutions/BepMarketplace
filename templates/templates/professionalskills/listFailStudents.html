@@ -13,7 +13,7 @@
         <tbody>
         {% for dist in distributions %}
             <tr>
-                <td><a href="mailto:{{ dist.Student.email }}"> {{ dist.Student.get_full_name }}</a></td>
+                <td><a href="mailto:{{ dist.Student.email }}"> {{ dist.Student.usermeta.get_nice_name }}</a></td>
                 <td><a href="{% url 'proposals:details' dist.Proposal.id %}">{{ dist.Proposal }}</a></td>
             </tr>
         {% endfor %}

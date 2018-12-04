@@ -66,13 +66,13 @@
                             <td>{{ dp.Group }}</td>
                             <td>
                                 <a href="mailto:{{ dp.ResponsibleStaff.email }}">
-                                    {{ dp.ResponsibleStaff.get_full_name }}
+                                    {{ dp.ResponsibleStaff.usermeta.get_nice_name }}
                                 </a>
                             </td>
                             <td>
                                 <ul>
                                     {% for a in dp.Assistants.all %}
-                                        <li><a href="mailto:{{ a.email }}">{{ a.get_full_name }}</a></li>
+                                        <li><a href="mailto:{{ a.email }}">{{ a.usermeta.get_nice_name }}</a></li>
                                     {% endfor %}
                                 </ul>
                             </td>

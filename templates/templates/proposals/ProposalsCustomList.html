@@ -63,7 +63,7 @@
                                     <ul>
                                         {% for dist in proposal.distributions.all %}
                                             <li>
-                                                {{ dist.Student.get_full_name }}
+                                                {{ dist.Student.usermeta.get_nice_name }}
                                                 ({{ dist.Student.usermeta.Studentnumber }})
                                             </li>
                                         {% endfor %}
@@ -85,13 +85,13 @@
                     <td>{{ proposal.Group }}</td>
                     <td>
                         <a href="mailto:{{ proposal.ResponsibleStaff.email }}">
-                            {{ proposal.ResponsibleStaff.get_full_name }}
+                            {{ proposal.ResponsibleStaff.usermeta.get_nice_name }}
                         </a>
                     </td>
                     <td>
                         <ul>
                             {% for a in proposal.Assistants.all %}
-                                <li><a href="mailto:{{ a.email }}">{{ a.get_full_name }}</a></li>
+                                <li><a href="mailto:{{ a.email }}">{{ a.usermeta.get_nice_name }}</a></li>
                             {% endfor %}
                         </ul>
                     </td>
@@ -100,7 +100,7 @@
                         <td>
                             <ul>
                                 {% for a in proposal.Private.all %}
-                                    <li><a href="mailto:{{ a.email }}">{{ a.get_full_name }}</a></li>
+                                    <li><a href="mailto:{{ a.email }}">{{ a.usermeta.get_nice_name }}</a></li>
                                 {% endfor %}
                             </ul>
                         </td>

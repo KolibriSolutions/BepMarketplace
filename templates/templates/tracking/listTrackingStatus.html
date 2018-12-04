@@ -35,7 +35,7 @@
                        href="{% url 'proposals:details' track.Subject.id %}">{{ track.Subject.Title }}</a>
                 </td>
                 <td>
-                    {{ track.Actor.get_full_name }}
+                    {{ track.Actor.usermeta.get_nice_name }}
                 </td>
                 <td>
                     {{ track.StatusFrom }}

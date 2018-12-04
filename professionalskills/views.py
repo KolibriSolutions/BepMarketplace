@@ -41,7 +41,7 @@ def download_all_of_type(request, pk):
             trck = file.Distribution.Proposal.Track
             with open(file.File.path, 'rb') as fstream:
                 archive.writestr(
-                    '{}/{}.{}'.format(str(trck), file.Distribution.Student.get_full_name().replace(' ', ''),
+                    '{}/{}.{}'.format(str(trck), file.Distribution.Student.usermeta.get_nice_name().replace(' ', ''),
                                       file.File.name.split('.')[-1]), fstream.read())
     in_memory.seek(0)
 
@@ -317,7 +317,7 @@ def respond_file(request, pk):
 
     return render(request, 'GenericForm.html', {
         'form': form,
-        'formtitle': 'Respond to {} from {}'.format(fileobj.Type.Name, fileobj.Distribution.Student.get_full_name())
+        'formtitle': 'Respond to {} from {}'.format(fileobj.Type.Name, fileobj.Distribution.Student.usermeta.get_nice_name())
     })
 
 
@@ -460,7 +460,7 @@ def list_group_members(request, pk):
     """
     group = get_object_or_404(StudentGroup, pk=pk)
     return render(request, 'GenericList.html', {
-        'items': [mem.get_full_name() for mem in group.Members.all()],
+        'items': [mem.usermeta.get_nice_name() for mem in group.Members.all()],
         'header': format_html('<h1>Members of group {}</h1><h2>{}</h2><h3>Starts {}</h3><br/>Capacity: {}/{}'
                               .format(group.Number, group.PRV, localtime(group.Start).strftime("%a %d %b at %H:%M"),
                                       group.Members.count(), group.Max)),

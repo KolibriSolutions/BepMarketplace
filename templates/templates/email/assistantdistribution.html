@@ -1,7 +1,7 @@
 {% extends "email/base_email.html" %}
 
 {% block header %}
-Dear {{ supervisor.get_full_name }},<br />
+Dear {{ supervisor.usermeta.get_nice_name }},<br />
 {% endblock %}
 
 {% block body %}
@@ -17,7 +17,7 @@ Projects for which you are assistant to:<br/>
     {% else %}
         <ul>
         {% for dist in project.distributions.all %}
-            <li><a href="mailto:{{ dist.Student.email }}">{{ dist.Student.get_full_name }}</a></li>
+            <li><a href="mailto:{{ dist.Student.email }}">{{ dist.Student.usermeta.get_nice_name }}</a></li>
         {% endfor %}
         </ul>
     {% endif %}

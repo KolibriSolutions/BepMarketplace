@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block body %}
-    <h1>Telemetry of user: {{ target.get_full_name }}</h1>
+    <h1>Telemetry of user: {{ target.usermeta.get_nice_name }}</h1>
     <div class="tabcontrol2" data-role="tabcontrol">
         <ul class="tabs">
             <li><a href="#numbers">Numbers</a></li>

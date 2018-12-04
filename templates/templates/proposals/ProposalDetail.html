@@ -15,7 +15,7 @@
                     <h1 style="margin-bottom: 0; margin-top: 0;" class="capitalize">
                         <small>
                             <a href="mailto:{{ project.ResponsibleStaff.email }}">
-                                By {{ project.ResponsibleStaff.get_full_name }}
+                                By {{ project.ResponsibleStaff.usermeta.get_nice_name }}
                             </a>
                         </small>
                     </h1>
@@ -167,7 +167,7 @@
                                         {% for assistant in project.Assistants.all %}
                                             <li>
                                                 <a href="mailto:{{ assistant.email }}">
-                                                    {{ assistant.get_full_name }}
+                                                    {{ assistant.usermeta.get_nice_name }}
                                                 </a>
                                             </li>
                                         {% endfor %}
@@ -201,7 +201,7 @@
                                         {% for a in project.Private.all %}
                                             <li>
                                                 {% if user|has_group:"any" %}<a href="mailto:{{ a.email }}">{% endif %}
-                                                {{ a.get_full_name }}
+                                                {{ a.usermeta.get_nice_name }}
                                                 {% if user|has_group:"any" %}</a>{% endif %}
                                             </li>
                                         {% endfor %}
@@ -239,7 +239,7 @@
                                                     <span
                                                             class='tag info studentApplicationPriority'>{{ application.Priority }}
                                                     </span></span>
-                                                    {{ application.Student.get_full_name }}
+                                                    {{ application.Student.usermeta.get_nice_name }}
                                                 </li>
                                             {% endfor %}
                                         </ul>
@@ -254,7 +254,7 @@
                                     <ul>
                                         {% for d in distributions %}
                                             <li>
-                                                {{ d.Student.get_full_name }}
+                                                {{ d.Student.usermeta.get_nice_name }}
                                             {% if d.Student in project.Private.all %}(private){% endif %}
                                             </li>
                                         {% endfor %}

@@ -14,7 +14,7 @@
         </tr>
         <tr>
             <td>Responsible Teacher:</td>
-            <td>{{ proposal.ResponsibleStaff.get_full_name }}</td>
+            <td>{{ proposal.ResponsibleStaff.usermeta.get_nice_name }}</td>
         </tr>
         <tr>
             <td>Assistants:</td>
@@ -23,7 +23,7 @@
                     <ul>
                         {% for assistant in proposal.Assistants.all %}
                             <li>
-                                {{ assistant.get_full_name }}
+                                {{ assistant.usermeta.get_nice_name }}
                             </li>
                         {% endfor %}
                     </ul>

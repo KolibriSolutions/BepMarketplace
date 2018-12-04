@@ -4,7 +4,7 @@ from django.db.models import Count, Sum
 from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 
-from general_view import timestamp, get_name
+from general_view import timestamp
 from results.models import GradeCategory
 from timeline.utils import get_timeslot
 from professionalskills.models import FileType, StaffReponse
@@ -63,10 +63,10 @@ def get_list_students_xlsx(des, typ):
             except:
                 reslist.append('-')
         row = [d.Student.usermeta.Studentnumber, d.Student.usermeta.Fullname, d.Proposal.Title,
-               get_name(d.Proposal.ResponsibleStaff)]
+               d.Proposal.ResponsibleStaff.usermeta.get_nice_name()]
         assistants = ''
         for a in d.Proposal.Assistants.all():
-            assistants += get_name(a) + "; "
+            assistants += a.usermeta.get_nice_name() + "; "
         row.append(assistants)
         if d.Student.usermeta.EnrolledExt:
             row.append(15)
@@ -138,7 +138,7 @@ def get_list_staff_xlsx(staff):
         dt2 = nint(s.proposals.all().annotate(Count('distributions')).aggregate(Sum('distributions__count'))[
                        'distributions__count__sum'])
         dts = dt1 + dt2
-        row = [s.get_full_name(), s.email,
+        row = [s.usermeta.get_nice_name(), s.email,
                pt1, pt2, pts,
                dt1, dt2, dts
                ]
@@ -181,10 +181,10 @@ def get_list_distributions_xlsx(proposals):
     for p in proposals:
         des = p.distributions.filter(Timeslot=get_timeslot())
         row = [p.Title, p.Track.__str__(), p.Group.__str__(),
-               get_name(p.ResponsibleStaff)]
+               p.ResponsibleStaff.usermeta.get_nice_name()]
         assistants = ''
         for a in p.Assistants.all():
-            assistants += get_name(a) + "; "
+            assistants += a.usermeta.get_nice_name() + "; "
         row.append(assistants)
         stds = ''
         stdsmail = ''
@@ -235,7 +235,7 @@ def get_list_proposals_xlsx(proposals):
     ws.column_dimensions['F'].width = 100
 
     for p in proposals:
-        ws.append([p.Title, str(p.Track), str(p.Group), p.ResponsibleStaff.get_full_name(), p.ResponsibleStaff.email,
+        ws.append([p.Title, str(p.Track), str(p.Group), p.ResponsibleStaff.usermeta.get_nice_name(), p.ResponsibleStaff.email,
                    get_share_link(p.pk)])
 
     return save_virtual_workbook(wb)

@@ -14,13 +14,13 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 CSRF_USE_SESSIONS = True  # do not use cookies for csrf
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True  # prevent mime-type sniffing
-X_FRAME_OPTIONS = 'DENY'
+X_FRAME_OPTIONS = 'allow-from https://canvas.tue.nl'  # superseded by CPS_FRAME_ANCESTORS, only for backwards compat.
 CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'")
 CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")
 CSP_IMG_SRC = ("'self'", "data:")  # base64 images are used by lightbox
 CSP_CONNECT_SRC = ("'self'", "wss://"+HOSTNAME)  # websockets and ajax. Make sure wss:// is set and not ws://.
 CSP_BASE_URI = ("'self'")
-CSP_FRAME_ANCESTORS = ("'none'")
+CSP_FRAME_ANCESTORS = ("https://canvas.tue.nl")  # Allow is being inherited by canvas in iframe.
 CSP_FORM_ACTION = ("'self'")  # where form action=URI can point to
 
 ## Impersonate

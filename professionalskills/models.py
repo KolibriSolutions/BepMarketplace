@@ -144,7 +144,7 @@ class StaffReponse(models.Model):
     Status = models.CharField(max_length=1, choices=StatusOptions)
 
     def __str__(self):
-        return '{} of {}'.format(self.File.Type.Name, self.File.Distribution.Student.get_full_name())
+        return '{} of {}'.format(self.File.Type.Name, self.File.Distribution.Student.usermeta.get_nice_name())
 
     def clean(self):
         self.Explanation = clean_text(self.Explanation)

@@ -2,7 +2,7 @@ from django.utils import timezone
 from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 
-from general_view import timestamp, get_name
+from general_view import timestamp
 
 
 def listPresentationsXls(sets):
@@ -23,13 +23,13 @@ def listPresentationsXls(sets):
         wss.append(ws)
         ws['C1'] = timezone.localtime(pset.DateTime).date().strftime("%A %d %B %Y")
         ws['C3'] = "Track: " + pset.Track.Name
-        ws['C4'] = "Track responsible staff: " + get_name(pset.Track.Head)
+        ws['C4'] = "Track responsible staff: " + pset.Track.Head.usermeta.get_nice_name()
         ws['C5'] = "Exported on: " + timestamp()
         ws['C6'] = "Presentation room: " + pset.PresentationRoom.Name
         ws['C7'] = "Assessment room: " + pset.AssessmentRoom.Name
         assessors = ''
         for a in pset.Assessors.all():
-            assessors += get_name(a) + "; "
+            assessors += a.usermeta.get_nice_name() + "; "
         ws['C8'] = 'Assessors: ' + assessors[:-2]
         ws['C9'] = ''
 
@@ -59,10 +59,10 @@ def listPresentationsXls(sets):
             else:
                 d = slot.Distribution
                 row = ['', d.Student.usermeta.Studentnumber, d.Student.usermeta.Fullname, d.Student.first_name,
-                       get_name(d.Proposal.ResponsibleStaff)]
+                       d.Proposal.ResponsibleStaff.usermeta.get_nice_name()]
                 assistants = ''
                 for a in d.Proposal.Assistants.all():
-                    assistants += get_name(a) + "; "
+                    assistants += a.usermeta.get_nice_name() + "; "
                 row.append(assistants[:-2])
                 row.append('x' if d.Student.usermeta.EnrolledBEP else '')
                 row.append('x' if d.Student.usermeta.EnrolledExt else '')

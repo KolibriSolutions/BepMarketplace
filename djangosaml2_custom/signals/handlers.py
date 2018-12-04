@@ -21,7 +21,7 @@ def custom_update_instance(sender, instance, attributes, user_modified, **kwargs
     :param kwargs:
     :return: False, because user is already saved in the function
     """
-    logger.debug("Runnig custom update user on pre_user_save")
+    logger.debug("Running custom update user on pre_user_save")
     try:
         meta = instance.usermeta
     except UserMeta.DoesNotExist:
@@ -29,15 +29,14 @@ def custom_update_instance(sender, instance, attributes, user_modified, **kwargs
 
     # make last name from fullname
     meta.Fullname = attributes["urn:mace:dir:attribute-def:displayName"][0]
-    # re-save emailadress in lower case
+    # re-save email address in lower case
     instance.email = attributes["urn:mace:dir:attribute-def:mail"][0].lower()  # make sure email is lowercase
 
     # these attributes don't always exist
     try:
         meta.Initials = attributes["Initials"][0]
         instance.last_name = attributes["urn:mace:dir:attribute-def:sn"][0]
-        instance.first_name = attributes["urn:mace:dir:attribute-def:givenName"][0].split(' ')[
-            0]  # take first if multiple.
+        instance.first_name = attributes["urn:mace:dir:attribute-def:givenName"][0]
     except:
         instance.last_name = meta.Fullname
 

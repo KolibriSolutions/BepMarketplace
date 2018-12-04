@@ -71,7 +71,7 @@ def upgrade_status_api(request, pk):
         notification.StatusTo = newstatus
         notification.save()
 
-        if obj.Status == 3:
+        if obj.Status > 3:
             for assistant in obj.Assistants.all():
                 if get_grouptype("2u") in assistant.groups.all():
                     verify_assistant_fn(assistant)

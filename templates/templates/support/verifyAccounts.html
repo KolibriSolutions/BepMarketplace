@@ -15,7 +15,7 @@
         <tbody>
         {% for account in accounts %}
             <tr id="{{ account.id }}">
-                <td>{{ account.get_full_name }}</td>
+                <td>{{ account.usermeta.get_nice_name }}</td>
                 <td><a href="mailto:{{ account.email }}">{{ account.email }}</a></td>
                 <td>
                     <ul>

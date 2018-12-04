@@ -6,7 +6,7 @@
             {{ bodyhtml }}
         {% endautoescape %}
     {% else %}
-        <h1>{% if usrsubject %}Visited by {{ usrsubject.get_full_name }}{% else %}Published proposals{% endif %}</h1>
+        <h1>{% if usrsubject %}Visited by {{ usrsubject.usermeta.get_nice_name }}{% else %}Published proposals{% endif %}</h1>
         <div class="double-scroll">
 
             <table class="table datatable striped hovered">
@@ -30,13 +30,13 @@
                         <td>{{ proposal.Group }}</td>
                         <td>
                             <a href="mailto:{{ proposal.ResponsibleStaff.email }}">
-                                {{ proposal.ResponsibleStaff.get_full_name }}
+                                {{ proposal.ResponsibleStaff.usermeta.get_nice_name }}
                             </a>
                         </td>
                         <td>
                             <ul class="no-margin">
                                 {% for a in proposal.Assistants.all %}
-                                    <li><a href="mailto:{{ a.email }}">{{ a.get_full_name }}</a></li>
+                                    <li><a href="mailto:{{ a.email }}">{{ a.usermeta.get_nice_name }}</a></li>
                                 {% endfor %}
                             </ul>
                         </td>

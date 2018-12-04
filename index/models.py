@@ -95,8 +95,10 @@ class UserMeta(models.Model):
             if preposition:
                 return self.User.first_name + ' ' + preposition + ' ' + last_name
             return self.User.first_name + ' ' + last_name
-        else:
+        elif self.User.first_name or self.User.last_name:
             return self.User.get_full_name()
+        else:
+            return self.User.username  # users without name, should not happen.
 
 
 class Term(models.Model):

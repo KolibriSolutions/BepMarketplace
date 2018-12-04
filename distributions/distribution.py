@@ -7,8 +7,10 @@ from django.conf import settings
 from django.db.models import Q
 
 from general_view import get_all_students
-from proposals.utils import get_all_proposals
+from general_view import get_timeslot
 from index.models import Track
+from proposals.utils import get_all_proposals
+from students.models import Application
 
 
 class DistributionProposal:
@@ -33,8 +35,8 @@ class DistributionProposal:
         :return:
         """
         return {
-            'StudentID' : self.StudentID,
-            'ProjectID' : self.ProjectID,
+            'StudentID': self.StudentID,
+            'ProjectID': self.ProjectID,
             'Preference': self.Preference,
         }
 
@@ -58,7 +60,8 @@ def get_cohorts():
 
     return cohorts
 
-def getValidProposals():
+
+def get_valid_proposals():
     """
     Get all proposals that (non-private) students can be distributed to.
 
@@ -89,7 +92,7 @@ def CalculateFromProjects():
 
     :return:
     """
-    projects = list(getValidProposals())
+    projects = list(get_valid_proposals())
     shuffle(projects)
     studentsdone = []
     projectsdone = []
@@ -107,8 +110,8 @@ def CalculateFromProjects():
             if proj.Track != autrack:
                 continue
             # select all applicatants of current selected cohort and preference, sort it for cohort >  ects > random
-            apps = list(proj.applications.filter(Priority=n).distinct()\
-                        .order_by( '-Student__usermeta__Cohort', '-Student__usermeta__ECTS', '?'))
+            apps = list(proj.applications.filter(Priority=n).distinct() \
+                        .order_by('-Student__usermeta__Cohort', '-Student__usermeta__ECTS', '?'))
             assigned = count_applications(proj.id, distobjs)
             # while project is not yet full
             while assigned != proj.NumstudentsMax:
@@ -138,8 +141,8 @@ def CalculateFromProjects():
         # iterate all projects
         for proj in projects:
             # select all applicatants of current selected cohort and preference, sort it for cohort >  ects > random
-            apps = list(proj.applications.filter(Priority=n).distinct()\
-                        .order_by( '-Student__usermeta__Cohort', '-Student__usermeta__ECTS', '?'))
+            apps = list(proj.applications.filter(Priority=n).distinct() \
+                        .order_by('-Student__usermeta__Cohort', '-Student__usermeta__ECTS', '?'))
             assigned = count_applications(proj.id, distobjs)
             # while project is not yet full
             while assigned != proj.NumstudentsMax:
@@ -163,8 +166,9 @@ def CalculateFromProjects():
             distobjs.append(DistributionProposal(std.id, prop.id, 0))
 
     # give the resultants random project
-    students = list(get_all_students().filter(Q(personal_proposal__isnull=True) & Q(applications__isnull=False)).distinct())
-    props = list(getValidProposals().order_by('?'))
+    students = list(
+        get_all_students().filter(Q(personal_proposal__isnull=True) & Q(applications__isnull=False)).distinct())
+    props = list(get_valid_proposals().order_by('?'))
     for std in students:
         if std.usermeta.ECTS == 0:
             continue
@@ -178,7 +182,6 @@ def CalculateFromProjects():
     return distobjs
 
 
-
 def CalculateFromStudent():
     """
     option1, calculated old way. Look for proposals for each student.
@@ -186,7 +189,8 @@ def CalculateFromStudent():
     :return:
     """
     # valid students:
-    stds = get_all_students().filter(personal_proposal__isnull=True, applications__isnull=False, usermeta__ECTS__gt=0).distinct()
+    stds = get_all_students().filter(personal_proposal__isnull=True, applications__isnull=False,
+                                     usermeta__ECTS__gt=0).distinct()
 
     # list of distributed students to return
     dists = []
@@ -196,7 +200,7 @@ def CalculateFromStudent():
     projectsdone = []
 
     # personal proposals:
-    dists=(distributePersonal(dists))
+    dists = (distributePersonal(dists))
 
     autrack = Track.objects.get(Name='Automotive')
 
@@ -207,7 +211,9 @@ def CalculateFromStudent():
     # for AU students in AU applications
     for c in cohorts:
         # get students in this cohort with applications, ordered by ECTS
-        stds_c = list(stds.filter(Q(usermeta__Cohort=c) & Q(usermeta__Study__contains='Automotive')).distinct().order_by('-usermeta__ECTS'))
+        stds_c = list(
+            stds.filter(Q(usermeta__Cohort=c) & Q(usermeta__Study__contains='Automotive')).distinct().order_by(
+                '-usermeta__ECTS'))
         # filter on students without distributionproposal
         # Higher application have priority over ECTS
         for a in range(1, settings.MAX_NUM_APPLICATIONS + 1):
@@ -218,13 +224,16 @@ def CalculateFromStudent():
                 if s not in studentsdone:
                     try:
                         application = s.applications.get(Priority=a)
-                    except:
+                    except Application.DoesNotExist:
                         # user does not have a'th application
-                        pass
+                        continue
                     if application.Proposal.Track != autrack:
                         break
                     # apply to proposal:
                     proposal = application.Proposal
+                    if proposal.TimeSlot != get_timeslot():
+                        # application is to an invalid proposal
+                        continue
                     numdist = count_applications(proposal.id, dists)
                     maxdist = proposal.NumstudentsMax
                     if numdist < maxdist:
@@ -232,7 +241,6 @@ def CalculateFromStudent():
                         dists.append(DistributionProposal(s.id, proposal.id, a))
                         # remove this student from queryset because it is now distributed
                         studentsdone.append(s)
-
 
     # loop over all cohorts, take the youngest students first
     # for all students
@@ -250,24 +258,28 @@ def CalculateFromStudent():
                 if s not in studentsdone:
                     try:
                         application = s.applications.get(Priority=a)
-                    except:
+                    except Application.DoesNotExist:
                         # user does not have a'th application
-                        pass
+                        continue
 
                     # apply to proposal:
                     proposal = application.Proposal
+                    if proposal.TimeSlot != get_timeslot():
+                        # application is to an invalid proposal
+                        continue
+
                     numdist = count_applications(proposal.id, dists)
                     maxdist = proposal.NumstudentsMax
+
                     if numdist < maxdist:
                         # proposal can handle more students
                         dists.append(DistributionProposal(s.id, proposal.id, a))
                         # remove this student from queryset because it is now distributed
                         studentsdone.append(s)
 
-
         if len(stds_c) > 0:
             # attach students to proposals with not enough students
-            proposals = getValidProposals().order_by('?')
+            proposals = get_valid_proposals().order_by('?')
             for p in proposals:
                 if len(stds_c) > 0:
                     missingstudents = p.NumstudentsMin - count_applications(p.id, dists)
@@ -283,7 +295,7 @@ def CalculateFromStudent():
 
         if len(stds_c) > 0:
             # attach students to proposals random
-            proposals = getValidProposals().order_by('?')
+            proposals = get_valid_proposals().order_by('?')
             for p in proposals:
                 if len(stds_c) > 0:
                     missingstudents = p.NumstudentsMin - count_applications(p.id, dists)
@@ -299,6 +311,7 @@ def CalculateFromStudent():
     # return the list of distributed students
     return dists
 
+
 def count_applications(proposalId, distributionList):
     """
 
@@ -312,5 +325,3 @@ def count_applications(proposalId, distributionList):
             count += 1
 
     return count
-
-

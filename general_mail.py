@@ -40,9 +40,15 @@ def send_mail(subject, email_template_name, context, to_email):
     except SMTPException:
         with open("mailcrash.log", "a") as stream:
             stream.write("Mail to {} could not be send:\n{}\n".format(to_email, html_email))
+    except ConnectionRefusedError:
+        if settings.DEBUG:
+            print("Send mail refused!")
+        else:
+            with open("mailcrash.log", "a") as stream:
+                stream.write("Mail to {} could not be send:\n{}\n".format(to_email, html_email))
 
 
-def mail_proposal_all(request, project, message=''):
+def mail_project_all(request, project, message=''):
     """
     General function to mail a 'message' to all users responsible or assistant to a given proposal.
     Except the user making the request (-> new behavior 2018).
@@ -68,7 +74,7 @@ def mail_proposal_all(request, project, message=''):
         send_mail("action required for proposal", "email/action_required_email.html", context, email)
 
 
-def mail_proposal_single(project, staff, message=''):
+def mail_project_single(project, staff, message=''):
     """
     mail a staff member with a given message about a project.
 
@@ -85,7 +91,7 @@ def mail_proposal_single(project, staff, message=''):
     send_mail("proposal changed", "email/staff_change_email.html", context, email)
 
 
-def mail_proposal_private(project, student, message=''):
+def mail_project_private(project, student, message=''):
     """
     Mail a given student a message about a given proposal. This is only for students with a private proposal.
 
@@ -172,3 +178,8 @@ class EmailThreadTemplate(threading.Thread):
                                                                  'progress': floor(((i + 1) / len(self.mails)) * 100),
                                                              })})
             send_mail(mail['subject'], mail['template'], mail['context'], mail['email'])
+
+# defines for consistency with mastermp
+mail_proposal_all = mail_project_all
+mail_proposal_single = mail_project_single
+mail_proposal_private = mail_project_private

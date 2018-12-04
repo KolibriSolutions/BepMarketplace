@@ -13,7 +13,7 @@
 <tbody>
     {% for dist in distributions %}
         <tr>
-            <td>{{ dist.Student.get_full_name }}</td>
+            <td>{{ dist.Student.usermeta.get_nice_name }}</td>
             <td>{{ dist.Student.usermeta.Cohort }}</td>
             <td>{{ dist.Student.usermeta.ECTS }}</td>
             <td><a href="{% url "proposals:details" dist.Proposal.pk %}">{{ dist.Proposal.Title }}</a></td>
