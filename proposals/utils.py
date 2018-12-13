@@ -7,7 +7,53 @@ from django.urls import reverse
 from general_view import get_grouptype
 from timeline.utils import get_timephase_number, get_timeslot
 from .models import Proposal
+from support.utils import group_administrator_status
 
+
+def can_downgrade_project_fn(user, prop):
+    if prop.prevyear():
+        return False, "This is an old proposal. Changing history is not allowed."
+
+    if prop.Status == 1:
+        return False, "Already at first stage."
+
+    # support staf, superusers are always allowed to downgrade
+    if get_grouptype("3") in user.groups.all() \
+            or user.is_superuser:
+        return True, ""
+
+    # proposals of this year, check timephases
+    if prop.TimeSlot == get_timeslot():
+        # if no timephase is enabled than forbid editing
+        if get_timephase_number() < 0:
+            return False, "No editing allowed, system is closed"
+
+        # if timephase is after checking phase no editing is allowed, except for support staff
+        if get_timephase_number() > 2 and not get_grouptype("3") in user.groups.all():
+            return False, "Proposal is frozen in this timeslot"
+
+        # if status is 3 or 4 Responsible can downgrade 3-2 in timephase 1 only
+        if prop.Status >= 3 and prop.ResponsibleStaff == user and get_timephase_number() == 1:
+            return True, ""
+
+        # Track head can downgrade in phase 1 and 2
+        if get_timephase_number() <= 2 and (prop.Track.Head == user or group_administrator_status(prop, user) == 1):
+            return True, ""
+    else:
+        # if status is 3 Responsible can downgrade 3-2 if not in this timeslot
+        if prop.Status == 3 and prop.ResponsibleStaff == user:
+            return True, ""
+
+        # Track head is allowed all for not this timeslot
+        if prop.Track.Head == user or group_administrator_status(prop, user) == 1:
+            return True, ""
+
+    # if status is 2 and user is assistant downgrade is allowed
+    if prop.Status == 2 \
+            and (user in prop.Assistants.all() or prop.ResponsibleStaff == user):
+        return True, ""
+
+    return False, ""
 
 def can_edit_project_fn(user, prop, file):
     """
@@ -28,7 +74,7 @@ def can_edit_project_fn(user, prop, file):
 
     # published proposals can only ever be edited limited. choice of form is done in view function
     if prop.Status == 4:
-        if (prop.ResponsibleStaff == user or user == prop.Track.Head) and not file:
+        if (prop.ResponsibleStaff == user or user == prop.Track.Head or group_administrator_status(prop, user) == 1) and not file:
             # file cannot be edited in limited edit.
             return True, ''  # it is the responsibility of the view that the right form is choosen
 
@@ -53,7 +99,7 @@ def can_edit_project_fn(user, prop, file):
             return False, 'No editing allowed anymore, not right time phase'
 
     # track heads are allowed to edit in the create and check phase
-    if prop.Track.Head == user:
+    if prop.Track.Head == user or group_administrator_status(prop, user) == 1:
         return True, ''
 
     # if status is either 1 or 2 and user is assistant edit is allowed in create+check timephase

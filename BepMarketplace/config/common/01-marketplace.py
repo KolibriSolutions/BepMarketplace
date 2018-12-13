@@ -7,9 +7,9 @@
 import os
 
 try:
-    from BepMarketplace.config.secret import SECRET_KEY_IMPORT
+    from BepMarketplace.config.secret import SECRET_KEY_IMPORT, PYLTI_CONFIG
 except:
-    from BepMarketplace.secret import SECRET_KEY_IMPORT
+    from BepMarketplace.secret import SECRET_KEY_IMPORT, PYLTI_CONFIG
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'tracking.apps.TrackingConfig',
     'two_factor_custom.apps.TwoFactorCustomConfig',
     'osirisdata.apps.OsirisdataConfig',
+    'canvas.apps.CanvasConfig',
 
     'django.contrib.admin',
     'django.contrib.admindocs',

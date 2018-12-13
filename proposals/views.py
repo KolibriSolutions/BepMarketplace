@@ -114,7 +114,7 @@ def detail_project(request, pk):
         return render(request, "proposals/ProposalDetail.html", data)
 
 
-@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
 def create_project(request):
     """
     Create a new proposal. Only for staff. Generating a new proposal for this timeslot is only allowed in the first
@@ -173,7 +173,7 @@ def list_own_projects(request):
                                                                   'hide_sidebar': True})
 
 
-@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
 @can_edit_proposal
 def edit_project(request, pk):
     """
@@ -209,7 +209,7 @@ def edit_project(request, pk):
     return render(request, 'GenericForm.html', {'form': form, 'formtitle': title, 'buttontext': 'Save'})
 
 
-@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
 @can_view_proposal
 def copy_project(request, pk):
     """
@@ -219,7 +219,7 @@ def copy_project(request, pk):
     :param request:
     :return:
     """
-    
+
     if request.method == 'POST':
         form = ProposalFormCreate(request.POST, request=request)
         if form.is_valid():
@@ -248,7 +248,7 @@ def copy_project(request, pk):
                                                     'buttontext': 'Create and go to next step'})
 
 
-@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
 @can_edit_proposal
 def add_file(request, pk, ty):
     """
@@ -285,7 +285,7 @@ def add_file(request, pk, ty):
                   {'form': form, 'formtitle': 'Add ' + ty + ' to Proposal ' + obj.Title, 'buttontext': 'Save'})
 
 
-@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
 @can_edit_proposal
 def edit_file(request, pk, ty):
     """
@@ -459,7 +459,7 @@ def list_track(request):
     })
 
 
-@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
 @can_share_proposal
 def share(request, pk):
     """
@@ -552,7 +552,7 @@ def stats_personal(request, step=0):
         })
 
 
-@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
 def stats_general(request, step=0):
     """
     Provides report of general statistics.

@@ -23,7 +23,7 @@ def api_info(request):
     return render(request, 'api/api.html')
 
 
-@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
 @can_edit_proposal
 def upgrade_status_api(request, pk):
     """
@@ -82,7 +82,7 @@ def upgrade_status_api(request, pk):
         return HttpResponse(getStatStr(obj.Status))
 
 
-@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
 @can_downgrade_proposal
 def downgrade_status_api(request, pk, message=''):
     """

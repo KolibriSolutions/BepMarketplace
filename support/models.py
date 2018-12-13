@@ -7,7 +7,7 @@ from django.forms import ValidationError
 
 from general_model import GroupOptions, print_list, get_ext
 from general_model import file_delete_default, metro_icon_default, filename_default, clean_text
-from proposals.utils import get_all_proposals
+# from proposals.utils import get_all_proposals
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timeslot_id
 
@@ -19,8 +19,8 @@ class CapacityGroupAdministration(models.Model):
     Group = models.CharField(max_length=3, choices=GroupOptions)
     Members = models.ManyToManyField(User, related_name='groupadministrations', blank=True)
 
-    def proposals(self):
-        return get_all_proposals().filter(Group=self.Group)
+    # def proposals(self):
+    #     return get_all_proposals().filter(Group=self.Group)
 
     def __str__(self):
         return self.Group + " Administration"

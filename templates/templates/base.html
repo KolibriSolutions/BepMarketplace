@@ -211,8 +211,13 @@
                             </li>
                         {% endif %}
                     {% elif user|has_group:"type4staff" %}
-                        <li><a href="{% url 'support:listgroupproposals' %}"><span class="mif-mail-read icon"></span>My
-                            group proposals</a></li>
+                        <li><a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Proposals</a>
+                            <ul class="d-menu" data-role="dropdown">
+                            <li><a href="{% url 'support:listgroupproposals' %}"><span class="mif-mail-read icon"></span>My
+                                group proposals</a></li>
+                            <li><a href="{% url 'proposals:create' %}">Create new proposal</a></li>
+                            </ul>
+                        </li>
                     {% elif user|has_group:"type5staff" %}
                         <li><a href="{% url 'support:listproposalsadvisor' %}"><span class="mif-mail-read icon"></span>All
                             proposals</a></li>

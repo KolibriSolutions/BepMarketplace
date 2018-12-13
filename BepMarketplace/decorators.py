@@ -8,7 +8,8 @@ from general_view import get_grouptype
 from presentations.models import PresentationTimeSlot
 from presentations.utils import planning_public
 from proposals.models import Proposal
-from proposals.utils import can_edit_project_fn, get_cached_project
+from proposals.utils import can_edit_project_fn, get_cached_project, can_downgrade_project_fn
+from support.utils import group_administrator_status
 from support.models import CapacityGroupAdministration
 from timeline.utils import get_timephase_number, get_timeslot
 
@@ -230,7 +231,7 @@ def can_share_proposal(fn):
             return fn(*args, **kw)
         elif (
                 request.user == prop.ResponsibleStaff or request.user in prop.Assistants.all() or
-                request.user == prop.Track.Head) and not prop.prevyear():
+                request.user == prop.Track.Head or group_administrator_status(prop, request.user) == 1) and not prop.prevyear():
             return fn(*args, **kw)
         else:
             raise PermissionDenied(allowed[1])
@@ -262,49 +263,11 @@ def can_downgrade_proposal(fn):
                 login_url='index:login',
                 redirect_field_name='next', )
 
-        if prop.prevyear():
-            raise PermissionDenied("This is an old proposal. Changing history is not allowed.")
-
-        if prop.Status == 1:
-            raise PermissionDenied("Already at first stage.")
-
-        # support staf, superusers are always allowed to downgrade
-        if get_grouptype("3") in request.user.groups.all() \
-                or request.user.is_superuser:
+        allowed = can_downgrade_project_fn(request.user, prop)
+        if allowed[0] is True:
             return fn(*args, **kw)
-
-        # proposals of this year, check timephases
-        if prop.TimeSlot == get_timeslot():
-            # if no timephase is enabled than forbid editing
-            if get_timephase_number() < 0:
-                raise PermissionDenied("No editing allowed, system is closed")
-
-            # if timephase is after checking phase no editing is allowed, except for support staff
-            if get_timephase_number() > 2 and not get_grouptype("3") in request.user.groups.all():
-                raise PermissionDenied("Proposal is frozen in this timeslot")
-
-            # if status is 3 or 4 Responsible can downgrade 3-2 in timephase 1 only
-            if prop.Status >= 3 and prop.ResponsibleStaff == request.user and get_timephase_number() == 1:
-                return fn(*args, **kw)
-
-            # Track head can downgrade in phase 1 and 2
-            if get_timephase_number() <= 2 and prop.Track.Head == request.user:
-                return fn(*args, **kw)
         else:
-            # if status is 3 Responsible can downgrade 3-2 if not in this timeslot
-            if prop.Status == 3 and prop.ResponsibleStaff == request.user:
-                return fn(*args, **kw)
-
-            # Track head is allowed all for not this timeslot
-            if prop.Track.Head == request.user:
-                return fn(*args, **kw)
-
-        # if status is 2 and user is assistant downgrade is allowed
-        if prop.Status == 2 \
-                and (request.user in prop.Assistants.all() or prop.ResponsibleStaff == request.user):
-            return fn(*args, **kw)
-
-        raise PermissionDenied("You are not allowed to downgrade this proposal.")
+            raise PermissionDenied(allowed[1])
 
     return wrapper
 

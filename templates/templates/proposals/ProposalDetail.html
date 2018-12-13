@@ -78,7 +78,7 @@
                     {% if user.is_authenticated %} {# To prevent API views using sharelinks to see any buttons. #}
                         <p>
                             {% comment %} Normal edit buttons for staff {% endcomment %}
-                            {% if user|has_group:"any" %}
+                            {% if project|can_edit_project:user %}
                                 {% if Editlock != False %}
                                     {{ Editlock }}
                                 {% else %}
@@ -98,10 +98,11 @@
                                 {% endif %}
                                 {# show "copy to current timeslot" button for proposals of previous timeslots.#}
                                 <br/>
-
+                                {% if project.prevyear %}
                                 <a class="button primary" href="{% url 'proposals:copy' project.id %}">
                                     <span class="mif-versions"></span>Copy
                                 </a>
+                                {% endif %}
                                 {% if user.is_superuser %}
                                     <a href="{% url 'admin:proposals_proposal_change' project.pk %}"
                                        class="button warning">Admin Edit</a>
@@ -119,25 +120,33 @@
                         {% else %}
                             {% if phasenumber < 3 and phasenumber > 0 %}
                                 {# Note, groupadministrators can sometimes see a downgradebutton, but cannot downgrade. #}
-                                {% if project.Status == 1 %}
+{#                                {% if project.Status == 1 %}#}
+{#                                    {% include 'proposals/Proposal_include_upgradeButton.html' %}#}
+{#                                {% elif project.Status == 2 %}#}
+{#                                    {% if user|has_group:"type3staff" or user == project.ResponsibleStaff or project.Track.Head == request.user %}#}
+{#                                        {% include 'proposals/Proposal_include_upgradeButton.html' %}#}
+{#                                    {% endif %}#}
+{#                                    {% include 'proposals/Proposal_include_downgradeButton.html' %}#}
+{#                                {% elif project.Status == 3 %}#}
+{#                                    {% if project.Track.Head == request.user or user|has_group:"type3staff" %}#}
+{#                                        {% include 'proposals/Proposal_include_upgradeButton.html' %}#}
+{#                                    {% endif %}#}
+{#                                    {% if user == project.ResponsibleStaff or user|has_group:"type3staff" or project.Track.Head == request.user %}#}
+{#                                        {% include 'proposals/Proposal_include_downgradeButton.html' %}#}
+{#                                    {% endif %}#}
+{#                                {% elif project.Status == 4 %}#}
+{#                                    {% if project.Track.Head == request.user or user|has_group:"type3staff" or phasenumber == 1 F%}#}
+{#                                        {% include 'proposals/Proposal_include_downgradeButton.html' %}#}
+{#                                    {% endif %}#}
+{#                                {% endif %}#}
+
+                                {% if project|can_edit_project:user and project.Status != 4 %}
                                     {% include 'proposals/Proposal_include_upgradeButton.html' %}
-                                {% elif project.Status == 2 %}
-                                    {% if user|has_group:"type3staff" or user == project.ResponsibleStaff or project.Track.Head == request.user %}
-                                        {% include 'proposals/Proposal_include_upgradeButton.html' %}
-                                    {% endif %}
-                                    {% include 'proposals/Proposal_include_downgradeButton.html' %}
-                                {% elif project.Status == 3 %}
-                                    {% if project.Track.Head == request.user or user|has_group:"type3staff" %}
-                                        {% include 'proposals/Proposal_include_upgradeButton.html' %}
-                                    {% endif %}
-                                    {% if user == project.ResponsibleStaff or user|has_group:"type3staff" or project.Track.Head == request.user %}
-                                        {% include 'proposals/Proposal_include_downgradeButton.html' %}
-                                    {% endif %}
-                                {% elif project.Status == 4 %}
-                                    {% if project.Track.Head == request.user or user|has_group:"type3staff" or phasenumber == 1 %}
-                                        {% include 'proposals/Proposal_include_downgradeButton.html' %}
-                                    {% endif %}
                                 {% endif %}
+                                {% if project|can_downgrade_project:user %}
+                                    {% include 'proposals/Proposal_include_downgradeButton.html' %}
+                                {% endif %}
+
                                 {% if project.Status != 4 %}
                                     <br/><br/>
                                     <a href="{% url 'proposals:sharelink' project.id %}" class="button primary">Get

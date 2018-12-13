@@ -24,6 +24,7 @@ from .models import Proposal as Project
 from .models import ProposalImage as ProjectImage
 from .models import ProposalAttachment as ProjectAttachment
 from .models import ProposalFile as ProjectFile
+from support.utils import get_writable_admingroups
 
 logger = logging.getLogger('django')
 
@@ -304,16 +305,15 @@ class ProjectForm(forms.ModelForm):
                 accounts.append(get_or_create_user_email(email, student=True))
         return accounts
 
-    # TODO @fboerman enable when type4 backport
-    # def clean_Group(self):
-    #     group = self.cleaned_data['Group']
-    #     if self.request.user.groups.count() == 1 and get_grouptype('4') in self.request.user.groups.all():
-    #         # user is groupadmin and not assistant/responsible.
-    #         rw_groups = get_writable_admingroups(self.request.user)
-    #         if group not in rw_groups:
-    #             raise ValidationError("You are not allowed to create a project for that group. You are only allowed to "
-    #                                   "create projects for {}".format(print_list(rw_groups)))
-    #     return group
+    def clean_Group(self):
+        group = self.cleaned_data['Group']
+        if self.request.user.groups.count() == 1 and get_grouptype('4') in self.request.user.groups.all():
+            # user is groupadmin and not assistant/responsible.
+            rw_groups = get_writable_admingroups(self.request.user)
+            if group not in rw_groups:
+                raise ValidationError("You are not allowed to create a project for that group. You are only allowed to "
+                                      "create projects for {}".format(print_list(rw_groups)))
+        return group
 
     def clean(self):
         """

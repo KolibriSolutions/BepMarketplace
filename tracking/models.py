@@ -20,6 +20,12 @@ class UserLogin(models.Model):
     def __str__(self):
         return self.Subject.usermeta.get_nice_name() + "@" + localtime(self.Timestamp).strftime("%H:%M %d-%m-%Y")
 
+class CanvasLogin(models.Model):
+    Subject = models.ForeignKey(User, on_delete=models.CASCADE, related_name='logins_canvas')
+    Timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.Subject.usermeta.get_nice_name() + "@" + localtime(self.Timestamp).strftime("%H:%M %d-%m-%Y")
 
 class ProposalStatusChange(models.Model):
     Subject = models.ForeignKey(Proposal, on_delete=models.CASCADE, related_name="StatusChangeTracking")

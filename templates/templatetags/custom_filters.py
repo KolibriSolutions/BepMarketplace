@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from django import template
-from django.contrib.auth.models import Group
 from django.db.models import Q
 from django.template.defaultfilters import truncatechars
 from django.urls.base import reverse
@@ -9,7 +8,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from general_view import get_grouptype
-from proposals.utils import get_all_proposals
+from proposals.utils import get_all_proposals, can_edit_project_fn, can_downgrade_project_fn
 from index.models import Broadcast
 from presentations.models import PresentationTimeSlot, PresentationSet, PresentationOptions
 from timeline.utils import get_timeslot, get_timephase, get_timephase_number
@@ -32,35 +31,6 @@ def index(List, i):
 def tolist(object):
     return list(object)
 
-
-#
-# @register.filter(name='has_group')
-# def has_group(user, group_names):
-#     """
-#
-#     :param user:
-#     :param group_names:
-#     :return:
-#     """
-#     if user.is_superuser:
-#         return True
-#     if group_names == "any":
-#         if user.groups.exists():
-#             if Group.objects.get(name='type4staff') not in user.groups.all() and \
-#                 Group.objects.get(name='type5staff') not in user.groups.all() and \
-#                 Group.objects.get(name='type6staff') not in user.groups.all():
-#                 return True
-#             if user.groups.count() > 1:
-#                 return True
-#             return False
-#         else:
-#             return False
-#     for group_name in group_names.split(';'):
-#         group = Group.objects.get(name=group_name)
-#         if group in user.groups.all():
-#             return True
-#
-#     return False
 
 @register.filter(name='has_group')
 def has_group(user, group_names):
@@ -266,6 +236,14 @@ def GetEndDate():
         return ts.End
     else:
         return ''
+
+@register.filter(name='can_edit_project')
+def can_edit_project_tag(project, user):
+    return can_edit_project_fn(user, project, None)[0]
+
+@register.filter(name='can_downgrade_project')
+def can_downgrade_project_tag(project, user):
+    return can_downgrade_project_fn(user, project)[0]
 
 
 @register.simple_tag

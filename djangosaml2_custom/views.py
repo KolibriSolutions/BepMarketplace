@@ -46,8 +46,6 @@ def set_osiris(user, osirisdata):
         else:
             meta.Study = 'Eletrical Engineering'
         meta.Cohort = osirisdata.cohort
-        meta.EnrolledBEP = osirisdata.enrolled
-        meta.EnrolledExt = osirisdata.enrolledextension
         meta.ECTS = osirisdata.ects
         meta.save()
 
@@ -71,13 +69,11 @@ def enrolled_osiris(user):
     :param user:
     :return:
     """
-    data = osirisData()
-    userdata = data.get(user.email)
-    if userdata is None:
+    try:
+        meta = user.usermeta
+    except:
         return False
-    else:
-        return userdata.enrolled
-
+    return meta.EnrolledBEP
 
 def check_user(request, user):
     # insert checks on login here
@@ -97,22 +93,17 @@ def check_user(request, user):
                 # new staff members get automatically type2staffunverified
                 user.groups.add(get_grouptype("2u"))
         else:
-            # user is a student
-            if get_timephase_number() < 3:  # if there isn't a timephase, this returns -1, so login is blocked.
+            if not enrolled_osiris(user):
+                return render(request, 'base.html', status=403, context={"Message": "You are not enrolled in our system yet. Please login once through canvas module BEP Marketplace"})
+            elif get_timephase_number() < 3:  # if there isn't a timephase, this returns -1, so login is blocked.
                 return render(request, 'base.html', status=403, context={"Message": "Student login is not available in "
                                                                                     "this timephase."})
-
-            elif not enrolled_osiris(user):
-                return render(request, 'base.html', status=403, context={"Message":
-                                                                             "You are not yet enrolled in the BEP"
-                                                                             "course in Osiris. You are allowed to the "
-                                                                             "BEP Marketplace after you enrolled in "
-                                                                             "Osiris"})
             else:
                 # student is enrolled in osiris. Set its usermeta from the osiris data
                 data = osirisData()
-                osirisdata = data.get(user.email)  # enrollment is already checked so this always returns a person object
-                set_osiris(user, osirisdata)
+                osirisdata = data.get(user.email)
+                if osirisdata is not None:
+                    set_osiris(user, osirisdata)
 
                 if get_timephase_number() > 5:  # only students with project are allowed
                     if not user.distributions.exists():

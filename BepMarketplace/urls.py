@@ -32,6 +32,7 @@ urlpatterns = [
     path('timeline/', include('timeline.urls')),
     path('tracking/', include('tracking.urls')),
     path('two_factor/', include('two_factor_custom.urls')),
+    path('canvas/', include('canvas.urls')),
 ]
 
 if settings.DEBUG and True:
