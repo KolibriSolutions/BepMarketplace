@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Sum
 from django.forms import modelformset_factory
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
@@ -20,6 +20,7 @@ from general_view import get_grouptype, truncate_string
 from index.models import Track
 from proposals.utils import get_all_proposals, get_share_link, get_cached_project, updatePropCache
 from students.views import get_all_applications
+from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number
 from tracking.utils import tracking_visit_project
 from .forms import ProposalFormEdit, ProposalFormCreate, ProposalImageForm, ProposalDowngradeMessageForm, \
@@ -41,10 +42,10 @@ def list_public_projects(request):
     if body_html is None:
         proposals = get_all_proposals().filter(Q(Status=4) & Q(Private=None))
         proposals = proposals.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants')
-        body_html = render_block_to_string("proposals/ProposalList.html", 'body',
-                                           {"proposals": proposals, 'domain': settings.DOMAIN})
+        body_html = render_block_to_string("proposals/list_projects.html", 'body',
+                                           {"proposals": proposals, 'DOMAIN': settings.DOMAIN})  # render block does not pass through context_processors.
         cache.set('listproposalsbodyhtml', body_html, None)
-    return render(request, 'proposals/ProposalList.html', {"bodyhtml": body_html})
+    return render(request, 'proposals/list_projects.html', {"bodyhtml": body_html})
 
 
 @can_view_proposal
@@ -86,11 +87,11 @@ def detail_project(request, pk):
                     "project": prop,
                     "user": request.user
                     }
-            cdata = render_block_to_string("proposals/ProposalDetail.html", 'body', data)
+            cdata = render_block_to_string("proposals/detail_project.html", 'body', data)
             cache.set('proposaldetail{}'.format(pk), cdata, None)
 
         tracking_visit_project(prop, request.user)  # always log visits from students
-        return render(request, "proposals/ProposalDetail.html",
+        return render(request, "proposals/detail_project.html",
                       {"bodyhtml": cdata.format(button), 'project': prop})  # send project for if statement in scripts.
 
     # if staff:
@@ -111,7 +112,7 @@ def detail_project(request, pk):
         else:
             data['Editlock'] = allowed[1]
 
-        return render(request, "proposals/ProposalDetail.html", data)
+        return render(request, "proposals/detail_project.html", data)
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
@@ -131,7 +132,7 @@ def create_project(request):
             if prop.Private.all():
                 for std in prop.Private.all():
                     mail_proposal_private(prop, std, "A private proposal was created for you.")
-            return render(request, "proposals/ProposalMessage.html", {"Message": "Proposal created!", "Proposal": prop})
+            return render(request, "proposals/message_project.html", {"Message": "Proposal created!", "Proposal": prop})
     else:
         init = {}
         if get_grouptype("1") in request.user.groups.all():
@@ -169,7 +170,7 @@ def list_own_projects(request):
     else:
         projects = projects.select_related('ResponsibleStaff', 'Track__Head', 'TimeSlot').prefetch_related('Assistants',
                                                                                                            'distributions__Student__usermeta')
-    return render(request, 'proposals/ProposalsCustomList.html', {'proposals': projects,
+    return render(request, 'proposals/list_projects_custom.html', {'proposals': projects,
                                                                   'hide_sidebar': True})
 
 
@@ -199,7 +200,7 @@ def edit_project(request, pk):
                 if obj.Private.all():
                     for std in obj.Private.all():
                         mail_proposal_private(obj, std, "Your private proposal was edited.")
-            return render(request, "proposals/ProposalMessage.html", {"Message": "Proposal saved!", "Proposal": obj})
+            return render(request, "proposals/message_project.html", {"Message": "Proposal saved!", "Proposal": obj})
     else:
         if obj.Status == 4:
             form = ProposalFormLimited(request=request, instance=obj)
@@ -229,7 +230,7 @@ def copy_project(request, pk):
             if prop.Private.all():
                 for std in prop.Private.all():
                     mail_proposal_private(prop, std, "A private proposal was created for you.")
-            return render(request, "proposals/ProposalMessage.html", {"Message": "Proposal created!", "Proposal": prop})
+            return render(request, "proposals/message_project.html", {"Message": "Proposal created!", "Proposal": prop})
     else:
         old_proposal = get_object_or_404(Proposal, pk=pk)
         oldpk = old_proposal.pk
@@ -276,7 +277,7 @@ def add_file(request, pk, ty):
             file = form.save(commit=False)
             file.Proposal = obj
             file.save()
-            return render(request, "proposals/ProposalMessage.html",
+            return render(request, "proposals/message_project.html",
                           {"Message": "File to Proposal saved! Click the button below to add another file.",
                            "Proposal": obj})
     # else:
@@ -317,7 +318,7 @@ def edit_file(request, pk, ty):
         formset = form_set(request.POST, request.FILES)
         if formset.is_valid():
             formset.save()
-            return render(request, "proposals/ProposalMessage.html",
+            return render(request, "proposals/message_project.html",
                           {"Message": "File changes saved!", "Proposal": obj})
     return render(request, 'GenericForm.html',
                   {'formset': formset, 'formtitle': 'All ' + ty + 's in Proposal ' + obj.Title, "Proposal": obj.pk,
@@ -336,12 +337,12 @@ def ask_delete_project(request, pk):
     """
     obj = get_object_or_404(Proposal, pk=pk)
     if obj.Status >= 3:
-        return render(request, "proposals/ProposalMessage.html",
+        return render(request, "proposals/message_project.html",
                       {"Message": "This Proposal is already approved or public, it cannot be deleted", "Proposal": obj},
                       status=403)
     form = "<a href=" + reverse('proposals:deleteproposal', kwargs={"pk": int(
         pk)}) + " class='button warning'><span class='mif-bin'></span>click here to DELETE</a></button></form>"
-    return render(request, "proposals/ProposalMessage.html",
+    return render(request, "proposals/message_project.html",
                   {"Message": "Are you sure to delete? This cannot be undone " + form, "Proposal": obj})
 
 
@@ -356,7 +357,7 @@ def delete_project(request, pk):
     """
     obj = get_object_or_404(Proposal, pk=pk)
     if obj.Status >= 3:
-        return render(request, "proposals/ProposalMessage.html",
+        return render(request, "proposals/message_project.html",
                       {"Message": "Proposal is locked for editing", "Proposal": obj},
                       status=403)
 
@@ -365,7 +366,7 @@ def delete_project(request, pk):
             # make sure previous page is askdelete
             title = obj.Title
             obj.delete()
-            return render(request, "proposals/ProposalMessage.html",
+            return render(request, "proposals/message_project.html",
                           {"Message": "Proposal " + title + " is removed", "return": ""})
     raise PermissionDenied("You should not access this page directly")
 
@@ -381,7 +382,7 @@ def upgrade_status(request, pk):
     """
     obj = get_object_or_404(Proposal, pk=pk)
     r = upgrade_status_api(request, pk)
-    return render(request, "proposals/ProposalMessage.html", {"Message": r.content.decode(), "Proposal": obj},
+    return render(request, "proposals/message_project.html", {"Message": r.content.decode(), "Proposal": obj},
                   status=r.status_code)
 
 
@@ -405,7 +406,7 @@ def downgrade_status(request, pk):
                 notify = r.content.decode()
                 if message != '':
                     notify += "<br />With note: <br />" + str(message)
-                return render(request, "proposals/ProposalMessage.html", {"Message": notify, "Proposal": obj},
+                return render(request, "proposals/message_project.html", {"Message": notify, "Proposal": obj},
                               status=r.status_code)
         else:
             form = ProposalDowngradeMessageForm()  # request=request
@@ -414,7 +415,7 @@ def downgrade_status(request, pk):
                            'buttontext': 'Downgrade and send message'})
     else:  # assistant downgrade does not get the message field.
         r = downgrade_status_api(request, pk)
-        return render(request, "proposals/ProposalMessage.html", {"Message": r.content.decode(), "Proposal": obj},
+        return render(request, "proposals/message_project.html", {"Message": r.content.decode(), "Proposal": obj},
                       status=r.status_code)
 
 
@@ -453,7 +454,7 @@ def list_track(request):
         raise PermissionDenied("This page is only for track heads.")
     objs = Track.objects.filter(Head__id=request.user.id)
     projs = get_all_proposals().filter(Track__in=objs)
-    return render(request, "proposals/ProposalsCustomList.html", {
+    return render(request, "proposals/list_projects_custom.html", {
         "proposals": projs,
         "title": "Proposals of my Track"
     })
@@ -475,6 +476,31 @@ def share(request, pk):
         "Message": "Share link created: <a href=\"{}\">{}</a> <br/> "
                    "Use this to show the proposal to anybody without an account. "
                    "The link will be valid for seven days.".format(link, link),
+    })
+
+
+def view_share_link(request, token):
+    """
+    Translate a given sharelink to a proposal-detailpage.
+
+    :param request:
+    :param token: sharelink token, which includes the pk of the proposal
+    :return: proposal detail render
+    """
+    try:
+        pk = signing.loads(token, max_age=settings.MAXAGESHARELINK)
+    except signing.SignatureExpired:
+        return render(request, "base.html", {
+            "Message": "Share link has expired!"
+        })
+    except signing.BadSignature:
+        return render(request, "base.html", {
+            "Message": "Invalid token in share link!"
+        })
+    obj = get_object_or_404(Proposal, pk=pk)
+    return render(request, "proposals/detail_project.html", {
+        "proposal": obj,
+        "project": obj
     })
 
 
@@ -503,7 +529,7 @@ def stats_personal(request, step=0):
                 projects.append(prop)
 
     if step == 0:
-        return render(request, "proposals/ProposalStats.html", {"step": 0})
+        return render(request, "proposals/stats_project_personal.html", {"step": 0})
     elif step == 1:
         counts = []
         tabledata = []
@@ -522,7 +548,7 @@ def stats_personal(request, step=0):
                     "prop": p,
                     "count": 0
                 })
-        return render(request, "proposals/ProposalStats.html", {
+        return render(request, "proposals/stats_project_personal.html", {
             "counts": counts,
             "labels": [truncate_string(p.Title) for p in projects],
             "tabledata": tabledata,
@@ -530,14 +556,14 @@ def stats_personal(request, step=0):
         })
     else:
         if step - 3 >= len(projects):
-            return render(request, "proposals/ProposalStats.html", {"step": -1})
+            return render(request, "proposals/stats_project_personal.html", {"step": -1})
         prop = projects[step - 3]
         try:
             count = prop.tracking.UniqueVisitors.count()
         except:
             count = 0
 
-        return render(request, "proposals/ProposalStats.html", {
+        return render(request, "proposals/stats_project_personal.html", {
             "prop": prop,
             "visitors": count,
             "applications": [
@@ -557,7 +583,7 @@ def stats_general(request, step=0):
     """
     Provides report of general statistics.
     This is breakdown per group etc and the top10 of proposals on the marketplace.
-    Only for timephase  5 and 6
+    Only for timephase 5 and 6
 
     :param request:
     :param step: integer, which step of the wizard view you want to see, supplied via URI
@@ -569,14 +595,14 @@ def stats_general(request, step=0):
     step = int(step)
 
     if step == 0:
-        return render(request, "proposals/ProposalStatsGeneral.html", {"step": 0})
+        return render(request, "proposals/stats_project_general.html", {"step": 0})
     elif step == 1:
         groupcount = []
 
         for group in GroupOptions:
             groupcount.append(get_all_proposals().filter(Q(Status=4) & Q(Group=group[0])).distinct().count())
 
-        return render(request, "proposals/ProposalStatsGeneral.html", {
+        return render(request, "proposals/stats_project_general.html", {
             "proposalcount": get_all_proposals().filter(Status=4).count(),
             "groupcount": groupcount,
             "groups": [g[0] for g in GroupOptions],
@@ -586,13 +612,13 @@ def stats_general(request, step=0):
         trackcount = []
         for track in Track.objects.all():
             trackcount.append(get_all_proposals().filter(Q(Status=4) & Q(Track=track)).distinct().count())
-        return render(request, "proposals/ProposalStatsGeneral.html", {
+        return render(request, "proposals/stats_project_general.html", {
             "step": 2,
             "tracks": [t.Name for t in Track.objects.all()],
             "trackcount": trackcount,
         })
     elif step > 12:
-        return render(request, "proposals/ProposalStatsGeneral.html", {"step": -1})
+        return render(request, "proposals/stats_project_general.html", {"step": -1})
     else:
         prop = get_all_proposals() \
             .annotate(d_count=Count('distributions', distinct=True)) \
@@ -602,7 +628,7 @@ def stats_general(request, step=0):
             count = prop.tracking.UniqueVisitors.count()
         except:
             count = 0
-        return render(request, "proposals/ProposalStatsGeneral.html", {
+        return render(request, "proposals/stats_project_general.html", {
             "prop": prop,
             "visitors": count,
             "applications": [
@@ -617,26 +643,103 @@ def stats_general(request, step=0):
         })
 
 
-def view_share_link(request, token):
+@group_required('type1staff', 'type2staff', 'type3staff', 'type4staff', 'type5staff')
+def project_stats(request, timeslot=None):
     """
-    Translate a given sharelink to a proposal-detailpage.
+    Statistics for projects
 
     :param request:
-    :param token: sharelink token, which includes the pk of the proposal
-    :return: proposal detail render
+    :param timeslot: the timeslot to view proposals from
+    :return:
     """
-    try:
-        pk = signing.loads(token, max_age=settings.MAXAGESHARELINK)
-    except signing.SignatureExpired:
-        return render(request, "base.html", {
-            "Message": "Share link has expired!"
-        })
-    except signing.BadSignature:
-        return render(request, "base.html", {
-            "Message": "Invalid token in share link!"
-        })
-    obj = get_object_or_404(Proposal, pk=pk)
-    return render(request, "proposals/ProposalDetail.html", {
-        "proposal": obj,
-        "project": obj
+    Project = Proposal
+    if timeslot is None:
+        # all projects
+        p = Proposal.objects.all()
+    else:
+        ts = get_object_or_404(TimeSlot, pk=timeslot)
+        p = Proposal.objects.filter(TimeSlot=ts)
+
+    totalnum = p.count()
+
+    groups = GroupOptions
+    group_count = []
+    group_count_distr = []
+    group_labels = []
+    for group, long_group in groups:  # groups is tupple of (shortname, longname)
+        group_count.append(p.filter(Group=group).count())
+        group_labels.append(str(group))
+        group_count_distr.append(
+            p.filter(Group=group, distributions__isnull=False).count())  # not distinct because users.
+    group_labels_distr = group_labels
+    if group_count:
+        group_count, group_labels = (list(t) for t in zip(*sorted(zip(group_count, group_labels), reverse=True)))
+    if group_count_distr:
+        group_count_distr, group_labels_distr = (list(t) for t in
+                                                 zip(*sorted(zip(group_count_distr, group_labels_distr), reverse=True)))
+    status_count = []
+    status_labels = []
+    for option in Project.StatusOptions:
+        status_count.append(p.filter(Status=option[0]).count())
+        status_labels.append(option[1])
+    if status_count:
+        status_count, status_labels = (list(t) for t in zip(*sorted(zip(status_count, status_labels), reverse=True)))
+
+    track_count = []
+    track_labels = []
+    for track in Track.objects.all():
+        track_count.append(p.filter(Track=track).count())
+        track_labels.append(track.__str__())
+    if track_count:
+        track_count, track_labels = (list(t) for t in zip(*sorted(zip(track_count, track_labels), reverse=True)))
+
+    filters = ['All']+list(TimeSlot.objects.all().values_list('Name', flat=True))
+    filternames = [None]+list(TimeSlot.objects.all().values_list('pk', flat=True))
+    filters = zip(filters, filternames)
+    return render(request, 'proposals/stats_project.html', {
+        'num': totalnum,
+        # 'done': p.filter(Approved=True).count(),
+        'filters': filters,
+        'filter': timeslot,
+        "mincapacity": p.aggregate(Sum('NumstudentsMin'))['NumstudentsMin__sum'],
+        "maxcapacity": p.aggregate(Sum('NumstudentsMax'))['NumstudentsMax__sum'],
+        'data': [
+            {
+                'label': 'Projects by capacity group',
+                'labels': group_labels,
+                'counts': group_count,
+                'total': sum(group_count),
+            }, {
+                #     'label': 'Master program',
+                #     'labels': program_labels,
+                #     'counts': program_count,
+                #     'total': totalnum,
+                # }, {
+                'label': 'Status options',
+                'labels': status_labels,
+                'counts': status_count,
+                'total': sum(status_count),
+            }, {
+                'label': 'Track options',
+                'labels': track_labels,
+                'counts': track_count,
+                'total': sum(track_count),
+            },{
+                'label': 'Distributions by capacity group',
+                'labels': group_labels_distr,
+                'counts': group_count_distr,
+                'total': sum(group_count_distr),
+            },
+            # {
+            #     'label': 'Progress',
+            #     'labels': progress_labels,
+            #     'counts': progress_count,
+            #     'total': sum(progress_count),
+            # }, {
+            #     'label': 'Type',
+            #     'labels': type_labels,
+            #     'counts': type_count,
+            #     'total': sum(type_count),
+            # }
+        ],
     })

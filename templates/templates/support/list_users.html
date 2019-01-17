@@ -76,7 +76,7 @@
                             <a href="{% url 'tracking:userdetail' u.id %}" class="button primary">Telemetry</a>
                             <a href="{% url 'support:userinfo' u.id %}" class="button primary">Info</a>
                             <a href="{% url 'admin:auth_user_change' u.id %}" class="button warning">Admin edit</a>
-                            <a href="{% url 'admin:index_usermeta_change' u.usermeta.id %}" class="button warning">Meta edit</a>
+                            {% if u.usermeta %}<a href="{% url 'admin:index_usermeta_change' u.usermeta.id %}" class="button warning">Meta edit</a>{% endif %}
                         </td>
                     {% endif %}
                 </tr>

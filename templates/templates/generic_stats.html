@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block body %}
+    {% block stat_header %}
+
+    {% endblock %}
+    {% for stat in data %}
+        <div class="" style="clear:left">
+            <h2>{{ stat.label }}</h2>
+
+        </div>
+        <div>
+            <div class="margin20" style="float:left;width:40%;min-width:350px;">
+                <canvas id="chart-{{ forloop.counter0 }}"></canvas>
+            </div>
+
+            <div class="margin20" style="width:50%;float:left;min-width:200px;">
+                <table class="table bordered hovered striped datatable">
+                    <thead>
+                    <tr>
+                        <th>{{ stat.label }}</th>
+                        <th>Count</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for l in stat.labels %}
+                        <tr>
+                            <td>{{ l }}</td>
+                            <td>{{ stat.counts|index:forloop.counter0 }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <th><b>Total</b></th>
+                        <th>{{ stat.total }}</th>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    {% endfor %}
+    {#    </div>#}
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static 'js/Chart.bundle.min.js' %}"></script>
+    <script src="{% static "js/colors.js" %}"></script>
+    <script>
+        {#$(document).ready(function () {#}
+        {#    $('.datatable').dt_wrapper();#}
+        {# }); #}
+
+        {% autoescape off %}
+            {% for stat in data %}
+                new Chart($('#chart-{{ forloop.counter0 }}'), {
+                    data: {
+                        labels: {{ stat.labels }},
+                        datasets: [{
+                            data: {{ stat.counts }},
+                            backgroundColor: kelly_colors
+                        }]
+                    },
+                    {% if stat.counts|length > 3 %}
+                        type: 'pie',
+                        options: {
+                            legend: {
+                                "position": "right"
+                            },
+                        },
+                    {% else %}
+                        type: 'bar',
+                        options: {
+                            legend: {
+                                "position": "off"
+                            },
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                }],
+                            },
+                        }
+                    {% endif %}
+                });
+            {% endfor %}
+        {% endautoescape %}
+
+    </script>
+{% endblock %}

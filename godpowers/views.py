@@ -59,7 +59,7 @@ def visitorOverview(request, pk):
     usr = get_object_or_404(User, pk=pk)
     props = [trk.Subject for trk in ProposalTracking.objects.filter(UniqueVisitors=usr)]
 
-    return render(request, 'proposals/ProposalList.html', {'proposals': props, 'usrsubject': usr})
+    return render(request, 'proposals/list_projects.html', {'proposals': props, 'usrsubject': usr})
 
 
 @superuser_required()

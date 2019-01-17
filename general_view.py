@@ -11,7 +11,6 @@ from django.core.cache import cache
 from django.db.models import Q
 from django.utils import timezone
 
-from index.models import UserMeta
 from timeline.utils import get_timeslot, get_timephase_number
 
 
@@ -87,17 +86,3 @@ def truncate_string(data, trun_len=10):
     :return:
     """
     return (data[:trun_len] + '..') if len(data) > trun_len else data
-
-
-# Assume all users have usermeta
-# def get_name(user):
-#     """
-#     Get the name of a user.
-#
-#     :param user:
-#     :return:
-#     """
-#     try:
-#         return user.usermeta.get_nice_name()
-#     except UserMeta.DoesNotExist:
-#         return user.get_full_name()

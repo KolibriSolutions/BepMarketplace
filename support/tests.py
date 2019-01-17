@@ -24,7 +24,7 @@ class SupportViewsTest(ViewsTest):
             [['mailinglist', None], self.p_support],
             [['mailtrackheads', None], self.p_support],
             [['contentpolicy', None], self.p_support],
-            [['stats', None], self.p_staff12345],
+            # [['stats', None], self.p_staff12345],
             # public files
             [['addfile', None], self.p_support],
             [['editfiles', None], self.p_support],

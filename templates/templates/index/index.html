@@ -12,10 +12,11 @@
                 <h1>Bachelor Final Project Marketplace</h1>
                 <h4>Hello and welcome to the marketplace!</h4>
                 <p>At this moment we are in timephase <i>"{% GetPhase %}"</i> in timeslot <i>{% GetSlot %}</i></p>
-
                 {% if user.is_authenticated %}
-                    {{ info }}
+                    <p>{{ info }}</p>
+                    <p>If you have any questions about the system or your role in the system, please contact the {{ support_role }}, {{ support_name }} at {{ support_email }}</p>
                 {% else %}
+                    <p>
                     {% if DEBUG %}
                     Please start by <a href="{% url 'two_factor:login' %}" class="button primary">logging in</a><br/>
                     {% else %}
@@ -24,6 +25,7 @@
                     {% if phasenumber < 3 %}
                         After logging in, you can be granted staff access. With staff access it is possible to create and edit proposals.
                     {% endif %}
+                    </p>
                 {% endif %}
                 <br/>
                 {% if user.is_authenticated %}

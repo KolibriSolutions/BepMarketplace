@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% GetPhaseNumber as phasenumber %}
+{% block body %}
+    {% if bodyhtml %}
+        {% autoescape off %}
+            {{ bodyhtml }}
+        {% endautoescape %}
+    {% else %}
+        <div class="grid">
+            <div class="row cells3">
+                <div class="cell colspan2">
+                    <h1 style="margin-bottom: 0;" class="capitalize">{{ project.Title }}</h1>
+                    <h1 style="margin-bottom: 0; margin-top: 0;" class="capitalize">
+                        <small>
+                            <a href="mailto:{{ project.ResponsibleStaff.email }}">
+                                By {{ project.ResponsibleStaff.usermeta.get_nice_name }}
+                            </a>
+                        </small>
+                    </h1>
+                    <h3 style="margin-top: 0;">
+                        <small>Part of {{ project.Track.Name }}</small>
+                    </h3>
+                    {% if project.images.exists %}
+                        <div id="imageCarousel" class="carousel" data-role="carousel" data-height="300"
+                             data-controls="true" data-markers="false" data-auto="false">
+                            {% for image in project.images.all %}
+                                <div class="slide">
+                                    <a href="{% url "download:projectfile" "i" image.id %}" data-lightbox="lightbox1"
+                                       data-title="{{ image.Caption }}">
+                                        <img data-role="fitImage" data-format="fill"
+                                             src="{% url "download:projectfile" "i" image.id %}"
+                                             alt="{{ image.Caption }}"
+                                             referrerpolicy="no-referrer-when-downgrade"
+                                        />
+                                    </a>
+                                    <div class="imageCaption">
+                                        <h5>{{ image.Caption }}</h5>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div id="imageCarousel_thumbs" class="padding10 bg-grayLighter align-center">
+                            {% for image in project.images.all %}
+                                <div class="thumb" data-index="{{ forloop.counter }}"><img
+                                        src="{% url "download:projectfile" "i" image.id %}"
+                                        data-role="fitImage"
+                                        data-format="fill"
+                                        alt="{{ image.Caption }}"
+                                        referrerpolicy="no-referrer-when-downgrade">
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                    {% endif %}
+                    <h4>General description</h4>
+                    <p>{{ project.GeneralDescription|linebreaksbr }}</p>
+                    <h4>Students task description</h4>
+                    <p>{{ project.StudentsTaskDescription|linebreaksbr }}</p>
+                    <h4>Student task description for extension (if applicable)</h4>
+                    <p>{{ project.ExtensionDescription }}</p>
+                    {% if project.attachments.exists %}
+                        <h4>Attachments:</h4>
+                        {% for attachment in project.attachments.all %}
+                            <a href="{% url 'download:projectfile' 'a' attachment.id %}"
+                               class="command-button file-button" download
+                               referrerpolicy="no-referrer-when-downgrade">
+                                <span class="icon mif-file-pdf"></span>
+                                {% if attachment.Caption %}{{ attachment.Caption }}{% else %}Attachment
+                                    {{ forloop.counter }}{% endif %}
+                                <small>{{ attachment.OriginalName }}</small>
+                            </a>
+                        {% endfor %}
+                    {% endif %}
+                    <br/><br/>
+
+                    {% if user.is_authenticated %} {# To prevent API views using sharelinks to see any buttons. #}
+                        <p>
+                            {% comment %} Normal edit buttons for staff {% endcomment %}
+                            {% if project|can_edit_project:user %}
+                                {% if Editlock != False %}
+                                    {{ Editlock }}
+                                {% else %}
+                                    <br/>
+                                    <a class="button primary" href="{% url 'proposals:edit' project.id %}">
+                                        <span class="mif-pencil"></span>Edit data
+                                    </a>
+                                    {% if project.Status != 4 %}
+                                        <a class="button primary" href="{% url 'proposals:editfile' 'i' project.id %}">
+                                            <span class="mif-images"></span>Edit images
+                                        </a>
+                                        <a class="button primary" href="{% url 'proposals:editfile' 'a' project.id %}">
+                                            <span class="mif-file-pdf"></span>Edit attachments
+                                        </a>
+                                    {% endif %}
+                                    <br>
+                                {% endif %}
+                                {# show "copy to current timeslot" button for proposals of previous timeslots.#}
+                                <br/>
+                                {% if project.prevyear %}
+                                    <a class="button primary" href="{% url 'proposals:copy' project.id %}">
+                                        <span class="mif-versions"></span>Copy
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                            {% if user.is_superuser %}
+                                <a href="{% url 'admin:proposals_proposal_change' project.pk %}"
+                                   class="button warning">Admin Edit</a>
+                            {% endif %}
+                        </p>
+
+                        {% if not user|has_group:"any" %}
+                            {% comment %}
+                            Apply / retract buttons are inserted using a .format on the {} below.
+                            {% endcomment %}
+                            {% if not user|has_group:"type4staff" and not project.Private.all %}
+                                {}
+                            {% endif %}
+                        {% else %}
+                            {% if phasenumber < 3 and phasenumber > 0 %}
+                                {% if project|can_edit_project:user and project.Status != 4 %}
+                                    {% if proposal.Status == 2 %}
+                                        <a href="{% url 'proposals:upgradestatus' proposal.id %}" class="button success">Publish proposal</a>
+                                    {% else %}
+                                        <a href="{% url 'proposals:upgradestatus' proposal.id %}" class="button success">Upgrade to status {{ proposal.Status|add:"1" }}</a>
+                                    {% endif %}
+                                {% endif %}
+                                {% if project|can_downgrade_project:user %}
+                                    {% if proposal.Status == 4 %}
+                                        <a href="{% url 'proposals:downgradestatusmessage' proposal.id %}" class="button danger">Unpublish</a>
+                                    {% else %}
+                                        <a href="{% url 'proposals:downgradestatusmessage' proposal.id %}" class="button danger">Downgrade to status {{ proposal.Status|add:"-1" }}</a>
+                                    {% endif %}
+                                {% endif %}
+                                <br/><br/>
+                                {# share link always visible for staff when system is still closed for students #}
+                                <a href="{% url 'proposals:sharelink' project.id %}" class="button primary">Get
+                                    share link</a>
+                                {% if user|has_group:"type3staff" and project.Status < 3 %}
+                                    <a class="button warning"
+                                       href="{% url 'proposals:askdeleteproposal' project.id %}">
+                                        <span class="mif-bin"></span>Delete</a>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <div class="cell">
+                    <table class="table">
+                        <tr>
+                            <td>Capacity group:</td>
+                            <td>{{ project.get_Group_display }}</td>
+                        </tr>
+                        <tr>
+                            <td>Assistants:</td>
+                            <td>
+                                {% if project.Assistants.all %}
+                                    <ul>
+                                        {% for assistant in project.Assistants.all %}
+                                            <li>
+                                                <a href="mailto:{{ assistant.email }}">
+                                                    {{ assistant.usermeta.get_nice_name }}
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Students needed:</td>
+                            <td>
+                                {% if project.NumstudentsMin == project.NumstudentsMax %}
+                                    {{ project.NumstudentsMax }}
+                                {% else %}
+                                    {{ project.NumstudentsMin }}-{{ project.NumstudentsMax }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if project.Track.Name == "Automotive" and project.Private is None %}
+                            <tr>
+                                <td>Warning</td>
+                                <td>Please note that AU students have priority over EE students for AU projects</td>
+                            </tr>
+                        {% endif %}
+                        {% if project.Private.all %}
+                            <tr>
+                                <td>Private to:</td>
+                                <td>
+                                    <ul>
+                                        {% for a in project.Private.all %}
+                                            <li>
+                                                {% if user|has_group:"any" %}<a href="mailto:{{ a.email }}">{% endif %}
+                                                {{ a.usermeta.get_nice_name }}
+                                                {% if user|has_group:"any" %}</a>{% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                            </tr>
+                        {% endif %}
+                        {% if project.Status != 4 or not project.curyear %}
+                            <tr>
+                                <td>Status:</td>
+                                <td>
+                                    <ol>{% for opt in project.StatusOptions %}
+                                        <li class="{% if opt.0 == project.Status %}text-accent fg-navy{% else %}text-secondary{% endif %}">{{ opt.1 }}</li>{% endfor %}
+                                    </ol>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Time slot (year):</td>
+                                <td>{{ project.TimeSlot|default:"Future" }}</td>
+                            </tr>
+                        {% endif %}
+                        {% if user|has_group:"type3staff" %}
+                            {% if applications %}
+                                <tr>
+                                    <td>Applications:</td>
+                                    <td>
+                                        <ul>
+                                            {% for application in applications %}
+                                                <li>
+                                                    <span data-role="hint"
+                                                          data-hint-background="bg-gray"
+                                                          data-hint-color="fg-white"
+                                                          data-hint-mode="2"
+                                                          data-hint="This student has applied to this project with priority {{ application.Priority }}">
+                                                    <span
+                                                            class='tag info studentApplicationPriority'>{{ application.Priority }}
+                                                    </span></span>
+                                                    {{ application.Student.usermeta.get_nice_name }}
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endif %}
+                        {% if distributions %}
+                            <tr>
+                                <td>Distributions:</td>
+                                <td>
+                                    <ul>
+                                        {% for d in distributions %}
+                                            <li>
+                                                {{ d.Student.usermeta.get_nice_name }}
+                                                {% if d.Student in project.Private.all %}(private){% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    {% if user|has_group:"any" and project.Status == 4 %}
+        Number of uniqueviews:
+        <div id="uniqueviewsnumber"></div>
+    {% endif %}
+{% endblock %}
+{% block stylesheets %}
+    <link href="{% static "css/lightbox.css" %}" rel="stylesheet">
+    <style>
+        .thumb {
+            background: white;
+            padding: 4px;
+            display: inline-block;
+            height: 2.375rem;
+            width: 2.375rem;
+            border: 1px transparent solid;
+            cursor: pointer;
+        }
+
+        #imageCarousel, #imageCarousel_thumbs {
+            max-width: 600px;
+        }
+
+        .imageCaption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(58, 58, 58, .8);
+            color: white;
+            padding: 5px;
+        }
+    </style>
+{% endblock %}
+{% block scripts %}
+
+    {{ block.super }}
+    <script src="{% static "js/lightbox.js" %}"></script>
+    <script src="{% static "channels/js/websocketbridge.js" %}"></script>
+    <script>
+        $(document).ready(function () {
+            {% if project.images.all|length > 1 %}
+                var icar = $('#imageCarousel').data('carousel');
+                var thumbs = $('#imageCarousel_thumbs > .thumb');
+                $.each(thumbs, function () {
+                    var thumb = $(this), index = thumb.data('index') - 1;
+                    thumb.on('click', function () {
+                        icar.slideTo(index);
+                    });
+                });
+            {% endif %}
+
+            {% if user|has_group:"any" and project.Status == 4 %}
+                const webSocketBridgeViewnumber = new channels.WebSocketBridge();
+                webSocketBridgeViewnumber.connect('/tracking/viewnumber/{{ project.id }}/');
+                webSocketBridgeViewnumber.socket.onmessage = function (event) {
+                    $("#uniqueviewsnumber").html(event.data);
+                };
+            {% endif %}
+        });
+    </script>
+{% endblock %}

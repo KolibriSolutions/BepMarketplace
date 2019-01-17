@@ -12,26 +12,25 @@
             <div class="cell">
                 <h5>Currently Editing: {{ dstr }}</h5>
                 <a href="{% url 'results:gradeformstaff' pk 0 %}" style="width:100%"
-                   class="button {% if category %} info{% endif %}">Information</a>
+                   class="button {% if category %} info{% else %} button-shadow {% endif %}">Information</a>
                 {% for cat in categories %}
                     <a href="{% url 'results:gradeformstaff' pk forloop.counter %}" style="width:100%"
-                       class="button {% if cat != category %}primary{% endif %}">{{ cat }}</a><br/>
+                       class="button {% if cat != category %}primary{% else %} button-shadow {% endif %}">{{ cat }}</a><br/>
                 {% endfor %}
                 <br/>
                 <a href="{% url 'results:about' %}" style="width:100%" class="button info">Grading Explanation</a>
+                <a href="{% url 'results:gradefinalpreview' pk=pk %}" style="width:100%" class="button info">Print Preview</a>
                 <a href="{% url 'results:gradefinal' pk=pk %}" style="width:100%" class="button success">Finish and
                     Print</a>
                 <a href="{% url 'support:liststudents' %}" style="width:100%" class="button warning">Back To Menu</a>
             </div>
             <div class="cell colspan3">
-                {% if final %}
-                    <div class="bg-darkRed fg-white padding10 margin10">
-                        This category has already been finalized. Editing is disabled.
-                    </div>
-                {% endif %}
                 {% if step == 0 %}
+                    {% if final %}
+                        <div class="bg-darkRed fg-white padding10 margin10">All categories for this student have been finalized. You can view the grades but no longer edit them.</div>
+                    {% endif %}
                     <p>
-                        Use the buttons on the left side to grade this student.
+                        Use the buttons on the left side to grade {{ dstr }}.
                     </p><p>
                     The dark blue buttons are all categories of the grades.
                     Categories consist of multiple aspects.
@@ -42,16 +41,20 @@
                     When everything is correct, the grades can be printed or exported.
                     <b>After printing or exporting, editing is no longer possible.</b>
                 </p>
-                {% elif step == -1 %}
-                    Closing text
                 {% else %}
+                    {% if final %}
+                        <div class="bg-darkRed fg-white padding10 margin10">
+                            This category has already been finalized. Editing is disabled.
+                        </div>
+                    {% endif %}
+
                     {% if saved %}
                         <div class="bg-green fg-white padding10 margin10">
                             Grade saved!
                         </div>
                     {% endif %}
                     <h1>{{ category }}</h1>
-{# TODO                    Grades will be rounded to integers.#}
+                    {# TODO                    Grades will be rounded to integers.#}
                     <form id="gradeform" action="" method="post" enctype="multipart/form-data" novalidate>
                         {% if not final %}
                             <button type="submit" class="button success">Save</button>
@@ -61,19 +64,20 @@
                             {{ categoryform.as_table }}
                         </table>
                         <br/>
-                    {% if aspectsforms %}
-                        <table style="width:100%; table-layout:fixed;" class="table bordered">
-                            <tr>
-                                <td colspan="3"><h3>Aspects</h3></td>
-                                <td class="align-middle align-center">None</td>
-                                {% for aspectlabel in aspectlabels %}
-                                    <td class="align-middle align-center">{{ aspectlabel.1 }}</td>
-                                {% endfor %}
-                            </tr>
-                            {% for entry in aspectsforms %}
+                        {% if aspectsforms %}
+                            <table style="width:100%; table-layout:fixed;" class="table bordered">
                                 <tr>
-                                    <td colspan="3">
-                                        {{ entry.aspect.Name }}
+                                    <td colspan="3"><h3>Aspects</h3></td>
+                                    <td class="align-middle align-center">Not graded</td>
+                                    {# label for not yet graded. #}
+                                    {% for aspectlabel in aspectlabels %}
+                                        <td class="align-middle align-center">{{ aspectlabel.1 }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% for entry in aspectsforms %}
+                                    <tr>
+                                        <td colspan="3">
+                                            {{ entry.aspect.Name }}
                                             <span class="mif-question clickable"
                                                   data-role="popover"
                                                   data-popover-mode="click"
@@ -82,23 +86,22 @@
                                                   data-popover-text="{{ entry.aspect.Description }}"
                                                   data-popover-background="bg-cyan"
                                                   data-popover-color="fg-white">
-                                </span>
+                                            </span>
+                                        </td>
+                                        {% for field in entry.form.visible_fields %}
+                                            {% if field.errors %}
+                                                <div class="bg-red fg-white padding10 margin10">
+                                                    Aspect {{ entry.aspect.Name }} is not graded!
+                                                </div>
+                                            {% endif %}
+                                            {{ field }}
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
 
-                                    </td>
-                                    {% for field in entry.form.visible_fields %}
-                                        {% if field.errors %}
-                                            <div class="bg-red fg-white padding10 margin10">
-                                                Aspect {{ entry.aspect.Name }} is not graded!
-                                            </div>
-                                        {% endif %}
-                                        {{ field }}
-                                    {% endfor %}
-                                </tr>
-                            {% endfor %}
-
-                        </table>
+                            </table>
                         {% else %}
-                        This category has no aspects.
+                            <p>This category has no aspects.</p>
                         {% endif %}
                         {% if not final %}
                             <button type="submit" class="button success">Save</button>

@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% GetPhaseNumber as phasenumber %}
+{% block body %}
+    {% if title %}
+        <h1>{{ title }}</h1>
+    {% elif user|has_group:'type3staff' %}
+        <h1>All Proposals</h1>
+    {% else %}
+        <h1>My Proposals</h1>
+    {% endif %}
+    <a href="#" id="projectinfo" class="columnToggle button"><span></span> project details</a>
+
+    <div class="double-scroll">
+        <table class="table datatable striped" data-order='[[2, "asc"]]'>
+            <thead>
+            <tr>
+                <th data-priority="4" data-searchable="false" data-sortable="false">{% if phasenumber < 5 %}
+                    Edit{% else %}Distributions{% endif %}</th>
+                <th data-visible='false' class="projectinfo">Timeslot</th>
+                <th data-priority="1">Name</th>
+                <th data-visible='false' class="projectinfo">Track</th>
+                <th data-visible='false' class="projectinfo">Group</th>
+                <th>Responsible staff</th>
+                <th>Assistant(s)</th>
+                <th data-priority="2">Status</th>
+                {% if private %}
+                    <th>Private to student</th>{% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for proposal in proposals %}
+                <tr>
+                    <td>
+                        {% if not user|has_group:"type5staff" or user.is_superuser %}
+                            {# type3 can delete old proposals, no edit as history cannot be changed #}
+                            {% if proposal.prevyear %}
+                                {% if user|has_group:"type3staff" %}
+                                    {% if proposal.Status < 3 %}
+                                        <a href="{% url 'proposals:askdeleteproposal' proposal.id %}"
+                                           class="button warning">Delete</a>
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                {# show edit buttons for proposals of this year in lower timephases  #}
+                                {% if phasenumber < 5 %}
+                                    <a href="{% url 'proposals:details' proposal.id %}" class="button primary">View</a>
+                                    {% if proposal|can_edit_project:user %}
+                                        <a class="button primary" href="{% url 'proposals:edit' proposal.id %}">
+                                            Edit data
+                                        </a>
+                                        {% if user|has_group:"type3staff" %}
+                                            {% if proposal.Status < 3 %}
+                                                <a href="{% url 'proposals:askdeleteproposal' proposal.id %}"
+                                                   class="button warning">Delete</a>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endif %}
+                                    {# Proposals of this year in phase 5 or later #}
+                                {% else %}
+                                    <ul>
+                                        {% for dist in proposal.distributions.all %}
+                                            <li>
+                                                {{ dist.Student.usermeta.get_nice_name }}
+                                                ({{ dist.Student.usermeta.Studentnumber }})
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            {% endif %}
+                            {# show "copy" button for proposals #}
+                            {% if proposal.prevyear %}
+                                <a class="button primary" href="{% url 'proposals:copy' proposal.id %}">
+                                    Copy
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>{{ proposal.TimeSlot|default:"Future" }}</td>
+                    <td><a href="{% url 'proposals:details' proposal.id %}" class="capitalize">{{ proposal.Title }}</a>
+                    </td>
+                    <td>{{ proposal.Track }}</td>
+                    <td>{{ proposal.Group }}</td>
+                    <td>
+                        <a href="mailto:{{ proposal.ResponsibleStaff.email }}">
+                            {{ proposal.ResponsibleStaff.usermeta.get_nice_name }}
+                        </a>
+                    </td>
+                    <td>
+                        <ul>
+                            {% for a in proposal.Assistants.all %}
+                                <li><a href="mailto:{{ a.email }}">{{ a.usermeta.get_nice_name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td data-sort="status{{ proposal.Status }}">{{ proposal.get_Status_display }}</td>
+                    {% if private %}
+                        <td>
+                            <ul>
+                                {% for a in proposal.Private.all %}
+                                    <li><a href="mailto:{{ a.email }}">{{ a.usermeta.get_nice_name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var dt = $('.datatable').dt_wrapper([
+                    {column_number: 1, filter_type: "select"},
+                    {column_number: 3, filter_type: "select"},
+                    {column_number: 4, filter_type: "select"},
+                    {column_number: 5, filter_type: "select", column_data_type: 'html'},  // to parse mailto links
+                    {
+                        column_number: 6,
+                        filter_type: "select",
+                        column_data_type: 'html',
+                        html_data_type: 'selector',
+                        html_data_selector: 'li'
+                    }, //to parse ul-li
+                    {column_number: 7, filter_type: "select"},
+                ]
+            );
+            $(".columnToggle").click(function () {
+                //reset width:
+                $(".datatable").width("100%");
+                // Get the column API object
+                var columns = dt.columns("." + $(this).attr('id'));
+                // Toggle the visibility
+                if (columns.visible()[0]) {
+                    columns.visible(false);
+                    $(this).find("span").text("Show");
+                } else {
+                    columns.visible(true);
+                    $(this).find("span").text("Hide")
+                }
+                //trigger resize event for double-scroll because table width has changed.
+                $('.double-scroll').trigger('resize.doubleScroll');
+            });
+
+            //set default text for columns buttons, because datatables saves visibility in state.
+            var but = $('a.columnToggle');
+            but.each(function (i) {
+                var vis = dt.columns("." + $(this).attr('id')).visible()[0];
+                if (vis) {
+                    $(this).find("span").text("Hide")
+                } else {
+                    $(this).find("span").text("Show")
+                }
+            })
+        });
+    </script>  {% endblock %}

@@ -8,8 +8,10 @@ urlpatterns = [
     path('about/<int:pk>/', views.about, name='about'),
     path('staff/form/<int:pk>/', views.staff_form, name='gradeformstaff'),
     path('staff/form/<int:pk>/<int:step>/', views.staff_form, name='gradeformstaff'),
+    path('staff/finalize_preview/<int:pk>/', views.finalize_preview, name='gradefinalpreview'),
     path('staff/end/<int:pk>/', views.finalize, name='gradefinal'),
     path('staff/end/<int:pk>/<int:version>/', views.finalize, name='gradefinal'),
+
 
     path('category/list/', views.list_categories, name='list_categories'),
     path('category/add/', views.add_category, name='add_category'),

@@ -28,8 +28,11 @@ urlpatterns = [
 
     path('track/', views.list_track, name='listtrackproposals'),
 
-    path('stats/', views.stats_personal, name='stats'),
-    path('stats/<int:step>/', views.stats_personal, name='stats'),
+    path('stats/', views.project_stats, name='stats'),
+    path('stats/<int:timeslot>', views.project_stats, name='stats'),
+
+    path('stats/personal', views.stats_personal, name='statspersonal'),
+    path('stats/personal/<int:step>/', views.stats_personal, name='statspersonal'),
     path('stats/general/', views.stats_general, name='statsgeneral'),
     path('stats/general/<int:step>/', views.stats_general, name='statsgeneral'),
 ]

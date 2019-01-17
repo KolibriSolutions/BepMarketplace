@@ -55,6 +55,7 @@ def can_downgrade_project_fn(user, prop):
 
     return False, ""
 
+
 def can_edit_project_fn(user, prop, file):
     """
     Check if a user can edit a proposal. Used to show/hide editbuttons on detailproposal and

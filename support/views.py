@@ -412,7 +412,7 @@ def list_staff_projects(request, pk):
     projects = projects.select_related('ResponsibleStaff', 'Track', 'TimeSlot'). \
         prefetch_related('Assistants', 'distributions', 'applications')
 
-    return render(request, 'proposals/ProposalsCustomList.html',
+    return render(request, 'proposals/list_projects_custom.html',
                   {"title": "Proposals from " + user.usermeta.get_nice_name(), "proposals": projects})
 
 
@@ -539,21 +539,6 @@ def list_students_xlsx(request):
     return response
 
 
-@group_required('type3staff')
-def verify_assistants(request):
-    """
-    Page to let support staff give type2staffunverified the type2staff status.
-    Can also be done using the userlist.
-
-    :param request:
-    :return:
-    """
-    accounts = list(get_grouptype("2u").user_set.all())
-    return render(request, "support/verifyAccounts.html", {
-        "accounts": accounts
-    })
-
-
 @group_required('type4staff')
 def list_group_projects(request):
     """
@@ -564,7 +549,7 @@ def list_group_projects(request):
     """
     obj = get_object_or_404(CapacityGroupAdministration, Members__id=request.user.id)
     props = get_all_proposals(old=True).filter(Group=obj.Group)
-    return render(request, "proposals/ProposalsCustomList.html", {
+    return render(request, "proposals/list_projects_custom.html", {
         "proposals": props,
         "title": "Proposals of My Group"
     })
@@ -578,7 +563,7 @@ def list_studyadvisor_projects(request):
     :param request:
     :return:
     """
-    return render(request, "proposals/ProposalsCustomList.html", {
+    return render(request, "proposals/list_projects_custom.html", {
         "proposals": get_all_proposals(old=True),
         "title": "All proposals in system"
     })
@@ -593,10 +578,25 @@ def list_private_projects(request):
     :return:
     """
     props = get_all_proposals().filter(Private__isnull=False).distinct()
-    return render(request, "proposals/ProposalsCustomList.html", {
+    return render(request, "proposals/list_projects_custom.html", {
         "proposals": props,
         "title": "All private proposals",
         "private": True
+    })
+
+
+@group_required('type3staff')
+def verify_assistants(request):
+    """
+    Page to let support staff give type2staffunverified the type2staff status.
+    Can also be done using the userlist.
+
+    :param request:
+    :return:
+    """
+    accounts = list(get_grouptype("2u").user_set.all())
+    return render(request, "support/verifyAccounts.html", {
+        "accounts": accounts
     })
 
 
@@ -667,148 +667,6 @@ def capacity_group_administration(request):
         "form": form,
         "formtitle": "Capacity Group Administrators",
         "buttontext": "Save",
-    })
-
-
-#
-# @group_required('type3staff')
-# def upgrade_user(request, pk):
-#     """
-#     Upgrade a user from type2staff to type1staff
-#
-#     :param request:
-#     :param pk: id of the user.
-#     :return:
-#     """
-#     usr = get_object_or_404(User, pk=pk)
-#
-#     # verify type 2 unverified
-#     if get_grouptype("2u") in usr.groups.all():
-#         if get_grouptype("2") in usr.groups.all():
-#             usr.groups.remove(get_grouptype("2"))
-#         if get_grouptype("2u") in usr.groups.all():
-#             usr.groups.remove(get_grouptype("2u"))
-#         usr.groups.add(get_grouptype("2"))
-#         usr.save()
-#         return render(request, "base.html", {
-#             "Message": "Type2staff unverifed is now verified.",
-#             "return": "support:listusers"
-#         })
-#
-#     if not get_grouptype("2") in usr.groups.all():
-#         return render(request, "base.html", {
-#             "Message": "Only type2staff can be upgraded.",
-#             "return": "support:listusers"
-#         })
-#
-#     if get_grouptype("3") in usr.groups.all():
-#         return render(request, "base.html", {
-#             "Message": "User is supportstaff!",
-#             "return": "support:listusers"
-#         })
-#
-#     if get_grouptype("1") not in usr.groups.all():
-#         if get_grouptype("2") in usr.groups.all():
-#             usr.groups.remove(get_grouptype("2"))
-#         if get_grouptype("2u") in usr.groups.all():
-#             # this line should never hit. Just to be sure.
-#             usr.groups.remove(get_grouptype("2u"))
-#         usr.groups.add(get_grouptype("1"))
-#         usr.save()
-#
-#     else:
-#         return render(request, "base.html", {
-#             "Message": "User is already upgraded!",
-#             "return": "support:listusers"
-#         })
-#
-#     if cache.has_key('listusersbodyhtml'):
-#         cache.delete('listusersbodyhtml')
-#     if cache.has_key('listusersbodyhtmladmin'):
-#         cache.delete('listusersbodyhtmladmin')
-#
-#     return render(request, "base.html", {
-#         "Message": "User upgraded!",
-#         "return": "support:listusers"
-#     })
-#
-#
-# @group_required('type3staff')
-# def downgrade_user(request, pk):
-#     """
-#     Change a user from type1staff to type2staff
-#
-#     :param request:
-#     :param pk: id of the staff user.
-#     :return:
-#     """
-#     usr = get_object_or_404(User, pk=pk)
-#
-#     if not get_grouptype("1") in usr.groups.all():
-#         return render(request, "base.html", {
-#             "Message": "Only type1staff can be downgraded.",
-#             "return": "support:listusers"
-#         })
-#
-#     if get_grouptype("3") in usr.groups.all():
-#         return render(request, "base.html", {
-#             "Message": "User is support staff!",
-#             "return": "support:listusers"
-#         })
-#
-#     if get_grouptype("2") not in usr.groups.all() and get_grouptype("2u") not in usr.groups.all():
-#         if get_grouptype("1") in usr.groups.all():
-#             usr.groups.remove(get_grouptype("1"))
-#         usr.groups.add(get_grouptype("2"))
-#         usr.save()
-#
-#     if cache.has_key('listusersbodyhtml'):
-#         cache.delete('listusersbodyhtml')
-#     if cache.has_key('listusersbodyhtmladmin'):
-#         cache.delete('listusersbodyhtmladmin')
-#
-#     return render(request, "base.html", {
-#         "Message": "User downgraded!",
-#         "return": "support:listusers"
-#     })
-
-
-#######
-# Other#
-#######
-
-@group_required('type1staff', 'type2staff', 'type3staff', 'type4staff', 'type5staff')
-def stats(request):
-    """
-    Statistics about number of proposals, with breakdown per group.
-
-    :param request:
-    :return:
-    """
-    groupcount = {}
-    trackcount = {}
-    statuscount = [
-        get_all_proposals().filter(Status=1).count(),
-        get_all_proposals().filter(Status=2).count(),
-        get_all_proposals().filter(Status=3).count(),
-        get_all_proposals().filter(Status=4).count()
-    ]
-
-    for group in GroupOptions:
-        groupcount[group[0]] = get_all_proposals().filter(Group=group[0]).count()
-
-    for track in Track.objects.all():
-        trackcount[track.__str__()] = get_all_proposals().filter(Track=track).count()
-
-    return render(request, "support/stats.html", {
-        "proposalcount": get_all_proposals().count(),
-        "usercount": get_all_students().count() + get_all_staff().count(),
-        "privatecount": get_all_proposals().filter(Private__isnull=False).count(),
-        "groupcount": groupcount,
-        "statuscount": statuscount,
-        "trackcount": trackcount,
-        "mincapacity": get_all_proposals().aggregate(Sum('NumstudentsMin'))['NumstudentsMin__sum'],
-        "maxcapacity": get_all_proposals().aggregate(Sum('NumstudentsMax'))['NumstudentsMax__sum']
     })
 
 

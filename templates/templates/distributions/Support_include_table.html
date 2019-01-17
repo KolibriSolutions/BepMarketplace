@@ -4,7 +4,7 @@
         <th data-priority="1">Title</th>
         <th>Track</th>
         <th>Research group</th>
-        <th data-priority="3">Reponsible staff</th>
+        <th data-priority="3">Responsible staff</th>
         {% if phasenumber < 6 %}
             <th data-searchable="false">Nr of std.</th>
             <th>Interested students</th>
@@ -52,22 +52,40 @@
                                 data-student="{{ application.Student.usermeta.Fullname }}">
                                 {# The list of students that has applied to this Proposal. #}
                                 {# if this Student is chosen for this Proposal (this is db-heavy..) #}
-                                <span class="{% if application.distributions in proposal.distributions.all %} icon mif-link {% endif %} applicationChosenLinkIcon"
-                                      data-student="{{ application.Student.pk }}"></span>
-                                <span class="tag info">{{ application.Priority }}</span>
-                                {% if "automotive" in application.Student.usermeta.Study|lower %}
-                                    <span class="icon mif-automobile"></span>
-                                {% endif %}
-                                <span class="studentName">{{ application.Student.usermeta.Fullname }}</span>
+                                <span data-role="hint"
+                                      data-hint-background="bg-grayLight"
+                                      data-hint-position="right"
+                                      data-hint-color="fg-black"
+                                      data-hint-mode="2"
+                                      data-hint="ECTS: {{ application.Student.usermeta.ECTS|default:0 }}<br />Cohort: {{ application.Student.usermeta.Cohort|default:'-' }}">
+
+                                        <span class="{% if application.distributions in proposal.distributions.all %} icon mif-link {% endif %} applicationChosenLinkIcon"
+                                              data-student="{{ application.Student.pk }}"></span>
+                                        <span class="tag info">{{ application.Priority }}</span>
+                                    {% if "automotive" in application.Student.usermeta.Study|lower %}
+                                        <span class="icon mif-automobile"></span>
+                                    {% endif %}
+                                    <span class="studentName">{{ application.Student.usermeta.Fullname }}</span>
+                                    </span>
                             </li>
                         {% endfor %}
                         {% for privstd in proposal.Private.all %}
-                            <li class="private-student-click clickable"
-                                data-student="{{ privstd.usermeta.Fullname }}">
+                            <li class="private-student-click clickable" data-student="{{ privstd.usermeta.Fullname }}">
+                            <span data-role="hint"
+                                  data-hint-background="bg-grayLight"
+                                  data-hint-position="right"
+                                  data-hint-color="fg-black"
+                                  data-hint-mode="2"
+                                  data-hint="ECTS: {{ privstd.usermeta.ECTS|default:0 }}<br />Cohort: {{ privstd.usermeta.Cohort|default:'-' }}">
+
                                 <span class="{% if privstd.distributions in proposal.distributions.all %} icon mif-link {% endif %} applicationChosenLinkIcon"
                                       data-student="{{ privstd.pk }}"></span>
                                 <span class="tag info">Private</span>
+                                {% if "automotive" in privstd.usermeta.Study|lower %}
+                                    <span class="icon mif-automobile"></span>
+                                {% endif %}
                                 <span class="studentName">{{ privstd.usermeta.Fullname }}</span>
+                                </span>
                             </li>
                         {% endfor %}
                     </ul>
@@ -86,13 +104,20 @@
                     data-proposal="{{ proposal.pk }}">
                     {% if distribute %}{# for distribute #}
                         {% for dist in proposal.distributions.all %}
-                            {% include "support/../distributions/Support_include_studentBlock.html" with student=dist.Student dist=dist only %}
+                            {% include "distributions/Support_include_studentBlock.html" with student=dist.Student dist=dist only %}
                         {% endfor %}
                         {% else %}{# for list #}
                         {% for dist in proposal.distributions.all %}
                             {% with student=dist.Student %}
                                 <li class="distributed-student-click clickable"
                                     data-student="{{ student.usermeta.Fullname }}">
+                            <span data-role="hint"
+                                  data-hint-background="bg-grayLight"
+                                  data-hint-position="right"
+                                  data-hint-color="fg-black"
+                                  data-hint-mode="2"
+                                  data-hint="ECTS: {{ student.usermeta.ECTS|default:0 }}<br />Cohort: {{ student.usermeta.Cohort|default:'-' }}">
+
                                                 <span class='tag info studentApplicationPriority'>
                                                     {% if dist %}
                                                         {% if dist.Application %}
@@ -102,10 +127,11 @@
                                                         {% endif %}
                                                     {% endif %}
                                                 </span>
-                                    {% if "automotive" in student.usermeta.Study|lower %}
-                                        <span class="icon mif-automobile"></span>
-                                    {% endif %}
-                                    <span class="studentName">{{ student.usermeta.Fullname }}</span>
+                                {% if "automotive" in student.usermeta.Study|lower %}
+                                    <span class="icon mif-automobile"></span>
+                                {% endif %}
+                                <span class="studentName">{{ student.usermeta.Fullname }}</span>
+                            </span>
                                 </li>
                             {% endwith %}
                         {% endfor %}

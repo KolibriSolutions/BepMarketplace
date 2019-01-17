@@ -11,17 +11,22 @@ class DistributionsViewsTest(ViewsTest):
             [['distribute', None], self.p_forbidden],
             [['undistribute', None], self.p_forbidden],
             [['changedistribute', None], self.p_forbidden],
-            [['distributeproposal', {'dtype': 1}], self.p_forbidden],
-            [['distributeproposal', {'dtype': 2}], self.p_forbidden],
+            [['distributeproposal', {'dist_type': 1}], self.p_forbidden],
+            [['distributeproposal', {'dist_type': 2}], self.p_forbidden],
+            [['distributeproposaloption', {'dist_type': 2, 'distribute_random': 0, 'automotive_preference': 0}], self.p_forbidden],
             [['maildistributions', None], self.p_forbidden],
+            [['automaticoptions', None], self.p_forbidden],
         ]
         codes_phase45 = [
             [['distribute', None], self.p_forbidden],
             [['undistribute', None], self.p_forbidden],
             [['changedistribute', None], self.p_forbidden],
-            [['distributeproposal', {'dtype': 1}], self.p_support],
-            [['distributeproposal', {'dtype': 2}], self.p_support],
+            [['distributeproposal', {'dist_type': 1}], self.p_support],
+            [['distributeproposal', {'dist_type': 2}], self.p_support],
+            [['distributeproposaloption', {'dist_type': 2, 'distribute_random': 0, 'automotive_preference': 0}],
+             self.p_support],
             [['maildistributions', None], self.p_support],
+            [['automaticoptions', None], self.p_support],
         ]
         codes_phase1237 = [
             [['supportDistributeApplications', None], self.p_forbidden],

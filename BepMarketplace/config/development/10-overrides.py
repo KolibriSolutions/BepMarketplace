@@ -25,28 +25,3 @@ DEBUG_TOOLBAR_CONFIG = {
     'JQUERY_URL': None,
 
 }
-
-# logging
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-         'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-        }
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-        'javascript_error': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    },
-}
-ALLOWED_HOSTS='*'

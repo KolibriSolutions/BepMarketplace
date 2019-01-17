@@ -11,7 +11,9 @@ urlpatterns = [
     path('api/redistribute/', views.api_redistribute, name='changedistribute'),
     path('mail/', views.mail_distributions, name='maildistributions'),
 
-    path('automatic/<int:dtype>/', views.automatic, name='distributeproposal'),
+    path('automatic/', views.automatic_options, name='automaticoptions'),
+    path('automatic/<int:dist_type>/<int:distribute_random>/<int:automotive_preference>/', views.automatic, name='distributeproposaloption'),
+    path('automatic/<int:dist_type>/', views.automatic, name='distributeproposal'),
     path('secondchoice/', views.list_second_choice, name='secondchoice'),
     path('delete/randoms/', views.delete_random_distributions, name='deleterandoms'),
 ]

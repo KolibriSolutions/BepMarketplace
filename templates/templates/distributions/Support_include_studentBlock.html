@@ -1,6 +1,6 @@
 {# a draggable 'button' with a Student. Code snippet used in SupportDistributeApplications #}
 {# Data-search-term are all things that the Student search box searches for, should be all lower case #}
-<li class="student" id="{{ student.pk }}"
+<li class="student" id="stdid-{{ student.pk }}"
     data-search-term="{{ student.first_name | lower }} {{ student.last_name | lower }} {{ student.usermeta.Fullname | lower }} {{ student.username | lower }} {{ student.usermeta.Studentnumber }}">
     <div class="button primary">
         {#  Tooltip with all applications of Student, dictsorted by Priority, displayed as ordered list.#}
@@ -14,7 +14,8 @@
                       {#  the tag warning span, is only for double-checking that the list order is correct. It prints the Priority which should be equal to its index number. #}
                     {% for application in student.applications.all|dictsort:"Priority" %}
                         <li><span class='tag info'> {{ application.Priority }}</span><span> {{ application.Proposal.Title }}</span></li>
-                    {% endfor %}</ul>">
+                    {% endfor %}</ul>
+    ECTS: {{ application.Student.usermeta.ECTS|default:0 }}<br />Cohort: {{ application.Student.usermeta.Cohort|default:'-' }}">
         {# text visible on the button of the Student #}
 
             {# display a Priority if this Student is currently on a Proposal (so this Student block is actually an application)#}

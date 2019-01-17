@@ -146,12 +146,14 @@ def create_user_from_email(email, username, student=False):
     new_account.last_name = last_name
     if not student:
         new_account.groups.add(get_grouptype('2u'))
+    new_account.full_clean()
     new_account.save()
     m = UserMeta(
         User=new_account,
         Initials=initials,
         Fullname="{}, {}".format(last_name, initials),
     )
+    m.full_clean()
     m.save()
     return new_account
 

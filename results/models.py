@@ -54,14 +54,19 @@ class CategoryResult(models.Model):
     Distribution = models.ForeignKey(Distribution, on_delete=models.CASCADE, related_name='results')
     Category = models.ForeignKey(GradeCategory, on_delete=models.CASCADE, related_name='results')
     Grade = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(10)], default=0.0)
-    Comments = models.TextField()
+    Comments = models.TextField(blank=True, null=True)
     Final = models.BooleanField(default=False)
 
     def __str__(self):
         return self.Category.Name + " to " + self.Distribution.__str__() + " grade: " + str(self.Grade)
 
     def is_valid(self):
-        return self.aspectresults.count() == self.Category.aspects.count()
+        """
+        Check if comment field is filled and all aspects have a grade.
+
+        :return:
+        """
+        return (self.Comments and self.aspectresults.count() == self.Category.aspects.count() and all([a.Grade for a in self.aspectresults.all()]))
 
     class Meta:
         ordering = ["Category"]
@@ -99,7 +104,7 @@ class CategoryAspectResult(models.Model):
     )
 
     CategoryAspect = models.ForeignKey(GradeCategoryAspect, on_delete=models.CASCADE, related_name='results')
-    Grade = models.CharField(max_length=2, choices=ResultOptions)
+    Grade = models.CharField(max_length=2, choices=ResultOptions, blank=True, null=True)
     CategoryResult = models.ForeignKey(CategoryResult, on_delete=models.CASCADE, related_name='aspectresults')
 
     def __str__(self):

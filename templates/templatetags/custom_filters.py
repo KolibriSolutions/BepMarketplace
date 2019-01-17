@@ -17,24 +17,32 @@ register = template.Library()
 
 
 @register.filter(name="index")
-def index(List, i):
+def index(lst, i):
     """
+    Return a value from a list at index
 
-    :param List:
-    :param i:
+    :param lst: list
+    :param i: index
     :return:
     """
-    return List[int(i)]
+    return lst[int(i)]
 
 
 @register.filter(name='tolist')
 def tolist(object):
+    """
+    Convert object to list
+
+    :param object:
+    :return: list of object
+    """
     return list(object)
 
 
 @register.filter(name='has_group')
 def has_group(user, group_names):
     """
+    Check groups for given user.
 
     :param user:
     :param group_names:
@@ -149,6 +157,19 @@ def GetSlot():
 
 
 @register.simple_tag
+def GetSlotId():
+    """
+    Return id of timeslot
+
+    :return:
+    """
+    ts = get_timeslot()
+    if not ts:
+        return None
+    return ts.pk
+
+
+@register.simple_tag
 def isThereTimeslot():
     """
 
@@ -237,9 +258,11 @@ def GetEndDate():
     else:
         return ''
 
+
 @register.filter(name='can_edit_project')
 def can_edit_project_tag(project, user):
     return can_edit_project_fn(user, project, None)[0]
+
 
 @register.filter(name='can_downgrade_project')
 def can_downgrade_project_tag(project, user):

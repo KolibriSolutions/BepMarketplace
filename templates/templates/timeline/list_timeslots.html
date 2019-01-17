@@ -2,8 +2,9 @@
 {% load custom_filters %}
 {% block body %}
     <h1>TimeSlots</h1>
-    Current TimeSlot: {{ cur }}
+    <p>Current TimeSlot: {{ cur }}</p>
     <a href="{% url "timeline:add_timeslot" %}" class="button primary">Add TimeSlot</a>
+    <a href="{% url "timeline:copy_timephases" %}" class="button primary">Copy TimePhases</a>
     <table class="table bordered hovered striped datatable">
         <thead>
         <tr>

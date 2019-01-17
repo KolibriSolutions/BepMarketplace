@@ -40,8 +40,8 @@ class ViewsTest(TestCase):
         """
         Setup test data, like users and groups.
         """
-        # whether to produce output
-        self.debug = True
+        # whether to produce output, please override this on app level if debug is required.
+        self.debug = False
 
         # to test that each page is at least tested once, check if all urls of the app are tested.
         urlpatterns = import_module(self.app + '.urls', 'urlpatterns').urlpatterns
@@ -98,7 +98,7 @@ class ViewsTest(TestCase):
         ## setup matrix with all possible rights
         # expected results:
         # r=random, t=this(for this proposal)
-        # s=student, p=private-student, r=responsible, a=assistant, n = assistant_not_verified t=trackhead, u=support
+        # s=student, p=private-student, r=responsible, a=assistant, u=assistant_not_verified t=trackhead
         # ta = assessor of presentation, 4=groupadministration, 5=studyadvisor, 6=profskill
         # matrix with different types of permissions, set for each user of the array self.usernames
         # permissions by user. The order is the order of self.usernames. User 'god' is disabled (not tested).

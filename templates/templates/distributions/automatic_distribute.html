@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block body %}
+    Please note that automatic distribution does not take 'Minimum number of students' into account.
+    If a minimum number of students is not reached, this should be discussed with the responsible staff of the proposal.
+    <br/>
+    The distributions can be changed after this automatic distribution is applied.
+    <h1>{{ typename }}</h1>
+    <p>Options:
+    <ul>
+        <li>
+            Distribute random: {{ distribute_random|yesno|capfirst }}
+        </li>
+        <li>
+            Automotive preference: {{ automotive_preference|yesno|capfirst }}
+        </li>
+    </ul>
+
+    </p>
+    <h2>Confirm (this deletes all current distributions from current timeslot)</h2>
+    <form action="" method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <table class="table" style="text-align:left;">
+            {{ form.as_table }}
+            <input type="hidden" name="jsondata" value='{{ jsondata|safe }}'>
+            <tr>
+                <td>
+                    <button class="button success" type="submit">Confirm</button>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+    </form>
+
+    <h2>Students overview</h2>
+    <table class="table bordered hovered striped" id="disttable">
+        <thead>
+        <tr>
+            <th>Student</th>
+            <th>Cohort</th>
+            <th>ECTS</th>
+            <th>Project</th>
+            <th>Student Preference</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for distribution in distributions %}
+            <tr>
+                <td>{{ distribution.student.usermeta.get_nice_name }}</td>
+                <td>{{ distribution.student.usermeta.Cohort }}</td>
+                <td>{{ distribution.student.usermeta.ECTS }}</td>
+                <td>
+                    {% if distribution.proposal %}
+                        <a href="{% url 'proposals:details' distribution.proposal.id %}">{{ distribution.proposal }}</a>
+                    {% else %}
+                        Not Distributed!
+                    {% endif %}
+                </td>
+                <td>
+                    {% if distribution.preference == -1 %}
+                        Random
+                    {% elif distribution.preference == 0 %}
+                        Private
+                    {% else %}
+                        {{ distribution.preference }}
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Statistics</h2>
+    <h3>Preference vs Cohort</h3>
+    <table class="table bordered striped">
+        <thead>
+        <tr>
+            <th>Preference</th>
+            {% for h in stats_header %}
+                <th>{{ h }}</th>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in stats %}
+            <tr>
+                {% for column in row %}
+                    <td>
+                        {{ column }}
+                    </td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <h3>Preference vs ECTS</h3>
+
+    <div class="margin20" style="width:40%;float:left;">
+        <canvas id="ECTSScatter"></canvas>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static 'js/Chart.bundle.min.js' %}"></script>
+    <script src="{% static "js/colors.js" %}"></script>
+    <script>
+        $(document).ready(function () {
+
+            var options = {
+                "pageLength": 50,
+                'order': [[1, 'desc']],
+                "columns": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                ],
+                initComplete: function () {
+                    this.api().columns([]).every(function () {
+                        var column = this;
+                        var select = $('<select><option value=""></option></select>')
+                            .appendTo($(column.header()))
+                            .on('change', function () {
+                                var val = $.fn.dataTable.util.escapeRegex(
+                                    $(this).val()
+                                );
+                                column
+                                    .search(val ? '^' + val + '$' : '', true, false)
+                                    .draw();
+                            });
+
+                        column.data().unique().sort().each(function (d, j) {
+                            select.append('<option value="' + d + '">' + d + '</option>')
+                        });
+                    });
+                }
+            };
+            $('#disttable').DataTable(options);
+            //for datatables, do not sort the table when clicking a select.
+            $("th>select").click(function () {
+                return false;
+            })
+        });
+        {% autoescape off %}
+
+            new Chart($('#ECTSScatter'), {
+                data: {
+                    datasets: [{
+                        data: {{ scatter }},
+                        backgroundColor: kelly_colors,
+                        label: 'ECTS vs preference plot',
+                    }]
+                },
+                type: 'scatter',
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                // Include a dollar sign in the ticks
+                                callback: function (value, index, values) {
+                                    if (value === -1) {
+                                        return 'random';
+                                    }
+                                    if (value === 0) {
+                                        return 'private';
+                                    }
+                                    return value;
+                                }
+                            }
+                        }]
+                    }
+                }
+            });
+        {% endautoescape %}
+    </script>
+
+{% endblock %}

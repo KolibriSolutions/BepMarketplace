@@ -36,7 +36,6 @@ def finalize(request, pk, version=0):
         if not get_timeslot().resultoptions.Visible:
             raise PermissionDenied("Results menu is not yet visible.")
 
-
     dstr = get_object_or_404(Distribution, pk=pk)
 
     if not hasattr(dstr, 'presentationtimeslot'):
@@ -45,8 +44,9 @@ def finalize(request, pk, version=0):
     if not request.user.is_superuser and \
             request.user not in dstr.presentationtimeslot.Presentations.Assessors.all() and \
             request.user != dstr.Proposal.Track.Head:
-        raise PermissionDenied("You are not the correct owner of this distribution."
-                               " Grades can only be finalized by assessors or track heads.")
+        raise PermissionDenied("You are not the correct owner of this distribution. "
+                               " Grades can only be finalized by assessors or track heads. "
+                               " To get a preview of the print view, use the 'Print Preview' button.")
 
     vals = [cat.is_valid() for cat in dstr.results.all()]
     if dstr.results.count() < GradeCategory.objects.filter(TimeSlot=get_timeslot()).count() or not all(
@@ -56,13 +56,15 @@ def finalize(request, pk, version=0):
             "return": "results:gradeformstaff",
             "returnget": str(pk),
         })
+
     version = int(version)
     if version == 0:  # The normal page summarizing the grades of the student
-        return render(request, "results/printGrades.html", {
+        return render(request, "results/finalize_grades.html", {
             "dstr": dstr,
             "catresults": dstr.results.all(),
             "final": all(f.Final is True for f in dstr.results.all()),
             "finalgrade": dstr.TotalGradeRounded(),
+            "preview": False,
         })
     elif version == 1:  # printable page with grades
         if get_timephase_number() != 7:
@@ -72,7 +74,7 @@ def finalize(request, pk, version=0):
             cat.Final = True
             cat.save()
 
-        return render(request, "results/printGradesStandAlone.html", {
+        return render(request, "results/print_grades_pdf.html", {
             "dstr": dstr,
             "catresults": dstr.results.all(),
             "finalgrade": dstr.TotalGradeRounded(),
@@ -84,7 +86,7 @@ def finalize(request, pk, version=0):
             cat.Final = True
             cat.save()
 
-        template = get_template('results/printGradesStandAlone.html')
+        template = get_template('results/print_grades_pdf.html')
 
         htmlblock = template.render({
             "dstr": dstr,
@@ -100,6 +102,48 @@ def finalize(request, pk, version=0):
         response = HttpResponse(buffer, 'application/pdf')
         response['Content-Disposition'] = 'attachment; filename="bepresult_{}.pdf"'.format(dstr.Student.usermeta.get_nice_name())
         return response
+
+
+@group_required('type1staff', 'type3staff')
+@phase_required(6, 7)
+def finalize_preview(request, pk, step=0):
+    """
+    Edit grade for a category as indexed by step. For each student as given by pk.
+    Also edit the individual aspects of each grade category. For trackheads and responsible staff
+
+    :param request:
+    :param pk: id of distribution
+    :param step: number of step in the menu, index of category
+    :return:
+    """
+    ts = get_timeslot()
+    if not hasattr(ts, 'resultoptions'):
+        raise PermissionDenied("Results menu is not yet visible.")
+    else:
+        if not get_timeslot().resultoptions.Visible:
+            raise PermissionDenied("Results menu is not yet visible.")
+
+    dstr = get_object_or_404(Distribution, pk=pk)
+
+    if not hasattr(dstr, 'presentationtimeslot'):
+        raise PermissionDenied('This student does not have a presentation planned. Please plan it first.')
+
+    if not request.user.is_superuser and \
+            request.user != dstr.Proposal.Track.Head and \
+            request.user != dstr.Proposal.ResponsibleStaff and \
+            get_grouptype('3') not in request.user.groups.all() and \
+            request.user not in dstr.presentationtimeslot.Presentations.Assessors.all():
+        raise PermissionDenied("You are not the correct owner of this distribution. "
+                               "Only track heads and responsible staff can edit grades.")
+
+    cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
+    return render(request, "results/finalize_grades.html", {
+        "dstr": dstr,
+        "catresults": dstr.results.all(),
+        "final": all(f.Final is True for f in dstr.results.all()),
+        "finalgrade": dstr.TotalGradeRounded(),
+        "preview": True,
+    })
 
 
 @group_required('type1staff', 'type3staff')
@@ -143,6 +187,7 @@ def staff_form(request, pk, step=0):
             "pk": pk,
             "categories": cats,
             "dstr": dstr,
+            "final": all(f.Final is True for f in dstr.results.all()),
         })
     elif step <= numcategories:
         saved = False

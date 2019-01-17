@@ -3,7 +3,7 @@ asgi_redis
 bleach
 channels>=2
 daphne>=2
-django==2.*
+django>=2.0.10
 django-csp
 django-htmlmin
 django-impersonate

@@ -2,6 +2,7 @@
 {% load custom_filters %}
 {% block body %}
     <h1>TimePhases of TimeSlot {{ ts }}</h1>
+    <a href="{% url "timeline:list_timeslots" %}" class="button primary">Back to list Timeslots</a>
     <a href="{% url "timeline:add_timephase" ts.pk %}" class="button primary">Add TimePhase</a>
     <table class="table bordered hovered striped datatable">
         <thead>
@@ -22,6 +23,7 @@
                 <td data-sort="{{ p.CountdownEnd|date:"U" }}">{{ p.CountdownEnd }}</td>
                 <td>
                     {% if p.End >= now %}<a href="{% url 'timeline:edit_timephase' p.pk %}" class="button primary">Edit</a>{% endif %}
+                    {% if p.End >= now %}<a href="{% url 'timeline:delete_timephase' p.pk %}" class="button warning">Delete</a>{% endif %}
                     {% if user.is_superuser %}<a href="{% url 'admin:timeline_timephase_change' p.pk %}" class="button warning">Admin edit</a>{% endif %}
                 </td>
             </tr>

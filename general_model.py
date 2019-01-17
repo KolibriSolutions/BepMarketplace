@@ -8,9 +8,9 @@ import uuid
 def get_ext(filename):
     """
     Get the extension of a given filename
-    
+
     :param filename: a filename
-    :return: 
+    :return:
     """
     return filename.split(".")[-1].lower()
 
@@ -18,11 +18,11 @@ def get_ext(filename):
 def file_delete_default(sender, instance, **kwargs):
     """
     Delete a file
-    
-    :param sender: 
-    :param instance: the file object to delete the file from 
-    :param kwargs: 
-    :return: 
+
+    :param sender:
+    :param instance: the file object to delete the file from
+    :param kwargs:
+    :return:
     """
     try:
         instance.File.delete(False)
@@ -34,8 +34,8 @@ def file_delete_default(sender, instance, **kwargs):
 def metro_icon_default(fobject):
     """
     Gives an icon name from metro ui icon font based on the extension of the filename.
-    
-    :param fobject: file object 
+
+    :param fobject: file object
     :return: icon name
     """
     extension = get_ext(fobject.File.name)
@@ -60,10 +60,10 @@ def metro_icon_default(fobject):
 
 def filename_default(filename):
     """
-    Generate a random unique filename.  
-    
+    Generate a random unique filename.
+
     :param filename: the original filename, used to get extension from.
-    :return: 
+    :return:
     """
     ext = get_ext(filename)
     return "%s.%s" % (uuid.uuid4(), ext)
@@ -106,21 +106,21 @@ GroupOptions = (
 )
 
 
-def print_list(list):
+def print_list(lst):
     """
     list of strings to pretty inline enumeration.
     ['a', 'b', 'c'] to 'a, b & c'
 
-    :param list: input list
+    :param lst: input list
     :return: string
     """
-    if len(list) == 0:
+    if len(lst) == 0:
         return 'None'
-    elif len(list) == 1:
-        return list[0]
+    elif len(lst) == 1:
+        return lst[0]
     else:
         tx = ''
-        for item in list:
+        for item in lst:
             tx += str(item) + ', '
         tx = tx[:-2]
         i = tx.rfind(',')

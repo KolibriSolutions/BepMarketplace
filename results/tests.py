@@ -42,17 +42,20 @@ class ResultsViewsTest(ProjectViewsTestGeneral):
             [['gradeformstaff', {'pk': d.pk, 'step': 0}], self.p_forbidden],
             [['gradefinal', {'pk': d.pk}], self.p_forbidden],
             [['gradefinal', {'pk': d.pk, 'version': 0}], self.p_forbidden],
+            [['gradefinalpreview', {'pk': d.pk}], self.p_forbidden],
         ]
         codes_phase67_notvisible = [
             [['gradeformstaff', {'pk': d.pk}], self.p_forbidden],
             [['gradeformstaff', {'pk': d.pk, 'step': 0}], self.p_forbidden],
             [['gradefinal', {'pk': d.pk}], self.p_forbidden],
             [['gradefinal', {'pk': d.pk, 'version': 0}], self.p_forbidden],
+            [['gradefinalpreview', {'pk': d.pk}], self.p_forbidden],
         ]
         # presentation assessors are not tested.
         codes_phase67_visible = [
             [['gradeformstaff', {'pk': d.pk}], self.p_staff_results],
             [['gradeformstaff', {'pk': d.pk, 'step': 0}], self.p_staff_results],
+            [['gradefinalpreview', {'pk': d.pk}], self.p_staff_results],
             [['gradefinal', {'pk': d.pk}], self.p_grade_final],
             [['gradefinal', {'pk': d.pk, 'version': 0}], self.p_grade_final],
         ]

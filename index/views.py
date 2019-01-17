@@ -72,8 +72,17 @@ def index(request):
             d = tdelta.days
             s = tdelta.seconds
     return render(request, "index/index.html",
-                  {"info": info, "files": files, "countdownDays": d, "countdownHours": floor((s / 3600) % 24),
-                   "countdownMinutes": floor((s / 60) % 60)})
+                  {"info": info,
+                   "files": files,
+                   "countdownDays": d,
+                   "countdownHours": floor((s / 3600) % 24),
+                   "countdownMinutes": floor((s / 60) % 60),
+                   'support_role': settings.SUPPORT_ROLE,
+                   'support_name': settings.SUPPORT_NAME,
+                   'support_email': settings.SUPPORT_EMAIL,
+                   }
+
+                  )
 
 
 def logout(request):
@@ -114,18 +123,19 @@ def feedback_form(request):
     """
     if request.method != "POST":
         return render(request, "base.html", {
-            "Message": "No parameters supplied"
+            "Message": "Please do not access this page directly."
         })
 
     form = FeedbackForm(initial={
         'Url': request.POST['id_Url'],
     })
 
-    return render(request, "GenericForm.html", {
+    return render(request, "index/feedback_form.html", {
         "form": form,
         "formtitle": "Feedback Form",
         "buttontext": "Send",
-        "actionlink": "index:feedback_submit"
+        'support_name': settings.SUPPORT_NAME,
+        "actionlink": "index:feedback_submit"  # redirect to feedback_submit
     })
 
 
@@ -133,13 +143,14 @@ def feedback_form(request):
 def feedback_submit(request):
     """
     The 'thanks' page after feedback is submitted by a user.
+    Also shows form validation errors if present.
 
     :param request:
     :return:
     """
     if request.method != "POST":
         return render(request, "base.html", {
-            "Message": "No parameters supplied"
+            "Message": "Please do not access this page directly."
         })
     form = FeedbackForm(request.POST)
     if form.is_valid():
@@ -156,8 +167,11 @@ def feedback_submit(request):
         return render(request, "base.html", {
             "Message": "Feedback saved, thank you for taking the time to improve the system!"
         })
-    return render(request, "GenericForm.html", {
-        "form": form
+    return render(request, "index/feedback_form.html", {
+        "form": form,
+        "formtitle": "Feedback Form",
+        "buttontext": "Send",
+        "support_name": settings.SUPPORT_NAME,
     })
 
 

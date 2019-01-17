@@ -1,5 +1,10 @@
 from django.contrib import admin
 from students.models import Distribution
 
-# Register your models here.
-admin.site.register(Distribution)
+
+class DistributionAdmin(admin.ModelAdmin):
+    list_filter = ['Timeslot']
+    search_fields = ('Student__username', 'Student__last_name', 'Proposal__Title')
+
+
+admin.site.register(Distribution, DistributionAdmin)

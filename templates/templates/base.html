@@ -45,6 +45,7 @@
             <ul class="app-bar-menu">
                 <li><a href="/"><span class="mif-home icon"></span>Home</a></li>
                 {% if user.is_authenticated %}
+                    {% isThereTimeslot as timeslotpresent %}
                     {% if user|has_group:"any" %}
                         <li><a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Proposals</a>
                             <ul class="d-menu" data-role="dropdown">
@@ -67,11 +68,15 @@
                                             <a href="#" class="dropdown-toggle">Statistics</a>
                                             <ul class="d-menu" data-role="dropdown">
                                                 <li><a href="{% url 'proposals:statsgeneral' %}">General Report</a></li>
-                                                <li><a href="{% url 'proposals:stats' %}">Personal Report</a></li>
+                                                <li><a href="{% url 'proposals:statspersonal' %}">Personal Report</a></li>
                                             </ul>
                                         </li>
+                                    {% endif %}
+                                    {% if timeslotpresent %}
+                                        {% GetSlotId as slotid %}  {# Not very nice way to get the current timeslot ID, but best way to redirect this link to the current timeslot stats. #}
+                                        <li><a href="{% url 'proposals:stats' slotid %}">Statistics</a></li>
                                     {% else %}
-                                        <li><a href="{% url 'support:stats' %}">Statistics</a></li>
+                                        <li><a href="{% url 'proposals:stats' %}">Statistics</a></li>
                                     {% endif %}
                                 {% endif %}
                             </ul>
@@ -83,30 +88,21 @@
                                 <li>
                                     <a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Distribution</a>
                                     <ul class="d-menu" data-role="dropdown">
-
-                                        {% if phasenumber == 4 or phasenumber == 5 %}
-                                            <li><a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
-                                                Manually</a></li>
-                                        {% endif %}
                                         {% if phasenumber == 6 and user.is_superuser %}
                                             <li><a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
                                                 Manually (superuser)</a></li>
                                         {% endif %}
-
                                         {% if phasenumber == 4 or phasenumber == 5 %}
+                                            <li>
+                                                <a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
+                                                    Manually</a>
+                                            </li>
                                             {# actual distributions are possible in phase 4 and 5 #}
                                             {% if phasenumber == 4 %}
                                                 {# phase 4 show automatic distribution menu#}
                                                 <li>
-                                                    <a href="#" class="dropdown-toggle">Distribute Automatically</a>
-                                                    <ul class="d-menu" data-role="dropdown">
-                                                        <li><a href="{% url 'distributions:distributeproposal' 1 %}">1:
-                                                            By student</a>
-                                                        </li>
-                                                        <li><a href="{% url 'distributions:distributeproposal' 2 %}">2:
-                                                            By project</a>
-                                                        </li>
-                                                    </ul>
+                                                    <a href="{% url 'distributions:automaticoptions' %}">Distribute
+                                                        Automatically</a>
                                                 </li>
                                             {% endif %}
                                             <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">List
@@ -123,7 +119,7 @@
                                         {% endif %}
                                     </ul>
                                 </li>
-                            {% endif %}
+                            {% endif %}  {# Distribution menu #}
                             {% if phasenumber > 4 %}
                                 <li>
                                     <a href="" class="dropdown-toggle"><span class="mif-file-powerpoint icon"></span>Presentations</a>
@@ -144,7 +140,7 @@
                                         </li>
                                     </ul>
                                 </li>
-                            {% endif %}
+                            {% endif %}  {# Presentations menu #}
                             <li>
                                 <a href="" class="dropdown-toggle"><span class="mif-stack2 icon"></span>Support</a>
                                 <ul class="d-menu" data-role="dropdown">
@@ -171,7 +167,6 @@
                                             <li><a href="{% url 'osirisdata:tometa' %}">Rewrite Meta</a></li>
                                         </ul>
                                     </li>
-                                    <li><a href="{% url 'support:stats' %}">Stats</a></li>
                                     {% if phasenumber == 2 %}
                                         <li><a href="{% url 'support:mailtrackheads' %}">Mail Track Heads</a></li>
                                     {% endif %}
@@ -194,7 +189,7 @@
                                     <li><a href="{% url 'index:edit_tracks' %}">Track Head edit</a></li>
                                     <li><a href="{% url 'results:list_categories' %}">Grading</a></li>
                                 </ul>
-                            </li>
+                            </li>  {# support menu #}
                         {% else %}
                             {# staff except type3/6 #}
                             {% if phasenumber > 5 %}
@@ -204,7 +199,7 @@
                                 </li>
                             {% endif %}
                         {% endif %}
-                        {% isThereTimeslot as timeslotpresent %}
+
                         {% if phasenumber > 3 or phasenumber < 0 and timeslotpresent %}
                             <li><a href="{% url 'support:liststudents' %}"><span class="mif-users icon"></span>Students
                                 {% if phasenumber >= 6 or phasenumber < 0 %} & Grades{% endif %}</a>
@@ -213,9 +208,10 @@
                     {% elif user|has_group:"type4staff" %}
                         <li><a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Proposals</a>
                             <ul class="d-menu" data-role="dropdown">
-                            <li><a href="{% url 'support:listgroupproposals' %}"><span class="mif-mail-read icon"></span>My
-                                group proposals</a></li>
-                            <li><a href="{% url 'proposals:create' %}">Create new proposal</a></li>
+                                <li><a href="{% url 'support:listgroupproposals' %}"><span
+                                        class="mif-mail-read icon"></span>My
+                                    group proposals</a></li>
+                                <li><a href="{% url 'proposals:create' %}">Create new proposal</a></li>
                             </ul>
                         </li>
                     {% elif user|has_group:"type5staff" %}
@@ -260,6 +256,18 @@
                         <li><a href="{% url 'professionalskills:filetypelist' %}"><span class="mif-widgets icon"></span>Professional
                             Skills</a></li>
                     {% endif %}
+
+
+
+
+
+
+
+
+
+
+
+
                     {% if user.is_superuser %}
                         <li>
                             <a href="" class="dropdown-toggle"><span class="mif-wrench"></span>GodPowers</a>
@@ -429,7 +437,7 @@
     </div>
 
     <div class="place-right text-small">
-        <div class="cell place-left padding10" onclick="roll('li')">By: Kolibri Solutions 2016-2018</div>
+        <div class="cell place-left padding10" onclick="roll('li')">By: Kolibri Solutions 2016-2019</div>
         <div class="cell place-left padding10">Currently deployed: {% GetHash %}</div>
     </div>
 </div>

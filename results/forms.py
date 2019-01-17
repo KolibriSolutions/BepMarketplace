@@ -10,6 +10,8 @@ class CategoryResultForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['Grade'].disabled = disabled
         self.fields['Comments'].disabled = disabled
+        self.fields['Comments'].widget.attrs['placeholder'] = "Please give some comments on the grade"
+
 
     class Meta:
         model = CategoryResult

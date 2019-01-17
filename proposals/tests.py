@@ -19,14 +19,15 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         s = self
 
         code_general = [
-            [['viewsharelink', {'token': 'blabla'}], [s.p_anonymous]]
+            [['viewsharelink', {'token': 'blabla'}], [s.p_anonymous]],
+            [['stats', None], [s.p_staff12345]],
         ]
         code_general_phase12345 = [
             [['list', None],  s.p_all],
             [['create', None],                     s.p_staff_prop],
             [['chooseedit', None],                 s.p_staff_prop_no4],
             [['pending', None],                    s.p_pending],
-            [['stats', None],                      s.p_forbidden],  #TODO s.p_staff12345
+            [['statspersonal', None],              s.p_forbidden],  #TODO s.p_staff12345
             [['statsgeneral', None],               s.p_forbidden],  #TODO s.p_staff12345
             [['listtrackproposals', None],         s.p_track],
         ]
@@ -35,7 +36,7 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
             [['create', None],                     s.p_staff_prop],
             [['chooseedit', None],                 s.p_staff_prop_no4],
             [['pending', None],                    s.p_pending],
-            [['stats', None],                      s.p_staff_prop_no4],
+            [['statspersonal', None],                      s.p_staff_prop_no4],
             [['statsgeneral', None],               s.p_staff_prop],
             [['listtrackproposals', None],         s.p_track],
         ]
@@ -51,7 +52,6 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
 
     def test_view_status_nophase(self):
         s = self
-
         # no phase. Same as "TimePhase 3 and later" but without student rights.
         code_phase_nophase = [
             [['addfile', {'ty': 'i', 'pk': s.p}],     [s.p_support       , s.p_support         ,s.p_support        , s.p_support  ]],

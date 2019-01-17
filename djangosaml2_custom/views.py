@@ -47,6 +47,7 @@ def set_osiris(user, osirisdata):
             meta.Study = 'Eletrical Engineering'
         meta.Cohort = osirisdata.cohort
         meta.ECTS = osirisdata.ects
+        meta.full_clean()
         meta.save()
 
 

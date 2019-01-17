@@ -1,10 +1,12 @@
 from datetime import datetime
 
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, render
 
 from BepMarketplace.decorators import group_required
-from .forms import TimePhaseForm, TimeSlotForm
+from general_form import ConfirmForm
+from general_model import print_list
+from .forms import TimePhaseForm, TimeSlotForm, TimePhaseCopyForm
 from .models import TimeSlot, TimePhase
 from .utils import get_timeslot, get_timephase
 
@@ -159,4 +161,81 @@ def edit_timephase(request, timephase):
         'formtitle': 'Edit TimePhase',
         'buttontext': 'Save',
         'skip_date_validate': True,
+    })
+
+
+@group_required('type3staff')
+def copy_timephases(request):
+    """
+    Copy all timephases of one timeslot to the other timeslot
+
+    :param request:
+    :return:
+    """
+    if request.method == 'POST':
+        form = TimePhaseCopyForm(request.POST)
+        if form.is_valid():
+            from_date = form.cleaned_data['ts_from'].Begin
+            to_date = form.cleaned_data['ts_to'].Begin
+            diff = to_date - from_date
+            copied = []
+            for tp in form.cleaned_data['ts_from'].timephases.all().order_by("Description"):
+                try:
+                    tp.Timeslot = form.cleaned_data['ts_to']
+                    tp.id = None  # to make a copy.
+                    tp.Begin = tp.Begin + diff
+                    tp.End = tp.End + diff
+                    if hasattr(tp, 'CountDownEnd'):
+                        tp.CountDownEnd = tp.CountDownEnd + diff
+                    tp.full_clean()
+                    tp.save()
+                    copied.append(tp.Description)
+                except ValidationError as e:  # form save error, invalid dates
+                    return render(request, 'base.html', {
+                        'Message': 'TimePhases {} saved. Timephase {} could not be saved because of {}'.format(
+                            print_list(copied), tp.Description,
+                            print_list(e.messages)),
+                        'return': 'timeline:list_timeslots',
+                    })
+            return render(request, 'base.html', {
+                'Message': 'TimePhases {} saved! Please check and correct their Begin and End times manually.'.format(
+                    print_list(copied)),
+                'return': 'timeline:list_timeslots',
+            })
+
+    else:
+        form = TimePhaseCopyForm()
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Copy TimePhase',
+        'buttontext': 'Copy',
+    })
+
+
+@group_required("type3staff")
+def delete_timephase(request, timephase):
+    """
+
+    :param request:
+    :param timephase: pk of timephase to delete
+    :return:
+    """
+    name = 'Time phase'
+    obj = get_object_or_404(TimePhase, pk=timephase)
+    if obj.End < datetime.now().date():
+        raise PermissionDenied('This TimePhase has already finished.')
+    if request.method == 'POST':
+        form = ConfirmForm(request.POST)
+        if form.is_valid():
+            obj.delete()
+            return render(request, 'base.html', {
+                'Message': '{} deleted.'.format(name),
+                'return': 'timeline:list_timephases',
+                'returnget': obj.Timeslot.pk})
+    else:
+        form = ConfirmForm()
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Delete {}?'.format(name),
+        'buttontext': 'Delete'
     })

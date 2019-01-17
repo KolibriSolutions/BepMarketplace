@@ -11,7 +11,7 @@ urlpatterns = [
 
     path('contentpolicy/', views.content_policy, name='contentpolicy'),
     # path('ectsform/', views.ECTSForm, name='ectsform'), #deprecated due to osirisdata
-    path('stats/', views.stats, name='stats'),
+    # path('stats/', views.stats, name='stats'),
 
     # public files
     path('files/add/', views.add_file, name='addfile'),

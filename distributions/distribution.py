@@ -4,8 +4,10 @@ Automatic distribution of proposals
 from random import shuffle
 
 from django.conf import settings
+from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.db.models import Q
 
+from general_model import print_list
 from general_view import get_all_students
 from general_view import get_timeslot
 from index.models import Track
@@ -51,7 +53,7 @@ def get_cohorts():
     :return:
     """
     cohorts = []
-    for s in get_all_students():
+    for s in get_all_students().select_related('usermeta'):
         c = s.usermeta.Cohort
         if c is not None:
             if c not in cohorts:
@@ -70,250 +72,80 @@ def get_valid_proposals():
     return get_all_proposals().filter(Q(Status=4) & Q(Private__isnull=True))
 
 
-def distributePersonal(distributionList):
+def get_valid_students():
+    """
+    All students with applications, without personal, in this timeslot.
+
+    :return: list of user objects.
+    """
+    return get_all_students().filter(personal_proposal__isnull=True, applications__isnull=False).distinct()
+    # usermeta__ECTS__gt=0).distinct()
+
+
+def distribute_personal(distribution_proposals, students_done=[]):
     """
     Distribute all students with a private proposal to the private proposal.
 
-    :param distributionList: List of distributions
+    :param distribution_proposals, students_done: List of distributions and list of distributed students
     :return:
     """
     stds = get_all_students().filter(personal_proposal__isnull=False)
     for s in stds:
-        # will crash if user has multiple private proposals
-        pid = s.personal_proposal.get().id
-        distributionList.append(DistributionProposal(s.id, pid, 0))
+        try:
+            p = s.personal_proposal.get()
+        except MultipleObjectsReturned:
+            raise Exception("User {} has multiple private proposals ({}). Please resolve this!"
+                            .format(s, print_list(s.personal_proposal.all())))
+        if p.TimeSlot != get_timeslot():
+            raise Exception("User {} of this timeslot has private proposal {} of other timeslot {}"
+                            .format(s, p, p.TimeSlot))
+        distribution_proposals.append(DistributionProposal(s.id, p.id, 0))
+        students_done.append(s)
+    return [distribution_proposals, students_done]
 
-    return distributionList
 
-
-def CalculateFromProjects():
+def distribute_remaining_random(distribution_proposals, students_done=[]):
     """
-    Option 2, calculated new way. Loop over proposals and find a student for it.
+    Distribute all remaining students random.
 
+    :param distribution_proposals, students_done: List of distributions and list of distributed students
     :return:
     """
-    projects = list(get_valid_proposals())
-    shuffle(projects)
-    studentsdone = []
-    projectsdone = []
-    distobjs = []
+    stds = get_valid_students()
+    # attach students to proposals with not enough students
+    # attach students to proposals random
+    proposals = get_valid_proposals().order_by('?')
+    not_distributed = set(stds) - set(students_done)
+    for s in not_distributed:  # each not distributed user, distribute random.
+        for p in proposals:  # find first proposal with too few students, to add this student to.
+            missing_students = p.NumstudentsMin - count_distributions(p.id, distribution_proposals)
+            if missing_students > 0:
+                # proposal doesn't have enough students
+                # distribute student
+                distribution_proposals.append(DistributionProposal(s.id, p.id, -1))
+                students_done.append(s)
+                missing_students -= 1
+                break
 
-    # iterate for all preferences twice
-    # once to first handle all automotive
-    # second time the leftovers plus ele
-    autrack = Track.objects.get(Name='Automotive')
-
-    for n in range(1, settings.MAX_NUM_APPLICATIONS + 1):
-        # iterate all projects
-        for proj in projects:
-            # skip non AU
-            if proj.Track != autrack:
-                continue
-            # select all applicatants of current selected cohort and preference, sort it for cohort >  ects > random
-            apps = list(proj.applications.filter(Priority=n).distinct() \
-                        .order_by('-Student__usermeta__Cohort', '-Student__usermeta__ECTS', '?'))
-            assigned = count_applications(proj.id, distobjs)
-            # while project is not yet full
-            while assigned != proj.NumstudentsMax:
-                # take first from list and check if not yet distributed
-                # if list of applications is empty move on
-                if len(apps) == 0:
-                    break
-                app = apps.pop(0)
-                # check if student is automotive
-                if 'Automotive' not in app.Student.usermeta.Study:
-                    continue
-                # check if there is not an ele project at higher preference for this student, than wait for next round
-                appsstudent = app.Student.applications.filter(Priority__lt=app.Priority)
-                appsstudent = [True if a.Proposal.Track != autrack else False for a in appsstudent]
-                if True in appsstudent:
-                    continue
-                if app.Student_id not in studentsdone:
-                    # put it in the distribute list to this proposal
-                    distobjs.append(DistributionProposal(app.Student_id, proj.id, n))
-                    studentsdone.append(app.Student_id)
-                    assigned += 1
-            if assigned == proj.NumstudentsMax:
-                projectsdone.append(proj.id)
-
-    # all students not only au
-    for n in range(1, settings.MAX_NUM_APPLICATIONS + 1):
-        # iterate all projects
-        for proj in projects:
-            # select all applicatants of current selected cohort and preference, sort it for cohort >  ects > random
-            apps = list(proj.applications.filter(Priority=n).distinct() \
-                        .order_by('-Student__usermeta__Cohort', '-Student__usermeta__ECTS', '?'))
-            assigned = count_applications(proj.id, distobjs)
-            # while project is not yet full
-            while assigned != proj.NumstudentsMax:
-                # take first from list and check if not yet distributed
-                # if list of applications is empty move on
-                if len(apps) == 0:
-                    break
-                app = apps.pop(0)
-                if app.Student_id not in studentsdone:
-                    # put it in the distribute list to this proposal
-                    distobjs.append(DistributionProposal(app.Student_id, proj.id, n))
-                    studentsdone.append(app.Student_id)
-                    assigned += 1
-            if assigned == proj.NumstudentsMax:
-                projectsdone.append(proj.id)
-
-    # apply all privates
-    privprops = get_all_proposals().filter(Private__isnull=False).distinct()
-    for prop in privprops:
-        for std in prop.Private.all():
-            distobjs.append(DistributionProposal(std.id, prop.id, 0))
-
-    # give the resultants random project
-    students = list(
-        get_all_students().filter(Q(personal_proposal__isnull=True) & Q(applications__isnull=False)).distinct())
-    props = list(get_valid_proposals().order_by('?'))
-    for std in students:
-        if std.usermeta.ECTS == 0:
-            continue
-        if std.id not in studentsdone:
-            while True:
-                prop = props.pop(0)
-                if prop.id not in projectsdone:
-                    distobjs.append(DistributionProposal(std.id, prop.id, -1))
-                    break
-
-    return distobjs
+    # attach students to proposals not yet at maximum.
+    # attach students to proposals random
+    not_distributed = set(stds) - set(students_done)
+    for s in not_distributed:  # each not distributed user, distribute random.
+        for p in proposals:  # find first proposal not at max students, to add this student to.
+            missing_students = p.NumstudentsMax - count_distributions(p.id, distribution_proposals)
+            if missing_students > 0:
+                # proposal can handle more students
+                # distribute student
+                distribution_proposals.append(DistributionProposal(s.id, p.id, -1))
+                students_done.append(s)
+                missing_students -= 1
+                break
+    return [distribution_proposals, students_done]
 
 
-def CalculateFromStudent():
+def count_distributions(proposalId, distributionList):
     """
-    option1, calculated old way. Look for proposals for each student.
-
-    :return:
-    """
-    # valid students:
-    stds = get_all_students().filter(personal_proposal__isnull=True, applications__isnull=False,
-                                     usermeta__ECTS__gt=0).distinct()
-
-    # list of distributed students to return
-    dists = []
-
-    # list of students processed but not in distributionproposal
-    studentsdone = []
-    projectsdone = []
-
-    # personal proposals:
-    dists = (distributePersonal(dists))
-
-    autrack = Track.objects.get(Name='Automotive')
-
-    # get all cohorts
-    cohorts = get_cohorts()
-
-    # loop over all cohorts, take the youngest students first
-    # for AU students in AU applications
-    for c in cohorts:
-        # get students in this cohort with applications, ordered by ECTS
-        stds_c = list(
-            stds.filter(Q(usermeta__Cohort=c) & Q(usermeta__Study__contains='Automotive')).distinct().order_by(
-                '-usermeta__ECTS'))
-        # filter on students without distributionproposal
-        # Higher application have priority over ECTS
-        for a in range(1, settings.MAX_NUM_APPLICATIONS + 1):
-            # all students in this cohort, ordered by most ECTS first, with application number a
-            stds_c = list(set(stds_c) - set(studentsdone))
-            for s in stds_c:
-                # loop over applications. Lower choices have priority over ects/cohort
-                if s not in studentsdone:
-                    try:
-                        application = s.applications.get(Priority=a)
-                    except Application.DoesNotExist:
-                        # user does not have a'th application
-                        continue
-                    if application.Proposal.Track != autrack:
-                        break
-                    # apply to proposal:
-                    proposal = application.Proposal
-                    if proposal.TimeSlot != get_timeslot():
-                        # application is to an invalid proposal
-                        continue
-                    numdist = count_applications(proposal.id, dists)
-                    maxdist = proposal.NumstudentsMax
-                    if numdist < maxdist:
-                        # proposal can handle more students
-                        dists.append(DistributionProposal(s.id, proposal.id, a))
-                        # remove this student from queryset because it is now distributed
-                        studentsdone.append(s)
-
-    # loop over all cohorts, take the youngest students first
-    # for all students
-    for c in cohorts:
-        # get students in this cohort with applications, ordered by ECTS
-        stds_c = list(stds.filter(Q(usermeta__Cohort=c)).distinct().order_by('-usermeta__ECTS'))
-
-        # filter on students without distributionproposal
-        # Higher application have priority over ECTS
-        for a in range(1, settings.MAX_NUM_APPLICATIONS + 1):
-            # all students in this cohort, ordered by most ECTS first, with application number a
-            stds_c = list(set(stds_c) - set(studentsdone))
-            for s in stds_c:
-                # loop over applications. Lower choices have priority over ects/cohort
-                if s not in studentsdone:
-                    try:
-                        application = s.applications.get(Priority=a)
-                    except Application.DoesNotExist:
-                        # user does not have a'th application
-                        continue
-
-                    # apply to proposal:
-                    proposal = application.Proposal
-                    if proposal.TimeSlot != get_timeslot():
-                        # application is to an invalid proposal
-                        continue
-
-                    numdist = count_applications(proposal.id, dists)
-                    maxdist = proposal.NumstudentsMax
-
-                    if numdist < maxdist:
-                        # proposal can handle more students
-                        dists.append(DistributionProposal(s.id, proposal.id, a))
-                        # remove this student from queryset because it is now distributed
-                        studentsdone.append(s)
-
-        if len(stds_c) > 0:
-            # attach students to proposals with not enough students
-            proposals = get_valid_proposals().order_by('?')
-            for p in proposals:
-                if len(stds_c) > 0:
-                    missingstudents = p.NumstudentsMin - count_applications(p.id, dists)
-                    # proposal doesn't have enough students
-                    for s in stds_c:
-                        if s not in studentsdone:
-                            # distribute student
-                            dists.append(DistributionProposal(s.id, p.id, -1))
-                            studentsdone.append(s)
-                            missingstudents -= 1
-                            if missingstudents == 0:
-                                break
-
-        if len(stds_c) > 0:
-            # attach students to proposals random
-            proposals = get_valid_proposals().order_by('?')
-            for p in proposals:
-                if len(stds_c) > 0:
-                    missingstudents = p.NumstudentsMin - count_applications(p.id, dists)
-                    # proposal doesn't have enough students
-                    for s in stds_c:
-                        if s not in studentsdone:
-                            # distribute student
-                            dists.append(DistributionProposal(s.id, p.id, -1))
-                            studentsdone.append(s)
-                            missingstudents -= 1
-                            if missingstudents == 0:
-                                break
-    # return the list of distributed students
-    return dists
-
-
-def count_applications(proposalId, distributionList):
-    """
+    count number of students distributed to a proposal
 
     :param proposalId:
     :param distributionList:
@@ -325,3 +157,183 @@ def count_applications(proposalId, distributionList):
             count += 1
 
     return count
+
+
+def calculate_1_from_student(distribute_random, automotive_preference):
+    """
+    option1, calculated old way. Look for proposals for each student.
+
+    :return:
+    """
+    # valid students:
+    stds = get_valid_students()
+
+    # list of students processed but not in distributionproposal
+    students_done = []  # list of student objects
+    projects_done = []
+    distribution_proposals = []  # list of DistributionProposal objects
+
+    # personal proposals:
+    distribution_proposals, students_done = distribute_personal(distribution_proposals, students_done)
+
+    # get all cohorts
+    cohorts = get_cohorts()
+
+    # loop over all cohorts, take the youngest students first
+    if automotive_preference:
+        # for AU students in AU applications
+        track_automotive = Track.objects.get(Name='Automotive')
+        for c in cohorts:
+            # get students in this cohort with applications, ordered by ECTS
+            stds_c = list(
+                stds.filter(Q(usermeta__Cohort=c) & Q(usermeta__Study__contains='Automotive')).distinct().order_by(
+                    '-usermeta__ECTS'))
+            # filter on students without distributionproposal
+            # Higher application have priority over ECTS
+            for n in range(1, settings.MAX_NUM_APPLICATIONS + 1):
+                # all students in this cohort, ordered by most ECTS first, with application number a
+                stds_c = list(set(stds_c) - set(students_done))
+                for s in stds_c:
+                    # loop over applications. Lower choices have priority over ects/cohort
+                    if s not in students_done:
+                        try:
+                            application = s.applications.get(Priority=n)
+                        except Application.DoesNotExist:
+                            # user does not have a'th application
+                            continue
+                        if application.Proposal.Track != track_automotive:
+                            break
+                        # apply to proposal:
+                        proposal = application.Proposal
+                        if proposal.TimeSlot != get_timeslot():
+                            # application is to an invalid proposal
+                            continue
+                        num_dist = count_distributions(proposal.id, distribution_proposals)
+                        max_dist = proposal.NumstudentsMax
+                        if num_dist < max_dist:
+                            # proposal can handle more students
+                            distribution_proposals.append(DistributionProposal(s.id, proposal.id, n))
+                            # remove this student from queryset because it is now distributed
+                            students_done.append(s)
+
+    # loop over all cohorts, take the youngest students first
+    # for all students
+    for c in cohorts:
+        # get students in this cohort with applications, ordered by ECTS
+        stds_c = list(stds.filter(Q(usermeta__Cohort=c)).distinct().order_by('-usermeta__ECTS'))
+        # filter on students without distributionproposal
+        # Higher application have priority over ECTS
+        for n in range(1, settings.MAX_NUM_APPLICATIONS + 1):
+            # all students in this cohort, ordered by most ECTS first, with application number a
+            stds_c = list(set(stds_c) - set(students_done))
+            for s in stds_c:
+                # loop over applications. Lower choices have priority over ects/cohort
+                if s not in students_done:
+                    try:
+                        application = s.applications.get(Priority=n)
+                    except Application.DoesNotExist:
+                        # user does not have a'th application
+                        continue
+
+                    # apply to proposal:
+                    proposal = application.Proposal
+                    if proposal.TimeSlot != get_timeslot():
+                        # application is to an invalid proposal
+                        continue
+
+                    num_dist = count_distributions(proposal.id, distribution_proposals)
+                    max_dist = proposal.NumstudentsMax
+
+                    if num_dist < max_dist:
+                        # proposal can handle more students
+                        distribution_proposals.append(DistributionProposal(s.id, proposal.id, n))
+                        # remove this student from queryset because it is now distributed
+                        students_done.append(s)
+
+    if distribute_random:
+        distribution_proposals, students_done = distribute_remaining_random(distribution_proposals, students_done)
+
+    # return the list of distributed students
+    return distribution_proposals
+
+
+def calculate_2_from_project(distribute_random, automotive_preference):
+    """
+    Type 2, calculated new way. Loop over proposals and find a student for it.
+
+    :return:
+    """
+    projects = list(get_valid_proposals().select_related())
+    shuffle(projects)
+    students_done = []  # list of student objects
+    projects_done = []  # list of proposal objects
+    distribution_proposals = []  # list of DistributionProposal objects
+
+    distribution_proposals, students_done = distribute_personal(distribution_proposals, students_done)
+
+    # iterate for all preferences twice
+    # once to first handle all automotive
+    # second time the leftovers plus ele
+    if automotive_preference:
+        track_automotive = Track.objects.get(Name='Automotive')
+        for n in range(1, settings.MAX_NUM_APPLICATIONS + 1):
+            # iterate all projects
+            for proj in projects:
+                # skip non AU
+                if proj.Track != track_automotive:
+                    continue
+                # select all applicants of current selected cohort and preference, sort it for cohort >  ects > random
+                apps = list(proj.applications.filter(Priority=n).distinct().select_related() \
+                            .order_by('-Student__usermeta__Cohort', '-Student__usermeta__ECTS', '?'))
+                assigned = count_distributions(proj.id, distribution_proposals)
+                # while project is not yet full
+                while assigned != proj.NumstudentsMax:
+                    # take first from list and check if not yet distributed
+                    # if list of applications is empty move on
+                    if len(apps) == 0:
+                        break
+                    app = apps.pop(0)
+                    # check if student is automotive
+                    if 'Automotive' not in app.Student.usermeta.Study:
+                        continue
+                    # check if there is not an ele project at higher preference for this student, than wait for next round
+                    students_appls = app.Student.applications.filter(Priority__lt=app.Priority)
+                    students_appls = [True if a.Proposal.Track != track_automotive else False for a in students_appls]
+                    if True in students_appls:
+                        continue
+                    if app.Student not in students_done:
+                        # put it in the distribute list to this proposal
+                        distribution_proposals.append(DistributionProposal(app.Student_id, proj.id, n))
+                        students_done.append(app.Student)
+                        assigned += 1
+                if assigned == proj.NumstudentsMax:
+                    projects_done.append(proj)
+
+    # all students not only au
+    for n in range(1, settings.MAX_NUM_APPLICATIONS + 1):
+        # iterate all projects
+        for proj in projects:
+            # select all applicatants of current selected cohort and preference, sort it for cohort >  ects > random
+            apps = list(proj.applications.filter(Priority=n).distinct().select_related() \
+                        .order_by('-Student__usermeta__Cohort', '-Student__usermeta__ECTS', '?'))
+            assigned = count_distributions(proj.id, distribution_proposals)
+            # while project is not yet full
+            while assigned != proj.NumstudentsMax:
+                # take first from list and check if not yet distributed
+                # if list of applications is empty move on
+                if len(apps) == 0:
+                    break
+                app = apps.pop(0)
+                if app.Student not in students_done:
+                    # put it in the distribute list to this proposal
+                    distribution_proposals.append(DistributionProposal(app.Student_id, proj.id, n))
+                    students_done.append(app.Student)
+                    assigned += 1
+            if assigned == proj.NumstudentsMax:
+                projects_done.append(proj)
+
+    # distribute leftover students random
+    if distribute_random:
+        distribution_proposals, students_done = distribute_remaining_random(distribution_proposals, students_done)
+
+    return distribution_proposals

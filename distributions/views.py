@@ -4,12 +4,14 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q, F, Count
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
 
 from BepMarketplace.decorators import group_required, phase_required
 from general_form import ConfirmForm
 from general_mail import EmailThreadTemplate
+from general_model import print_list
 from general_view import get_all_students, get_all_staff
 from proposals.models import Proposal
 from proposals.utils import get_all_proposals, get_share_link, get_cached_project
@@ -17,6 +19,7 @@ from students.models import Application, Distribution
 from students.views import get_all_applications
 from timeline.utils import get_timeslot, get_timephase_number
 from . import distribution
+from .forms import AutomaticDistributionOptionForm
 
 warningString = 'Something failed in the server, please refresh this page (F5) or contact system administrator'
 
@@ -31,13 +34,21 @@ def manual(request):
     if get_timephase_number() < 4 or get_timephase_number() > 6:
         raise PermissionDenied('Distribution is not possible in this timephase')
 
-    props = get_all_proposals().filter(Q(Status__exact=4))
-    studs = get_all_students(undistributed=True).filter(Q(distributions=None))  # also show undistributed in phase 6
-    dists = Distribution.objects.filter(Timeslot=get_timeslot())
-    return render(request, 'distributions/distributeApplications.html', {'proposals': props,
-                                                                         'undistributedStudents': studs,
-                                                                         'distributions': dists,
-                                                                         'hide_sidebar': True})
+    props = get_all_proposals().filter(Q(Status__exact=4)) \
+        .select_related('ResponsibleStaff__usermeta', 'Track', 'TimeSlot') \
+        .prefetch_related('Assistants__usermeta', 'Private__usermeta', 'applications__Student__usermeta',
+                          'distributions__Student__usermeta')
+    # includes students without applications.
+    # also show undistributed in phase 6
+    studs = get_all_students(undistributed=True).filter(Q(distributions=None)) \
+        .select_related('usermeta') \
+        .prefetch_related('applications__Proposal')
+    dists = Distribution.objects.filter(Timeslot=get_timeslot()) \
+        .select_related('Student__usermeta', 'Proposal', 'Application__Student__usermeta')
+    return render(request, 'distributions/manual_distribute.html', {'proposals': props,
+                                                                    'undistributedStudents': studs,
+                                                                    'distributions': dists,
+                                                                    'hide_sidebar': True})
 
 
 @group_required('type3staff')
@@ -54,17 +65,20 @@ def api_distribute(request):
     if request.method == 'POST':
         try:
             student = get_all_students(undistributed=True).get(pk=request.POST['student'])
-            if student.distributions.filter(Timeslot=get_timeslot()).exists():
-                return JsonResponse({'type': 'warning', 'txt': warningString + ' (Student already distributed)'})
+        except User.DoesNotExist:
+            return JsonResponse({'type': 'warning', 'txt': warningString + ' (User cannot be found)'})
+        if student.distributions.filter(Timeslot=get_timeslot()).exists():
+            return JsonResponse({'type': 'warning', 'txt': warningString + ' (Student already distributed)'})
+        try:
             dist = Distribution()
             dist.Student = student
             dist.Proposal = get_cached_project(request.POST['propTo'])
             # check whether there was an application
             try:
                 dist.Application = get_all_applications(dist.Student).get(Proposal=dist.Proposal)
-                applprio = dist.Application.Priority
-            except:
-                applprio = -1
+                appl_prio = dist.Application.Priority
+            except Application.DoesNotExist:
+                appl_prio = -1
                 dist.Application = None
             dist.Timeslot = get_timeslot()
             dist.full_clean()
@@ -72,9 +86,9 @@ def api_distribute(request):
         except Exception as e:
             return JsonResponse({'type': 'warning', 'txt': warningString, 'exception': str(e)})
         return JsonResponse({'type': 'success', 'txt': 'Distributed Student ' + dist.Student.usermeta.get_nice_name() +
-                                                       ' to Proposal ' + dist.Proposal.Title, 'prio': applprio})
+                                                       ' to Proposal ' + dist.Proposal.Title, 'prio': appl_prio})
     else:
-        raise PermissionDenied('You don\'t know what you\'re doing!')
+        raise PermissionDenied("You don't know what you're doing!")
 
 
 @group_required('type3staff')
@@ -92,7 +106,13 @@ def api_undistribute(request):
     if request.method == 'POST':
         try:
             student = get_all_students(undistributed=True).get(pk=request.POST['student'])
+        except User.DoesNotExist:
+            return JsonResponse({'type': 'warning', 'txt': warningString + ' (User cannot be found)'})
+        try:
             dist = student.distributions.get(Timeslot=get_timeslot())
+        except Distribution.DoesNotExist:
+            return JsonResponse({'type': 'warning', 'txt': warningString + ' (Distribution cannot be found)'})
+        try:
             n = dist.delete()
             if n[0] == 1:
                 return JsonResponse(
@@ -119,24 +139,31 @@ def api_redistribute(request):
     if request.method == 'POST':
         try:
             student = get_all_students(undistributed=True).get(pk=request.POST['student'])
+        except User.DoesNotExist:
+            return JsonResponse({'type': 'warning', 'txt': warningString + ' (User cannot be found)'})
+        try:
             dist = student.distributions.get(Timeslot=get_timeslot())
+        except Distribution.DoesNotExist:
+            return JsonResponse({'type': 'warning', 'txt': warningString + ' (Distribution cannot be found)'})
+        try:
             # change Proposal
             dist.Proposal = get_cached_project(request.POST['propTo'])
             # change Application if user has Application
             try:
                 dist.Application = get_all_applications(dist.Student).get(Proposal=dist.Proposal)
-                applprio = dist.Application.Priority
+                appl_prio = dist.Application.Priority
             except Application.DoesNotExist:
                 dist.Application = None
-                applprio = -1
+                appl_prio = -1
             dist.full_clean()
             dist.save()
         except Exception as e:
             return JsonResponse({'type': 'warning', 'txt': warningString, 'exception': str(e)})
-        return JsonResponse({'type': 'success', 'txt': 'Changed distributed Student ' + dist.Student.usermeta.get_nice_name() +
-                                                       ' to Proposal ' + dist.Proposal.Title, 'prio': applprio})
+        return JsonResponse(
+            {'type': 'success', 'txt': 'Changed distributed Student ' + dist.Student.usermeta.get_nice_name() +
+                                       ' to Proposal ' + dist.Proposal.Title, 'prio': appl_prio})
     else:
-        raise PermissionDenied('You don\'t know what you\'re doing!')
+        raise PermissionDenied("You don't know what you're doing!")
 
 
 @group_required('type3staff')
@@ -216,24 +243,71 @@ def mail_distributions(request):
 
 
 @group_required('type3staff')
-def automatic(request, dtype):
+def automatic_options(request):
+    """
+    Option frontend for automatic() distribution
+
+    :param request:
+    :return: 302 to automatic() with correct get options
+    """
+    if get_timephase_number() < 4 or get_timephase_number() > 5:  # 4 or 5
+        raise PermissionDenied('Distribution is not possible in this timephase')
+
+    if request.method == 'POST':
+        form = AutomaticDistributionOptionForm(request.POST)
+        if form.is_valid():
+            # redirect to automatic
+            distribution_type = form.cleaned_data['distribution_type']
+            print(distribution_type)
+            distribute_random = form.cleaned_data['distribute_random']
+            automotive_preference = form.cleaned_data['automotive_preference']
+            return HttpResponseRedirect(reverse('distributions:distributeproposaloption',
+                                                kwargs={'dist_type': distribution_type,
+                                                        'distribute_random': distribute_random,
+                                                        'automotive_preference': automotive_preference}
+                                                ))
+    else:
+        form = AutomaticDistributionOptionForm()
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Automatic distribution options',
+        'buttontext': 'View result'
+    })
+
+
+@group_required('type3staff')
+def automatic(request, dist_type, distribute_random=1, automotive_preference=1):
     """
     After automatic distribution, this pages shows how good the automatic distribution is. At this point a type3staff
      member can choose to apply the distributions. Later, this distribution can be edited using manual distributions.
 
     :param request:
-    :param dtype: which type automatic distribution is used.
+    :param dist_type: which type automatic distribution is used.
+    :param distribute_random: Whether to distribute leftover students to random projects
+    :param automotive_preference: Distribute automotive students first to automotive people
     :return:
     """
     if get_timephase_number() < 4 or get_timephase_number() > 5:  # 4 or 5
         raise PermissionDenied('Distribution is not possible in this timephase')
 
-    dists = []
+    if int(dist_type) == 1:
+        typename = 'Calculated by student'
+    elif int(dist_type) == 2:
+        typename = 'Calculated by project'
+    else:
+        raise PermissionDenied("Invalid type")
+
+    if distribute_random not in [0, 1]:
+        raise PermissionDenied("Invalid option type random")
+    if automotive_preference not in [0, 1]:
+        raise PermissionDenied("Invalid option type automotive")
+
+    dists = []  # list to store actual user and proposal objects, instead of just ID's like distobjs.
     if request.method == 'POST':
         jsondata = request.POST.get('jsondata', None)
         if jsondata is None:
             return render(request, 'base.html', {'Message': 'Invalid POST data'})
-        distobjs = json.loads(jsondata)
+        distobjs = json.loads(jsondata)  # json blob with all dists with studentID projectID and preference
         for obj in distobjs:
             dists.append({
                 'student': User.objects.get(pk=obj['StudentID']),
@@ -270,84 +344,124 @@ def automatic(request, dtype):
             })
 
     else:
-        form = ConfirmForm()
-        # run the algorithms
-        if int(dtype) == 1:  # from student
-            distobjs = distribution.CalculateFromStudent()
-        elif int(dtype) == 2:  # from project
-            distobjs = distribution.CalculateFromProjects()
-        else:
-            return render(request, 'base.html', {'Message': 'invalid type'})
-        # convert to django models from db
-        # and make scatter chart data
-        scatter = []
-        for obj in distobjs:
-            student = get_all_students().get(pk=obj.StudentID)
-            scatter.append({
-                'x': student.usermeta.ECTS,
-                'y': obj.Preference,
-            })
-            dists.append({
-                # this will fail if a student does not have a timeslot, which should not happen.
-                'student': student,
-                'proposal': get_all_proposals().get(pk=obj.ProjectID),
-                'preference': obj.Preference,
+        # Handle the most common errors beforehand with a nice message
+        error_list = ''
+        for u in get_all_students().filter(personal_proposal__isnull=False).prefetch_related(
+                'personal_proposal'):  # all private students
+            if u.personal_proposal.count() > 1:  # more than one private proposal.
+                error_list += "<li>User {} has multiple private proposals ({}). Please resolve this!</li>" \
+                    .format(u, print_list(u.personal_proposal.all()))
+            if u.personal_proposal.first().Status != 4:
+                error_list += "<li>User {} has private proposals which is not yet public. Please upgrade proposal {} to public!</li>" \
+                    .format(u, u.personal_proposal.first())
+        if error_list:
+            return render(request, 'base.html', {
+                'Message': '<h1>Automatic distribution cannot start</h1><p>The following error(s) occurred:</p><ul>{}</ul>'
+                          .format(error_list),
+                'return': 'support:SupportListApplicationsDistributions',
             })
 
-    if int(dtype) == 1:
-        typename = 'Calculated by student'
-    elif int(dtype) == 2:
-        typename = 'Calculated by project'
-    else:
-        raise PermissionDenied("Invalid type")
+        form = ConfirmForm()
+        # run the algorithms
+        # catch any remaining errors of the algorithm with a broad exception exception.
+        try:
+            if int(dist_type) == 1:  # from student
+                distobjs = distribution.calculate_1_from_student(
+                    distribute_random=distribute_random,
+                    automotive_preference=automotive_preference)
+            elif int(dist_type) == 2:  # from project
+                distobjs = distribution.calculate_2_from_project(
+                    distribute_random=distribute_random,
+                    automotive_preference=automotive_preference)
+            # invalid types are catched at the begin of the function
+        except Exception as e:
+            return render(request, "base.html", {
+                'Message': '<h1>Automatic distribution cannot start</h1><p>The following error(s) occurred:</p>{}'
+                          .format(e)})
+
+    # convert to django models from db
+    # and make scatter chart data
+    scatter = []
+    undistributed = list(get_all_students())  # get all students and remove all distributed students later.
+    for obj in distobjs:  # distobjs is saved as json blob in the view, to use later on for distributions.
+        student = get_all_students().get(pk=obj.StudentID)
+        undistributed.remove(student)  # remove distributed student from undistributed students list.
+        scatter.append({  # data for scatterplot ECTS vs Preference
+            'x': student.usermeta.ECTS,
+            'y': obj.Preference,
+        })
+        try:
+            proposal = get_all_proposals().get(pk=obj.ProjectID)
+        except Proposal.DoesNotExist:
+            raise Exception("Proposal id {} cannot be found in all_proposals!".format(obj.ProjectID))
+        dists.append({
+            'student': student,
+            'proposal': proposal,
+            'preference': obj.Preference,
+        })
+    # show undistributed students also in the table. (Not added to json blob)
+    for obj in undistributed:
+        dists.append({
+            'student': obj,
+            'proposal': None,
+            'preference': 'Not distributed. ' + ('No' if obj.applications.exists() else 'With') + ' applications.',
+        })
 
     cohorts = distribution.get_cohorts()
 
-    # calculate stats
-    prefs = {
-        'Total': [x['preference'] for x in dists],
-    }
+    # make headers for table and find cohort for each student.
     columns = ['Total']
-    for c in cohorts:
+    # calculate stats per cohort
+    prefs = {  # first column with total
+        'Total': [obj['preference'] for obj in dists if obj['proposal'] is not None],
+    }
+    for c in cohorts:  # all next columns in table for each cohort. First column is totals.
         columns.append(c)
         prefs[c] = []
         for obj in dists:
-            if obj['student'].usermeta.Cohort == int(c):
-                prefs[c].append(obj['preference'])  # list of all individual preferences in this cohort
+            if obj['proposal'] is not None:  # do not count not-distributed students in the stats.
+                if obj['student'].usermeta.Cohort == int(c):
+                    prefs[c].append(obj['preference'])  # list of all individual preferences in this cohort
 
     # make a table
     table = []
-    pref_options = list(range(-1, settings.MAX_NUM_APPLICATIONS + 1))
+    pref_options = list(range(-1, settings.MAX_NUM_APPLICATIONS + 1))  # all options for preference.
     for pref in pref_options:  # each preference, each row.
         # set first column
-        if pref == -1:
+        if pref == -1:  # random distributed students.
             this_row = ['Random']
         elif pref == 0:
-            this_row = ['Private']
+            this_row = ['Private']  # private proposals
         else:
-            this_row = [str(pref), ]  # application preference
+            this_row = ['#' + str(pref), ]  # application preference
         # set other columns
-        for k in columns:  # add columns to the row.
-            num = prefs[k].count(pref)
+        for c in columns:  # add columns to the row.
+            num = prefs[c].count(pref)
             try:
-                this_row.append('{}% ({})'.format(round(num / len(prefs[k]) * 100), num))
+                this_row.append('{}% ({})'.format(round(num / len(prefs[c]) * 100), num))
             except ZeroDivisionError:
                 this_row.append('{}% ({})'.format(0, 0))
 
         # add row the the table
         table.append(this_row)
-    # last row with totals.
-    this_row = ['Totals']
-    for k in columns:
-        this_row.append(len(prefs[k]))
+    # one but last row with totals.
+    this_row = ['Total Distributed']
+    for c in columns:
+        this_row.append(len(prefs[c]))
+    table.append(this_row)
+
+    # last row with undistributed.
+    this_row = ['Not Distributed', len(undistributed)]
+    for c in columns[1:]:  # skip total column, is already added.
+        this_row.append(len([u for u in undistributed if u.usermeta.Cohort == c]))
     table.append(this_row)
 
     # show the tables for testing.
     if settings.TESTING:
-        return columns, table
+        return columns, table, dists
 
     data = [obj.as_json() for obj in distobjs]
-    return render(request, 'distributions/distributionProposal.html', {
+    return render(request, 'distributions/automatic_distribute.html', {
         'typename': typename,
         'distributions': dists,
         'form': form,
@@ -355,6 +469,8 @@ def automatic(request, dtype):
         'stats_header': columns,
         'scatter': scatter,
         'jsondata': json.dumps(data),
+        'distribute_random': distribute_random,
+        'automotive_preference': automotive_preference,
     })
 
 
@@ -370,14 +486,12 @@ def list_second_choice(request):
     props = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=get_timeslot(),
                                                                                num_distr__lt=F('NumstudentsMax')) \
         .order_by('Title')
-    sharelinks = [get_share_link(x.pk) for x in props]
-
-    return render(request, 'distributions/secondChoiseList.html', {
+    prop_obj = [[prop, get_share_link(prop.pk)] for prop in props]
+    return render(request, 'distributions/list_second_choice.html', {
         'distributions': Distribution.objects.filter(Timeslot=get_timeslot(),
                                                      Application__isnull=True,
                                                      Proposal__Private__isnull=True).order_by('Student'),
-        'proposals': props,
-        'sharelinks': sharelinks,
+        'proposals': prop_obj,
     })
 
 
@@ -403,7 +517,7 @@ def delete_random_distributions(request):
     else:
         form = ConfirmForm()
 
-    return render(request, 'distributions/deleterandomdists.html', {
+    return render(request, 'distributions/delete_random_dists.html', {
         'form': form,
         'buttontext': 'Confirm',
         'formtitle': 'Confirm deletion distributions of random assigned projects',

@@ -20,6 +20,8 @@ class TimeLineViewsTest(ViewsTest):
         codes = [
             [['list_timeslots', None], self.p_support],
             [['add_timeslot', None], self.p_support],
+            [['copy_timephases', None], self.p_support],
+            [['delete_timephase', {'timephase': self.tp.pk}], self.p_support],
 
             [['edit_timeslot', {'timeslot': self.ts.pk}], self.p_support],
             [['edit_timeslot', {'timeslot': self.nts.pk}], self.p_support],

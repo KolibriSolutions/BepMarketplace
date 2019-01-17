@@ -93,7 +93,6 @@ class Proposal(models.Model):
             raise ValidationError("Min or max number of students cannot be empty")
 
 
-
 class ProposalFile(models.Model):
     """
     Abstract base class for any object attached to a project. Used for images and attachments.

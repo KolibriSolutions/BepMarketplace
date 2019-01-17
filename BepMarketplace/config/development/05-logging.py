@@ -7,14 +7,18 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {filename}:{lineno} {message}',
-            'style': '{',
+            'verbose': {
+                'format': '{levelname} {asctime} {filename}:{lineno} {message}',
+                'style': '{',
+            },
+            'simple': {
+                'format': '{levelname} {message}',
+                'style': '{',
+            },
         },
-    },
     'handlers': {
         'file': {
-            'level': 'ERROR',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': os.path.join(LOG_DIR, 'django.log'),
             'formatter': 'verbose',
@@ -26,40 +30,41 @@ LOGGING = {
             'formatter': 'verbose',
         },
         'js_file': {
-            'level': 'ERROR',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': os.path.join(LOG_DIR, 'js_error.log'),
             'formatter': 'verbose',
         },
         'mail_admins': {
-            'level': 'ERROR',
+            'level': 'INFO',
             'class': 'django.utils.log.AdminEmailHandler',
             'formatter': 'verbose',
         },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        }
     },
     'loggers': {
-        'django.security.DisallowedHost': {  # to disable mailing when invalid host header is accessed.
-            'handlers': ['file'],
-            'propagate': False,
-            'level': 'CRITICAL',
-        },
         'django': {
-            'handlers': ['file', 'mail_admins'],
-            'level': 'ERROR',
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
             'propagate': True,
         },
         # logging for saml
         'djangosaml2': {
             'handlers': ['saml_file', 'mail_admins'],
-            'level': 'WARNING',
+            'level': 'INFO',
         },
         'saml2': {
             'handlers': ['saml_file'],
-            'level': 'CRITICAL',  # to disable logging on unsolicitedresponses etc.
+            'level': 'INFO',  # to disable logging on unsolicitedresponses etc.
         },
         'javascript_error': {
-            'handlers': ['mail_admins', 'js_file'],
-            'level': 'ERROR',
+            'handlers': ['console', 'js_file'],
+            'level': 'INFO',
+            # 'filters': ['skip_bots', 'skip_ie7'],
             'propagate': True,
         },
     },

@@ -24,6 +24,7 @@ SETTINGS_DIR = 'BepMarketplace'
 
 CONTACT_EMAIL = 'bepmarketplace@tue.nl'
 
+SUPPORT_ROLE = 'program director'
 SUPPORT_NAME = 'Sjoerd Hulshof'
 SUPPORT_EMAIL = 's.hulshof@tue.nl'
 
@@ -35,7 +36,7 @@ MANAGERS = ADMINS  # to mail broken links to, not used now.
 NAME_CODE = 'BEPMarketplace'
 NAME_PRETTY = 'BEP Marketplace'
 
-TESTING=False
+TESTING = False
 
 # General settings for the projects
 ####################################
