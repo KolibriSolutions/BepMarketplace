@@ -4,7 +4,7 @@
     data-dist="{{ d.id }}"
     data-type="{{ slot.CustomType }}"
     data-track="{{ d.Proposal.Track }}"
-    data-search-term="{{ d.Student.first_name|lower }} {{ d.Student.usermeta.Fullname|lower }} {{ d.Student.usermeta.Studentnumber }} {{ d.Proposal.Track.Name|lower }} {{ d.Proposal.Track.ShortName|lower }}">
+    data-search-term="{{ d.Student.get_nice_name|lower }} {{ d.Student.usermeta.get_nice_fullname|lower }} {{ d.Student.usermeta.Studentnumber }} {{ d.Proposal.Track.Name|lower }} {{ d.Proposal.Track.ShortName|lower }}">
     <div class="button primary ">
         {#  Tooltip with all applications of Student, dictsorted by Priority, displayed as ordered list.#}
         <span data-role="hint"
@@ -23,7 +23,7 @@
             <span class='tag info startTime'>{% if slot %}{{ slot.DateTime|date:"H:i" }}{% else %}..{% endif %}</span>
             <span class='tag warning maxpresentationswarning'
                   style="display:none;">Too much presentations in a row!</span>
-            {{ d.Student.usermeta.Fullname }}<br/>
+            {{ d.Student.usermeta.get_nice_fullname }}<br/>
             <span class='tag default tracktag fg-black'>{{ d.Proposal.Track }}</span> {{ d.Proposal.Title|truncatechars:"30" }}<br/>
             <b>{{ d.Proposal.ResponsibleStaff.usermeta.get_nice_name|truncatechars:"30" }}</b>
         </span>

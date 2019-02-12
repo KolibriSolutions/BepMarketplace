@@ -272,7 +272,7 @@
     <h1>Distribute proposals</h1>
     <div class="row cells4 padding5">
         <div class="cell colspan3">
-            {% include "distributions/Support_include_table.html" with distribute=True %}
+            {% include "distributions/inc_dist_table.html" with distribute=True %}
         </div>
         <div class="cell bg-grayLight padding5">
             <h2>Available students</h2>
@@ -282,7 +282,7 @@
             </button>
             <ul class="studentList no-padding-left" data-students-list="availableStudents" id="availableStudents">
                 {% for student in undistributedStudents %}
-                    {% include "distributions/Support_include_studentBlock.html" with distribute=False %}
+                    {% include "distributions/inc_student_block.html" with distribute=False %}
                 {% endfor %}
             </ul>
         </div>

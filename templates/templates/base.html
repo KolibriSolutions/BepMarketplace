@@ -62,6 +62,11 @@
                                 {% if user|is_trackhead and not user.is_superuser %}
                                     <li><a href="{% url 'proposals:listtrackproposals' %}">My track proposals</a></li>
                                 {% endif %}
+                                {% if user|has_group:"type3staff" %}
+                                    <li><a href="{% url 'support:privateproposals' %}">All Private Proposals</a></li>
+                                    <li><a href="{% url 'support:listnonfullprojects' %}">Non Full Proposals</a>
+                                    <li><a href="{% url 'support:contentpolicy' %}">Content Policy Violations</a></li>
+                                {% endif %}
                                 {% if user|has_group:'type1staff;type2staff;type3staff;type4staff;type5staff' %}
                                     {% if phasenumber > 5 %}
                                         <li>
@@ -105,13 +110,13 @@
                                                         Automatically</a>
                                                 </li>
                                             {% endif %}
-                                            <li><a href="{% url 'support:SupportListApplicationsDistributions' %}">List
+                                            <li><a href="{% url 'distributions:SupportListApplicationsDistributions' %}">List
                                                 all</a></li>
                                             <li><a href="{% url "distributions:secondchoice" %}">Second Choice</a></li>
                                         {% else %}
                                             {# show simple list applications/distributions button in phase 3, 6 and 7 #}
                                             <li>
-                                                <a href="{% url 'support:SupportListApplicationsDistributions' %}">
+                                                <a href="{% url 'distributions:SupportListApplicationsDistributions' %}">
                                                     {% if phasenumber == 3 %}List Applications{% else %}List
                                                         Distributions{% endif %}
                                                 </a>
@@ -152,10 +157,7 @@
                             temporary disabled waiting for osiris integration
                             <li><a href="{% url 'support:liststudentsldap' %}">All Students</a></li>
                             {% endcomment %}
-                                            <li><a href="{% url 'support:privateproposals' %}">All Private Proposals</a>
-                                            </li>
                                             <li><a href="{% url 'support:liststaff' %}">All Staff</a></li>
-                                            <li><a href="{% url 'support:listnonfullprojects' %}">Non Full Proposals</a>
                                             </li>
                                         </ul>
                                     </li>
@@ -173,7 +175,6 @@
                                     {#                                    {% if phasenumber < 6 %}#}
                                     {#                                        <li><a href="{% url 'support:ectsform' %}">Students ECTS</a></li>#}
                                     {#                                    {% endif %}#}
-                                    <li><a href="{% url 'support:contentpolicy' %}">Content Policy Violations</a></li>
                                     {#                                    <li><a href="{% url 'support:verifyassistants' %}">Verify assistants</a></li>#}
                                     <li>
                                         <a href="" class="dropdown-toggle">Public files</a>
@@ -183,11 +184,14 @@
                                         </ul>
                                     </li>
                                     <li><a href="{% url 'timeline:list_timeslots' %}">Timeline edit</a></li>
-                                    <li><a href="{% url 'support:capacitygroupadministration' %}">Group
-                                        Administration</a>
-                                    </li>
+{#                                    <li><a href="{% url 'support:capacitygroupadministration' %}">Group#}
+{#                                        Administration</a>#}
+{#                                    </li>#}
                                     <li><a href="{% url 'index:edit_tracks' %}">Track Head edit</a></li>
-                                    <li><a href="{% url 'results:list_categories' %}">Grading</a></li>
+                                    <li><a href="{% url 'results:list_categories' %}">Setup Grading</a></li>
+                                    <li><a href="{% url 'support:listcapacitygroups' %}">Capacity groups</a></li>
+                                    <li><a href="{% url 'support:groupadministratorsform' %}">Group Administration</a></li>
+                                    <li><a href="{% url 'support:history' %}">History</a></li>
                                 </ul>
                             </li>  {# support menu #}
                         {% else %}
@@ -356,7 +360,7 @@
 
                             {% if phasenumber < 3 %}
                                 <p>
-                                    Pending proposals: {% getPending user %}
+                                    Pending proposals: {% get_pending_tag user %}
                                 </p>
                             {% elif phasenumber > 5 %}
                                 <div class="panel"> {# staff presentations inside a panel for more clarity #}
@@ -370,30 +374,11 @@
                             {% endif %}
                         {% else %}
                             {# Students #}
-                            {% if user.personal_proposal.all %}
-                                <p>
-                                    {% if user.personal_proposal.all|length_is:"1" %}
-                                        There is a personal (private) proposal for you. You can view all proposals in
-                                        the
-                                        "proposals" menu but you don't have to do anything with it.
-                                    {% else %}
-                                        There are multiple private proposals for you. Please contact the support staff
-                                        to
-                                        remove you from one.
-                                    {% endif %}
-                                    <br/>
-                                    {% for p in user.personal_proposal.all %}
-                                        <a href="{% url 'proposals:details' p.pk %} "
-                                           class="button primary">{{ p.Title|truncatechars:30 }}</a>
-                                        <br/>
-                                    {% endfor %}
-                                </p>
-                            {% endif %}
-
+                            {% get_personal_tag user %}
                             {% if phasenumber > 4 %}
                                 {% if user.distributions.exists %}
                                     {# only students #}
-                                    {% GetDistribution user %}
+                                    {% get_distribution_tag user %}
                                     {% if phasenumber == 5 %}
                                         If you do not agree with your distribution, please contact the support staff.
                                     {% else %} {# phase 6 or 7 #}

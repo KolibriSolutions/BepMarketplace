@@ -3,6 +3,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
 
 import support.routing
+import proposals.routing
 import tracking.routing
 
 application = ProtocolTypeRouter({
@@ -11,7 +12,8 @@ application = ProtocolTypeRouter({
         AuthMiddlewareStack(
             URLRouter(
                 support.routing.websocket_urlpatterns +
-                tracking.routing.websocket_urlpatterns
+                tracking.routing.websocket_urlpatterns +
+                proposals.routing.websocket_urlpatterns
             )
         )
     ),

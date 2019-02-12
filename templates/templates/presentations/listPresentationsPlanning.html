@@ -28,7 +28,7 @@
                         <tr>
                             <td>{{ slot.get_CustomType_display }}</td>
                             {% if d %}
-                                <td>{{ d.Student.usermeta.Fullname }} ({{ d.Student.usermeta.Studentnumber }})</td>
+                                <td>{{ d.Student.usermeta.get_nice_fullname }} ({{ d.Student.usermeta.Studentnumber }})</td>
                                 <td><a href="{% url "proposals:details" d.Proposal.pk %}">{{ d.Proposal.Title }}</a>
                                 </td>
                                 <td>{{ d.Proposal.ResponsibleStaff }}</td>

@@ -7,8 +7,6 @@
         <tr>
             <th>Email</th>
             <th>ID number</th>
-            <th>Enrolled</th>
-            <th>Enrolled Extension</th>
             <th>Cohort</th>
             <th>ECTS</th>
             <th>Automotive</th>
@@ -19,9 +17,6 @@
             <tr>
                 <td>{{ person.email }}</td>
                 <td>{{ person.idnumber }}</td>
-                <td><span class="mif-{{ person.enrolled|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
-                <td><span class="mif-{{ person.enrolledextension|yesno:"checkmark fg-green,cross fg-red" }}"></span>
-                </td>
                 <td>{{ person.cohort }}</td>
                 <td>{{ person.ects }}</td>
                 <td><span class="mif-{{ person.automotive|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
@@ -36,8 +31,6 @@
     <script type="text/javascript">
         $(document).ready(function () {
             $('.datatable').dt_wrapper([
-                {column_number: 3, filter_type: "select"},
-                {column_number: 4, filter_type: "select"},
             ]);
         });
     </script>

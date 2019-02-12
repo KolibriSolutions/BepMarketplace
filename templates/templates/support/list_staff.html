@@ -1,9 +1,8 @@
 {% extends "base.html" %}
 {% load custom_filters %}
 {% block body %}
-    <h1>List all staff</h1>
-    <h3>Only type1 and type2 staff, supervisor staff and assistants.</h3>
-    <a href="{% url "support:liststaffXls" %}" class="button primary">Export Excel</a>
+    <h1>List Staff</h1>
+    <h3>Showing all supervisor staff and assistants. Number of projects are numbers for the current timeslot (year)</h3>
     <table class="table datatable striped">
         <thead>
         <tr>
@@ -20,7 +19,7 @@
         {% for u in staff %}
             <tr>
                 {#  se.append([s, pt1, pt2, pts, dt1, dt2, dts])  #}
-                <td><a href="mailto:{{ u.user.email }}">{{ u.user.first_name }} {{ u.user.last_name }}</a></td>
+                <td><a href="mailto:{{ u.user.email }}">{{ u.usermeta.get_nice_name }}</a></td>
                 <td>
                     {% if u.user|has_group:'type1staff' %}
                         Supervisor

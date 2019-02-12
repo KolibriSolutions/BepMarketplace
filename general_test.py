@@ -19,7 +19,7 @@ from presentations.models import PresentationOptions, PresentationTimeSlot, Pres
 from proposals.models import Proposal
 from results.models import ResultOptions
 from students.models import Distribution
-from support.models import CapacityGroupAdministration
+from support.models import GroupAdministratorThrough, CapacityGroup
 from timeline.models import TimeSlot, TimePhase
 from django.conf import settings
 from general_view import get_timephase_number
@@ -71,6 +71,22 @@ class ViewsTest(TestCase):
                             Name='prevyear')
         self.pts.save()
 
+        # Create capacity groups models
+        groups = (
+            ("EES", "Electrical Energy Systems"),
+            ("ECO", "Electro-Optical Communications"),
+            ("EPE", "Electromechanics and Power Electronics"),
+            ("ES", "Electronic Systems"),
+            ("IC", "Integrated Circuits"),
+            ("CS", "Control Systems"),
+            ("SPS", "Signal Processing Systems"),
+            ("PHI", "Photonic Integration"),
+            ("EM", "Electromagnetics")
+        )
+        for group in groups:
+            self.c, created = CapacityGroup.objects.get_or_create(ShortName=group[0], FullName=group[1])
+            assert created
+
         # Create groups and users
         self.create_groups()
         self.create_users()
@@ -80,20 +96,15 @@ class ViewsTest(TestCase):
         self.track = Track(Name='Automotive', ShortName='AU', Head=th)
         self.track.save()
 
-        # capacity group administration
-        # this capacity group administration
-        tcga = CapacityGroupAdministration()
-        tcga.Group = GroupOptions[0][0]
-        tcga.save()
-        tcga.Members.add(User.objects.get(username='t-4'))
-        tcga.save()
-
-        # random capacity group administration
-        rcga = CapacityGroupAdministration()
-        rcga.Group = GroupOptions[1][0]
-        rcga.save()
-        rcga.Members.add(User.objects.get(username='r-4'))
-        rcga.save()
+        grt = User.objects.get(username='t-4')
+        grr = User.objects.get(username='r-4')
+        # only read/write administration is tested. Not readonly.
+        g = GroupAdministratorThrough(User=grt, Super=True,
+                                      Group=CapacityGroup.objects.all()[0])
+        g.save()
+        g2 = GroupAdministratorThrough(User=grr, Super=True,
+                                       Group=CapacityGroup.objects.all()[1])
+        g2.save()
 
         ## setup matrix with all possible rights
         # expected results:
@@ -270,6 +281,8 @@ class ViewsTest(TestCase):
             for link in urls:  # select the url in href for all a tags(links)
                 if link in skip:
                     continue
+                if self.debug:
+                    print('url: {}'.format(link))
                 self.info['user'] = user.username
                 self.view_test_status(link, 200)
             self.client.logout()
@@ -335,7 +348,7 @@ class ViewsTest(TestCase):
                 self.info['user-index'] = i
             # log the user in
             if username != 'ano':
-                u = self.users[username]
+                u = User.objects.get(username=username)
                 if self.debug:
                     self.info['user-groups'] = u.groups.all()
                     self.info['user-issuper'] = u.is_superuser
@@ -367,7 +380,15 @@ class ViewsTest(TestCase):
                         exception = 'Reason not found in context!'
                 self.info['exception'] = exception
             else:
-                self.info['exception'] = "no 403"
+                if response_code == 404:
+                    for d in response.context.dicts:
+                        try:
+                            self.info['exception'] = d['Message']
+                            break
+                        except:
+                            continue
+                else:
+                    self.info['exception'] = "no 403"
         except Exception as e:
             response_code = 500
             print("Error: {}".format(e))
@@ -402,9 +423,9 @@ class ProjectViewsTestGeneral(ViewsTest):
         # The proposal used for testing
         self.proposal = Proposal(Title="testproposal",
                                  ResponsibleStaff=self.users.get('t-1'),
-                                 Group=GroupOptions[0][0],
-                                 NumstudentsMin=1,
-                                 NumstudentsMax=1,
+                                 Group=CapacityGroup.objects.all()[0],
+                                 NumStudentsMin=1,
+                                 NumStudentsMax=1,
                                  GeneralDescription="Test general description",
                                  StudentsTaskDescription="Test student task description",
                                  Status=1,
@@ -420,9 +441,9 @@ class ProjectViewsTestGeneral(ViewsTest):
         # make private proposal
         self.privateproposal = Proposal(Title="privateproposaltest",
                                         ResponsibleStaff=self.users.get('t-1'),
-                                        Group=GroupOptions[0][0],
-                                        NumstudentsMin=1,
-                                        NumstudentsMax=1,
+                                        Group=CapacityGroup.objects.all()[0],
+                                        NumStudentsMin=1,
+                                        NumStudentsMax=1,
                                         GeneralDescription="Test general description",
                                         StudentsTaskDescription="Test student task description",
                                         Status=1,
@@ -506,7 +527,7 @@ class ProjectViewsTestGeneral(ViewsTest):
                 self.info['user-index'] = i
             if username != 'ano':
                 # log the user in
-                u = self.users[username]
+                u = User.objects.get(username=username)
                 if self.debug:
                     self.info['user-groups'] = u.groups.all()
                     self.info['user-issuper'] = u.is_superuser

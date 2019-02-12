@@ -1,7 +1,9 @@
-{# a draggable 'button' with a Student. Code snippet used in SupportDistributeApplications #}
+{# used as inclusion in other files #}
+
+{# a draggable 'button' with a Student. Code snippet used in manual distribute and app/dist list. #}
 {# Data-search-term are all things that the Student search box searches for, should be all lower case #}
 <li class="student" id="stdid-{{ student.pk }}"
-    data-search-term="{{ student.first_name | lower }} {{ student.last_name | lower }} {{ student.usermeta.Fullname | lower }} {{ student.username | lower }} {{ student.usermeta.Studentnumber }}">
+    data-search-term="{{ student.usermeta.get_nice_name | lower }} {{ student.usermeta.get_nice_fullname | lower }} {{ student.username | lower }} {{ student.usermeta.Studentnumber }}">
     <div class="button primary">
         {#  Tooltip with all applications of Student, dictsorted by Priority, displayed as ordered list.#}
         <span data-role="hint"
@@ -32,7 +34,7 @@
             {% if "automotive" in student.usermeta.Study|lower %}
                 <span class="icon mif-automobile"></span>
             {% endif %}
-            {{ student.usermeta.Fullname }}
+            {{ student.usermeta.get_nice_fullname }}
         </span>
     </div>
 </li>

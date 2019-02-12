@@ -5,7 +5,7 @@ from openpyxl.writer.excel import save_virtual_workbook
 from general_view import timestamp
 
 
-def listPresentationsXls(sets):
+def get_list_presentations_xlsx(sets):
     """
     Lists the presentations planning with a set on each tab. Same formatting as before marketplace
 
@@ -47,7 +47,7 @@ def listPresentationsXls(sets):
         ws.column_dimensions['H'].width = 6  # codeExt
         ws.column_dimensions['I'].width = 50  # project name
 
-        header = ["Type", "Stud. id", "Name", "First name", "Responsible teacher", "Assistants",
+        header = ["Type", "Stud. id", "Full Name", "Name", "Responsible teacher", "Assistants",
                   codeBEP, codeExt, "Project", "Time", "Duration"]
         ws.append(header)
         for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']:
@@ -58,7 +58,7 @@ def listPresentationsXls(sets):
                 row = [slot.get_CustomType_display(), '', '', '', '', '', '', '', '']
             else:
                 d = slot.Distribution
-                row = ['', d.Student.usermeta.Studentnumber, d.Student.usermeta.Fullname, d.Student.first_name,
+                row = ['', d.Student.usermeta.Studentnumber, d.Student.usermeta.get_nice_fullname(), d.Student.usermeta.get_nice_name(),
                        d.Proposal.ResponsibleStaff.usermeta.get_nice_name()]
                 assistants = ''
                 for a in d.Proposal.Assistants.all():

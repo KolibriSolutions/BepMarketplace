@@ -11,7 +11,7 @@
         <div class="grid">
             <div class="row cells3">
                 <div class="cell colspan2">
-                    <h1 style="margin-bottom: 0;" class="capitalize">{{ project.Title }}</h1>
+                    <h1 style="margin-bottom: 0;">{{ project.Title }}</h1>
                     <h1 style="margin-bottom: 0; margin-top: 0;" class="capitalize">
                         <small>
                             <a href="mailto:{{ project.ResponsibleStaff.email }}">
@@ -19,6 +19,11 @@
                             </a>
                         </small>
                     </h1>
+                    {% if user.is_authenticated %}{# Not for anonymous users via sharelink #}
+                        <div class="margin5"><span id="fav-{{ project.pk }}"
+                                                   class="star-favorite mif-star-half icon"></span>
+                        </div>
+                    {% endif %}
                     <h3 style="margin-top: 0;">
                         <small>Part of {{ project.Track.Name }}</small>
                     </h3>
@@ -149,14 +154,10 @@
 
                 <div class="cell">
                     <table class="table">
-                        <tr>
-                            <td>Capacity group:</td>
-                            <td>{{ project.get_Group_display }}</td>
-                        </tr>
-                        <tr>
-                            <td>Assistants:</td>
-                            <td>
-                                {% if project.Assistants.all %}
+                        {% if project.Assistants.all %}
+                            <tr>
+                                <td>Assistants:</td>
+                                <td>
                                     <ul>
                                         {% for assistant in project.Assistants.all %}
                                             <li>
@@ -166,18 +167,20 @@
                                             </li>
                                         {% endfor %}
                                     </ul>
-                                {% else %}
-                                    None
-                                {% endif %}
-                            </td>
+                                </td>
+                            </tr>
+                        {% endif %}
+                        <tr>
+                            <td>Capacity group:</td>
+                            <td>{{ project.Group.FullName }}</td>
                         </tr>
                         <tr>
                             <td>Students needed:</td>
                             <td>
-                                {% if project.NumstudentsMin == project.NumstudentsMax %}
-                                    {{ project.NumstudentsMax }}
+                                {% if project.NumStudentsMin == project.NumStudentsMax %}
+                                    {{ project.NumStudentsMax }}
                                 {% else %}
-                                    {{ project.NumstudentsMin }}-{{ project.NumstudentsMax }}
+                                    {{ project.NumStudentsMin }}-{{ project.NumStudentsMax }}
                                 {% endif %}
                             </td>
                         </tr>
@@ -299,6 +302,9 @@
     {{ block.super }}
     <script src="{% static "js/lightbox.js" %}"></script>
     <script src="{% static "channels/js/websocketbridge.js" %}"></script>
+    {% if user.is_authenticated %}{# not when using sharelink #}
+        <script src="{% static "js/favorite.js" %}"></script>
+    {% endif %}
     <script>
         $(document).ready(function () {
             {% if project.images.all|length > 1 %}
@@ -319,6 +325,12 @@
                     $("#uniqueviewsnumber").html(event.data);
                 };
             {% endif %}
+            {% if fav %}
+                $('#fav-{{ project.pk }}').removeClass('mif-star-half').addClass('mif-star-full');
+            {% else %}
+                $('#fav-{{ project.pk }}').removeClass('mif-star-half').addClass('mif-star-empty');
+            {% endif %}
+
         });
     </script>
 {% endblock %}

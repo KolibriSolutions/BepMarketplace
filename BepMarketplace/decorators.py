@@ -1,7 +1,6 @@
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
 from general_view import get_grouptype
@@ -9,8 +8,7 @@ from presentations.models import PresentationTimeSlot
 from presentations.utils import planning_public
 from proposals.models import Proposal
 from proposals.utils import can_edit_project_fn, get_cached_project, can_downgrade_project_fn
-from support.utils import group_administrator_status
-from support.models import CapacityGroupAdministration
+from proposals.utils import group_administrator_status
 from timeline.utils import get_timephase_number, get_timeslot
 
 
@@ -112,6 +110,7 @@ def can_view_proposal(fn):
     :param fn:
     :return:
     """
+
     def wrapper(*args, **kw):
         if 'pk' in kw:
             pk = int(kw['pk'])
@@ -138,6 +137,10 @@ def can_view_proposal(fn):
                 or prop.Track.Head == request.user:
             return fn(*args, **kw)
 
+        # group administrators can view proposal
+        if group_administrator_status(prop, request.user) > 0:
+            return fn(*args, **kw)
+
         # if project is published, non private and its the right time phase
         if prop.Status == 4:
             if not prop.Private.exists() or request.user in prop.Private.all():  # only non-private proposals
@@ -159,11 +162,6 @@ def can_view_proposal(fn):
                             return fn(*args, **kw)
                     except PresentationTimeSlot.DoesNotExist:
                         continue
-
-        # user is secretary (type4) and its the right capacity group
-        if CapacityGroupAdministration.objects.filter(Q(Members__in=[request.user]) & Q(Group=prop.Group)).exists():
-            return fn(*args, **kw)
-
         raise PermissionDenied("You are not allowed to view this proposal page.")
 
     return wrapper
@@ -231,7 +229,7 @@ def can_share_proposal(fn):
             return fn(*args, **kw)
         elif (
                 request.user == prop.ResponsibleStaff or request.user in prop.Assistants.all() or
-                request.user == prop.Track.Head or group_administrator_status(prop, request.user) == 1) and not prop.prevyear():
+                request.user == prop.Track.Head or group_administrator_status(prop, request.user) > 0) and not prop.prevyear():
             return fn(*args, **kw)
         else:
             raise PermissionDenied(allowed[1])
@@ -330,7 +328,7 @@ def can_apply(fn):
             raise PermissionDenied("Not correct timephase!")
         if request.user.groups.exists():
             raise PermissionDenied("Only students can apply to proposals")
-        if request.user.personal_proposal.exists():
+        if request.user.personal_proposal.filter(TimeSlot=get_timeslot()).exists():
             raise PermissionDenied("You cannot apply/retract because there is a private proposal for you.")
         if 'pk' in kw:
             pk = int(kw['pk'])

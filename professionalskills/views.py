@@ -18,13 +18,12 @@ from distributions.utils import get_distributions
 from general_mail import send_mail, EmailThreadTemplate
 from general_view import get_grouptype, get_all_students
 from students.models import Distribution
-from timeline.utils import get_timeslot
+from timeline.utils import get_timeslot, get_timephase_number
 from .forms import FileTypeModelForm, ConfirmForm, StaffReponseForm, StudentGroupForm, StudentGroupChoice
 from .models import FileType, StaffReponse, StudentFile, StudentGroup
 
 
 @group_required('type3staff', 'type6staff')
-@phase_required(6, 7)
 def download_all_of_type(request, pk):
     """
     Download all files for a given filetype
@@ -34,7 +33,9 @@ def download_all_of_type(request, pk):
     :return:
     """
     ftype = get_object_or_404(FileType, pk=pk)
-
+    if ftype.TimeSlot == get_timeslot():  # current year download
+        if get_timephase_number() != 6 and get_timephase_number() != 7:  # only in phase 6 and 7
+            raise PermissionDenied("This page is not available in the current timephase.")
     in_memory = BytesIO()
     with zipfile.ZipFile(in_memory, 'w') as archive:
         for file in ftype.files.all():
@@ -188,7 +189,6 @@ def list_missing_of_type(request, pk):
     for dist in get_distributions(request.user):
         if dist.files.filter(Type=ftype).count() == 0:
             missing_students.append(dist)
-    missing_students.sort(key=lambda d: str(d.Student.last_name))
     return render(request, 'professionalskills/listFailStudents.html', {
         'type': ftype,
         'distributions': missing_students,

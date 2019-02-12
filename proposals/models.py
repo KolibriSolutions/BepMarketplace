@@ -9,8 +9,9 @@ from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch.dispatcher import receiver
 
-from general_model import GroupOptions, file_delete_default, filename_default, clean_text, get_ext, print_list
+from general_model import file_delete_default, filename_default, clean_text, get_ext, print_list
 from index.models import Track
+from support.models import CapacityGroup
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot
 
@@ -31,9 +32,9 @@ class Proposal(models.Model):
     Title = models.CharField(max_length=100)
     ResponsibleStaff = models.ForeignKey(User, on_delete=models.PROTECT, related_name='proposalsresponsible')
     Assistants = models.ManyToManyField(User, related_name='proposals', blank=True)
-    Group = models.CharField(max_length=3, choices=GroupOptions)
-    NumstudentsMin = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(10)])
-    NumstudentsMax = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(10)])
+    Group = models.ForeignKey(CapacityGroup, on_delete=models.CASCADE)
+    NumStudentsMin = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(10)])
+    NumStudentsMax = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(10)])
     GeneralDescription = models.TextField()
     StudentsTaskDescription = models.TextField()
     ExtensionDescription = models.TextField(null=True, blank=True)
@@ -84,8 +85,8 @@ class Proposal(models.Model):
         self.GeneralDescription = clean_text(self.GeneralDescription)
         self.StudentsTaskDescription = clean_text(self.StudentsTaskDescription)
 
-        min_std = self.NumstudentsMin
-        max_std = self.NumstudentsMax
+        min_std = self.NumStudentsMin
+        max_std = self.NumStudentsMax
         if min_std and max_std:
             if min_std > max_std:
                 raise ValidationError("Minimum number of students cannot be higher than maximum.")
@@ -160,7 +161,7 @@ class ProposalAttachment(ProposalFile):
 
 class Favorite(models.Model):
     """
-    users favourite a project.
+    users favorite a project.
     """
     Project = models.ForeignKey(Proposal, on_delete=models.CASCADE, related_name='favorites')
     User = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
@@ -181,3 +182,6 @@ class Favorite(models.Model):
 @receiver(pre_delete, sender=[ProposalAttachment, ProposalImage])
 def proposal_file_delete(sender, instance, **kwargs):
     file_delete_default(sender, instance)
+
+
+Project = Proposal

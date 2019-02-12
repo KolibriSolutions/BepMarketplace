@@ -1,6 +1,7 @@
 import json
 from datetime import date, datetime
 
+from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Sum
@@ -8,78 +9,35 @@ from django.db.models import Q, F
 from django.forms import modelformset_factory
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
 from htmlmin.decorators import not_minified_response
 
 from BepMarketplace.decorators import group_required
 from distributions.utils import get_distributions
 from general_form import ConfirmForm
 from general_mail import EmailThreadTemplate, mail_track_heads_pending, send_mail
-from general_model import GroupOptions, print_list
+from general_model import print_list
 from general_view import get_all_students, get_all_staff, get_grouptype
 from index.models import Track, UserMeta
 from osirisdata.data import osirisData
+from presentations.exports import get_list_presentations_xlsx
+from presentations.models import PresentationSet
+from proposals.models import Proposal, Favorite
+from presentations.exports import get_list_presentations_xlsx
+from presentations.models import PresentationSet
 from proposals.models import Proposal
 from proposals.utils import get_all_proposals
 from results.models import GradeCategory
+from students.models import Distribution
 from support import check_content_policy
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number
-from .exports import get_list_students_xlsx, get_list_staff_xlsx, get_list_distributions_xlsx, get_list_proposals_xlsx
+from .exports import get_list_students_xlsx, get_list_distributions_xlsx, get_list_proposals_xlsx
 from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm, UserGroupsForm, \
-    CapacityGroupAdministrationForm
-from .models import CapacityGroupAdministration, PublicFile
+    GroupadministratorEdit, CapacityGroupForm
+from .models import GroupAdministratorThrough, PublicFile, CapacityGroup
 
 
-###############
-# Distributions#
-###############
-
-
-@group_required("type3staff", "type6staff")
-def list_applications_distributions(request):
-    """
-    Show a list of all active proposals with the applications and possibly distributions of students.
-    Used for support staff as an overview.
-    """
-    if get_timephase_number() < 3:
-        raise PermissionDenied("There are no applications or distributions yet.")
-    elif get_timephase_number() > 5:
-        projects = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
-        projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
-                                                                                         'Private',
-                                                                                         'distributions__Application',
-                                                                                         'distributions__Student__usermeta')
-
-    else:  # phase 3 & 4 & 5
-        projects = get_all_proposals().filter(Status=4)
-        projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
-                                                                                         'Private',
-                                                                                         'applications__Student__usermeta',
-                                                                                         'distributions__Application',
-                                                                                         'distributions__Student__usermeta')
-
-    return render(request, 'support/listApplicationsDistributions.html', {"proposals": projects})
-
-
-@not_minified_response
-@group_required("type3staff", "type6staff")
-def list_distributions_xlsx(request):
-    """
-    Same as supportListApplications but as XLSX
-    """
-    if get_timephase_number() < 3:
-        raise PermissionDenied("There are no applications yet")
-    elif get_timephase_number() > 4:
-        projects = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
-    else:
-        projects = get_all_proposals().filter(Status=4)
-    # projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
-    #                                                                                  'distributions__Student__usermeta')
-    file = get_list_distributions_xlsx(projects)
-    response = HttpResponse(content=file)
-    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
-    return response
 
 
 #########
@@ -248,9 +206,130 @@ def mail_track_heads(request):
     return render(request, "support/TrackHeadSendConfirm.html", {'trackstats': trackstats, 'form': form})
 
 
+@group_required('type3staff')
+def groupadministrators_form(request):
+    """
+    Set group administrators, same way as in mastermp.
+
+    :param request:
+    :return:
+    """
+    if request.method == 'POST':
+        form = GroupadministratorEdit(request.POST)
+        if form.is_valid():
+            administratorusergroup = Group.objects.get(name='type4staff')
+            group = form.cleaned_data['group']
+            for u in form.cleaned_data['readmembers']:
+                g, created = GroupAdministratorThrough.objects.get_or_create(Group=group, User=u)
+                g.Super = False
+                g.save()
+                u.groups.add(administratorusergroup)
+                u.save()
+            for u in form.cleaned_data['writemembers']:
+                g, created = GroupAdministratorThrough.objects.get_or_create(Group=group, User=u)
+                g.Super = True
+                g.save()
+                u.groups.add(administratorusergroup)
+                u.save()
+            for g in GroupAdministratorThrough.objects.filter(Group=group):
+                if g.User not in form.cleaned_data['readmembers'] and g.User not in form.cleaned_data['writemembers']:
+                    g.delete()
+                    if g.User.administratoredgroups.count() == 0:
+                        g.User.groups.remove(administratorusergroup)
+                        g.User.save()
+            return render(request, 'base.html', {
+                'Message': 'Administrators saved!',
+                'return': 'support:groupadministratorsform',
+            })
+    else:
+        form = GroupadministratorEdit()
+
+    return render(request, 'support/groupadministrators.html', {
+        'form': form,
+        'formtitle': 'Set Group Administrators',
+        'buttontext': 'save',
+    })
+
+
+@group_required('type3staff')
+def add_capacity_group(request):
+    if request.method == 'POST':
+        form = CapacityGroupForm(request.POST)
+        if form.is_valid():
+            obj = form.save()
+            return render(request, 'base.html', {
+                'Message': 'Capacity group {} added.'.format(obj.FullName),
+                'return': 'support:listcapacitygroups'
+            })
+    else:
+        form = CapacityGroupForm()
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Add new Capacity Group',
+        'buttontext': 'Add'
+    })
+
+
+@group_required('type3staff')
+def edit_capacity_group(request, pk):
+    obj = get_object_or_404(CapacityGroup, pk=pk)
+
+    if request.method == "POST":
+        form = CapacityGroupForm(request.POST, instance=obj)
+        if form.is_valid():
+            form.save()
+            return render(request, 'base.html', {
+                'Message': 'Group {} saved.'.format(obj),
+                'return': 'support:listcapacitygroups',
+            })
+    else:
+        form = CapacityGroupForm(instance=obj)
+
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Edit Group',
+        'buttontext': 'Save'
+    })
+
+
+@group_required('type3staff')
+def delete_capacity_group(request, pk):
+    obj = get_object_or_404(CapacityGroup, pk=pk)
+    if request.method == 'POST':
+        form = ConfirmForm(request.POST)
+        if form.is_valid():
+            obj.delete()
+            return render(request, 'base.html', {
+                'Message': 'Capacity group {} deleted.'.format(obj),
+                'return': 'support:listcapacitygroups'
+            })
+    else:
+        form = ConfirmForm()
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Confirm deletion of {}'.format(obj),
+        'buttontext': 'Delete'
+    })
+
+
 #######
 # Lists#
 #######
+
+def list_capacity_groups(request):
+    """
+    List all capacity groups, edit buttons for support staff
+
+    :param request:
+    :return:
+    """
+    return render(request, 'support/list_capacitygroups.html', {
+        'groups': CapacityGroup.objects.all().select_related('Head'),
+        'hide_sidebar': True,
+        'MASTERMP': getattr(settings, 'MASTERMARKETPLACE_URL', False),  # for detaillink to mastermp.
+    })
+
+
 @group_required('type3staff', 'type6staff')
 def list_users(request):
     """
@@ -376,7 +455,6 @@ def list_staff(request):
 
     def nint(nr):
         """
-
         :param <int> nr:
         :return:
         """
@@ -389,13 +467,13 @@ def list_staff(request):
         'proposalsresponsible', 'proposals')
     se = []
     for s in staff:
-        pt1 = s.proposalsresponsible.count()
-        pt2 = s.proposals.count()
+        p1 = s.proposalsresponsible.filter(TimeSlot=get_timeslot())
+        p2 = s.proposals.filter(TimeSlot=get_timeslot())
+        pt1 = p1.count()
+        pt2 = p2.count()
         pts = pt1 + pt2
-        dt1 = nint(s.proposalsresponsible.all().annotate(Count('distributions')).aggregate(Sum('distributions__count'))[
-                       'distributions__count__sum'])
-        dt2 = nint(s.proposals.all().annotate(Count('distributions')).aggregate(Sum('distributions__count'))[
-                       'distributions__count__sum'])
+        dt1 = nint(p1.annotate(Count('distributions')).aggregate(Sum('distributions__count'))['distributions__count__sum'])
+        dt2 = nint(p2.annotate(Count('distributions')).aggregate(Sum('distributions__count'))['distributions__count__sum'])
         dts = dt1 + dt2
         se.append({"user": s, "pt1": pt1, "pt2": pt2, "pts": pts, "dt1": dt1, "dt2": dt2, "dts": dts})
     return render(request, 'support/list_staff.html', {"staff": se})
@@ -407,7 +485,6 @@ def list_staff_projects(request, pk):
     List all proposals of a staff member
     """
     user = get_all_staff().get(id=pk)
-
     projects = user.proposalsresponsible.all() | user.proposals.all()
     projects = projects.select_related('ResponsibleStaff', 'Track', 'TimeSlot'). \
         prefetch_related('Assistants', 'distributions', 'applications')
@@ -416,24 +493,26 @@ def list_staff_projects(request, pk):
                   {"title": "Proposals from " + user.usermeta.get_nice_name(), "proposals": projects})
 
 
-@not_minified_response
-@group_required("type3staff")
-def list_staff_xlsx(request):
-    """
-    Same as supportListStaff but as XLSX
-    """
-    staff = get_all_staff().filter(Q(groups=get_grouptype("2")) | Q(groups=get_grouptype("1")))
-    file = get_list_staff_xlsx(staff)
-    response = HttpResponse(content=file)
-    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response['Content-Disposition'] = 'attachment; filename=marketplace-staff-list.xlsx'
-    return response
+# Does not filter on timeslot, depricated.
+# @not_minified_response
+# @group_required("type3staff")
+# def list_staff_xlsx(request):
+#     """
+#     Same as supportListStaff but as XLSX
+#     """
+#     staff = get_all_staff().filter(Q(groups=get_grouptype("2")) | Q(groups=get_grouptype("1")))
+#     file = get_list_staff_xlsx(staff)
+#     response = HttpResponse(content=file)
+#     response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#     response['Content-Disposition'] = 'attachment; filename=marketplace-staff-list.xlsx'
+#     return response
 
 
 @group_required('type3staff')
 def list_non_full_proposals(request):
     """
     Show page with button to download excel with non full proposals of a timeslot.
+    Can be used for first half year projects
 
     :param request:
     :return:
@@ -453,7 +532,7 @@ def list_non_full_proposals_xlsx(request, timeslot):
     ts = get_object_or_404(TimeSlot, pk=timeslot)
     props = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=ts
                                                                                , num_distr__lt=F(
-            'NumstudentsMax')).order_by('Title')
+            'NumStudentsMax')).order_by('Title')
 
     file = get_list_proposals_xlsx(props)
     response = HttpResponse(content=file)
@@ -504,10 +583,10 @@ def list_students(request):
             except:
                 reslist.append('-')
         deslist.append([d, reslist])
-    return render(request, "support/listDistributedStudents.html", {'des': deslist,
-                                                                    'typ': cats,
-                                                                    'show_grades': show_grades,
-                                                                    'hide_sidebar': True})
+    return render(request, "support/list_students.html", {'des': deslist,
+                                                          'typ': cats,
+                                                          'show_grades': show_grades,
+                                                          'hide_sidebar': True})
 
 
 @not_minified_response
@@ -547,11 +626,15 @@ def list_group_projects(request):
     :param request:
     :return:
     """
-    obj = get_object_or_404(CapacityGroupAdministration, Members__id=request.user.id)
-    props = get_all_proposals(old=True).filter(Group=obj.Group)
-    return render(request, "proposals/list_projects_custom.html", {
-        "proposals": props,
-        "title": "Proposals of My Group"
+    projects = Proposal.objects.filter(Group__Administrators=request.user).distinct()
+    projects = projects.select_related('ResponsibleStaff', 'Group'). \
+        prefetch_related('Assistants', 'Track')
+    favorite_projects = Favorite.objects.filter(User=request.user).values_list('Project__pk', flat=True)
+    return render(request, 'proposals/list_projects_custom.html', {
+        'hide_sidebar': True,
+        'proposals': projects,
+        'favorite_projects': favorite_projects,
+        'title': 'Proposals of {}'.format(print_list(request.user.administratoredgroups.all().values_list('Group__ShortName', flat=True)))
     })
 
 
@@ -642,31 +725,6 @@ def edit_user_groups(request, pk):
     return render(request, 'support/user_groups_form.html', {
         'formtitle': 'Set user groups for {}'.format(usr.username),
         'form': form,
-    })
-
-
-@group_required('type3staff')
-def capacity_group_administration(request):
-    """
-    Used to to attach users to a research group as administration of that group.
-
-    :param request:
-    """
-    if request.method == 'POST':
-        form = CapacityGroupAdministrationForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return render(request, "base.html", {
-                "Message": "Capacity Group administration updated",
-                "return": "support:capacitygroupadministration",
-            })
-    else:
-        form = CapacityGroupAdministrationForm()
-
-    return render(request, "support/capacity_group_administration.html", {
-        "form": form,
-        "formtitle": "Capacity Group Administrators",
-        "buttontext": "Save",
     })
 
 
@@ -797,6 +855,53 @@ def delete_file(request, pk):
         'formtitle': 'Confirm deleting public file {}'.format(obj),
         'buttontext': 'Confirm'
     })
+
+
+@group_required('type3staff')
+def history(request):
+    """
+    Show historic data and options to download data
+
+    :param request:
+    :return:
+    """
+    tss = TimeSlot.objects.filter(End__lte=datetime.now())
+    return render(request, 'index/history.html', context={
+        'timeslots': tss,
+    })
+
+
+@not_minified_response
+@group_required("type3staff")
+def history_download(request, timeslot, download):
+    ts = get_object_or_404(TimeSlot, pk=timeslot)
+    if ts == get_timeslot() or ts.Begin > timezone.now().date():
+        raise PermissionDenied("Downloads of the current and future timeslots are not allowed. Please use the regular menu entries.")
+    if download == 'distributions':
+        projects = Proposal.objects.filter(TimeSlot=ts, Status=4).distinct()
+        file = get_list_distributions_xlsx(projects)
+        response = HttpResponse(content=file)
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
+    elif download == 'students':
+        typ = GradeCategory.objects.filter(TimeSlot=ts)
+        des = Distribution.objects.filter(Timeslot=ts)
+        file = get_list_students_xlsx(des, typ)
+        response = HttpResponse(content=file)
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response['Content-Disposition'] = 'attachment; filename=students-grades.xlsx'
+    elif download == 'presentations':
+        sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts)
+        if not sets:
+            return render(request, "base.html",
+                          {"Message": "There is nothing planned yet. Please plan the presentations first."})
+        file = get_list_presentations_xlsx(sets)
+        response = HttpResponse(content=file)
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response['Content-Disposition'] = 'attachment; filename=presentations-planning.xlsx'
+    else:
+        raise PermissionDenied("Invalid options.")
+    return response
 
 #######
 # Cache#

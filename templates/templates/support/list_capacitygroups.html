@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block body %}
+    <h1>Capacity Groups</h1>
+    <p>
+        {% if user|has_group:"type3staff" %}
+            <a href="{% url 'support:addcapacitygroup' %}"
+               class="button primary rounded">Add</a>
+        {% endif %}
+    </p>
+
+    <table class="table bordered striped hovered datatable">
+        <thead>
+        <tr>
+            <th>ShortCode</th>
+            <th>Name</th>
+            <th>Head</th>
+            <th data-searchable="false" data-sortable="false">Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for group in groups %}
+            <tr>
+                <td>{{ group.ShortName }}</td>
+                <td>{{ group.FullName }}</td>
+                <td>{{ group.Head.usermeta.get_nice_name }}</td>
+                <td>
+                {% if MASTERMP %}
+                    {# https://master.ele.tue.nl/studyguide/capacitygroup/ #}
+                    <a href="{{ MASTERMP }}/studyguide/{{ group.ShortName }}/"
+                       class="button primary rounded">Details</a>
+                {% endif %}
+                    {% if user|has_group:"type3staff" %}
+                        <a href="{% url 'support:editcapacitygroup' group.pk %}"
+                           class="button warning rounded">Edit</a>
+                        <a href="{% url 'support:deletecapacitygroup' group.pk %}"
+                           class="button danger rounded">Delete</a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.datatable').dt_wrapper()
+        });
+    </script>
+{% endblock %}

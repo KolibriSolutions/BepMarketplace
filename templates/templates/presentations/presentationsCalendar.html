@@ -152,7 +152,7 @@
                                         location: 'Somewhere..',
                                     {% endif %}
                                 {% else %}
-                                    title: '{{ slot.Distribution.Student.usermeta.Fullname }} ({{ slot.Distribution.Student.usermeta.Studentnumber }})',
+                                    title: '{{ slot.Distribution.Student.usermeta.get_nice_fullname }} ({{ slot.Distribution.Student.usermeta.Studentnumber }})',
                                     backgroundColor: "{{ setcolor }}",
                                     location: '{{ set.PresentationRoom }}',
                                     proposal: '<a href="{% url 'proposals:details' slot.Distribution.Proposal.pk %}" title="view project">{{ slot.Distribution.Proposal.Title }}</a>',

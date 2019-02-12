@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Download History</h1>
+    <p>Download excel exports and handed in professional skills from previous years. To download exports of the current year, please use the regular menu entries.</p>
+    <table class="table striped hovered">
+        <thead>
+        <th>TimeSlot</th>
+        <th>Stats</th>
+        <th data-searchable="false" data-sortable="false">Exports</th>
+        <th data-searchable="false" data-sortable="false">Downloads</th>
+        </thead>
+        {% for timeslot in timeslots %}
+            <tr>
+                <td>{{ timeslot }}</td>
+                <td>
+                    <ul>
+                        <li>Projects: {{ timeslot.proposals.count }}</li>
+                        <li>Students: {{ timeslot.users.count }}</li>
+                        <li>Distributions: {{ timeslot.distributions.count }}</li>
+                    </ul>
+                </td>
+                <td>
+                    <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'distributions' %}">Distributions</a>
+                    <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'students' %}">Students & Grades</a>
+                    <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'presentations' %}">Presentations</a>
+                </td>
+                <td>
+                    {% for filetype in timeslot.filetypes.all %}
+                        <a href="{% url 'professionalskills:downloadall' filetype.id %}" class="button primary">Download {{ filetype }}</a>
+                    {% endfor %}
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+        });
+    </script>
+{% endblock %}

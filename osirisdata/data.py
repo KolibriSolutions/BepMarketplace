@@ -8,17 +8,9 @@ class osirisPerson:
     def __init__(self, csvline):
         self.email = csvline[0]
         self.idnumber = csvline[1]
-        if csvline[1] == 'yes' or csvline[2] == '1' or csvline[2] == 1:
-            self.enrolled = True
-        else:
-            self.enrolled = False
-        if csvline[2] == 'yes' or csvline[3] == '1' or csvline[3] == 1:
-            self.enrolledextension = True
-        else:
-            self.enrolledextension = False
-        self.cohort = csvline[4]
-        self.ects = csvline[5]
-        if csvline[6] == 'yes' or csvline[6] == '1' or csvline[6] == 1:
+        self.cohort = csvline[2]
+        self.ects = csvline[3]
+        if csvline[4] == 'yes' or csvline[4] == '1' or csvline[4] == 1:
             self.automotive = True
         else:
             self.automotive = False

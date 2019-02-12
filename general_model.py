@@ -3,6 +3,7 @@ General functions mostly used in models (models.py)
 """
 import re
 import uuid
+from django.utils.html import strip_tags
 
 
 def get_ext(filename):
@@ -82,28 +83,13 @@ def clean_text(text):
     try:
         # remove ascii control characters, including replacement character FFFD
         text = re.sub(control, '', text)
-
         # convert non breaking spaces to regular spaces
         text = re.sub(nbsp, ' ', text)
         # convert curly braces to straight braces (prevents messing with django variables)
         text = text.replace('{', '[').replace('}', ']')
-        return text
+        return strip_tags(text)  # strip_tags removes most common HTML, but not all. Therefore, database text fiels are not safe.
     except:
         return ''
-
-
-# Capacity groups
-GroupOptions = (
-    ("EES", "Electrical Energy Systems"),
-    ("ECO", "Electro-Optical Communications"),
-    ("EPE", "Electromechanics and Power Electronics"),
-    ("ES", "Electronic Systems"),
-    ("MsM", "Mixed-signal Microelectronics"),
-    ("CS", "Control Systems"),
-    ("SPS", "Signal Processing Systems"),
-    ("PHI", "Photonic Integration"),
-    ("EM", "Electromagnetics")
-)
 
 
 def print_list(lst):

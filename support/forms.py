@@ -4,14 +4,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User, Group
 from django.forms import ValidationError
 
-from general_view import get_grouptype
 from general_form import clean_file_default, FileForm
-from general_model import GroupOptions
 from general_model import get_ext, print_list
+from general_view import get_grouptype
 from index.models import UserMeta
-from support.models import CapacityGroupAdministration
 from templates import widgets
-from .models import PublicFile
+from .models import PublicFile, CapacityGroup
 
 
 def clean_publicfile_default(self):
@@ -23,7 +21,9 @@ def clean_publicfile_default(self):
 
 
 class ChooseMailingList(forms.Form):
-    """List to choose what people to mail"""
+    """
+    List to choose what people to mail
+    """
 
     def __init__(self, *args, **kwargs):
         options = kwargs.pop('options')
@@ -71,6 +71,41 @@ class OverRuleUserMetaForm(forms.ModelForm):
         }
 
 
+class GroupadministratorEdit(forms.Form):
+    """
+    Form to assign groupadministrators to capacitygroups.
+    Backported from mastermp, not yet used. Replacement for CapacityGroupAdministrionForm
+    """
+    group = forms.ModelChoiceField(queryset=CapacityGroup.objects.all(), widget=widgets.MetroSelect,
+                                   label='Capacity group:')
+    readmembers = forms.ModelMultipleChoiceField(queryset=User.objects.filter(groups__isnull=False).distinct(),
+                                                 widget=widgets.MetroSelectMultiple,
+                                                 required=False, label='Administrators (read):')
+    writemembers = forms.ModelMultipleChoiceField(queryset=User.objects.filter(groups__isnull=False).distinct(),
+                                                  widget=widgets.MetroSelectMultiple,
+                                                  required=False, label='Administrators (read/write):')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['readmembers'].label_from_instance = self.user_label_from_instance
+        self.fields['writemembers'].label_from_instance = self.user_label_from_instance
+
+    @staticmethod
+    def user_label_from_instance(self):
+        return self.usermeta.get_nice_name
+
+    def clean(self):
+        """
+        Do not allow users to be in both read and write members.
+        :return:
+        """
+        dups = set(self.cleaned_data.get('readmembers')) & set(self.cleaned_data.get('writemembers'))
+        if dups:
+            raise ValidationError(
+                "User(s) {} cannot be both read and write members. Please remove them from one of the fields.".format(
+                    print_list(list(dups))))
+
+
 class UserGroupsForm(forms.ModelForm):
     """Form to assign groups to a user."""
     def __init__(self, *args, **kwargs):
@@ -101,36 +136,21 @@ class UserGroupsForm(forms.ModelForm):
         return groups
 
 
-class CapacityGroupAdministrationForm(forms.Form):
+class CapacityGroupForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['AdministrationMembers'].queryset = User.objects.all()
+        self.fields['Head'].queryset = get_grouptype("1").user_set.all()
+        self.fields['Head'].label_from_instance = self.user_label_from_instance
 
-    def save(self):
-        cleaned_data = self.clean()
+    class Meta:
+        model = CapacityGroup
+        fields = ['ShortName', 'FullName', 'Head']  # not info.
+        widgets = {
+            'ShortName': widgets.MetroTextInput,
+            'FullName': widgets.MetroTextInput,
+            'Head': widgets.MetroSelect,
+        }
 
-        if "AdministrationMembers" not in cleaned_data:
-            cleaned_data["AdministrationMembers"] = []
-
-        obj = CapacityGroupAdministration.objects.get(Group=cleaned_data['Group'])
-
-        for member in obj.Members.all():
-            # remove type4staff for removed members
-            if member not in cleaned_data['AdministrationMembers']:
-                member.groups.remove(Group.objects.get(name='type4staff'))
-                obj.Members.remove(member)
-                member.save()
-
-        for member in cleaned_data['AdministrationMembers']:
-            # add type4staff to new members
-            if member not in obj.Members.all():
-                member.groups.add(Group.objects.get(name='type4staff'))
-                obj.Members.add(member)
-                member.save()
-
-        obj.save()
-
-    Group = forms.ChoiceField(choices=GroupOptions, widget=widgets.MetroSelect)
-    AdministrationMembers = forms.ModelMultipleChoiceField(queryset=User.objects.none(),
-                                                           widget=widgets.MetroSelectMultiple, required=False,
-                                                           label='Administration members')
+    @staticmethod
+    def user_label_from_instance(self):
+        return self.usermeta.get_nice_name

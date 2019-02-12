@@ -15,7 +15,7 @@ from BepMarketplace.decorators import group_required, can_edit_proposal, can_vie
 from api.views import upgrade_status_api, downgrade_status_api
 from distributions.utils import get_distributions
 from general_mail import mail_proposal_all, mail_proposal_private
-from general_model import GroupOptions
+# from general_model import GroupOptions
 from general_view import get_grouptype, truncate_string
 from index.models import Track
 from proposals.utils import get_all_proposals, get_share_link, get_cached_project, updatePropCache
@@ -25,9 +25,9 @@ from timeline.utils import get_timeslot, get_timephase_number
 from tracking.utils import tracking_visit_project
 from .forms import ProposalFormEdit, ProposalFormCreate, ProposalImageForm, ProposalDowngradeMessageForm, \
     ProposalAttachmentForm, ProposalFormLimited
-from .models import Proposal, ProposalImage, ProposalAttachment
+from .models import Proposal, ProposalImage, ProposalAttachment, Favorite
 from .utils import can_edit_project_fn
-
+from support.models import CapacityGroup
 
 @login_required
 def list_public_projects(request):
@@ -37,15 +37,43 @@ def list_public_projects(request):
     :param request:
     :return:
     """
-
     body_html = cache.get('listproposalsbodyhtml')
     if body_html is None:
         proposals = get_all_proposals().filter(Q(Status=4) & Q(Private=None))
         proposals = proposals.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants')
-        body_html = render_block_to_string("proposals/list_projects.html", 'body',
-                                           {"proposals": proposals, 'DOMAIN': settings.DOMAIN})  # render block does not pass through context_processors.
+        body_html = render_block_to_string("proposals/list_projects.html", 'body', {
+            'projects': proposals,
+            'DOMAIN': settings.DOMAIN
+        })  # render block does not pass through context_processors.
         cache.set('listproposalsbodyhtml', body_html, None)
-    return render(request, 'proposals/list_projects.html', {"bodyhtml": body_html})
+    favorite_projects = list(Favorite.objects.filter(User=request.user).values_list('Project__pk', flat=True))
+    return render(request, 'proposals/list_projects.html', {
+        "bodyhtml": body_html,
+        'favorite_projects': favorite_projects,
+    })
+
+@login_required
+def list_favorited_projects(request):
+    """
+    List all the projects a student has favorited, this view is not cached
+
+    :param request:
+    :return:
+    """
+    proposals = get_all_proposals().filter(Q(Status=4) & Q(Private=None) & Q(favorites__User=request.user))
+    proposals = proposals.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants')
+    body_html = render_block_to_string("proposals/list_projects.html", 'body', {
+        'projects': proposals,
+        'DOMAIN': settings.DOMAIN,
+        'favorite': True,
+    })  # render block does not pass through context_processors.
+    favorite_projects = list(Favorite.objects.filter(User=request.user).values_list('Project__pk', flat=True))
+    return render(request, 'proposals/list_projects.html', {
+        "bodyhtml": body_html,
+        'favorite_projects': favorite_projects,
+        'favorite' : True,
+    })
+
 
 
 @can_view_proposal
@@ -91,8 +119,11 @@ def detail_project(request, pk):
             cache.set('proposaldetail{}'.format(pk), cdata, None)
 
         tracking_visit_project(prop, request.user)  # always log visits from students
-        return render(request, "proposals/detail_project.html",
-                      {"bodyhtml": cdata.format(button), 'project': prop})  # send project for if statement in scripts.
+        return render(request, "proposals/detail_project.html", {
+            "bodyhtml": cdata.format(button),
+            'project': prop,
+            'fav': prop.favorites.filter(User=request.user).exists()
+        })  # send project for if statement in scripts.
 
     # if staff:
     else:
@@ -111,7 +142,7 @@ def detail_project(request, pk):
             data['Editlock'] = False
         else:
             data['Editlock'] = allowed[1]
-
+        data['fav'] = prop.favorites.filter(User=request.user).exists()
         return render(request, "proposals/detail_project.html", data)
 
 
@@ -164,14 +195,17 @@ def list_own_projects(request):
     else:
         projects = Proposal.objects.filter(Q(ResponsibleStaff=request.user) |
                                            Q(Assistants=request.user)).distinct()
-
     if get_timephase_number() < 5:
         projects = projects.select_related('ResponsibleStaff', 'Track__Head', 'TimeSlot').prefetch_related('Assistants')
     else:
         projects = projects.select_related('ResponsibleStaff', 'Track__Head', 'TimeSlot').prefetch_related('Assistants',
                                                                                                            'distributions__Student__usermeta')
-    return render(request, 'proposals/list_projects_custom.html', {'proposals': projects,
-                                                                  'hide_sidebar': True})
+    favorite_projects = Favorite.objects.filter(User=request.user).values_list('Project__pk', flat=True)
+    return render(request, 'proposals/list_projects_custom.html', {
+        'hide_sidebar': True,
+        'proposals': projects,
+        'favorite_projects': favorite_projects,
+    })
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
@@ -439,7 +473,7 @@ def list_pending(request):
                                            (Q(Track__Head=request.user.id) & Q(Status__exact=3))
                                            ).distinct()
 
-    return render(request, "proposals/pendingProposals.html", {"proposals": projs})
+    return render(request, "proposals/list_pending.html", {"proposals": projs})
 
 
 @group_required('type1staff')
@@ -460,6 +494,7 @@ def list_track(request):
     })
 
 
+
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
 @can_share_proposal
 def share(request, pk):
@@ -473,8 +508,8 @@ def share(request, pk):
     """
     link = get_share_link(pk)
     return render(request, "base.html", {
-        "Message": "Share link created: <a href=\"{}\">{}</a> <br/> "
-                   "Use this to show the proposal to anybody without an account. "
+        "Message": "Share link created: <a href=\"{}\">{}</a> <br/>"
+                   " Use this to show the proposal to anybody without an account. "
                    "The link will be valid for seven days.".format(link, link),
     })
 
@@ -599,13 +634,13 @@ def stats_general(request, step=0):
     elif step == 1:
         groupcount = []
 
-        for group in GroupOptions:
+        for group in CapacityGroup.objects.all():
             groupcount.append(get_all_proposals().filter(Q(Status=4) & Q(Group=group[0])).distinct().count())
 
         return render(request, "proposals/stats_project_general.html", {
             "proposalcount": get_all_proposals().filter(Status=4).count(),
             "groupcount": groupcount,
-            "groups": [g[0] for g in GroupOptions],
+            "groups": [g[0] for g in CapacityGroup.objects.all()],
             "step": 1,
         })
     elif step == 2:
@@ -662,11 +697,11 @@ def project_stats(request, timeslot=None):
 
     totalnum = p.count()
 
-    groups = GroupOptions
+    groups = CapacityGroup.objects.all()
     group_count = []
     group_count_distr = []
     group_labels = []
-    for group, long_group in groups:  # groups is tupple of (shortname, longname)
+    for group in groups:  # groups is tupple of (shortname, longname)
         group_count.append(p.filter(Group=group).count())
         group_labels.append(str(group))
         group_count_distr.append(
@@ -693,16 +728,16 @@ def project_stats(request, timeslot=None):
     if track_count:
         track_count, track_labels = (list(t) for t in zip(*sorted(zip(track_count, track_labels), reverse=True)))
 
-    filters = ['All']+list(TimeSlot.objects.all().values_list('Name', flat=True))
-    filternames = [None]+list(TimeSlot.objects.all().values_list('pk', flat=True))
+    filters = ['All'] + list(TimeSlot.objects.all().values_list('Name', flat=True))
+    filternames = [None] + list(TimeSlot.objects.all().values_list('pk', flat=True))
     filters = zip(filters, filternames)
     return render(request, 'proposals/stats_project.html', {
         'num': totalnum,
         # 'done': p.filter(Approved=True).count(),
         'filters': filters,
         'filter': timeslot,
-        "mincapacity": p.aggregate(Sum('NumstudentsMin'))['NumstudentsMin__sum'],
-        "maxcapacity": p.aggregate(Sum('NumstudentsMax'))['NumstudentsMax__sum'],
+        "mincapacity": p.aggregate(Sum('NumStudentsMin'))['NumStudentsMin__sum'],
+        "maxcapacity": p.aggregate(Sum('NumStudentsMax'))['NumStudentsMax__sum'],
         'data': [
             {
                 'label': 'Projects by capacity group',
@@ -724,7 +759,7 @@ def project_stats(request, timeslot=None):
                 'labels': track_labels,
                 'counts': track_count,
                 'total': sum(track_count),
-            },{
+            }, {
                 'label': 'Distributions by capacity group',
                 'labels': group_labels_distr,
                 'counts': group_count_distr,

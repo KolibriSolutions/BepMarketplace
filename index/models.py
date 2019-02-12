@@ -78,7 +78,7 @@ class UserMeta(models.Model):
     EnrolledBEP = models.BooleanField(default=False)
     EnrolledExt = models.BooleanField(default=False)
     Overruled = models.BooleanField(default=False)
-    TimeSlot = models.ManyToManyField(TimeSlot, default=get_timeslot_id)
+    TimeSlot = models.ManyToManyField(TimeSlot, default=get_timeslot_id, related_name='users')
 
     def __str__(self):
         return str(self.User)
@@ -99,6 +99,16 @@ class UserMeta(models.Model):
             return self.User.get_full_name()
         else:
             return self.User.username  # users without name, should not happen.
+
+    def get_nice_fullname(self):
+        """
+        Get fullname with fallback to normal name
+
+        :return:
+        """
+        if self.Fullname and len(self.Fullname) > 2:
+            return self.Fullname
+        return self.get_nice_name()
 
 
 class Term(models.Model):

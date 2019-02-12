@@ -5,25 +5,36 @@ from django.db.models.signals import pre_delete
 from django.dispatch.dispatcher import receiver
 from django.forms import ValidationError
 
-from general_model import GroupOptions, print_list, get_ext
 from general_model import file_delete_default, metro_icon_default, filename_default, clean_text
-# from proposals.utils import get_all_proposals
+from general_model import print_list, get_ext
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timeslot_id
 
 
-class CapacityGroupAdministration(models.Model):
-    """
-    Model to set the administrative users for a capacity group.
-    """
-    Group = models.CharField(max_length=3, choices=GroupOptions)
-    Members = models.ManyToManyField(User, related_name='groupadministrations', blank=True)
-
-    # def proposals(self):
-    #     return get_all_proposals().filter(Group=self.Group)
+class CapacityGroup(models.Model):
+    ShortName = models.CharField(max_length=3)
+    FullName = models.CharField(max_length=256)
+    Administrators = models.ManyToManyField(User, related_name='administratorgroups',
+                                            through='GroupAdministratorThrough')
+    Head = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE, related_name='capacity_group_head')
 
     def __str__(self):
-        return self.Group + " Administration"
+        return self.ShortName
+
+    def clean(self):
+        # self.Info = clean_text(self.Info)
+        self.FullName = clean_text(self.FullName)
+        self.ShortName = clean_text(self.ShortName)
+
+
+class GroupAdministratorThrough(models.Model):
+    """
+    Through-model between User and CapacityGroup to store read/write access as groupadministrator
+    Called via CapacityGroup.Administrators
+    """
+    Group = models.ForeignKey(CapacityGroup, on_delete=models.CASCADE)
+    User = models.ForeignKey(User, on_delete=models.CASCADE, related_name='administratoredgroups')
+    Super = models.BooleanField(default=False, blank=True)
 
 
 class PublicFile(models.Model):

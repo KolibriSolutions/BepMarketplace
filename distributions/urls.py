@@ -5,6 +5,10 @@ from . import views
 app_name = 'distributions'
 
 urlpatterns = [
+    path('list/', views.list_applications_distributions,
+         name='SupportListApplicationsDistributions'),
+    path('xlsx/', views.list_distributions_xlsx, name='SupportListDistributionsXls'),
+
     path('manual/', views.manual, name='supportDistributeApplications'),
     path('api/distribute/', views.api_distribute, name='distribute'),
     path('api/undistribute/', views.api_undistribute, name='undistribute'),

@@ -27,14 +27,18 @@ urlpatterns = [
     # path('users/downgrade/<int:pk>/', views.downgrade_user, name='downgradeuser'),
     path('users/overruleusermeta/<int:pk>/', views.usermeta_overrule, name='overruleusermeta'),
     path('users/groups/<int:pk>/', views.edit_user_groups, name='usergroups'),
-    path('capacitygroupadministration/', views.capacity_group_administration, name='capacitygroupadministration'),
 
-    path('applicationsdistributions/', views.list_applications_distributions, name='SupportListApplicationsDistributions'),
-    path('distributions/xlsx/', views.list_distributions_xlsx, name='SupportListDistributionsXls'),
+    path('capacitygroup/list/', views.list_capacity_groups, name='listcapacitygroups'),  # listing new way of all capacitygroups
+    path('capacitygroup/add/', views.add_capacity_group, name='addcapacitygroup'),
+    path('capacitygroup/edit/<int:pk>/', views.edit_capacity_group, name='editcapacitygroup'),
+    path('capacitygroup/delete/<int:pk>/', views.delete_capacity_group, name='deletecapacitygroup'),
+    # path('groupadministrator/', views.groupadministrators_form, name='groupadministratorsform'),  # new way of setting capacity group administrators. Not yet enabled.
+    # path('capacitygroupadministration/', views.capacity_group_administration, name='capacitygroupadministration'),  # DEPRICATED old way of capacity groups admins using hardcoded list.
+    path('groupadministrator/', views.groupadministrators_form, name='groupadministratorsform'),
 
     path('staff/', views.list_staff, name='liststaff'),
     path('staff/projects/<int:pk>/', views.list_staff_projects, name='liststaffproposals'),
-    path('staff/xlsx/', views.list_staff_xlsx, name='liststaffXls'),
+    # path('staff/xlsx/', views.list_staff_xlsx, name='liststaffXls'),  # depricated
     path('students/', views.list_students, name='liststudents'),
     path('students/xlsx/', views.list_students_xlsx, name='liststudentsXls'),
 
@@ -48,4 +52,7 @@ urlpatterns = [
 
     path('nonfull/', views.list_non_full_proposals, name='listnonfullprojects'),
     path('nonfull/<int:timeslot>', views.list_non_full_proposals_xlsx, name='listnonfullprojectsxlsx'),
+
+    path('history/', views.history, name='history'),
+    path('history_download/<int:timeslot>/<str:download>/', views.history_download, name='history_download'),
 ]

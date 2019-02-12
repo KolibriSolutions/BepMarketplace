@@ -36,6 +36,9 @@ MANAGERS = ADMINS  # to mail broken links to, not used now.
 NAME_CODE = 'BEPMarketplace'
 NAME_PRETTY = 'BEP Marketplace'
 
+# used for studyguide capacitygroup detail link to mastermp. Not required, remove if not used.
+MASTERMARKETPLACE_URL = 'https://master.ele.tue.nl'
+
 TESTING = False
 
 # General settings for the projects

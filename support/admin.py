@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import PublicFile, CapacityGroupAdministration
+from .models import PublicFile, CapacityGroup, GroupAdministratorThrough
 
 
 class PublicFileAdmin(admin.ModelAdmin):
@@ -8,5 +8,6 @@ class PublicFileAdmin(admin.ModelAdmin):
     list_filter = ['TimeSlot']
 
 
-admin.site.register(CapacityGroupAdministration)
 admin.site.register(PublicFile, PublicFileAdmin)
+admin.site.register(CapacityGroup)
+admin.site.register(GroupAdministratorThrough)

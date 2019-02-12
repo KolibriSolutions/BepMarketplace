@@ -15,7 +15,7 @@ from general_view import get_grouptype
 from index.models import Track
 from students.models import Distribution
 from timeline.utils import get_timephase_number
-from .exports import listPresentationsXls
+from .exports import get_list_presentations_xlsx
 from .forms import PresentationOptionsForm, PresentationRoomForm, PresentationSetForm, get_timeslot, MakePublicForm
 from .models import Room, PresentationSet, PresentationTimeSlot, PresentationOptions
 from .utils import planning_public
@@ -113,7 +113,7 @@ def wizard_step3(request):
     except:
         return render(request, "base.html", {
             'Message':
-                "There is no timephase for presentations defined, please define a timephase or contact the support staff."})
+                "There is no timephase for presentations defined, please define a timephase using the 'Timeline Edit' menu or contact the support staff."})
 
     form = PresentationSetForm
     form_set = modelformset_factory(PresentationSet, form=form, can_delete=True, extra=4)
@@ -235,7 +235,7 @@ def export_presentations(request):
         return render(request, "base.html",
                       {"Message": "There is nothing planned yet. Please plan the presentations first."})
 
-    file = listPresentationsXls(sets)
+    file = get_list_presentations_xlsx(sets)
     response = HttpResponse(content=file)
     response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     response['Content-Disposition'] = 'attachment; filename=presentations-planning.xlsx'

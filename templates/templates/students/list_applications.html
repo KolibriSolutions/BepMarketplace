@@ -3,7 +3,7 @@
 {% block body %}
     <h1>Applications</h1>
     <p>Applications can be changed till the end of the phase "Students choosing projects"</p>
-    {% if user.personal_proposal.all %}
+    {% if private %}
         <p> There is a private proposal for you. Therefore you cannot apply to public proposals. Please check out your
             proposal in the sidebar on the right.</p>
     {% else %}

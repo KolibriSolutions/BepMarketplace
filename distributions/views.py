@@ -3,10 +3,13 @@ import json
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q, F, Count
+from django.db.models import Count
+from django.db.models import Q, F
+from django.http import HttpResponse
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from htmlmin.decorators import not_minified_response
 
 from BepMarketplace.decorators import group_required, phase_required
 from general_form import ConfirmForm
@@ -17,6 +20,7 @@ from proposals.models import Proposal
 from proposals.utils import get_all_proposals, get_share_link, get_cached_project
 from students.models import Application, Distribution
 from students.views import get_all_applications
+from support.exports import get_list_distributions_xlsx
 from timeline.utils import get_timeslot, get_timephase_number
 from . import distribution
 from .forms import AutomaticDistributionOptionForm
@@ -24,10 +28,59 @@ from .forms import AutomaticDistributionOptionForm
 warningString = 'Something failed in the server, please refresh this page (F5) or contact system administrator'
 
 
+@group_required("type3staff", "type6staff")
+def list_applications_distributions(request):
+    """
+    Show a list of all active proposals with the applications and possibly distributions of students.
+    Used for support staff as an overview.
+    Same table include as in manual distribute
+    """
+    if get_timephase_number() < 3:
+        raise PermissionDenied("There are no applications or distributions yet.")
+    elif get_timephase_number() > 5:
+        projects = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
+        projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
+                                                                                         'Private',
+                                                                                         'distributions__Application',
+                                                                                         'distributions__Student__usermeta')
+
+    else:  # phase 3 & 4 & 5
+        projects = get_all_proposals().filter(Status=4)
+        projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
+                                                                                         'Private',
+                                                                                         'applications__Student__usermeta',
+                                                                                         'distributions__Application',
+                                                                                         'distributions__Student__usermeta')
+
+    return render(request, 'distributions/list_applications_distributions.html', {"proposals": projects})
+
+
+@not_minified_response
+@group_required("type3staff", "type6staff")
+def list_distributions_xlsx(request):
+    """
+    Same as supportListApplications but as XLSX
+    """
+    if get_timephase_number() < 3:
+        raise PermissionDenied("There are no applications yet")
+    elif get_timephase_number() > 4:
+        projects = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
+    else:
+        projects = get_all_proposals().filter(Status=4)
+    # projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
+    #                                                                                  'distributions__Student__usermeta')
+    file = get_list_distributions_xlsx(projects)
+    response = HttpResponse(content=file)
+    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
+    return response
+
+
 @group_required('type3staff')
 def manual(request):
     """
     Support page to distribute students manually to projects. Uses ajax calls to change distributions.
+    Same table included as in list appls/dists
 
     :param request:
     """
@@ -40,9 +93,9 @@ def manual(request):
                           'distributions__Student__usermeta')
     # includes students without applications.
     # also show undistributed in phase 6
-    studs = get_all_students(undistributed=True).filter(Q(distributions=None)) \
+    studs = get_all_students(undistributed=True).exclude(distributions__Timeslot=get_timeslot()) \
         .select_related('usermeta') \
-        .prefetch_related('applications__Proposal')
+        .prefetch_related('applications__Proposal').distinct()
     dists = Distribution.objects.filter(Timeslot=get_timeslot()) \
         .select_related('Student__usermeta', 'Proposal', 'Application__Student__usermeta')
     return render(request, 'distributions/manual_distribute.html', {'proposals': props,
@@ -340,25 +393,26 @@ def automatic(request, dist_type, distribute_random=1, automotive_preference=1):
 
             return render(request, 'base.html', {
                 'Message': 'Distributions saved!',
-                'return': 'support:SupportListApplicationsDistributions',
+                'return': 'distributions:SupportListApplicationsDistributions',
             })
 
     else:
         # Handle the most common errors beforehand with a nice message
         error_list = ''
-        for u in get_all_students().filter(personal_proposal__isnull=False).prefetch_related(
-                'personal_proposal'):  # all private students
-            if u.personal_proposal.count() > 1:  # more than one private proposal.
+        stds = get_all_students().filter(personal_proposal__isnull=False, personal_proposal__TimeSlot=get_timeslot()).distinct().prefetch_related('personal_proposal')
+        for u in stds:  # all private students
+            ps = u.personal_proposal.filter(TimeSlot=get_timeslot())
+            if ps.count() > 1:  # more than one private proposal.
                 error_list += "<li>User {} has multiple private proposals ({}). Please resolve this!</li>" \
-                    .format(u, print_list(u.personal_proposal.all()))
-            if u.personal_proposal.first().Status != 4:
+                    .format(u, print_list(ps))
+            if ps.first().Status != 4:
                 error_list += "<li>User {} has private proposals which is not yet public. Please upgrade proposal {} to public!</li>" \
-                    .format(u, u.personal_proposal.first())
+                    .format(u, ps.first())
         if error_list:
             return render(request, 'base.html', {
                 'Message': '<h1>Automatic distribution cannot start</h1><p>The following error(s) occurred:</p><ul>{}</ul>'
                           .format(error_list),
-                'return': 'support:SupportListApplicationsDistributions',
+                'return': 'distributions:SupportListApplicationsDistributions',
             })
 
         form = ConfirmForm()
@@ -373,7 +427,7 @@ def automatic(request, dist_type, distribute_random=1, automotive_preference=1):
                 distobjs = distribution.calculate_2_from_project(
                     distribute_random=distribute_random,
                     automotive_preference=automotive_preference)
-            # invalid types are catched at the begin of the function
+        # invalid types are catched at the begin of the function
         except Exception as e:
             return render(request, "base.html", {
                 'Message': '<h1>Automatic distribution cannot start</h1><p>The following error(s) occurred:</p>{}'
@@ -404,7 +458,7 @@ def automatic(request, dist_type, distribute_random=1, automotive_preference=1):
         dists.append({
             'student': obj,
             'proposal': None,
-            'preference': 'Not distributed. ' + ('No' if obj.applications.exists() else 'With') + ' applications.',
+            'preference': 'Not distributed. ' + ('With' if obj.applications.filter(Proposal__TimeSlot=get_timeslot()).exists() else 'No') + ' applications.',
         })
 
     cohorts = distribution.get_cohorts()
@@ -484,7 +538,7 @@ def list_second_choice(request):
     :return:
     """
     props = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=get_timeslot(),
-                                                                               num_distr__lt=F('NumstudentsMax')) \
+                                                                               num_distr__lt=F('NumStudentsMax')) \
         .order_by('Title')
     prop_obj = [[prop, get_share_link(prop.pk)] for prop in props]
     return render(request, 'distributions/list_second_choice.html', {

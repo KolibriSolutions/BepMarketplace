@@ -32,8 +32,9 @@ def list_applications(request):
 
     :param request:
     """
-    return render(request, 'students/ListApplications.html', context={
-        'applications': get_all_applications(request.user)
+    return render(request, 'students/list_applications.html', context={
+        'applications': get_all_applications(request.user),
+        'private': request.user.personal_proposal.filter(TimeSlot=get_timeslot()).exists()
     })
 
 
@@ -190,7 +191,7 @@ def confirm_apply(request, pk):
             'Message': 'You already applied to this proposal.',
             'return': 'students:listapplications',
         })
-    return render(request, 'students/ApplyToProposal.html', context={
+    return render(request, 'students/apply.html', context={
         'proposal': get_object_or_404(Proposal, pk=pk),
     })
 

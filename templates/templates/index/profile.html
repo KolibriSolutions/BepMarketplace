@@ -26,7 +26,7 @@
         </tr>
         <tr>
             <td>First and last name:</td>
-            <td>{{ user.usermeta.get_nice_name }}</td>
+            <td>{{ meta.get_nice_name }}</td>
         </tr>
         <tr>
             <td>Initials</td>
@@ -34,7 +34,7 @@
         </tr>
         <tr>
             <td>Full name</td>
-            <td>{{ meta.Fullname }}</td>
+            <td>{{ meta.get_nice_fullname }}</td>
         </tr>
         <tr>
             <td>Email:</td>

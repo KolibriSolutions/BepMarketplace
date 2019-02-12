@@ -7,12 +7,12 @@
     {% else %}
         <h1>Projects and their distributions</h1>
     {% endif %}
-    <a href="{% url "support:SupportListDistributionsXls" %}" class="button primary">Export Excel</a>
+    <a href="{% url "distributions:SupportListDistributionsXls" %}" class="button primary">Export Excel</a>
     {% if phasenumber == 4 or phasenumber == 5 %}
         <a href="{% url 'distributions:maildistributions' %}" class="button warning">Mail distributions to students</a>
     {% endif %}
     <div class="double-scroll"> {# only in this view use doublescroll, not in distribute view. #}
-        {% include "distributions/Support_include_table.html" %}
+        {% include "distributions/inc_dist_table.html" %}
     </div>
 {% endblock %}
 {% block scripts %}
@@ -22,8 +22,8 @@
         $(document).ready(function () {
             var dt = $('.datatable').dt_wrapper([
                     {column_number: 0, filter_type: "text"},        //name
-                    {column_number: 1, filter_type: "select"},      //track
-                    {column_number: 2, filter_type: "select"},      //group
+                    {column_number: 1, filter_type: "select", filter_match_mode: 'exact'},      //track
+                    {column_number: 2, filter_type: "select", filter_match_mode: 'exact'},      //group
                     {column_number: 3, filter_type: "select", column_data_type: 'html'},  //responsible
                     {% if phasenumber < 6 %}
                         {#{column_number: 4, filter_type: "number", html5_data: 'data-search'},  maybe range input later on.#}

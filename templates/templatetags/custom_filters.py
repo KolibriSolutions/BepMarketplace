@@ -88,28 +88,6 @@ def is_trackhead(user):
 
 
 @register.simple_tag
-def getPending(user):
-    """
-
-    :param user:
-    :return:
-    """
-    html = "<a href='" + reverse(
-        "proposals:pending") + "'><button class=\"button danger loading-pulse\">Pending: {}</button></a>"
-    num = 0
-
-    if get_grouptype("2") in user.groups.all():
-        num += get_all_proposals().filter(Q(Assistants__id=user.id) & Q(Status__exact=1)).count()
-    if get_grouptype("1") in user.groups.all():
-        num += get_all_proposals().filter(Q(ResponsibleStaff=user.id) & Q(Status__exact=2)).count()
-    num += get_all_proposals().filter(Q(Track__Head=user.id) & Q(Status__exact=3)).count()
-    if num == 0:
-        return "No pending proposals for your attention"
-    else:
-        return format_html(html.format(num))
-
-
-@register.simple_tag
 def GetPhase():
     """
 
@@ -226,25 +204,77 @@ def GetBroadcastStatus(user):
 
 
 @register.simple_tag
-def GetDistribution(user):
+def get_pending_tag(user):
     """
 
     :param user:
     :return:
     """
+    # <button> inside <a> is invalid HTML5. MetroUI does not work well with loading-pulse on non-button, so keep it.
+    html = "<a href='" + reverse(
+        "proposals:pending") + "'><button class=\"button danger loading-pulse\">Pending: {}</button></a>"
+    num = 0
+
+    if get_grouptype("2") in user.groups.all():
+        num += get_all_proposals().filter(Q(Assistants__id=user.id) & Q(Status__exact=1)).count()
+    if get_grouptype("1") in user.groups.all():
+        num += get_all_proposals().filter(Q(ResponsibleStaff=user.id) & Q(Status__exact=2)).count()
+    num += get_all_proposals().filter(Q(Track__Head=user.id) & Q(Status__exact=3)).count()
+    if num == 0:
+        return "No pending projects for your attention"
+    else:
+        return format_html(html.format(num))
+
+
+
+@register.simple_tag
+def get_distribution_tag(user):
+    """
+    Shows the students distribution in the sidebar
+
+    :param user:
+    :return:
+    """
     if not user.is_authenticated or user.groups.exists():
-        return False
+        return ''
     # check if user has distributions
     timeslot = get_timeslot()
     try:
         dist = user.distributions.get(Timeslot=timeslot)
     except:
-        return False
+        return ''
     url = reverse('proposals:details', args=[dist.Proposal.pk])
-    html = '<p>You are distributed to the proposal:</p><a href="{}" class ="button primary">{}</a></p>'
+    html = '<p>You are distributed to the project:</p><a href="{}" class ="button primary" title="{}">{}</a></p>'
     title = truncatechars(dist.Proposal.Title, 25)
-    st = format_html(html, url, title)
+    st = format_html(html, url, title, title)
     return st
+
+
+@register.simple_tag
+def get_personal_tag(user):
+    """
+    Show the students personal proposals of this timeslot in the sidebar
+
+    :param user:
+    :return:
+    """
+    if not user.is_authenticated or user.groups.exists():
+        return ''
+    if user.personal_proposal.filter(TimeSlot=get_timeslot()).exists():
+        ps = user.personal_proposal.filter(TimeSlot=get_timeslot())
+        html = '<p>'
+        if ps.count() == 1:
+            html += "There is a personal (private) proposal for you. You can view all proposals in the 'proposals' menu but you don't have to do anything with it."
+        else:
+            html += "There are multiple private proposals for you. Please contact the support staff to remove you from one."
+        html += "<br />"
+        for p in ps:
+            url = reverse('proposals:details', args=[p.pk])
+            title = truncatechars(p.Title, 25)
+            html += '<a href="{}" class="button primary" title="{}">{}</a><br />'.format(url, title, title)
+        html += '</p>'
+        return format_html(html)
+    return ''
 
 
 @register.simple_tag()
@@ -257,6 +287,11 @@ def GetEndDate():
         return ts.End
     else:
         return ''
+
+
+@register.simple_tag
+def is_favorite(project, user):
+    return project.favorites.filter(User=user).exists()
 
 
 @register.filter(name='can_edit_project')
@@ -351,7 +386,7 @@ def GetPresentationStaff(user):
             for presentation in t:
                 start = timezone.localtime(presentation.DateTime).strftime("%A %d %B %H:%M")
                 room = presentation.Presentations.PresentationRoom
-                html += "<li> {} at {} in {} </li>".format(presentation.Distribution.Student.usermeta.Fullname, start, room)
+                html += "<li> {} at {} in {} </li>".format(presentation.Distribution.Student.usermeta.get_nice_fullname(), start, room)
             html += "</ul>"
         else:
             html += "<p>You do not have any presentations to attend as supervisor.</p>"

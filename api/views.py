@@ -2,18 +2,17 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db.models import Q
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from BepMarketplace.decorators import group_required, can_edit_proposal, can_downgrade_proposal
 from api.utils import getStatStr
 from general_mail import mail_proposal_all, send_mail
-from general_model import GroupOptions
 from general_view import get_grouptype
 from proposals.models import Proposal
 from proposals.utils import get_all_proposals
-from support.models import CapacityGroupAdministration
+from support.models import GroupAdministratorThrough, CapacityGroup
 from timeline.utils import get_timeslot, get_timephase_number
 from tracking.models import ProposalStatusChange
 
@@ -168,27 +167,27 @@ def verify_assistant_fn(user):
               user.email)
     return True
 
-
-@group_required('type3staff')
-def get_group_admins(request, group=""):
-    """
-    Get all capacity group administration members as JSON
-
-    :param request:
-    :param group: the group where you want the administration member from
-    :return:
-    """
-    objs = CapacityGroupAdministration.objects.filter(Group=group)
-    if not objs.exists():
-        return HttpResponse("Could not find group")
-    else:
-        obj = objs[0]
-
-    mmbrs = set()
-    for m in obj.Members.all():
-        mmbrs.add(str(m.id))
-    return JsonResponse(list(mmbrs), safe=False)
-
+#
+# @group_required('type3staff')
+# def get_group_admins(request, group=""):
+#     """
+#     Get all capacity group administration members as JSON
+#
+#     :param request:
+#     :param group: the group where you want the administration member from
+#     :return:
+#     """
+#     objs = CapacityGroupAdministration.objects.filter(Group=group)
+#     if not objs.exists():
+#         return HttpResponse("Could not find group")
+#     else:
+#         obj = objs[0]
+#
+#     mmbrs = set()
+#     for m in obj.Members.all():
+#         mmbrs.add(str(m.id))
+#     return JsonResponse(list(mmbrs), safe=False)
+#
 
 @login_required
 def list_public_projects_api(request):
@@ -200,11 +199,11 @@ def list_public_projects_api(request):
     """
     data = {}
 
-    for group in GroupOptions:
-        data[group[0]] = {
-            "name": group[0],
+    for group in CapacityGroup.objects.all():  # TODO Change to capacity group model
+        data[group.ShortName] = {
+            "name": group.ShortName,
             "projects": [prop.id for prop in
-                         get_all_proposals().filter(Q(Status=4) & Q(Group=group[0]) & Q(Private__isnull=True))]
+                         get_all_proposals().filter(Q(Status=4) & Q(Group=group) & Q(Private__isnull=True))]
         }
 
     return JsonResponse(data)
@@ -266,9 +265,22 @@ def list_published_api(request):
             "id": prop.id,
             "detaillink": reverse("proposals:details", args=[prop.id]),
             "title": prop.Title,
-            "group": prop.Group,
+            "group": prop.Group.ShortName,
             "track": str(prop.Track),
             "reponsible": str(prop.ResponsibleStaff),
             "assistants": [str(u) for u in list(prop.Assistants.all())],
         })
     return JsonResponse(prop_list, safe=False)
+
+
+@group_required('type3staff')
+def get_group_admins(request, pk, type):
+    group = get_object_or_404(CapacityGroup, pk=pk)
+    if type == 'read':
+        return JsonResponse([g.User.id for g in GroupAdministratorThrough.objects.filter(Group=group, Super=False)],
+                            safe=False)
+    elif type == 'write':
+        return JsonResponse([g.User.id for g in GroupAdministratorThrough.objects.filter(Group=group, Super=True)],
+                            safe=False)
+    else:
+        return HttpResponseBadRequest()

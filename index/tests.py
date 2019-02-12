@@ -39,7 +39,6 @@ class IndexViewsTest(ProjectViewsTestGeneral):
             [['termsaccept', None], self.p_redirect],
             [['edit_tracks', None], self.p_support],
             [['robots', None], self.p_anonymous],
-
         ]
 
         self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes_status)

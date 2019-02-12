@@ -1,3 +1,5 @@
+{# used as inclusion in other files #}
+{# table visible in list_applications_distributions and manual_distribute #}
 <table class="table bordered datatable" id="proposalTable">
     <thead>
     <tr>
@@ -24,24 +26,24 @@
                 <a href="mailto:{{ proposal.ResponsibleStaff.email }}">{{ proposal.ResponsibleStaff.usermeta.get_nice_name }}</a>
             </td>
             {% if phasenumber < 6 %}
-                <td data-sort="{{ proposal.NumstudentsMin }}">
-                                    <span class="NrOfStudents" data-min="{{ proposal.NumstudentsMin }}"
-                                          data-max="{{ proposal.NumstudentsMax }}">
+                <td data-sort="{{ proposal.NumStudentsMin }}">
+                                    <span class="NrOfStudents" data-min="{{ proposal.NumStudentsMin }}"
+                                          data-max="{{ proposal.NumStudentsMax }}">
                                         {# icon #}
                                         {% if proposal.distributions.all|length == 0 %}
                                             <span class="NrOfStudentsIcon"></span>
-                                        {% elif proposal.distributions.all|length < proposal.NumstudentsMin %}
+                                        {% elif proposal.distributions.all|length < proposal.NumStudentsMin %}
                                             <span class="NrOfStudentsIcon fg-orange mif-vertical-align-bottom"></span>
-                                        {% elif proposal.distributions.all|length > proposal.NumstudentsMax %}
+                                        {% elif proposal.distributions.all|length > proposal.NumStudentsMax %}
                                             <span class="NrOfStudentsIcon fg-red mif-vertical-align-top"></span>
                                         {% else %}
                                             <span class="NrOfStudentsIcon fg-green mif-checkmark"></span>
                                         {% endif %}
                                         {# text #}
-                                        {% if proposal.NumstudentsMin == proposal.NumstudentsMax %}
-                                            {{ proposal.NumstudentsMax }}
+                                        {% if proposal.NumStudentsMin == proposal.NumStudentsMax %}
+                                            {{ proposal.NumStudentsMax }}
                                         {% else %}
-                                            {{ proposal.NumstudentsMin }} - {{ proposal.NumstudentsMax }}
+                                            {{ proposal.NumStudentsMin }} - {{ proposal.NumStudentsMax }}
                                         {% endif %}
                                     </span>
                 </td>
@@ -49,7 +51,7 @@
                     <ul class="no-margin">
                         {% for application in proposal.applications.all|dictsort:"Priority" %}
                             <li class="application-student-click clickable"
-                                data-student="{{ application.Student.usermeta.Fullname }}">
+                                data-student="{{ application.Student.usermeta.get_nice_fullname }}">
                                 {# The list of students that has applied to this Proposal. #}
                                 {# if this Student is chosen for this Proposal (this is db-heavy..) #}
                                 <span data-role="hint"
@@ -65,12 +67,12 @@
                                     {% if "automotive" in application.Student.usermeta.Study|lower %}
                                         <span class="icon mif-automobile"></span>
                                     {% endif %}
-                                    <span class="studentName">{{ application.Student.usermeta.Fullname }}</span>
+                                    <span class="studentName">{{ application.Student.usermeta.get_nice_fullname }}</span>
                                     </span>
                             </li>
                         {% endfor %}
                         {% for privstd in proposal.Private.all %}
-                            <li class="private-student-click clickable" data-student="{{ privstd.usermeta.Fullname }}">
+                            <li class="private-student-click clickable" data-student="{{ privstd.usermeta.get_nice_fullname }}">
                             <span data-role="hint"
                                   data-hint-background="bg-grayLight"
                                   data-hint-position="right"
@@ -84,7 +86,7 @@
                                 {% if "automotive" in privstd.usermeta.Study|lower %}
                                     <span class="icon mif-automobile"></span>
                                 {% endif %}
-                                <span class="studentName">{{ privstd.usermeta.Fullname }}</span>
+                                <span class="studentName">{{ privstd.usermeta.get_nice_fullname }}</span>
                                 </span>
                             </li>
                         {% endfor %}
@@ -104,13 +106,13 @@
                     data-proposal="{{ proposal.pk }}">
                     {% if distribute %}{# for distribute #}
                         {% for dist in proposal.distributions.all %}
-                            {% include "distributions/Support_include_studentBlock.html" with student=dist.Student dist=dist only %}
+                            {% include "distributions/inc_student_block.html" with student=dist.Student dist=dist only %}
                         {% endfor %}
                         {% else %}{# for list #}
                         {% for dist in proposal.distributions.all %}
                             {% with student=dist.Student %}
                                 <li class="distributed-student-click clickable"
-                                    data-student="{{ student.usermeta.Fullname }}">
+                                    data-student="{{ student.usermeta.get_nice_fullname }}">
                             <span data-role="hint"
                                   data-hint-background="bg-grayLight"
                                   data-hint-position="right"
@@ -130,7 +132,7 @@
                                 {% if "automotive" in student.usermeta.Study|lower %}
                                     <span class="icon mif-automobile"></span>
                                 {% endif %}
-                                <span class="studentName">{{ student.usermeta.Fullname }}</span>
+                                <span class="studentName">{{ student.usermeta.get_nice_fullname }}</span>
                             </span>
                                 </li>
                             {% endwith %}

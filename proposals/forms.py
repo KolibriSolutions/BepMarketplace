@@ -24,7 +24,7 @@ from .models import Proposal as Project
 from .models import ProposalImage as ProjectImage
 from .models import ProposalAttachment as ProjectAttachment
 from .models import ProposalFile as ProjectFile
-from support.utils import get_writable_admingroups
+from proposals.utils import get_writable_admingroups
 
 logger = logging.getLogger('django')
 
@@ -161,9 +161,7 @@ def create_user_from_email(email, username, student=False):
 class ProposalFormLimited(forms.ModelForm):
     """
     Form to change assistants and title on a project
-    TODO no checks are run with this form. ResponsibleStaff can become Assistant and Duplicate titles can be made
     """
-
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
@@ -188,6 +186,25 @@ class ProposalFormLimited(forms.ModelForm):
             'Title': widgets.MetroTextInput,
             'Assistants': widgets.MetroSelectMultiple,
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # Title should be unique within one timeslot.
+        p = Project.objects.filter(TimeSlot=self.instance.TimeSlot).filter(Title__iexact=cleaned_data.get('Title'))
+        if p.exists():
+            for conflict_or_self in p:
+                if conflict_or_self.id != self.instance.id:
+                    raise ValidationError('A proposal with this title already exists in this timeslot')
+        for account in self.cleaned_data.get('Assistants'):
+            if account == self.instance.ResponsibleStaff:
+                raise ValidationError("The responsible staff member cannot be assistants of its own project.")
+            # for assistants added using email, the queryset is not checked, so check groups now.
+            if get_grouptype('2') not in account.groups.all() and \
+                    get_grouptype('2u') not in account.groups.all() and \
+                    get_grouptype('1') not in account.groups.all():
+                raise ValidationError(
+                    "The user {} is not allowed as assistant. Please contact the support staff if this user needs to be added.".format(account.usermeta.get_nice_name()))
+        return cleaned_data
 
 
 class ProjectForm(forms.ModelForm):
@@ -239,8 +256,8 @@ class ProjectForm(forms.ModelForm):
                   'addAssistantsEmail',
                   'Track',
                   'Group',
-                  'NumstudentsMin',
-                  'NumstudentsMax',
+                  'NumStudentsMin',
+                  'NumStudentsMax',
                   'GeneralDescription',
                   'StudentsTaskDescription',
                   'ExtensionDescription',
@@ -250,8 +267,8 @@ class ProjectForm(forms.ModelForm):
                   ]
 
         labels = {
-            'NumstudentsMin': 'Minimum number of students',
-            'NumstudentsMax': 'Maximum number of students',
+            'NumStudentsMin': 'Minimum number of students',
+            'NumStudentsMax': 'Maximum number of students',
             'GeneralDescription': 'General description',
             'StudentsTaskDescription': 'Students task description',
             'ExtensionDescription': 'Description for extension work',
@@ -264,8 +281,8 @@ class ProjectForm(forms.ModelForm):
             'Assistants': widgets.MetroSelectMultiple,
             'Track': widgets.MetroSelect,
             'Group': widgets.MetroSelect,
-            'NumstudentsMin': widgets.MetroNumberInputInteger,
-            'NumstudentsMax': widgets.MetroNumberInputInteger,
+            'NumStudentsMin': widgets.MetroNumberInputInteger,
+            'NumStudentsMax': widgets.MetroNumberInputInteger,
             'GeneralDescription': widgets.MetroMultiTextInput,
             'StudentsTaskDescription': widgets.MetroMultiTextInput,
             'ExtensionDescription': widgets.MetroMultiTextInput,
@@ -329,26 +346,26 @@ class ProjectForm(forms.ModelForm):
         cleaned_data = super().clean()
         # add and check private students
         privates = []
-        if self.cleaned_data.get('Private'):
-            privates += self.cleaned_data.get('Private')
-        if self.cleaned_data.get('addPrivatesEmail'):
-            privates += self.cleaned_data.get('addPrivatesEmail')
+        if cleaned_data.get('Private'):
+            privates += cleaned_data.get('Private')
+        if cleaned_data.get('addPrivatesEmail'):
+            privates += cleaned_data.get('addPrivatesEmail')
         privates = set(privates)
         for account in privates:
             for p in account.personal_proposal.all():
-                if p.TimeSlot == self.cleaned_data.get('TimeSlot') and p.pk != self.instance.pk:
+                if p.TimeSlot == cleaned_data.get('TimeSlot') and p.pk != self.instance.pk:
                     raise ValidationError(
                         "Student {} already has another private proposal!".format(account.usermeta.get_nice_name()))
-        self.cleaned_data['Private'] = privates
+        cleaned_data['Private'] = privates
         # add and check assistants.
         assistants = []
-        if self.cleaned_data.get('Assistants'):
-            assistants += self.cleaned_data.get('Assistants')
-        if self.cleaned_data.get('addAssistantsEmail'):
-            assistants += self.cleaned_data.get('addAssistantsEmail')
+        if cleaned_data.get('Assistants'):
+            assistants += cleaned_data.get('Assistants')
+        if cleaned_data.get('addAssistantsEmail'):
+            assistants += cleaned_data.get('addAssistantsEmail')
         assistants = set(assistants)
         for account in assistants:
-            if account == self.cleaned_data.get('ResponsibleStaff'):
+            if account == cleaned_data.get('ResponsibleStaff'):
                 raise ValidationError("The responsible staff member cannot be assistants of its own project.")
             # for assistants added using email, the queryset is not checked, so check groups now.
             if get_grouptype('2') not in account.groups.all() and \
@@ -356,7 +373,7 @@ class ProjectForm(forms.ModelForm):
                     get_grouptype('1') not in account.groups.all():
                 raise ValidationError(
                     "The user {} is not allowed as assistant. Please contact the support staff if this user needs to be added.".format(account.usermeta.get_nice_name()))
-        self.cleaned_data['Assistants'] = assistants
+        cleaned_data['Assistants'] = assistants
         return cleaned_data
 
     def save(self, commit=True):

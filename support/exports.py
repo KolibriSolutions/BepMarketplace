@@ -5,10 +5,10 @@ from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 
 from general_view import timestamp
-from results.models import GradeCategory
-from timeline.utils import get_timeslot
 from professionalskills.models import FileType, StaffReponse
 from proposals.utils import get_share_link
+from results.models import GradeCategory
+from timeline.utils import get_timeslot
 
 
 def get_list_students_xlsx(des, typ):
@@ -62,7 +62,7 @@ def get_list_students_xlsx(des, typ):
                 reslist.append(d.results.get(Category=c).Grade)
             except:
                 reslist.append('-')
-        row = [d.Student.usermeta.Studentnumber, d.Student.usermeta.Fullname, d.Proposal.Title,
+        row = [d.Student.usermeta.Studentnumber, d.Student.usermeta.get_nice_fullname(), d.Proposal.Title,
                d.Proposal.ResponsibleStaff.usermeta.get_nice_name()]
         assistants = ''
         for a in d.Proposal.Assistants.all():
@@ -89,61 +89,61 @@ def get_list_students_xlsx(des, typ):
 
     return save_virtual_workbook(wb)
 
-
-def get_list_staff_xlsx(staff):
-    """
-    Lists all staff from the marketplace, with number of proposals and distributions
-
-    :param staff:
-    :return:
-    """
-
-    def nint(nr):
-        """
-
-        :param nr:
-        :return:
-        """
-        if nr is None:
-            return 0
-        else:
-            return int(nr)
-
-    wb = Workbook()
-
-    # grab the active worksheet
-    ws = wb.active
-    ws.title = "staff"
-
-    ws['A1'] = "Staff from Bep Marketplace"
-    ws['A1'].style = 'Headline 2'
-    ws['F1'] = "Exported on: " + timestamp()
-    header = ["Name", "Email", "Proposals responsible", "Proposals assistant", "Proposals total",
-              "Distribution responsible ", "Distributions assistant", "Distributions total"]
-
-    ws.column_dimensions['A'].width = 25  # name
-    ws.column_dimensions['B'].width = 25  # mail
-
-    ws.append(header)
-
-    for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
-        ws[col + '2'].style = 'Headline 3'
-
-    for s in staff:
-        pt1 = s.proposalsresponsible.count()
-        pt2 = s.proposals.count()
-        pts = pt1 + pt2
-        dt1 = nint(s.proposalsresponsible.all().annotate(Count('distributions')).aggregate(Sum('distributions__count'))[
-                       'distributions__count__sum'])
-        dt2 = nint(s.proposals.all().annotate(Count('distributions')).aggregate(Sum('distributions__count'))[
-                       'distributions__count__sum'])
-        dts = dt1 + dt2
-        row = [s.usermeta.get_nice_name(), s.email,
-               pt1, pt2, pts,
-               dt1, dt2, dts
-               ]
-        ws.append(row)
-    return save_virtual_workbook(wb)
+#  Does not filter on timeslot, depricated.
+# def get_list_staff_xlsx(staff):
+#     """
+#     Lists all staff from the marketplace, with number of proposals and distributions
+#
+#     :param staff:
+#     :return:
+#     """
+#
+#     def nint(nr):
+#         """
+#
+#         :param nr:
+#         :return:
+#         """
+#         if nr is None:
+#             return 0
+#         else:
+#             return int(nr)
+#
+#     wb = Workbook()
+#
+#     # grab the active worksheet
+#     ws = wb.active
+#     ws.title = "staff"
+#
+#     ws['A1'] = "Staff from Bep Marketplace"
+#     ws['A1'].style = 'Headline 2'
+#     ws['F1'] = "Exported on: " + timestamp()
+#     header = ["Name", "Email", "Proposals responsible", "Proposals assistant", "Proposals total",
+#               "Distribution responsible ", "Distributions assistant", "Distributions total"]
+#
+#     ws.column_dimensions['A'].width = 25  # name
+#     ws.column_dimensions['B'].width = 25  # mail
+#
+#     ws.append(header)
+#
+#     for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
+#         ws[col + '2'].style = 'Headline 3'
+#
+#     for s in staff:
+#         pt1 = s.proposalsresponsible.count()
+#         pt2 = s.proposals.count()
+#         pts = pt1 + pt2
+#         dt1 = nint(s.proposalsresponsible.all().annotate(Count('distributions')).aggregate(Sum('distributions__count'))[
+#                        'distributions__count__sum'])
+#         dt2 = nint(s.proposals.all().annotate(Count('distributions')).aggregate(Sum('distributions__count'))[
+#                        'distributions__count__sum'])
+#         dts = dt1 + dt2
+#         row = [s.usermeta.get_nice_name(), s.email,
+#                pt1, pt2, pts,
+#                dt1, dt2, dts
+#                ]
+#         ws.append(row)
+#     return save_virtual_workbook(wb)
 
 
 def get_list_distributions_xlsx(proposals):
@@ -191,9 +191,9 @@ def get_list_distributions_xlsx(proposals):
         for d in des:
             stdsmail += d.Student.email + '; '
             try:
-                stds += d.Student.usermeta.Fullname + " (" + d.Student.usermeta.Studentnumber + "); "
+                stds += d.Student.usermeta.get_nice_fullname() + " (" + d.Student.usermeta.Studentnumber + "); "
             except:
-                stds += d.Student.usermeta.Fullname + "; "
+                stds += d.Student.usermeta.get_nice_fullname() + "; "
         row.append(stds)
         row.append(stdsmail)
         emails = '{};'.format(p.ResponsibleStaff.email)

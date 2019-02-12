@@ -7,7 +7,8 @@ from django.urls import reverse
 from general_view import get_grouptype
 from timeline.utils import get_timephase_number, get_timeslot
 from .models import Proposal
-from support.utils import group_administrator_status
+# from support.utils import group_administrator_status
+from support.models import GroupAdministratorThrough
 
 
 def can_downgrade_project_fn(user, prop):
@@ -37,7 +38,7 @@ def can_downgrade_project_fn(user, prop):
             return True, ""
 
         # Track head can downgrade in phase 1 and 2
-        if get_timephase_number() <= 2 and (prop.Track.Head == user or group_administrator_status(prop, user) == 1):
+        if get_timephase_number() <= 2 and (prop.Track.Head == user or group_administrator_status(prop, user) > 1):
             return True, ""
     else:
         # if status is 3 Responsible can downgrade 3-2 if not in this timeslot
@@ -45,7 +46,7 @@ def can_downgrade_project_fn(user, prop):
             return True, ""
 
         # Track head is allowed all for not this timeslot
-        if prop.Track.Head == user or group_administrator_status(prop, user) == 1:
+        if prop.Track.Head == user or group_administrator_status(prop, user) > 1:
             return True, ""
 
     # if status is 2 and user is assistant downgrade is allowed
@@ -75,7 +76,7 @@ def can_edit_project_fn(user, prop, file):
 
     # published proposals can only ever be edited limited. choice of form is done in view function
     if prop.Status == 4:
-        if (prop.ResponsibleStaff == user or user == prop.Track.Head or group_administrator_status(prop, user) == 1) and not file:
+        if (prop.ResponsibleStaff == user or user == prop.Track.Head or group_administrator_status(prop, user) == 2) and not file:
             # file cannot be edited in limited edit.
             return True, ''  # it is the responsibility of the view that the right form is choosen
 
@@ -100,7 +101,7 @@ def can_edit_project_fn(user, prop, file):
             return False, 'No editing allowed anymore, not right time phase'
 
     # track heads are allowed to edit in the create and check phase
-    if prop.Track.Head == user or group_administrator_status(prop, user) == 1:
+    if prop.Track.Head == user or group_administrator_status(prop, user) == 2:
         return True, ''
 
     # if status is either 1 or 2 and user is assistant edit is allowed in create+check timephase
@@ -203,3 +204,43 @@ def updatePropCache_pk(pk):
     prop = get_object_or_404(Proposal, pk=pk)
     if prop.Status == 4:
         cache.set('proposal_{}'.format(pk), prop, None)
+
+
+def group_administrator_status(project, user):
+    """
+    Returns the administrator status of user for the group belonging to the project
+    status 0: no admin
+    status 1: read only admin
+    status 2: read/write admin
+
+    :param project:
+    :param user:
+    :return:
+    """
+    try:
+        g = GroupAdministratorThrough.objects.get(Group=project.Group, User=user)
+    except GroupAdministratorThrough.DoesNotExist:
+        # for psg in project.SecondaryGroup.all():
+        #     try:
+        #         gs = GroupAdministratorThrough.objects.get(Group=psg, User=user)
+        #     except GroupAdministratorThrough.DoesNotExist:
+        #         continue
+        #     return 1  # groupadmin of secondary group can only view, not edit.
+        return 0  # no primary and no secondary group admin
+
+    # groupadmin of primary group, check super value.
+    if g.Super:
+        return 2  # rw
+    else:
+        return 1  # readonly
+
+
+def get_writable_admingroups(user):
+    """
+    returns group objects for which this user is writable group admin
+
+    :param user:
+    :return:
+    """
+    return [g.Group for g in GroupAdministratorThrough.objects.filter(User=user, Super=True)]
+

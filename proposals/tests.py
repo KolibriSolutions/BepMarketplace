@@ -23,7 +23,8 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
             [['stats', None], [s.p_staff12345]],
         ]
         code_general_phase12345 = [
-            [['list', None],  s.p_all],
+            [['list', None],                       s.p_all],
+            [['favorites', None],                 s.p_all],
             [['create', None],                     s.p_staff_prop],
             [['chooseedit', None],                 s.p_staff_prop_no4],
             [['pending', None],                    s.p_pending],
@@ -32,11 +33,12 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
             [['listtrackproposals', None],         s.p_track],
         ]
         code_general_phase67 = [
-            [['list', None], [s.p_all]],
+            [['list', None],                       s.p_all],
+            [['favorites', None],                 s.p_all],
             [['create', None],                     s.p_staff_prop],
             [['chooseedit', None],                 s.p_staff_prop_no4],
             [['pending', None],                    s.p_pending],
-            [['statspersonal', None],                      s.p_staff_prop_no4],
+            [['statspersonal', None],              s.p_staff_prop_no4],
             [['statsgeneral', None],               s.p_staff_prop],
             [['listtrackproposals', None],         s.p_track],
         ]

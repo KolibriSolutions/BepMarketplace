@@ -43,8 +43,6 @@ def osirisToMeta(request):
                     meta.Study = 'Automotive'
                 else:
                     meta.Study = 'Eletrical Engineering'
-                meta.EnrolledBEP = p.enrolled
-                meta.EnrolledExt = p.enrolledextension
                 meta.Cohort = p.cohort
                 meta.ECTS = p.ects
                 meta.Studentnumber = p.idnumber

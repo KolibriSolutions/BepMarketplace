@@ -1,13 +1,14 @@
 {% extends "base.html" %}
+{% load static %}
 {% load custom_filters %}
 {% GetPhaseNumber as phasenumber %}
 {% block body %}
     {% if title %}
         <h1>{{ title }}</h1>
     {% elif user|has_group:'type3staff' %}
-        <h1>All Proposals</h1>
+        <h1>All projects</h1>
     {% else %}
-        <h1>My Proposals</h1>
+        <h1>My projects</h1>
     {% endif %}
     <a href="#" id="projectinfo" class="columnToggle button"><span></span> project details</a>
 
@@ -15,6 +16,7 @@
         <table class="table datatable striped" data-order='[[2, "asc"]]'>
             <thead>
             <tr>
+                <th><span class="mif-star-half icon"></span></th>
                 <th data-priority="4" data-searchable="false" data-sortable="false">{% if phasenumber < 5 %}
                     Edit{% else %}Distributions{% endif %}</th>
                 <th data-visible='false' class="projectinfo">Timeslot</th>
@@ -29,37 +31,42 @@
             </tr>
             </thead>
             <tbody>
-            {% for proposal in proposals %}
+            {% for project in proposals %}
                 <tr>
                     <td>
+                    <span id="fav-{{ project.pk }}"
+                          class="star-favorite mif-star-{% if project.pk in favorite_projects %}full{% else %}empty{% endif %} icon">
+                    </span>
+                    </td>
+                    <td>
                         {% if not user|has_group:"type5staff" or user.is_superuser %}
-                            {# type3 can delete old proposals, no edit as history cannot be changed #}
-                            {% if proposal.prevyear %}
+                            {# type3 can delete old projects, no edit as history cannot be changed #}
+                            {% if project.prevyear %}
                                 {% if user|has_group:"type3staff" %}
-                                    {% if proposal.Status < 3 %}
-                                        <a href="{% url 'proposals:askdeleteproposal' proposal.id %}"
+                                    {% if project.Status < 3 %}
+                                        <a href="{% url 'proposals:askdeleteproposal' project.id %}"
                                            class="button warning">Delete</a>
                                     {% endif %}
                                 {% endif %}
                             {% else %}
-                                {# show edit buttons for proposals of this year in lower timephases  #}
+                                {# show edit buttons for projects of this year in lower timephases  #}
                                 {% if phasenumber < 5 %}
-                                    <a href="{% url 'proposals:details' proposal.id %}" class="button primary">View</a>
-                                    {% if proposal|can_edit_project:user %}
-                                        <a class="button primary" href="{% url 'proposals:edit' proposal.id %}">
+                                    <a href="{% url 'proposals:details' project.id %}" class="button primary">View</a>
+                                    {% if project|can_edit_project:user %}
+                                        <a class="button primary" href="{% url 'proposals:edit' project.id %}">
                                             Edit data
                                         </a>
                                         {% if user|has_group:"type3staff" %}
-                                            {% if proposal.Status < 3 %}
-                                                <a href="{% url 'proposals:askdeleteproposal' proposal.id %}"
+                                            {% if project.Status < 3 %}
+                                                <a href="{% url 'proposals:askdeleteproposal' project.id %}"
                                                    class="button warning">Delete</a>
                                             {% endif %}
                                         {% endif %}
                                     {% endif %}
-                                    {# Proposals of this year in phase 5 or later #}
+                                    {# projects of this year in phase 5 or later #}
                                 {% else %}
                                     <ul>
-                                        {% for dist in proposal.distributions.all %}
+                                        {% for dist in project.distributions.all %}
                                             <li>
                                                 {{ dist.Student.usermeta.get_nice_name }}
                                                 ({{ dist.Student.usermeta.Studentnumber }})
@@ -68,36 +75,36 @@
                                     </ul>
                                 {% endif %}
                             {% endif %}
-                            {# show "copy" button for proposals #}
-                            {% if proposal.prevyear %}
-                                <a class="button primary" href="{% url 'proposals:copy' proposal.id %}">
+                            {# show "copy" button for projects #}
+                            {% if project.prevyear %}
+                                <a class="button primary" href="{% url 'proposals:copy' project.id %}">
                                     Copy
                                 </a>
                             {% endif %}
                         {% endif %}
                     </td>
-                    <td>{{ proposal.TimeSlot|default:"Future" }}</td>
-                    <td><a href="{% url 'proposals:details' proposal.id %}" class="capitalize">{{ proposal.Title }}</a>
+                    <td>{{ project.TimeSlot|default:"Future" }}</td>
+                    <td><a href="{% url 'proposals:details' project.id %}" class="capitalize">{{ project.Title }}</a>
                     </td>
-                    <td>{{ proposal.Track }}</td>
-                    <td>{{ proposal.Group }}</td>
+                    <td>{{ project.Track }}</td>
+                    <td>{{ project.Group }}</td>
                     <td>
-                        <a href="mailto:{{ proposal.ResponsibleStaff.email }}">
-                            {{ proposal.ResponsibleStaff.usermeta.get_nice_name }}
+                        <a href="mailto:{{ project.ResponsibleStaff.email }}">
+                            {{ project.ResponsibleStaff.usermeta.get_nice_name }}
                         </a>
                     </td>
                     <td>
                         <ul>
-                            {% for a in proposal.Assistants.all %}
+                            {% for a in project.Assistants.all %}
                                 <li><a href="mailto:{{ a.email }}">{{ a.usermeta.get_nice_name }}</a></li>
                             {% endfor %}
                         </ul>
                     </td>
-                    <td data-sort="status{{ proposal.Status }}">{{ proposal.get_Status_display }}</td>
+                    <td data-sort="status{{ project.Status }}">{{ project.get_Status_display }}</td>
                     {% if private %}
                         <td>
                             <ul>
-                                {% for a in proposal.Private.all %}
+                                {% for a in project.Private.all %}
                                     <li><a href="mailto:{{ a.email }}">{{ a.usermeta.get_nice_name }}</a></li>
                                 {% endfor %}
                             </ul>
@@ -111,22 +118,39 @@
 {% endblock %}
 {% block scripts %}
     {{ block.super }}
+    <script src="{% static "channels/js/websocketbridge.js" %}"></script>
+    <script src="{% static "js/favorite.js" %}"></script>
     <script type="text/javascript">
         $(document).ready(function () {
+            // custom sort for favorite button, https://datatables.net/examples/plug-ins/dom_sort.html
+            $.fn.dataTable.ext.order['dom-order-favorite'] = function (settings, col) {
+                return this.api().column(col, {order: 'index'}).nodes().map(function (td, i) {
+                    return $('span', td).hasClass('mif-star-full') ? '1' : '0';
+                });
+            };
+            // make cols array for datatables
+            const l = $("table.datatable th").length;
+            const cols = new Array(l);
+            for (var i = 0; i < l; i++) {
+                cols[i] = null;
+            }
+            // set first column to custom sort function
+            cols[0] = {"orderDataType": "dom-order-favorite"};
+            // call datatables with yadcf and the cols array.
             var dt = $('.datatable').dt_wrapper([
-                    {column_number: 1, filter_type: "select"},
-                    {column_number: 3, filter_type: "select"},
-                    {column_number: 4, filter_type: "select"},
-                    {column_number: 5, filter_type: "select", column_data_type: 'html'},  // to parse mailto links
+                    {column_number: 2, filter_type: "select"},
+                    {column_number: 4, filter_type: "select", filter_match_mode: 'exact'},
+                    {column_number: 5, filter_type: "select", filter_match_mode: 'exact'},
+                    {column_number: 6, filter_type: "select", column_data_type: 'html'},  // to parse mailto links
                     {
-                        column_number: 6,
+                        column_number: 7,
                         filter_type: "select",
                         column_data_type: 'html',
                         html_data_type: 'selector',
                         html_data_selector: 'li'
                     }, //to parse ul-li
-                    {column_number: 7, filter_type: "select"},
-                ]
+                    {column_number: 8, filter_type: "select"},
+                ], cols
             );
             $(".columnToggle").click(function () {
                 //reset width:

@@ -38,9 +38,9 @@ class AutomaticDistributionTest(TestCase):
         Setup test data, like users and groups.
         """
         self.factory = RequestFactory()
-
         management.call_command('flush', verbosity=0, interactive=False)
         management.call_command('loaddata', settings.BASE_DIR + '/distributions/distribution-testdb.json', verbosity=0)
+        self.debug = True # whether to produce output
 
     def test_distribution(self):
         n = datetime.now().date()
@@ -49,9 +49,10 @@ class AutomaticDistributionTest(TestCase):
         for ts in TimeSlot.objects.all():  # two years of testdata
             year_all = get_user_model().objects.filter(Q(usermeta__EnrolledBEP=True) & Q(groups=None) & Q(usermeta__TimeSlot=ts))
             year_priv = year_all.filter(Q(personal_proposal__isnull=False)).distinct().count()  # private students of this year.
-            year_norm = year_all.filter(Q(personal_proposal__isnull=True) & Q(applications__isnull=False)).distinct().count()  # all students without private with applications. These can be distributed.
+            year_norm = len([s for s in year_all.filter(Q(personal_proposal__isnull=True) & Q(applications__isnull=False)).distinct() if s.applications.filter(Proposal__TimeSlot=ts).exists()])  # all students without private with applications. These can be distributed.
             year_all = year_all.count()  # all students in this year
-            print(color.BOLD + color.UNDERLINE + 'year: {} (id: {}). {} students, {} privates and {} normal applications.'.format(ts.Name, ts.pk, year_all, year_priv, year_norm) + color.END)
+            if self.debug:
+                print(color.BOLD + color.UNDERLINE + 'year: {} (id: {}). {} students, {} privates and {} normal applications.'.format(ts.Name, ts.pk, year_all, year_priv, year_norm) + color.END)
             ts.Begin = n - timedelta(days=2)
             ts.End = n + timedelta(days=2)
             ts.save()
@@ -64,16 +65,20 @@ class AutomaticDistributionTest(TestCase):
             )
             tp.save()
             for distribute_random in [0, 1]:
-                print(color.BOLD + "With distribute random {}".format(bool(distribute_random)) + color.END)
+                if self.debug:
+                    print(color.BOLD + "With distribute random {}".format(bool(distribute_random)) + color.END)
                 for automotive_preference in [0, 1]:
-                    print(color.BOLD + "With automotive preference {}".format(bool(automotive_preference)) + color.END)
+                    if self.debug:
+                        print(color.BOLD + "With automotive preference {}".format(bool(automotive_preference)) + color.END)
                     for t in [1, 2]:
-                        print(color.BOLD + "automatic distribution type {}".format(['', 'From student', 'From project'][t]) + color.END)
+                        if self.debug:
+                            print(color.BOLD + "automatic distribution type {}".format(['', 'From student', 'From project'][t]) + color.END)
                         request = self.factory.get('/distributions/automatic/{}/'.format(t))
                         request.user = u.first()  # any support user will do.
                         headers, table, dists = automatic(request, t, distribute_random, automotive_preference)
-                        print("Percentage division per cohort. random and preference 1-5")
-                        print(tabulate(table, headers=headers))
+                        if self.debug:
+                            print("Percentage division per cohort. random and preference 1-5")
+                            print(tabulate(table, headers=headers))
                         # dists, response[2] dict:
                         # 'student': student,
                         # 'proposal': get_all_proposals().get(pk=obj.ProjectID),
@@ -81,29 +86,30 @@ class AutomaticDistributionTest(TestCase):
                         # find overfull projects
                         proposals = set([d['proposal'] for d in dists if d['proposal'] is not None])
                         for p in proposals:
-                            proposal_min = p.NumstudentsMin
-                            proposal_max = p.NumstudentsMax
+                            proposal_min = p.NumStudentsMin
+                            proposal_max = p.NumStudentsMax
                             distributed = [d for d in dists if d['proposal'] == p]
                             proposal_dists = len(distributed)
                             priv = list(p.Private.all())
-                            if proposal_dists > proposal_max:
-                                print("Prop {} has {} dists where {} is max!".format(p, proposal_dists,
-                                                                                     proposal_max))
-                                for d in distributed:
-                                    if priv:
-                                        print(' - prop: {}, private: {}, student: {}'.format(d['proposal'].id, priv,
-                                                                                             d['student'].id))
-                                    else:
-                                        print(' - prop: {}, student: {}'.format(d['proposal'].id, d['student'].id))
-                            # find underfull projects
-                            if proposal_dists < proposal_min:
-                                print("Prop {} has {} dists where {} is min!".format(p, proposal_dists,
-                                                                                     proposal_min))
-                                for d in distributed:
-                                    if priv:
-                                        print(' - prop: {}, private: {}, student: {}'.format(d['proposal'].id, priv, d['student'].id))
-                                    else:
-                                        print(' - prop: {}, student: {}'.format(d['proposal'].id, d['student'].id))
+                            if self.debug:
+                                if proposal_dists > proposal_max:
+                                    print("Prop {} has {} dists where {} is max!".format(p, proposal_dists,
+                                                                                         proposal_max))
+                                    for d in distributed:
+                                        if priv:
+                                            print(' - prop: {}, private: {}, student: {}'.format(d['proposal'].id, priv,
+                                                                                                 d['student'].id))
+                                        else:
+                                            print(' - prop: {}, student: {}'.format(d['proposal'].id, d['student'].id))
+                                # find underfull projects
+                                if proposal_dists < proposal_min:
+                                    print("Prop {} has {} dists where {} is min!".format(p, proposal_dists,
+                                                                                         proposal_min))
+                                    for d in distributed:
+                                        if priv:
+                                            print(' - prop: {}, private: {}, student: {}'.format(d['proposal'].id, priv, d['student'].id))
+                                        else:
+                                            print(' - prop: {}, student: {}'.format(d['proposal'].id, d['student'].id))
                         students = [d['student'] for d in dists]
                         dupes = set([x for x in students if students.count(x) > 1])
                         if dupes:

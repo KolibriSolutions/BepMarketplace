@@ -59,7 +59,7 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['respondfile', {'pk': 0}], self.p_forbidden],
             [['mailoverduestudents', None], self.p_forbidden],
             [['printprvforms', None], self.p_forbidden],
-            [['downloadall', {'pk': 0}], self.p_forbidden],
+            [['downloadall', {'pk': 100}], self.p_forbidden],
             [['listowngroups', None], self.p_forbidden],
             [['switchgroups', {'frompk': 0, 'topk': 1}], self.p_forbidden],
             [['listgroupmembers', {'pk': 0}], self.p_forbidden],

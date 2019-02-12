@@ -28,35 +28,6 @@
                 });
             }
         }
-        /*
-         function ToggleDown(proposalid, button)
-         {
-         if($(button).prop('checked')) {
-         if($("#appr_".concat(String(proposalid))).prop('checked'))
-         {
-         $("#appr_".concat(String(proposalid))).prop('checked', false);
-         $.get("/api/downgradestatus/" + String(proposalid));
-         }
-         $.get("/api/downgradestatus/" + String(proposalid), function(data){
-         $.Notify({
-         caption:'Result',
-         content: data,
-         type:'info'
-         })
-         });
-         }
-         else
-         {
-         $.get("/api/upgradestatus/" + String(proposalid), function(data){
-         $.Notify({
-         caption:'Result',
-         content: data,
-         type:'info'
-         })
-         });
-         }
-         }
-         */
     </script>
 {% endblock %}
 
@@ -74,7 +45,7 @@
         {% for proposal in proposals %}
             <tr>
                 <td><a href="{% url 'proposals:details' proposal.id %}" class="capitalize">{{ proposal.Title }}</a></td>
-                <td>{{ proposal.ResponsibleStaff.first_name }} {{ proposal.ResponsibleStaff.last_name }}</td>
+                <td>{{ proposal.ResponsibleStaff.usermeta.get_nice_name }}</td>
                 <td>
                     <label class="switch">
                         <input id="appr_{{ proposal.id }}" type="checkbox" onclick="ToggleUp({{ proposal.id }}, this);">
@@ -82,10 +53,6 @@
                     </label>
                 </td>
                 <td>
-                    <!--<label class="switch">
-    <input id="disappr_{{ proposal.id }}" type="checkbox" onclick="ToggleDown({{ proposal.id }}, this);">
-    <span class="check"></span>
-</label>-->
                     <a href="{% url 'proposals:downgradestatusmessage' proposal.id %}">
                         <button class="button danger">Downgrade status</button>
                     </a>

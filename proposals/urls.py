@@ -6,6 +6,7 @@ app_name = 'proposals'
 
 urlpatterns = [
     path('', views.list_public_projects, name='list'),
+    path('favorites/', views.list_favorited_projects, name='favorites'),
     path('details/<int:pk>/', views.detail_project, name='details'),
     path('create/', views.create_project, name='create'),
     path('edit/', views.list_own_projects, name='chooseedit'),

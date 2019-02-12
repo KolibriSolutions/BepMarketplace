@@ -41,7 +41,7 @@
             <tr>
                 <td><a href="{% url "proposals:details" prop.pk %}">{{ prop.Title }}</a></td>
                 <td>{{ prop.ResponsibleStaff.usermeta.get_nice_name }}</td>
-                <td>{{ prop.NumstudentsMax }}</td>
+                <td>{{ prop.NumStudentsMax }}</td>
                 <td>{{ prop.num_distr }}</td>
                 <td><a href="{{ lnk }}">{{ lnk }}</a></td>
 

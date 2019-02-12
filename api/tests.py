@@ -1,9 +1,8 @@
 from django.contrib.auth.models import User
-from django.urls import reverse
 
-from general_model import GroupOptions
 from general_test import ProjectViewsTestGeneral
 from index.models import UserMeta
+from support.models import CapacityGroup
 
 
 class ApiViewsTest(ProjectViewsTestGeneral):
@@ -18,11 +17,15 @@ class ApiViewsTest(ProjectViewsTestGeneral):
 
     def test_view_status(self):
         s = self
+        g = CapacityGroup(ShortName='ES', FullName='ES')
+        g.save()
         # not related to proposals
         codes_general_phase1234567 = [
             [['verifyassistant', {'pk': self.dummy.id}], s.p_support],  # use a dummy user without type2staffunverified
-            [['getgroupadmins', None], s.p_support],
-            [['getgroupadminsarg', {'group': GroupOptions[0][0]}], s.p_support],
+            # [['getgroupadmins', None], s.p_support],
+            # [['getgroupadminsarg', {'group': GroupOptions[0][0]}], s.p_support],
+            [['getgroupadmins', {'type': 'read', 'pk': g.pk}], s.p_support],
+            [['getgroupadmins', {'type': 'write', 'pk': g.pk}], s.p_support],
             [['listpublished', None], s.p_all],
             [['listpublishedpergroup', None], s.p_all],
             [['listpublishedtitles', None], s.p_all],

@@ -2,7 +2,8 @@
 {% load custom_filters %}
 {% block body %}
     <h1>List all users</h1>
-    <a href="{% url 'support:capacitygroupadministration' %}" class="button primary">Capacity Group Administration</a>
+    <a href="{% url 'support:groupadministratorsform' %}" class="button primary">Capacity Group Administration</a>
+{#    <a href="{% url 'support:capacitygroupadministration' %}" class="button primary">Capacity Group Administration</a>#}
     <a href="{% url 'index:edit_tracks' %}" class="button primary">Track heads</a>
     <a href="{% url 'support:verifyassistants' %}" class="button primary">Verify type2staffunverified</a>
 
@@ -40,8 +41,8 @@
                     <td data-sort="{{ u.last_login|date:"U" }}">{{ u.last_login }}</td>
                     <td>
                         {% if u.groups.exists %}
-                            {% if u.administratorgroups.exists %}
-                                Group admin of {% for group in u.groupadministratorthrough_set.all %}
+                            {% if u.administratoredgroups.exists %}
+                                Group admin of {% for group in u.administratoredgroups.all %}
                                 {{ group.Group.ShortName }} ({{ group.Super|yesno:"rw,r" }})
                             {% endfor %}
                             {% endif %}

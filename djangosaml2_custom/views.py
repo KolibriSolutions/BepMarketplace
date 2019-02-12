@@ -114,14 +114,10 @@ def check_user(request, user):
                                                           "allowed in this timephase."})
 
                 if get_timeslot() not in user.usermeta.TimeSlot.all():  # user is not active in this timeslot
-                    # since enrollment was already checked so make this student active in this timeslot
-                    user.usermeta.TimeSlot.add(get_timeslot())
-                    # if not user.usermeta.TimeSlot.exists():    # user has no timeslot, add the current timeslot
-                    #     # user has no timeslot
-                    #     user.usermeta.TimeSlot.add(get_timeslot())
-                    # else:  # user was active in another timeslot
-                    #     return render(request, 'base.html', status=403, context={"Message": "You already did your BEP once"
-                    #                                                                     ", login is not allowed."})
+                    # not in this timeslot so old user, canvas app sets timeslot
+                    # this security will fail if canvas does not close off old courses as it does now
+                    return render(request, 'base.html', status=403, context={"Message": "You already did your BEP once"
+                                                                                    ", login is not allowed."})
     return True
 
 

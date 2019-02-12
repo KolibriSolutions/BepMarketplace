@@ -29,10 +29,15 @@ class FileType(models.Model):
     """
     Name = models.CharField(max_length=256)
     Deadline = models.DateField()
-    TimeSlot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE)
+    TimeSlot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE, related_name='filetypes')
     Description = models.CharField(max_length=2056)
     AllowedExtensions = models.ManyToManyField(FileExtension)
     CheckedBySupervisor = models.BooleanField(default=True)
+
+    # TODO check whether approval/grade of this file has to be in the prv staffresponse OR in the final grading at presentations
+    # GradedInFinalGrade = models.BooleanField(default=False, help_text="Whether this file should be graded in the final grading process")
+    # AvailableAtPresentation = models.BooleanField(default=False, help_text="Whether this file should be made available to the presentation assessors during the presentation.")
+
 
     def get_allowed_extensions(self):
         return list(self.AllowedExtensions.values_list('Name', flat=True))
