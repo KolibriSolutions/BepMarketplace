@@ -12,10 +12,10 @@ __pycache__
 documentation/build/
 githash
 media/*
-migrations/
 templates/static/admin/*
 templates/static/channels/*
 BepMarketplace/config/secret.py
+BepMarketplace/secret.py
 tracking/telemetry/*
 *.lock
 *.csv
