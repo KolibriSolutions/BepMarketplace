@@ -13,7 +13,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.module_loading import import_module
 
-from general_model import GroupOptions
 from index.models import UserMeta, UserAcceptedTerms, Track
 from presentations.models import PresentationOptions, PresentationTimeSlot, PresentationSet, Room
 from proposals.models import Proposal
@@ -121,10 +120,11 @@ class ViewsTest(TestCase):
         self.p_redirect =       [302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302]  # everyone
 
         self.p_staff =          [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 200, 200, 200, 200, 200, 200, 200, 302]  # all staff, general
-        self.p_staff12345 =     [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 200, 403, 200, 200, 200, 302]  # all staff, general, for proposal stats
+        self.p_staff_veri =     [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 200, 200, 200, 200, 200, 302]  # all staff, without unverified
+        self.p_staff122u35 =    [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 200, 403, 200, 200, 200, 302]  # all staff, for chooseedit list
         self.p_staff_prop =     [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 200, 200, 403, 403, 200, 200, 200, 302]  # all staff, to create proposals
         self.p_staff_prop_no4 = [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 403, 403, 200, 200, 200, 302]  # all staff to create but no type4
-        self.p_staff_prop_nou=  [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 403, 403, 403, 403, 200, 200, 200, 302]  # all staff, to create proposals, no unverified
+        self.p_staff_prop_nou=  [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 403, 403, 200, 200, 200, 302]  # all staff, to create proposals, no unverified
         self.p_staff_stud =     [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 403, 403, 403, 200, 200, 200, 200, 302]  # all staff that can see students (1,2,3,6)
 
         self.p_all_this =       [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 403, 200, 302]  # staff of this proposal
@@ -140,13 +140,13 @@ class ViewsTest(TestCase):
         self.p_grade_final =    [403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # Trackhead and assessor can finalize grades.
         self.p_grade_staff =    [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal except assistants, for grading
         self.p_track =          [403, 403, 200, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 302]  # any trackhead
-        self.p_pending =        [200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 200, 302]  # staff with pending proposals
+        self.p_pending =        [200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 200, 200, 403, 403, 200, 200, 200, 302]  # staff with pending proposals
 
         self.p_support      =   [403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # type3 support
         self.p_support_prv  =   [403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # 3+6
 
-        self.p_cgadmin      =   [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 403, 403, 404, 302]  # type4 (not superuser)
-        self.p_study        =   [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 200, 302]  # type5
+        self.p_cgadmin      =   [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 403, 403, 200, 302]  # type4 (not superuser)
+        # self.p_study        =   [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 200, 302]  # type5
         self.p_prv =            [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # 6
 
         self.p_student =        [403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 403, 403, 403, 403, 403, 302]  # any student
@@ -253,6 +253,7 @@ class ViewsTest(TestCase):
         Find all links in a response and check if they return status 200.
 
         :param sourceurl: the page which is parsed to test the links on the page.
+        :param skip: urls to not test
         :return:
         """
         for user in self.users.values():
@@ -432,7 +433,6 @@ class ProjectViewsTestGeneral(ViewsTest):
                                  Track=self.track,
                                  TimeSlot=self.ts,
                                  )
-
         self.proposal.save()
         self.p = self.proposal.id
         self.proposal.Assistants.add(self.users.get('t-2'))

@@ -3,30 +3,40 @@
 {% load custom_filters %}
 {% load static %}
 {% block body %}
-    <h1>Proposal Statistics Report (Personal)</h1>
+    <h1>Proposal Statistics Report for {{ timeslot }}</h1>
     {% if step == 0 %}
         <h2>Introduction</h2>
-        Welcome to the statistics report of your proposals. Here you can see a breakdown of statistics for your
-        proposals.<br/>
-        Please note that it is possible to have a large amount of applications but no distributed students. This means
-        that those students were distributed to a project they had as a higher choice than yours.<br/>
-        <br/>
-        Visitor count is a "unique" count. This means that students are only at most counted once when they view your
-        proposal. Staff members are not counted in this number.
-        Please note that due to privacy concerns we do not publish the details of which students viewed your proposal.
-        <br/>
-        You can use the buttons on the bottom to navigate through the report.<br/>
-        <br/>
+        <p>
+            Welcome to the statistics report of your proposals. Here you can see a breakdown of statistics for your
+            proposals.<br/>
+            Please note that it is possible to have a large amount of applications but no distributed students. This means
+            that those students were distributed to a project they had as a higher choice than yours.<br/>
+            <br/>
+            Visitor count is a "unique" count. This means that students are only at most counted once when they view your
+            proposal. Staff members are not counted in this number.
+            Please note that due to privacy concerns we do not publish the details of which students viewed your proposal.
+            <br/>
+            You can use the buttons on the bottom to navigate through the report.<br/>
+            <br/>
+            {% if timeslots %}
+                To view this report for another time slot, click any of the links below:
+                <ul>
+                    {% for ts in timeslots %}
+                        <li><a href="{% url 'proposals:statspersonal' ts.pk 0 %}">{{ ts }}</a></li>
+                    {% endfor %}
+                </ul>
+                <br/>
+            {% endif %}
         If you have any questions about the report do not hesitate to contact us at
         <a href="mailto:{{ CONTACT_EMAIL }}">{{ CONTACT_EMAIL }}</a>.<br/>
         Kind regards,<br/>
         The {{ NAME }} Team <br/>
-        <br/>
-        <a href="{% url 'proposals:stats' 1 %}" style="position:absolute;right:0;bottom:0;"
+        </p>
+        <a href="{% url 'proposals:statspersonal' timeslot.pk 1 %}" style="position:absolute;right:0;bottom:0;"
            class="button primary">Next</a>
     {% elif step == 1 %}
-        <a class="button primary" style="left:0;" href="{% url 'proposals:stats' 0 %}">Previous</a>
-        <a class="button primary" style="position:absolute;right:0;" href="{% url 'proposals:stats' 2 %}">Next</a>
+        <a class="button primary" style="left:0;" href="{% url 'proposals:statspersonal' timeslot.pk 0 %}">Previous</a>
+        <a class="button primary" style="position:absolute;right:0;" href="{% url 'proposals:statspersonal' timeslot.pk 2 %}">Next</a>
         <h2>Overview Unique Visitor count</h2>
         <div style="width:50%;float:left;">
             <canvas id="myoChart"></canvas>
@@ -53,22 +63,26 @@
         </div>
 
     {% elif step == -1 %}
-        You have reached the end of the statistics report of this year. We hope you enjoyed it!<br/>
-        To see what the top 10 most successfull projects did you can view the General report
-        <a href="{% url 'proposals:statsgeneral' %}">here</a>.<br/>
-        We hope this data can be usesfull for writing future projects, if you have any questions about the data
-        please do not hesitate to contact us at <a href="mailto:{{ CONTACT_EMAIL }}">{{ CONTACT_EMAIL }}</a>.<br/>
-        <a href="{% url 'proposals:stats' %}" class="button primary">Read Again</a>
+        <p>
+            You have reached the end of the statistics report of this year. We hope you enjoyed it!<br/>
+            {#        To see what the top 10 most successfull projects did you can view the General report#}
+            {#        <a href="{% url 'proposals:statsgeneral' %}">here</a>.<br/>#}
+            We hope this data can be usesful for writing future projects, if you have any questions about the data
+            please do not hesitate to contact us at <a href="mailto:{{ CONTACT_EMAIL }}">{{ CONTACT_EMAIL }}</a>.<br/>
+        </p>
+        <a href="{% url 'proposals:statspersonal' timeslot.pk %}" class="button primary">Read Again</a>
     {% else %}
-        <a class="button primary" style="left:0;" href="{% url 'proposals:stats' step|add:"-1" %}">Previous</a>
-        <a class="button primary" style="position:absolute;right:0;" href="{% url 'proposals:stats' step|add:"1" %}">Next</a>
+        <a class="button primary" style="left:0;" href="{% url 'proposals:statspersonal' timeslot.pk step|add:"-1" %}">Previous</a>
+        <a class="button primary" style="position:absolute;right:0;" href="{% url 'proposals:statspersonal' timeslot.pk step|add:"1" %}">Next</a>
         <h2><a href="{% url 'proposals:details' prop.id %}">{{ prop.Title }}</a></h2>
         <div style="width:35%;float:left;">
             <canvas id="mydChart"></canvas>
         </div>
         <div style="float:right;width:50%;">
-            Had total of <b>{{ visitors }}</b> unique student visitors.<br/>
-            Was distributed <b>{{ distributed }}</b> student(s).
+            <p>
+                Had total of <b>{{ visitors }}</b> unique student visitors.<br/>
+                Was distributed <b>{{ distributed }}</b> student(s).
+            </p>
             <table class="table hovered border bordered">
                 <thead>
                 <tr>
@@ -145,7 +159,7 @@
                         display: false
                     },
                     scales: {
-                        yAxes: [{
+                        xAxes: [{
                             ticks: {
                                 beginAtZero: true
                             }

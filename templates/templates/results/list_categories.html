@@ -1,11 +1,10 @@
 {% extends "base.html" %}
-{% load custom_filters %}
 {% block body %}
     <h1>Categories</h1>
     <p>
     Current TimeSlot: {{ ts }}.
     </p>
-    <a href="{% url "results:copy_overview" %}" class="button primary">Import from other timeslot</a>
+    <a href="{% url "results:copy_overview" %}" class="button primary">Import from other time slot</a>
     <a href="{% url "results:add_category" %}" class="button primary">Add Category</a>
 
      {% if form %}
@@ -71,7 +70,7 @@
     <script type="text/javascript">
         //live search for proposals, using datatables jquery.
         $(document).ready(function () {
-            var dt = $('.datatable').dt_wrapper();
+            $('.datatable').dt_wrapper();
         });
     </script>
 {% endblock %}

@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.utils import timezone
 
-from BepMarketplace.decorators import superuser_required, group_required
+from index.decorators import superuser_required, group_required
 from general_form import ConfirmForm
 from general_mail import send_mail
 from support.models import PublicFile

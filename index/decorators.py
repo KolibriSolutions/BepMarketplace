@@ -7,8 +7,7 @@ from general_view import get_grouptype
 from presentations.models import PresentationTimeSlot
 from presentations.utils import planning_public
 from proposals.models import Proposal
-from proposals.utils import can_edit_project_fn, get_cached_project, can_downgrade_project_fn
-from proposals.utils import group_administrator_status
+from proposals.utils import can_edit_project_fn, get_cached_project, can_downgrade_project_fn, group_administrator_status, can_create_project_fn
 from timeline.utils import get_timephase_number, get_timeslot
 
 
@@ -19,7 +18,6 @@ def group_required(*group_names):
     :param group_names:
     :return:
     """
-
     def in_groups(u):
         if u.is_authenticated:
             if u.groups.filter(name__in=group_names).exists() or u.is_superuser:
@@ -105,12 +103,11 @@ def student_only():
 
 def can_view_proposal(fn):
     """
-    Test if a given user is able to see a given proposal.
+    Test if a given user is able to see a given project.
 
     :param fn:
     :return:
     """
-
     def wrapper(*args, **kw):
         if 'pk' in kw:
             pk = int(kw['pk'])
@@ -270,6 +267,30 @@ def can_downgrade_proposal(fn):
     return wrapper
 
 
+def can_create_project(fn):
+    """
+    @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
+
+    :param fn:
+    :return:
+    """
+    def wrapper(*args, **kw):
+        page = args[0].path
+        request = args[0]
+        # user needs to be logged in (so no need for login_required on top of this)
+        if not request.user.is_authenticated:
+            return redirect_to_login(
+                next=page,
+                login_url='index:login',
+                redirect_field_name='next', )
+        allowed = can_create_project_fn(request.user)
+        if allowed[0] is True:
+            return fn(*args, **kw)
+        else:
+            raise PermissionDenied(allowed[1])
+    return wrapper
+
+
 def can_access_professionalskills(fn):
     """
     Tests if it is the correct timephase and person with access rights to look at profesionalskills
@@ -292,7 +313,7 @@ def can_access_professionalskills(fn):
 
         # type 3 and 6 can always view professional skills.
         # Everyone can view it in phase 6 (execution) and later (presenting).
-        if get_timephase_number() < 6 and \
+        if get_timephase_number() < 5 and \
                 get_grouptype("3") not in request.user.groups.all() and \
                 get_grouptype("6") not in request.user.groups.all():
             raise PermissionDenied("Student files are not available in this phase")

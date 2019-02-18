@@ -3,13 +3,16 @@
     <h1>Feedback Reports</h1>
     <table class="table striped hovered datatable">
         <thead>
-        <th>TimeStamp</th>
-        <th>Reporter</th>
-        <th>Url</th>
-        <th data-sortable="false">Feedback</th>
-        <th>Status</th>
-        <th data-searchable="false" data-sortable="false">Actions</th>
+        <tr>
+            <th>TimeStamp</th>
+            <th>Reporter</th>
+            <th>Url</th>
+            <th data-sortable="false">Feedback</th>
+            <th>Status</th>
+            <th data-searchable="false" data-sortable="false">Actions</th>
+        </tr>
         </thead>
+        <tbody>
         {% for report in feedback_list %}
             <tr>
                 <td data-sort="{{ report.Timestamp|date:"U" }}">{{ report.Timestamp }}</td>
@@ -29,13 +32,14 @@
                 </td>
             </tr>
         {% endfor %}
+        </tbody>
     </table>
 {% endblock %}
 {% block scripts %}
     {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
-           var dt = $('.datatable').dt_wrapper();
+            var dt = $('.datatable').dt_wrapper();
         });
     </script>
 {% endblock %}

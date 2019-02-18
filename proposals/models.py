@@ -98,7 +98,6 @@ class ProposalFile(models.Model):
     """
     Abstract base class for any object attached to a project. Used for images and attachments.
     """
-
     def make_upload_path(instance, filename):
         filename_new = filename_default(filename)
         return 'proposal_{0}/{1}'.format(instance.Proposal.pk, filename_new)

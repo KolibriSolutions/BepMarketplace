@@ -1,17 +1,16 @@
 {% extends "base.html" %}
-{% load custom_filters %}
 {% block body %}
-    <h1>TimeSlots</h1>
-    <p>Current TimeSlot: {{ cur }}</p>
-    <a href="{% url "timeline:add_timeslot" %}" class="button primary">Add TimeSlot</a>
-    <a href="{% url "timeline:copy_timephases" %}" class="button primary">Copy TimePhases</a>
+    <h1>Time slots</h1>
+    <p>Current time slot: {{ cur }}</p>
+    <a href="{% url "timeline:add_timeslot" %}" class="button primary">Add time slot</a>
+    <a href="{% url "timeline:copy_timephases" %}" class="button primary">Copy time phases</a>
     <table class="table bordered hovered striped datatable">
         <thead>
         <tr>
             <th>Name</th>
             <th>Begin</th>
             <th>End</th>
-            <th>Edit/TimePhases</th>
+            <th>Edit / Time phases</th>
         </tr>
         </thead>
         <tbody>
@@ -38,9 +37,8 @@
 {% block scripts %}
     {{ block.super }}
     <script type="text/javascript">
-        //live search for proposals, using datatables jquery.
         $(document).ready(function () {
-            var dt = $('.datatable').dt_wrapper();
+            $('.datatable').dt_wrapper();
         });
     </script>
 {% endblock %}

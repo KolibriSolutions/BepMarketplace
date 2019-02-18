@@ -3,7 +3,7 @@ from datetime import datetime
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, render
 
-from BepMarketplace.decorators import group_required
+from index.decorators import group_required
 from general_form import ConfirmForm
 from general_model import print_list
 from .forms import TimePhaseForm, TimeSlotForm, TimePhaseCopyForm

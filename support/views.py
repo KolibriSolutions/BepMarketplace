@@ -4,15 +4,14 @@ from datetime import date, datetime
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Sum
-from django.db.models import Q, F
+from django.db.models import Count, Sum, F, Q
 from django.forms import modelformset_factory
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from htmlmin.decorators import not_minified_response
 
-from BepMarketplace.decorators import group_required
+from index.decorators import group_required
 from distributions.utils import get_distributions
 from general_form import ConfirmForm
 from general_mail import EmailThreadTemplate, mail_track_heads_pending, send_mail
@@ -22,22 +21,16 @@ from index.models import Track, UserMeta
 from osirisdata.data import osirisData
 from presentations.exports import get_list_presentations_xlsx
 from presentations.models import PresentationSet
-from proposals.models import Proposal, Favorite
-from presentations.exports import get_list_presentations_xlsx
-from presentations.models import PresentationSet
 from proposals.models import Proposal
 from proposals.utils import get_all_proposals
 from results.models import GradeCategory
 from students.models import Distribution
-from support import check_content_policy
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number
-from .exports import get_list_students_xlsx, get_list_distributions_xlsx, get_list_proposals_xlsx
+from .exports import get_list_students_xlsx, get_list_distributions_xlsx, get_list_projects_xlsx
 from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm, UserGroupsForm, \
     GroupadministratorEdit, CapacityGroupForm
 from .models import GroupAdministratorThrough, PublicFile, CapacityGroup
-
-
 
 
 #########
@@ -385,11 +378,10 @@ def user_info(request, pk):
 
     def json_serial(obj):
         """JSON serializer for objects not serializable by default json code"""
-
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
 
-        if isinstance(obj, (User)):
+        if isinstance(obj, User):
             return obj.__str__()
         raise TypeError("Type %s not serializable" % type(obj))
 
@@ -398,7 +390,7 @@ def user_info(request, pk):
                   field.name.lower() not in ['password', 'pass', 'key', 'secret', 'token', 'signature']]
     try:
         usermeta_model = [[field.name, getattr(user.usermeta, field.name)] for field in user.usermeta._meta.fields]
-    except:
+    except UserMeta.DoesNotExist:
         usermeta_model = []
     related = []
     for obj in user._meta.related_objects + user._meta.many_to_many:
@@ -416,7 +408,6 @@ def user_info(request, pk):
             ds += list(p.distributions.all())
         for p in user.proposalsresponsible.all():
             ds += list(p.distributions.all())
-        print(ds)
     else:  # student
         ds = user.distributions.all()
     for d in ds:
@@ -508,39 +499,6 @@ def list_staff_projects(request, pk):
 #     return response
 
 
-@group_required('type3staff')
-def list_non_full_proposals(request):
-    """
-    Show page with button to download excel with non full proposals of a timeslot.
-    Can be used for first half year projects
-
-    :param request:
-    :return:
-    """
-    return render(request, "support/non_full_proposals.html", {'timeslots': TimeSlot.objects.all()})
-
-
-@not_minified_response
-@group_required('type3staff')
-def list_non_full_proposals_xlsx(request, timeslot):
-    """
-    Export excel of all proposals with space left.
-
-    :param request:
-    :param timeslot: The timeslot to get proposals from.
-    """
-    ts = get_object_or_404(TimeSlot, pk=timeslot)
-    props = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=ts
-                                                                               , num_distr__lt=F(
-            'NumStudentsMax')).order_by('Title')
-
-    file = get_list_proposals_xlsx(props)
-    response = HttpResponse(content=file)
-    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response['Content-Disposition'] = 'attachment; filename=non-full-proposals-{}.xlsx'.format(ts.Name)
-    return response
-
-
 @group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
 def list_students(request):
     """
@@ -618,56 +576,6 @@ def list_students_xlsx(request):
     return response
 
 
-@group_required('type4staff')
-def list_group_projects(request):
-    """
-    List all proposals of a group.
-
-    :param request:
-    :return:
-    """
-    projects = Proposal.objects.filter(Group__Administrators=request.user).distinct()
-    projects = projects.select_related('ResponsibleStaff', 'Group'). \
-        prefetch_related('Assistants', 'Track')
-    favorite_projects = Favorite.objects.filter(User=request.user).values_list('Project__pk', flat=True)
-    return render(request, 'proposals/list_projects_custom.html', {
-        'hide_sidebar': True,
-        'proposals': projects,
-        'favorite_projects': favorite_projects,
-        'title': 'Proposals of {}'.format(print_list(request.user.administratoredgroups.all().values_list('Group__ShortName', flat=True)))
-    })
-
-
-@group_required('type5staff')
-def list_studyadvisor_projects(request):
-    """
-    List all proposals for the studyadvisor, so includes old and private ones
-
-    :param request:
-    :return:
-    """
-    return render(request, "proposals/list_projects_custom.html", {
-        "proposals": get_all_proposals(old=True),
-        "title": "All proposals in system"
-    })
-
-
-@group_required('type3staff', 'type6staff')
-def list_private_projects(request):
-    """
-    List all private proposals.
-
-    :param request:
-    :return:
-    """
-    props = get_all_proposals().filter(Private__isnull=False).distinct()
-    return render(request, "proposals/list_projects_custom.html", {
-        "proposals": props,
-        "title": "All private proposals",
-        "private": True
-    })
-
-
 @group_required('type3staff')
 def verify_assistants(request):
     """
@@ -726,24 +634,6 @@ def edit_user_groups(request, pk):
         'formtitle': 'Set user groups for {}'.format(usr.username),
         'form': form,
     })
-
-
-@group_required('type3staff')
-def content_policy(request):
-    """
-    List of proposal description/assignment texts that do not met the expected text.
-    Example of a policy violation is an email address in a proposal description.
-
-    :param request:
-    """
-    data = {
-        'pattern_violations': check_content_policy.cpv_regex(),
-        'length_violations': check_content_policy.cpv_length(),
-        'diff_violations': check_content_policy.cpv_diff(),
-        'pattern_policies': check_content_policy.content_policies,
-        'length_requirements': check_content_policy.length_requirements.items(),
-    }
-    return render(request, 'support/content_policy_violations.html', data)
 
 
 # deprecated due to osirisdata
@@ -881,14 +771,12 @@ def history_download(request, timeslot, download):
         projects = Proposal.objects.filter(TimeSlot=ts, Status=4).distinct()
         file = get_list_distributions_xlsx(projects)
         response = HttpResponse(content=file)
-        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
     elif download == 'students':
         typ = GradeCategory.objects.filter(TimeSlot=ts)
         des = Distribution.objects.filter(Timeslot=ts)
         file = get_list_students_xlsx(des, typ)
         response = HttpResponse(content=file)
-        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         response['Content-Disposition'] = 'attachment; filename=students-grades.xlsx'
     elif download == 'presentations':
         sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts)
@@ -897,10 +785,15 @@ def history_download(request, timeslot, download):
                           {"Message": "There is nothing planned yet. Please plan the presentations first."})
         file = get_list_presentations_xlsx(sets)
         response = HttpResponse(content=file)
-        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         response['Content-Disposition'] = 'attachment; filename=presentations-planning.xlsx'
+    elif download == 'nonfull':
+        projects = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=ts, num_distr__lt=F('NumStudentsMax')).order_by('Title')
+        file = get_list_projects_xlsx(projects)
+        response = HttpResponse(content=file)
+        response['Content-Disposition'] = 'attachment; filename=non-full-proposals-{}.xlsx'.format(ts.Name)
     else:
         raise PermissionDenied("Invalid options.")
+    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     return response
 
 #######

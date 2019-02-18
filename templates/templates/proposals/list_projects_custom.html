@@ -1,17 +1,33 @@
 {% extends "base.html" %}
 {% load static %}
-{% load custom_filters %}
-{% GetPhaseNumber as phasenumber %}
+{% load index_tags %}
+{% load proposal_tags %}
+{% load timeline_tags %}
+{% get_timephase_number as phasenumber %}
 {% block body %}
+    <h1>
     {% if title %}
-        <h1>{{ title }}</h1>
+        {{ title }}
     {% elif user|has_group:'type3staff' %}
-        <h1>All projects</h1>
+        All projects
     {% else %}
-        <h1>My projects</h1>
+        My projects
+    {% endif %}
+    {% if timeslots %}
+     of {{ timeslot|default_if_none:"future" }}
+    {% endif %}
+    </h1>
+    {% if timeslots %}
+        <div class="tabcontrol">
+            <ul class="tabs">
+                {% for ts in timeslots %}
+                    <li {% if ts == timeslot %}class="active"{% endif %}><a href="{% if ts == timeslot %}#{% else %}../{{ ts.pk }}{% endif %}">{{ ts }}</a></li>
+                {% endfor %}
+                <li {% if not timeslot %}class="active"{% endif %}><a href="{% if timeslot %}../future{% else %}#{% endif %}">Future</a></li>
+            </ul>
+        </div>
     {% endif %}
     <a href="#" id="projectinfo" class="columnToggle button"><span></span> project details</a>
-
     <div class="double-scroll">
         <table class="table datatable striped" data-order='[[2, "asc"]]'>
             <thead>
@@ -19,7 +35,7 @@
                 <th><span class="mif-star-half icon"></span></th>
                 <th data-priority="4" data-searchable="false" data-sortable="false">{% if phasenumber < 5 %}
                     Edit{% else %}Distributions{% endif %}</th>
-                <th data-visible='false' class="projectinfo">Timeslot</th>
+{#                <th data-visible='false' class="projectinfo">Timeslot</th>#}
                 <th data-priority="1">Name</th>
                 <th data-visible='false' class="projectinfo">Track</th>
                 <th data-visible='false' class="projectinfo">Group</th>
@@ -31,7 +47,7 @@
             </tr>
             </thead>
             <tbody>
-            {% for project in proposals %}
+            {% for project in projects %}
                 <tr>
                     <td>
                     <span id="fav-{{ project.pk }}"
@@ -83,7 +99,7 @@
                             {% endif %}
                         {% endif %}
                     </td>
-                    <td>{{ project.TimeSlot|default:"Future" }}</td>
+{#                    <td>{{ project.TimeSlot|default:"Future" }}</td>#}
                     <td><a href="{% url 'proposals:details' project.id %}" class="capitalize">{{ project.Title }}</a>
                     </td>
                     <td>{{ project.Track }}</td>
@@ -138,18 +154,17 @@
             cols[0] = {"orderDataType": "dom-order-favorite"};
             // call datatables with yadcf and the cols array.
             var dt = $('.datatable').dt_wrapper([
-                    {column_number: 2, filter_type: "select"},
+                    {column_number: 3, filter_type: "select", filter_match_mode: 'exact'},
                     {column_number: 4, filter_type: "select", filter_match_mode: 'exact'},
-                    {column_number: 5, filter_type: "select", filter_match_mode: 'exact'},
-                    {column_number: 6, filter_type: "select", column_data_type: 'html'},  // to parse mailto links
+                    {column_number: 5, filter_type: "select", column_data_type: 'html'},  // to parse mailto links
                     {
-                        column_number: 7,
+                        column_number: 6,
                         filter_type: "select",
                         column_data_type: 'html',
                         html_data_type: 'selector',
                         html_data_selector: 'li'
                     }, //to parse ul-li
-                    {column_number: 8, filter_type: "select"},
+                    {column_number: 7, filter_type: "select"},
                 ], cols
             );
             $(".columnToggle").click(function () {

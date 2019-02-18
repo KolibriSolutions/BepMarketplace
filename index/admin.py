@@ -12,9 +12,13 @@ class UserAcceptedTermsAdmin(admin.ModelAdmin):
     search_fields = ['User__username']
 
 
+class FeedbackReportAdmin(admin.ModelAdmin):
+    list_filter = ['Status']
+
+
 admin.site.register(Term)
 admin.site.register(UserAcceptedTerms, UserAcceptedTermsAdmin)
 admin.site.register(UserMeta, UserMetaAdmin)
 admin.site.register(Broadcast)
-admin.site.register(FeedbackReport)
+admin.site.register(FeedbackReport, FeedbackReportAdmin)
 admin.site.register(Track)

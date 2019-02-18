@@ -71,3 +71,13 @@ def get_timeslot_id():
         return ts.id
     else:
         raise PermissionDenied("This is not possible, as there is no timeslot.")
+
+
+def get_recent_timeslots():
+    """
+    Returns recent timeslots, used for filters on pages.
+
+    :return:
+    """
+    NUM_TIMESLOTS_VISIBLE = 5
+    return reversed(TimeSlot.objects.all().order_by('-Begin')[:NUM_TIMESLOTS_VISIBLE])

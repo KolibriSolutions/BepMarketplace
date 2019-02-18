@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.shortcuts import render
 
-from BepMarketplace.decorators import group_required
+from index.decorators import group_required
 from general_form import ConfirmForm
 from index.models import UserMeta
 from .data import osirisData

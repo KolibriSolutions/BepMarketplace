@@ -1,17 +1,24 @@
 {% extends 'base.html' %}
 
 {% block body %}
-    <h1>All files of type {{ type }}</h1>
-    <h3>Has deadline {{ type.Deadline }}</h3>
+    {% if type %}
+        <h1>All files of type {{ type }}</h1>
+        <h3>Has deadline {{ type.Deadline }}</h3>
+    {% else %}
+        <h1>Files list for {{ dist.Student.usermeta.get_nice_name }}</h1>
+        {% if not user.groups.exists %}
+            <a href="{% url 'students:addfile' %}" class="button primary">Upload a file</a>
+        {% endif %}
+    {% endif %}
     <table class="table bordered striped datatable">
         <thead>
         <tr>
+            <th>{% if type %}Student{% else %}Type{% endif %}</th>
             <th data-sortable="false" data-searchable="false"><span class="mif-attachment"></span></th>
             <th>Name</th>
             <th data-sortable="false">Caption</th>
             <th>Created</th>
             <th>Updated</th>
-            <th>Student</th>
             <th>Supervisors Email</th>
             <th>Supervisor Approval</th>
             <th>Approval Timestamp</th>
@@ -21,14 +28,18 @@
         <tbody>
         {% for file in files %}
             <tr>
+                <td>{% if type %} {{ file.Distribution.Student.usermeta.get_nice_name }} {% else %} {{ file.Type }} {% endif %}</td>
                 <td><span class="icon mif-file-{{ file.metro_icon }}"></span></td>
-                <td><a href="{% url "download:studentfile" file.id %}" download>{{ file.OriginalName }}</a></td>
+                <td>
+                    <a href="{% url "download:studentfile" file.id %}" download>{{ file.OriginalName }}</a>
+                    {% if edit %}
+                        <a href="{% url 'students:editfile' file.id %}" class="button primary">Edit</a>
+                    {% endif %}
+                </td>
                 <td>{{ file.Caption }}</td>
                 <td data-sort="{{ file.Created|date:"U" }}">{{ file.Created }}</td>
-                <td {% if file.TimeStamp.date <= type.Deadline %} class="success" {% else %}class="error"{% endif %}
-                                                                  data-sort="{{ file.TimeStamp|date:"U" }}">{{ file.TimeStamp }}</td>
-                <td {% if file.TimeStamp.date <= type.Deadline %} class="success"
-                                                                  {% else %}class="error"{% endif %} >{{ file.Distribution.Student.usermeta.get_nice_name }}</td>
+                <td {% if file.TimeStamp.date <= file.Type.Deadline %} class="success" {% else %}class="error"{% endif %}
+                                                                       data-sort="{{ file.TimeStamp|date:"U" }}">{{ file.TimeStamp }}</td>
                 <td>
                     {{ file.Distribution.Proposal.ResponsibleStaff.email }}<br/>
                     {% for ass in file.Distribution.Proposal.Assistants.all %}
@@ -58,6 +69,9 @@
                 <td>
                     {% if file.Type.CheckedBySupervisor %}
                         {{ file.staffreponse.Explanation }}
+                        {% if respond %}
+                            <a href="{% url 'professionalskills:respondfile' file.id %}" class="button primary">Respond</a>
+                        {% endif %}
                     {% else %}
                         No check needed
                     {% endif %}

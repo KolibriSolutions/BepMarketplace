@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load custom_filters %}
-{% GetPhaseNumber as phasenumber %}
+{% load timeline_tags %}
+{% get_timephase_number as phasenumber %}
 {% block body %}
     {% if phasenumber < 6 %}
         <h1>Proposals with applications and distributions</h1>

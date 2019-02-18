@@ -86,7 +86,8 @@ def distribute_personal(distribution_proposals, students_done=[]):
     """
     Distribute all students with a private proposal to the private proposal.
 
-    :param distribution_proposals, students_done: List of distributions and list of distributed students
+    :param distribution_proposals: List of distributions
+    :param students_done: list of distributed students
     :return:
     """
     stds = get_all_students().filter(personal_proposal__isnull=False, personal_proposal__TimeSlot=get_timeslot()).distinct().prefetch_related('personal_proposal')

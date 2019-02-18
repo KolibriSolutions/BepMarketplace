@@ -1,8 +1,7 @@
 {% extends "base.html" %}
-{% load custom_filters %}
 {% block body %}
-    <h1>Timeslots</h1>
-    <p>Import grades from another timeslot to the current timeslot.
+    <h1>Time slots</h1>
+    <p>Import grades from another time slot to the current time slot.
         Current TimeSlot: {{ ts }}
     </p>
 
@@ -31,7 +30,7 @@
                 </td>
                 <td>
                     {% if p == ts %}
-                        Current timeslot<br />
+                        Current time slot<br />
                         {# current timeslot #}
                             <a href="{% url "results:list_categories" %}" class="button primary">List categories</a>
 
@@ -50,7 +49,7 @@
     <script type="text/javascript">
         //live search for proposals, using datatables jquery.
         $(document).ready(function () {
-            var dt = $('.datatable').dt_wrapper();
+            $('.datatable').dt_wrapper();
         });
     </script>
 {% endblock %}

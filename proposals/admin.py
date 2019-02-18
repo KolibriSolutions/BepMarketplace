@@ -5,7 +5,7 @@ from .models import Proposal, ProposalImage, ProposalAttachment, Favorite
 
 class ProposalAdmin(admin.ModelAdmin):
     search_fields = ['Title', ]
-    list_filter = ('Track', 'Status', 'TimeSlot')  # TODO add group back.
+    list_filter = ('Track', 'Status', 'TimeSlot', 'Group')
 
 
 class ProposalFileAdmin(admin.ModelAdmin):

@@ -38,7 +38,6 @@ class FileType(models.Model):
     # GradedInFinalGrade = models.BooleanField(default=False, help_text="Whether this file should be graded in the final grading process")
     # AvailableAtPresentation = models.BooleanField(default=False, help_text="Whether this file should be made available to the presentation assessors during the presentation.")
 
-
     def get_allowed_extensions(self):
         return list(self.AllowedExtensions.values_list('Name', flat=True))
 
@@ -111,11 +110,10 @@ class StudentGroup(models.Model):
         except:
             pass
         if self.Number in [n.Number for n in self.PRV.groups.all()]:
-            raise ValidationError('Group with that number already exists for this PRV')
+            raise ValidationError('Group with that number already exists for this professional skill')
 
     class Meta:
         ordering = ['PRV', 'Number']
-
 
 
 @receiver(pre_delete, sender=StudentFile)
@@ -131,7 +129,7 @@ def student_file_delete(sender, instance, **kwargs):
     file_delete_default(sender, instance)
 
 
-class StaffReponse(models.Model):
+class StaffResponse(models.Model):
     """
     Response of a responsible staff member to a student uploaded file.
     """

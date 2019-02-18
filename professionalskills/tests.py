@@ -38,6 +38,9 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
         )
         g2.id = 1
         g2.save()
+        g2.Members.add(self.users.get('r-s'))
+        g2.Members.add(self.users.get('t-p'))
+        g2.save()
 
     def test_view_status(self):
         codes_general = [
@@ -47,10 +50,11 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
 
             [['creategroup', {'pk': 100}], self.p_support_prv],
             [['creategroup', None], self.p_support_prv],
+            [['extensions', None], self.p_support_prv],
             [['editgroup', {'pk': 0}], self.p_support_prv],
             [['listgroups', {'pk': 100}], self.p_support_prv],
         ]
-        codes_phase12345 = [  # also no-timephase
+        codes_phase1234 = [  # also no-timephase
             [['listfileoftype', {'pk': 100}], self.p_forbidden],
             [['listmissingoftype', {'pk': 100}], self.p_forbidden],
             [['filetypelist', None], self.p_support_prv],
@@ -61,12 +65,12 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['printprvforms', None], self.p_forbidden],
             [['downloadall', {'pk': 100}], self.p_forbidden],
             [['listowngroups', None], self.p_forbidden],
-            [['switchgroups', {'frompk': 0, 'topk': 1}], self.p_forbidden],
+            [['switchgroups', {'pk': 100}], self.p_forbidden],
             [['listgroupmembers', {'pk': 0}], self.p_forbidden],
             [['assignshuffle', {'pk': 100}], self.p_forbidden],
         ]
 
-        codes_phase67 = [
+        codes_phase567 = [
             [['listfileoftype', {'pk': 100}], self.p_support_prv],
             [['listmissingoftype', {'pk': 100}], self.p_support_prv],
             [['filetypelist', None], self.p_all],
@@ -78,15 +82,15 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['downloadall', {'pk': 100}], self.p_support_prv],
 
             [['listowngroups', None], self.p_student],
-            # [['switchgroups', {'frompk': 0, 'topk': 1}], self.p_student], # never used and hard to test, so not tested
+            [['switchgroups', {'pk': 100}], self.p_student], # never used and hard to test, so not tested
             [['listgroupmembers', {'pk': 0}], self.p_all],
             [['assignshuffle', {'pk': 100}], self.p_support_prv],
         ]
         self.info['type'] = 'general'
         self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes_general)
         self.info['type'] = 'phase'
-        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5], codes_phase12345)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4], codes_phase1234)
         # self.loop_phase_user([5], codes_phase5)
-        self.loop_phase_code_user([6, 7], codes_phase67)
+        self.loop_phase_code_user([5, 6, 7], codes_phase567)
 
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

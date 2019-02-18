@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load custom_filters %}
+{% load timeline_tags %}
 {% load static %}
-{% GetPhaseNumber as phasenumber %}
+{% get_timephase_number as phasenumber %}
 {% block stylesheets %}
     <style>
 
@@ -68,8 +68,9 @@
             // these HTTP methods do not require CSRF protection
             return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
         }
+
         $.ajaxSetup({
-            beforeSend: function(xhr, settings) {
+            beforeSend: function (xhr, settings) {
                 if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
                     xhr.setRequestHeader("X-CSRFToken", csrftoken);
                 }
@@ -78,6 +79,7 @@
         var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
         //keep track of unsaved data
         var saved = true;
+
         //error notify
         function studentError(jqthis) {
             var errorNotify = {
@@ -122,7 +124,7 @@
                 type: "info"
             });
             $.post("{% url 'presentations:presentationswizardstep4' %}", {"jsondata": JSON.stringify(datas)}, function (data) {
-                if (data.type == 'success') {
+                if (data.type === 'success') {
                     $.Notify({
                         caption: "Saved presentations!",
                         content: "Saved!",
@@ -157,6 +159,7 @@
                 calculateSet(allSets[i])
             }
         }
+
         function clearSet(setid) {
             //remove all presentations in one set.
             if (confirm("Are you sure to remove all presentations from this set?")) {
@@ -179,6 +182,7 @@
                 saved = false;
             }
         }
+
         //recalculate the timing of a set, and send this to the server using setSlot()
         function calculateSet(set) {
             saved = false;
@@ -216,6 +220,7 @@
                 }
             }
         }
+
         function trackFilter() {
             var ulSet = $("ul#unplannedSlots");
             var elems = ulSet.children();
@@ -235,6 +240,7 @@
                 }
             }
         }
+
         //unplanned to planned
         $("ul.draglist").sortable({
             connectWith: "ul.draglist",
@@ -261,19 +267,15 @@
                 if (from === "unplannedSlots") {
                     if (to === "unplannedSlots") {
                         //nothing, just a re-ordering of this list
-                    }
-                    else if (to === 'plannedSlots') {
+                    } else if (to === 'plannedSlots') {
                         //RowTo is updated in the 'update' function
-                    }
-                    else if (to === "customSlots") {
+                    } else if (to === "customSlots") {
                         //should not happen, revert
                         item.appendTo("ul.unplannedSlots")
-                    }
-                    else {
+                    } else {
                         window.alert("Error 1, please refresh the page.")
                     }
-                }
-                else if (from === "plannedSlots") {
+                } else if (from === "plannedSlots") {
                     //var setFrom = $(ui.sender).data('set');
                     //calculateSet(setFrom);
                     if (to === "unplannedSlots") {
@@ -289,11 +291,9 @@
                             elem.find("span.startTime").html("..");
                             elem.find("span.tracktag").removeClass('warning').addClass('default');
                         }
-                    }
-                    else if (to === 'plannedSlots') {
+                    } else if (to === 'plannedSlots') {
                         //RowTo is updated in the 'update' function
-                    }
-                    else if (to === "customSlots") {
+                    } else if (to === "customSlots") {
                         //remove/unplan the item
                         if (item.hasClass("customSlot")) {
                             //remove item
@@ -302,30 +302,24 @@
                             //invalid. Just unplan the normal way, re-append to unplannedSlots
                             item.appendTo("ul.unplannedSlots")
                         }
-                    }
-                    else {
+                    } else {
                         window.alert("Error 2, please refresh the page.")
                     }
-                }
-                else if (from === "customSlots") {
+                } else if (from === "customSlots") {
                     //add a new one of this to the customslots, clone with keeping of events.
                     item.clone(true, true).appendTo("ul.customSlots");
                     if (to === "unplannedSlots") {
                         //do nothing
                         item.remove();
-                    }
-                    else if (to === 'plannedSlots') {
+                    } else if (to === 'plannedSlots') {
                         //RowTo is updated in the 'update' function
-                    }
-                    else if (to === "customSlots") {
+                    } else if (to === "customSlots") {
                         //remove the item
                         item.remove();
-                    }
-                    else {
+                    } else {
                         window.alert("Error 3, please refresh the page.")
                     }
-                }
-                else {
+                } else {
                     window.alert("Error 4, please refresh the page.")
                 }
             }

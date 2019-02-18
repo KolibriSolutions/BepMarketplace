@@ -10,7 +10,8 @@ from django.shortcuts import render
 from django.urls import reverse
 from htmlmin.decorators import not_minified_response
 
-from BepMarketplace.decorators import group_required, phase_required
+from index.decorators import group_required
+from timeline.decorators import phase_required
 from general_view import get_grouptype
 from index.models import Track
 from students.models import Distribution
@@ -254,7 +255,7 @@ def calendar(request, own=False):
     """
     if get_timephase_number() < 7 and get_grouptype("3") not in request.user.groups.all() and not planning_public():
         # in phase 5 and 6, planning is only visible for type3, except when it is set to public.
-        return render(request, 'base.html', {'Message': 'The Presentationsplanning is not yet public'})
+        return render(request, 'base.html', {'Message': 'The presentations planning is not yet public'})
     ts = get_timeslot()
     sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts).order_by('DateTime')
     if own:

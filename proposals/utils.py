@@ -6,9 +6,31 @@ from django.urls import reverse
 
 from general_view import get_grouptype
 from timeline.utils import get_timephase_number, get_timeslot
-from .models import Proposal
+from .models import Proposal, Favorite
 # from support.utils import group_administrator_status
 from support.models import GroupAdministratorThrough
+
+
+def can_create_project_fn(user):
+    """
+    Check if a user can create a project. Allowed for responsible, assistant and studyadvisors
+    Group administrators can create projects when they have rw access.
+    in BEP also type3 can create projects
+
+    :param user: user
+    :return: tuple with Boolean and String.
+    """
+    if get_grouptype('2') in user.groups.all() or \
+            get_grouptype('1') in user.groups.all() or \
+            get_grouptype('3') in user.groups.all() or \
+            get_grouptype('2u') in user.groups.all():
+        return True, ''
+    if get_grouptype('4') in user.groups.all():
+        if len(get_writable_admingroups(user)) != 0:
+            return True, ''
+        else:
+            return False, "You are not allowed to create projects, you are read-only group administrator."
+    return False, "You are not allowed to create new projects."
 
 
 def can_downgrade_project_fn(user, prop):
@@ -154,12 +176,34 @@ def get_all_proposals(old=False):
         return Proposal.objects.filter(TimeSlot=get_timeslot()).distinct()
 
 
+def prefetch(projects):
+    """
+    Prefetch interesting data for a list of projects.
+
+    :param projects:
+    :return:
+    """
+    projects = projects.select_related('ResponsibleStaff__usermeta', 'Track__Head__usermeta', 'TimeSlot', 'Group__Head__usermeta').prefetch_related('Assistants__usermeta')
+    if get_timephase_number() > 4:
+        projects = projects.prefetch_related('distributions__Student__usermeta')
+    return projects
+
+
+def get_favorites(user):
+    """
+    Get pk's of favorited projects
+
+    :param user:
+    :return:
+    """
+    return list(Favorite.objects.filter(User=user).values_list('Project__pk', flat=True))
+
+
 def get_share_link(pk):
     """
     Create a share link for a proposal detail page.
     Used to let unauthenticated users view a proposal, possibly before the proposal is public.
 
-    :param request:
     :param pk: pk of the proposal to get a link for.
     :return:
     """

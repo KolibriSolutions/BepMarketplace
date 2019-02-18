@@ -1,6 +1,4 @@
 {% extends "base.html" %}
-{% load custom_filters %}
-
 {% block scripts %}
     {{ block.super }}
     <script>
@@ -16,6 +14,12 @@
                         content: data,
                         type: 'info'
                     })
+                }).fail(function(){
+                    $.Notify({
+                        caption: 'Operation failed!',
+                        content: 'Please contact the support staff.',
+                        type: 'warning'
+                    })
                 });
             }
             else {
@@ -25,6 +29,12 @@
                         content: data,
                         type: 'info'
                     })
+                }).fail(function(){
+                    $.Notify({
+                        caption: 'Operation failed!',
+                        content: 'Please contact the support staff.',
+                        type: 'warning'
+                    })
                 });
             }
         }
@@ -32,7 +42,7 @@
 {% endblock %}
 
 {% block body %}
-    <h1>Pending proposals</h1>
+    <h1>{{ title }}</h1>
     <table class="table striped hovered bordered">
         <thead>
         <tr>
@@ -42,18 +52,18 @@
             <th>Disapprove</th>
         </tr>
         </thead>
-        {% for proposal in proposals %}
+        {% for project in projects %}
             <tr>
-                <td><a href="{% url 'proposals:details' proposal.id %}" class="capitalize">{{ proposal.Title }}</a></td>
-                <td>{{ proposal.ResponsibleStaff.usermeta.get_nice_name }}</td>
+                <td><a href="{% url 'proposals:details' project.id %}" class="capitalize">{{ project.Title }}</a></td>
+                <td>{{ project.ResponsibleStaff.usermeta.get_nice_name }}</td>
                 <td>
                     <label class="switch">
-                        <input id="appr_{{ proposal.id }}" type="checkbox" onclick="ToggleUp({{ proposal.id }}, this);">
+                        <input id="appr_{{ project.id }}" type="checkbox" onclick="ToggleUp({{ project.id }}, this);">
                         <span class="check"></span>
                     </label>
                 </td>
                 <td>
-                    <a href="{% url 'proposals:downgradestatusmessage' proposal.id %}">
+                    <a href="{% url 'proposals:downgradestatusmessage' project.id %}">
                         <button class="button danger">Downgrade status</button>
                     </a>
                 </td>

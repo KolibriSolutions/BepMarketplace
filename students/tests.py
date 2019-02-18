@@ -49,12 +49,12 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
             [['addfile', None], s.p_forbidden],
             [['editfile', {'pk': f.pk}], s.p_forbidden],
         ]
-        code_general_phase345 = [
+        code_general_phase34 = [
             [['listapplications', None], s.p_student],
             [['addfile', None], s.p_forbidden],
             [['editfile', {'pk': f.pk}], s.p_forbidden],
         ]
-        code_general_phase67 = [
+        code_general_phase567 = [
             [['listapplications', None], s.p_student],
             [['addfile', None], s.p_student],
             [['editfile', {'pk': f.pk}], s.p_student],
@@ -76,8 +76,8 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
 
         self.info['type'] = 'general'
         self.loop_phase_code_user([-1, 1, 2], code_general_phase12)
-        self.loop_phase_code_user([3, 4, 5], code_general_phase345)
-        self.loop_phase_code_user([6, 7], code_general_phase67)
+        self.loop_phase_code_user([3, 4], code_general_phase34)
+        self.loop_phase_code_user([5, 6, 7], code_general_phase567)
 
         if s.debug:
             print("Testing proposal apply")

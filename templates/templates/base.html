@@ -1,6 +1,12 @@
 {% load static %}
 {% load custom_filters %}
-{% GetPhaseNumber as phasenumber %}
+{% load timeline_tags %}
+{% load index_tags %}
+{% load proposal_tags %}
+{% load presentations_tags %}
+{% load students_tags %}
+
+{% get_timephase_number as phasenumber %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -41,48 +47,52 @@
     {% block menu %}
         <div class="app-bar" data-role="appbar">
             <div class="app-bar-element branding">{{ NAME }}</div>
-
             <ul class="app-bar-menu">
                 <li><a href="/"><span class="mif-home icon"></span>Home</a></li>
                 {% if user.is_authenticated %}
-                    {% isThereTimeslot as timeslotpresent %}
+                    {% timeslot_exists as timeslotpresent %}
                     {% if user|has_group:"any" %}
                         <li><a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Proposals</a>
                             <ul class="d-menu" data-role="dropdown">
-                                <li><a href="{% url 'proposals:list' %}">All published proposals</a></li>
-                                <li><a href="{% url 'proposals:create' %}">Create new proposal</a></li>
-                                <li><a href="{% url 'proposals:chooseedit' %}">{% if user|has_group:'type3staff' %}All
-                                    proposals{% else %}My proposals{% endif %}</a></li>
-                                {% if not user|has_group:'type3staff' and phasenumber < 3 %}
-                                    <li><a href="{% url 'proposals:pending' %}">My pending proposals</a></li>
+                                <li><a href="{% url 'proposals:list' %}">All published projects</a></li>
+                                {% if user|can_create_project %}
+                                    <li><a href="{% url 'proposals:create' %}">Create new project</a></li>
+                                {% endif %}
+                                {% if user|has_group:"type1staff;type2staff;type2staffunverified;type3staff;type5staff" %}
+                                    <li>
+                                        <a href="{% url_timeslot 'proposals:chooseedit' %}">
+                                            {% if user|has_group:'type3staff;type5staff' %}
+                                                All projects
+                                            {% else %}
+                                                My projects
+                                            {% endif %}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                {% if phasenumber < 3 %}
+                                    {% if user|has_group:"type1staff;type2staff;type4staff" %}
+                                        <li><a href="{% url 'proposals:pending' %}">My pending projects</a></li>
+                                    {% endif %}
                                 {% endif %}
                                 {% if user|has_group:"type4staff" and not user.is_superuser %}
-                                    <li><a href="{% url 'support:listgroupproposals' %}">My group proposals</a></li>
+                                    <li><a href="{% url_timeslot 'proposals:listgroupproposals' %}">My group proposals</a></li>
                                 {% endif %}
-                                {% if user|is_trackhead and not user.is_superuser %}
-                                    <li><a href="{% url 'proposals:listtrackproposals' %}">My track proposals</a></li>
+                                {% if user|is_track_head and not user.is_superuser %}
+                                    <li><a href="{% url_timeslot 'proposals:listtrackproposals' %}">My track proposals</a></li>
                                 {% endif %}
                                 {% if user|has_group:"type3staff" %}
-                                    <li><a href="{% url 'support:privateproposals' %}">All Private Proposals</a></li>
-                                    <li><a href="{% url 'support:listnonfullprojects' %}">Non Full Proposals</a>
-                                    <li><a href="{% url 'support:contentpolicy' %}">Content Policy Violations</a></li>
+                                    <li><a href="{% url_timeslot 'proposals:privateproposals' %}">All Private Proposals</a></li>
+                                    <li><a href="{% url 'proposals:contentpolicy' %}">Content Policy Violations</a></li>
                                 {% endif %}
-                                {% if user|has_group:'type1staff;type2staff;type3staff;type4staff;type5staff' %}
-                                    {% if phasenumber > 5 %}
-                                        <li>
-                                            <a href="#" class="dropdown-toggle">Statistics</a>
-                                            <ul class="d-menu" data-role="dropdown">
-                                                <li><a href="{% url 'proposals:statsgeneral' %}">General Report</a></li>
-                                                <li><a href="{% url 'proposals:statspersonal' %}">Personal Report</a></li>
-                                            </ul>
-                                        </li>
+                                {% if user|has_group:'type1staff;type2staff;type3staff;type4staff' %}
+                                    {% if phasenumber > 4 %}
+                                        <li><a href="{% url_timeslot 'proposals:statspersonal' %}">Personal Report</a></li>
                                     {% endif %}
-                                    {% if timeslotpresent %}
-                                        {% GetSlotId as slotid %}  {# Not very nice way to get the current timeslot ID, but best way to redirect this link to the current timeslot stats. #}
-                                        <li><a href="{% url 'proposals:stats' slotid %}">Statistics</a></li>
-                                    {% else %}
-                                        <li><a href="{% url 'proposals:stats' %}">Statistics</a></li>
-                                    {% endif %}
+                                {% endif %}
+                                {% if user|has_group:'type1staff;type2staff;type3staff;type4staff;type5staff;type6staff' %}
+                                    <li>
+                                        <a href="{% url_timeslot 'proposals:stats' %}">Project stats</a>
+                                    </li>
                                 {% endif %}
                             </ul>
                         </li>
@@ -158,7 +168,6 @@
                             <li><a href="{% url 'support:liststudentsldap' %}">All Students</a></li>
                             {% endcomment %}
                                             <li><a href="{% url 'support:liststaff' %}">All Staff</a></li>
-                                            </li>
                                         </ul>
                                     </li>
                                     <li><a href="{% url 'support:mailinglist' %}">Mailing List</a></li>
@@ -184,9 +193,9 @@
                                         </ul>
                                     </li>
                                     <li><a href="{% url 'timeline:list_timeslots' %}">Timeline edit</a></li>
-{#                                    <li><a href="{% url 'support:capacitygroupadministration' %}">Group#}
-{#                                        Administration</a>#}
-{#                                    </li>#}
+                                    {#                                    <li><a href="{% url 'support:capacitygroupadministration' %}">Group#}
+                                    {#                                        Administration</a>#}
+                                    {#                                    </li>#}
                                     <li><a href="{% url 'index:edit_tracks' %}">Track Head edit</a></li>
                                     <li><a href="{% url 'results:list_categories' %}">Setup Grading</a></li>
                                     <li><a href="{% url 'support:listcapacitygroups' %}">Capacity groups</a></li>
@@ -203,39 +212,40 @@
                                 </li>
                             {% endif %}
                         {% endif %}
-
-                        {% if phasenumber > 3 or phasenumber < 0 and timeslotpresent %}
-                            <li><a href="{% url 'support:liststudents' %}"><span class="mif-users icon"></span>Students
-                                {% if phasenumber >= 6 or phasenumber < 0 %} & Grades{% endif %}</a>
-                            </li>
+                        {% if user|has_group:'type1staff;type2staff;type3staff;type6staff' %}
+                            {% if phasenumber > 3 or phasenumber < 0 and timeslotpresent %}
+                                <li><a href="{% url 'support:liststudents' %}"><span class="mif-users icon"></span>Students
+                                    {% if phasenumber >= 6 or phasenumber < 0 %} & Grades{% endif %}</a>
+                                </li>
+                            {% endif %}
                         {% endif %}
-                    {% elif user|has_group:"type4staff" %}
-                        <li><a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Proposals</a>
-                            <ul class="d-menu" data-role="dropdown">
-                                <li><a href="{% url 'support:listgroupproposals' %}"><span
-                                        class="mif-mail-read icon"></span>My
-                                    group proposals</a></li>
-                                <li><a href="{% url 'proposals:create' %}">Create new proposal</a></li>
-                            </ul>
-                        </li>
-                    {% elif user|has_group:"type5staff" %}
-                        <li><a href="{% url 'support:listproposalsadvisor' %}"><span class="mif-mail-read icon"></span>All
-                            proposals</a></li>
-                    {% else %} {# students and type 5/6 staff #}
+                        {#                    {% elif user|has_group:"type4staff" %}#}
+                        {#                        <li><a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Proposals</a>#}
+                        {#                            <ul class="d-menu" data-role="dropdown">#}
+                        {#                                <li><a href="{% url 'support:listgroupproposals' %}"><span#}
+                        {#                                        class="mif-mail-read icon"></span>My#}
+                        {#                                    group proposals</a></li>#}
+                        {#                                <li><a href="{% url 'proposals:create' %}">Create new proposal</a></li>#}
+                        {#                            </ul>#}
+                        {#                        </li>#}
+                        {#                    {% elif user|has_group:"type5staff" %}#}
+                        {#                        <li><a href="{% url 'support:listproposalsadvisor' %}"><span class="mif-mail-read icon"></span>All#}
+                        {#                            proposals</a></li>#}
+                    {% else %} {# students #}
                         <li><a href="{% url 'proposals:list' %}"><span class="mif-mail-read icon"></span>Proposals</a>
                         </li>
-                        {% if not user.groups.exists and phasenumber > 2 %} {# students only #}
+                        {% if phasenumber > 2 %}
                             {% if phasenumber < 5 %}
                                 <li><a href="{% url 'students:listapplications' %}"><span
                                         class="mif-stack2 icon"></span>Applications</a></li>
                             {% endif %}
-                            {% if phasenumber > 5 and user.distributions.exists %}
+                            {% if phasenumber > 4 and user.distributions.exists %}
                                 <li>
                                     <a href="" class="dropdown-toggle"><span
                                             class="mif-files-empty icon"></span>Files</a>
                                     <ul class="d-menu" data-role="dropdown">
                                         <li><a href="{% url 'professionalskills:listownfiles' %}">List files</a></li>
-                                        <li><a href="{% url 'students:addfile' %}">Add file</a></li>
+                                        <li><a href="{% url 'students:addfile' %}">Upload file</a></li>
                                     </ul>
                                 </li>
                                 <li>
@@ -247,30 +257,26 @@
                     {% endif %}
                     {% if user|has_group:'type3staff;type6staff' %}
                         <li>
-                            <a href="#" class="dropdown-toggle"><span class="mif-widgets icon"></span>Professional
-                                Skills</a>
+                            <a href="#" class="dropdown-toggle"><span class="mif-widgets icon"></span>Professional Skills</a>
                             <ul class="d-menu" data-role="dropdown">
                                 <li><a href="{% url 'professionalskills:filetypelist' %}">All</a></li>
+                                <li><a href="{% url 'professionalskills:extensions' %}">File extensions</a></li>
                                 {% if user|has_group:'type6staff' %}
                                     <li><a href="{% url 'professionalskills:filetypecreate' %}">Create New</a></li>
                                 {% endif %}
                             </ul>
                         </li>
-                    {% elif phasenumber > 5 %} {# should be hidden for undistributed students, but is not. #}
-                        <li><a href="{% url 'professionalskills:filetypelist' %}"><span class="mif-widgets icon"></span>Professional
-                            Skills</a></li>
+                    {% elif phasenumber > 4 %}
+                        <li>
+                            <a href="#" class="dropdown-toggle"><span class="mif-widgets icon"></span>Professional Skills</a>
+                            <ul class="d-menu" data-role="dropdown">
+                                <li><a href="{% url 'professionalskills:filetypelist' %}">Professional Skills</a></li>
+                                {% if user.distributions.exists %}  {# only distributed students (not filtered by timeslot) #}
+                                    <li><a href="{% url 'professionalskills:listowngroups' %}">Groups</a></li>
+                                {% endif %}
+                            </ul>
+                        </li>
                     {% endif %}
-
-
-
-
-
-
-
-
-
-
-
 
                     {% if user.is_superuser %}
                         <li>
@@ -290,7 +296,7 @@
                                 <li><a href="{% url 'godpowers:sessionlist' %}">Session List</a></li>
                                 <li><a href="{% url 'index:list_feedback' %}">Feedback Reports</a></li>
                                 <li><a href="{% url 'godpowers:clearcache' %}">Clear Cache</a></li>
-                                <li><a href="/admin/">Django admin</a></li>
+                                <li><a href="{% url 'admin:index' %}">Django admin</a></li>
                             </ul>
                         </li>
                     {% endif %}
@@ -299,7 +305,7 @@
             </ul>
             <div class="app-bar-pullbutton automatic"></div>
             <ul class="app-bar-menu place-right" data-flexdirection="reverse">
-                <li>{% GetSlot %}</li>
+                <li>{% get_timeslot %}</li>
                 {% if user.is_authenticated %}
                     <li><a href="{% url 'index:profile' %}"><span class="mif-user icon"></span>Profile</a>
                     </li>
@@ -332,19 +338,19 @@
                     {% endblock %}
                 </div>
                 <div class="cell" id="cellSidebar">
-                    {% GetBroadcastStatus user as status %}
+                    {% broadcast_available user as status %}
                     {% if status %}
                         <div class="panel">
                             <div class="heading">
                                 <span class="title">Announcements</span>
                             </div>
                             <div class="content padding5">
-                                {% GetBroadcast user %}
+                                {% get_broadcasts user %}
                             </div>
                         </div>
                         <br>
                     {% endif %}
-                    <p>Current phase: {% GetPhase %}</p>
+                    <p>Current phase: {% get_timephase %}</p>
                     {% if user.is_authenticated %}
                         {% if user|has_group:"type1staff;type2staff;type2staffunverified" %}
                             {# Staff #}
@@ -368,7 +374,7 @@
                                         <span class="title">Presentations:</span>
                                     </div>
                                     <div class="content padding5">
-                                        {% GetPresentationStaff user %}
+                                        {% get_presentations_staff user %}
                                     </div>
                                 </div>
                             {% endif %}
@@ -382,7 +388,7 @@
                                     {% if phasenumber == 5 %}
                                         If you do not agree with your distribution, please contact the support staff.
                                     {% else %} {# phase 6 or 7 #}
-                                        {% GetPresentationStudent user %}
+                                        {% get_presentation_student user %}
                                     {% endif %}
                                 {% endif %}
                             {% endif %}
@@ -423,7 +429,7 @@
 
     <div class="place-right text-small">
         <div class="cell place-left padding10" onclick="roll('li')">By: Kolibri Solutions 2016-2019</div>
-        <div class="cell place-left padding10">Currently deployed: {% GetHash %}</div>
+        <div class="cell place-left padding10">Currently deployed: {% get_hash %}</div>
     </div>
 </div>
 {% block scripts %}

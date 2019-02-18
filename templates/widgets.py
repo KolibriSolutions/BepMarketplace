@@ -92,6 +92,7 @@ class MetroSelect(Select):
     template_name = 'widgets/select.html'
     option_template_name = 'widgets/select_option.html'
 
+
 class MetroSelectRadioTable(RadioSelect):
     input_type = 'radio'
     template_name = 'widgets/select_radio_table.html'

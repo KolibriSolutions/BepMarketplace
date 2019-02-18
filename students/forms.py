@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from general_form import clean_file_default, FileForm
 from general_model import get_ext, print_list
 from timeline.utils import get_timeslot
-from professionalskills.models import FileType
+from professionalskills.models import FileType, FileExtension
 from templates import widgets
 
 
@@ -34,6 +34,8 @@ class StudentFileForm(FileForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['Type'].queryset = FileType.objects.filter(TimeSlot=get_timeslot())
+        # allow any extension known in the system, full validation is done afterwards based on the filetype.
+        self.fields['File'].widget.attrs['accept'] = str(','.join(['.'+f for f in FileExtension.objects.all().values_list('Name', flat=True)]))
 
     class Meta(FileForm.Meta):
         fields = ['File', 'Caption', 'Type']

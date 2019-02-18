@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load custom_filters %}
+{% load index_tags %}
 {% block body %}
     <h1>List all users</h1>
     <a href="{% url 'support:groupadministratorsform' %}" class="button primary">Capacity Group Administration</a>
@@ -47,7 +47,7 @@
                             {% endfor %}
                             {% endif %}
                         {% else %}
-                            Cohort: {{ u.registration.Cohort|default:"None" }}
+                            Cohort: {{ u.usermeta.Cohort|default:"-" }}
                         {% endif %}
                     </td>
                     <td>
@@ -90,7 +90,7 @@
     {{ block.super }}
     <script>
         $(document).ready(function () {
-            var dt = $('.datatable').dt_wrapper([
+            $('.datatable').dt_wrapper([
                     {column_number: 0, filter_type: "text"},
                     {column_number: 3, filter_type: "select"},
                     {column_number: 5, filter_type: "select", html5_data: 'data-search'},
@@ -105,7 +105,7 @@
             );
         });
 
-        function verify(id, button) {
+        function verify(id) {
             $.get("/api/verify/assistant/" + String(id), function (data) {
                 $.Notify({
                     caption: 'Result',

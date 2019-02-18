@@ -15,8 +15,9 @@ class ResultOptions(models.Model):
     """
     TimeSlot = models.OneToOneField(TimeSlot, on_delete=models.CASCADE, related_name="resultoptions")
     Visible = models.BooleanField(default=False)
+
     def __str__(self):
-        return "Result options for " + self.TimeSlot.__str__() + "."
+        return "Result options for {}.".format(self.TimeSlot)
 
 
 class GradeCategory(models.Model):
@@ -32,7 +33,7 @@ class GradeCategory(models.Model):
         ordering = ["-Weight", "Name"]
 
     def __str__(self):
-        return self.Name + " (" + str(self.Weight) + "%)"
+        return '{} ({}%)'.format(self.Name, self.Weight)
 
     def clean(self):
         ws = GradeCategory.objects.filter(TimeSlot=get_timeslot_id())
@@ -66,7 +67,7 @@ class CategoryResult(models.Model):
 
         :return:
         """
-        return (self.Comments and self.aspectresults.count() == self.Category.aspects.count() and all([a.Grade for a in self.aspectresults.all()]))
+        return self.Comments and self.aspectresults.count() == self.Category.aspects.count() and all([a.Grade for a in self.aspectresults.all()])
 
     class Meta:
         ordering = ["Category"]
@@ -83,8 +84,11 @@ class GradeCategoryAspect(models.Model):
     Name = models.CharField(max_length=255)
     Description = models.TextField()
 
+    class Meta:
+        ordering = ['Category', 'Name']
+
     def __str__(self):
-        return self.Name + " in " + str(self.Category)
+        return '{} in {}'.format(self.Name, self.Category)
 
     def clean(self):
         self.Description = clean_text(self.Description)
@@ -107,5 +111,8 @@ class CategoryAspectResult(models.Model):
     Grade = models.CharField(max_length=2, choices=ResultOptions, blank=True, null=True)
     CategoryResult = models.ForeignKey(CategoryResult, on_delete=models.CASCADE, related_name='aspectresults')
 
+    class Meta:
+        ordering = ['CategoryAspect']  # inherit sorting
+
     def __str__(self):
-        return self.CategoryAspect.Name + " to " + self.CategoryResult.Distribution.__str__() + " grade: " + self.Grade
+        return '{} to {} grade: {}'.format(self.CategoryAspect.Name, self.CategoryResult.Distribution.__str__(), self.Grade)

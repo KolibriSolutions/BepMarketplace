@@ -1,12 +1,16 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block body %}
-    Please note that automatic distribution does not take 'Minimum number of students' into account.
-    If a minimum number of students is not reached, this should be discussed with the responsible staff of the proposal.
-    <br/>
-    The distributions can be changed after this automatic distribution is applied.
-    <h1>{{ typename }}</h1>
-    <p>Options:
+    <h1>Automatic distribution {{ typename }}</h1>
+    <p>
+        Please note that automatic distribution does not take 'Minimum number of students' into account.
+        If a minimum number of students is not reached, this should be discussed with the responsible staff of the proposal.
+        <br/>
+        The distributions can be changed after this automatic distribution is applied.
+        <br/>
+        Scroll to the bottom of the page for statistics of this distribution.
+    </p>
+    <h3>Options:</h3>
     <ul>
         <li>
             Distribute random: {{ distribute_random|yesno|capfirst }}
@@ -15,9 +19,7 @@
             Automotive preference: {{ automotive_preference|yesno|capfirst }}
         </li>
     </ul>
-
-    </p>
-    <h2>Confirm (this deletes all current distributions from current timeslot)</h2>
+    <h2>Confirm (this deletes all current distributions from current time slot)</h2>
     <form action="" method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
         <table class="table" style="text-align:left;">

@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load custom_filters %}
 {% load static %}
 
 {% block body %}
@@ -9,58 +8,59 @@
         {% endautoescape %}
     {% else %}
 
-    {% if not favorite %}
-        <h1>{% if usrsubject %}Visited by {{ usrsubject.usermeta.get_nice_name }}{% else %}Published projects{% endif %}</h1>
-        <a href="{% url 'proposals:favorites' %}" class="button primary">Favorites only</a>
-    {% else %}
-        <h1>Favorited Projects</h1>
-        <a href="{% url 'proposals:list' %}" class="button primary">All Projects</a>
-    {% endif %}
-    <div class="double-scroll">
-        <table class="table datatable striped hovered">
-            <thead>
-            <tr>
-                <th><span class="mif-star-half icon"></span></th>
-                <th data-priority="1">Name</th>
-                <th>Track</th>
-                <th>Research group</th>
-                <th>Responsible staff</th>
-                <th>Assistants</th>
-                <th data-visible="false">URL</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for project in projects %}
-                <tr data-proj="{{ project.pk }}">
-                    <td>
+        <h1>{% if usrsubject %}Visited by {{ usrsubject.usermeta.get_nice_name }}{% elif favorite %}Favorite Projects{% else %}Published projects{% endif %}</h1>
+        {# tabcontrol is now incorrect for visited-by view, but this is only for superusers. #}
+        <div class="tabcontrol">
+            <ul class="tabs">
+                <li {% if not favorite %} class="active"{% endif %}><a href="{% url 'proposals:list' %}">All projects</a></li>
+                <li {% if favorite %} class="active"{% endif %}><a href="{% url 'proposals:favorites' %}">Favorite only</a></li>
+            </ul>
+        </div>
+        <div class="double-scroll">
+            <table class="table datatable striped hovered">
+                <thead>
+                <tr>
+                    <th><span class="mif-star-half icon"></span></th>
+                    <th data-priority="1">Name</th>
+                    <th>Track</th>
+                    <th>Research group</th>
+                    <th>Responsible staff</th>
+                    <th>Assistants</th>
+                    <th data-visible="false">URL</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for project in projects %}
+                    <tr data-proj="{{ project.pk }}">
+                        <td>
                         <span id="fav-{{ project.pk }}"
                               class="star-favorite mif-star-empty icon">
                         </span>
-                    </td>
-                    <td><a href="{% url 'proposals:details' project.id %}"
-                           class="capitalize">{{ project.Title }}</a>
-                    </td>
-                    <td>{{ project.Track }}</td>
-                    <td>{{ project.Group }}</td>
-                    <td>
-                        <a href="mailto:{{ project.ResponsibleStaff.email }}">
-                            {{ project.ResponsibleStaff.usermeta.get_nice_name }}
-                        </a>
-                    </td>
-                    <td>
-                        <ul class="no-margin">
-                            {% for a in project.Assistants.all %}
-                                <li><a href="mailto:{{ a.email }}">{{ a.usermeta.get_nice_name }}</a></li>
-                            {% endfor %}
-                        </ul>
-                    </td>
-                    <td>{{ DOMAIN }}{% url 'proposals:details' project.id %}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-{% endif %}
+                        </td>
+                        <td><a href="{% url 'proposals:details' project.id %}"
+                               class="capitalize">{{ project.Title }}</a>
+                        </td>
+                        <td>{{ project.Track }}</td>
+                        <td>{{ project.Group }}</td>
+                        <td>
+                            <a href="mailto:{{ project.ResponsibleStaff.email }}">
+                                {{ project.ResponsibleStaff.usermeta.get_nice_name }}
+                            </a>
+                        </td>
+                        <td>
+                            <ul class="no-margin">
+                                {% for a in project.Assistants.all %}
+                                    <li><a href="mailto:{{ a.email }}">{{ a.usermeta.get_nice_name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>{{ DOMAIN }}{% url 'proposals:details' project.id %}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
 {% endblock %}
 {% block scripts %}
     {{ block.super }}
@@ -99,7 +99,7 @@
             );
             // load all favorites after cache
             var favs = {{ favorite_projects }};
-            for(var i=0; i<favs.length; i++){
+            for (var i = 0; i < favs.length; i++) {
                 $('#fav-' + favs[i]).removeClass('mif-star-empty').addClass('mif-star-full');
             }
         });

@@ -1,25 +1,16 @@
 {% extends 'generic_stats.html' %}
 {% block stat_header %}
-        <h1>Project stats</h1>
-    {#    <div class="grid">#}
-    {% for n, f in filters %}
-        {% if f %}
-        <a href="{% url 'proposals:stats' f %}"
-           class="button {% if f == filter %}primary{% endif %}"><span></span>{{ n }}</a>
-        {% else %}
-            <a href="{% url 'proposals:stats' %}"
-           class="button {% if f == filter %}primary{% endif %}"><span></span>{{ n }}</a>
-        {% endif %}
-
-    {% endfor %}
+    <h1>Project stats for {{ timeslot|default_if_none:'future' }}</h1>
+    <div class="tabcontrol">
+        <ul class="tabs">
+            {% for ts in timeslots %}
+                <li {% if ts == timeslot %}class="active"{% endif %}><a href="{% if ts == timeslot %}#{% else %}../{{ ts.pk }}{% endif %}">{{ ts }}</a></li>
+            {% endfor %}
+            <li {% if not timeslot %}class="active"{% endif %}><a href="{% if timeslot %}../future{% else %}#{% endif %}">Future</a></li>
+        </ul>
+    </div>
     <p>
-        {% if filter %}
-            Showing only data for visible projects.
-        {% else %}
-            Showing data of all projects.
-        {% endif %}
-    <br />
-    Showing {{ num }} projects.
+        Showing {{ num }} projects.
         The minimum total capacity is {{ mincapacity }} students, the maximum total capacity is {{ maxcapacity }} students.<br/>
     </p>
 {% endblock %}

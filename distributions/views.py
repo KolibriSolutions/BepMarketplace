@@ -11,7 +11,8 @@ from django.shortcuts import render
 from django.urls import reverse
 from htmlmin.decorators import not_minified_response
 
-from BepMarketplace.decorators import group_required, phase_required
+from index.decorators import group_required
+from timeline.decorators import phase_required
 from general_form import ConfirmForm
 from general_mail import EmailThreadTemplate
 from general_model import print_list
@@ -344,9 +345,9 @@ def automatic(request, dist_type, distribute_random=1, automotive_preference=1):
         raise PermissionDenied('Distribution is not possible in this timephase')
 
     if int(dist_type) == 1:
-        typename = 'Calculated by student'
+        typename = 'calculated by student'
     elif int(dist_type) == 2:
-        typename = 'Calculated by project'
+        typename = 'calculated by project'
     else:
         raise PermissionDenied("Invalid type")
 

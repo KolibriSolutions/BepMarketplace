@@ -1,3 +1,5 @@
+{% load students_tags %}
+
 {# used as inclusion in other files #}
 
 {# a draggable 'button' with a Student. Code snippet used in manual distribute and app/dist list. #}
@@ -14,10 +16,10 @@
               data-hint="Interested in:|<ul class='no-padding-left' style='list-style:none'>
 
                       {#  the tag warning span, is only for double-checking that the list order is correct. It prints the Priority which should be equal to its index number. #}
-                    {% for application in student.applications.all|dictsort:"Priority" %}
+                    {% for application in student|get_applications %}
                         <li><span class='tag info'> {{ application.Priority }}</span><span> {{ application.Proposal.Title }}</span></li>
                     {% endfor %}</ul>
-    ECTS: {{ application.Student.usermeta.ECTS|default:0 }}<br />Cohort: {{ application.Student.usermeta.Cohort|default:'-' }}">
+    ECTS: {{ student.usermeta.ECTS|default:0 }}<br />Cohort: {{ student.usermeta.Cohort|default:'-' }}">
         {# text visible on the button of the Student #}
 
             {# display a Priority if this Student is currently on a Proposal (so this Student block is actually an application)#}

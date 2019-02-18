@@ -23,7 +23,6 @@ class SupportViewsTest(ViewsTest):
         codes_general_phase1234567 = [  # including no-timephase
             [['mailinglist', None], self.p_support],
             [['mailtrackheads', None], self.p_support],
-            [['contentpolicy', None], self.p_support],
             # [['stats', None], self.p_staff12345],
             # public files
             [['addfile', None], self.p_support],
@@ -44,15 +43,9 @@ class SupportViewsTest(ViewsTest):
             # [['capacitygroupadministration', None], self.p_support],  # old groupadmin form.
 
             # lists
-            [['privateproposals', None], self.p_support_prv],
             [['listusers', None], self.p_support_prv],
             [['liststaff', None], self.p_support_prv],
             [['liststaffproposals', {'pk': 1}], self.p_support],
-            # [['liststaffXls', None], self.p_support],  # depricated
-            [['listgroupproposals', None], self.p_cgadmin],
-            [['listproposalsadvisor', None], self.p_study],
-            [['listnonfullprojects', None], self.p_support],
-            [['listnonfullprojectsxlsx', {'timeslot': 1}], self.p_support],
             [['editfile', {'pk': self.publicfile.id}], self.p_support],
             [['deletefile', {'pk': self.publicfile.id}], self.p_support],
 

@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load custom_filters %}
 {% block body %}
     <h1>Presentations planning</h1>
     <a href="{% url "presentations:presentationsplanningxls" %}" class="button primary">Export Excel</a>
@@ -75,7 +74,7 @@
     <script type="text/javascript">
         //live search for proposals, using datatables jquery.
         $(document).ready(function () {
-            var dt = $('.datatable').dt_wrapper([
+            $('.datatable').dt_wrapper([
                     {column_number: 0, filter_type: "select"},
                     {column_number: 1, filter_type: "text"},
                     {column_number: 2, filter_type: "select", column_data_type: 'html'},

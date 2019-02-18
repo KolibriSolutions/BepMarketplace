@@ -9,6 +9,7 @@ from django.db import models
 from django.utils.timezone import localtime
 
 from general_model import clean_text
+from general_view import truncate_string
 from proposals.models import Proposal
 
 
@@ -20,12 +21,14 @@ class UserLogin(models.Model):
     def __str__(self):
         return self.Subject.usermeta.get_nice_name() + "@" + localtime(self.Timestamp).strftime("%H:%M %d-%m-%Y")
 
+
 class CanvasLogin(models.Model):
     Subject = models.ForeignKey(User, on_delete=models.CASCADE, related_name='logins_canvas')
     Timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.Subject.usermeta.get_nice_name() + "@" + localtime(self.Timestamp).strftime("%H:%M %d-%m-%Y")
+
 
 class ProposalStatusChange(models.Model):
     Subject = models.ForeignKey(Proposal, on_delete=models.CASCADE, related_name="StatusChangeTracking")
@@ -39,6 +42,9 @@ class ProposalStatusChange(models.Model):
 
     def clean(self):
         self.Message = clean_text(self.Message)
+
+    def __str__(self):
+        return "Project {} from {} to {} by {} at {}".format(truncate_string(self.Subject.__str__()), self.StatusFrom, self.StatusTo, self.Actor, self.Timestamp)
 
 
 class ProposalTracking(models.Model):

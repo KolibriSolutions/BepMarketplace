@@ -13,12 +13,12 @@
                 <h5>Currently Editing: {{ dstr }}</h5>
                 <a href="{% url 'results:gradeformstaff' pk 0 %}" style="width:100%"
                    class="button {% if category %} info{% else %} button-shadow {% endif %}">Information</a>
+                <hr/>
                 {% for cat in categories %}
                     <a href="{% url 'results:gradeformstaff' pk forloop.counter %}" style="width:100%"
                        class="button {% if cat != category %}primary{% else %} button-shadow {% endif %}">{{ cat }}</a><br/>
                 {% endfor %}
-                <br/>
-                <a href="{% url 'results:about' %}" style="width:100%" class="button info">Grading Explanation</a>
+                <hr>
                 <a href="{% url 'results:gradefinalpreview' pk=pk %}" style="width:100%" class="button info">Print Preview</a>
                 <a href="{% url 'results:gradefinal' pk=pk %}" style="width:100%" class="button success">Finish and
                     Print</a>
@@ -31,16 +31,20 @@
                     {% endif %}
                     <p>
                         Use the buttons on the left side to grade {{ dstr }}.
-                    </p><p>
-                    The dark blue buttons are all categories of the grades.
-                    Categories consist of multiple aspects.
-                    For more information about the categories and aspects click on the light blue explanation button.
-                </p><p>
-                    To finish the grading, click the green button. Then there is a summary to do a final check on the
-                    grades.
-                    When everything is correct, the grades can be printed or exported.
-                    <b>After printing or exporting, editing is no longer possible.</b>
-                </p>
+                    </p>
+                    <p>
+                        The dark blue buttons are all categories of the grades.
+                        Categories consist of multiple aspects.
+                    </p>
+                    <a href="{% url 'results:about' %}" class="button primary">More information about the categories and aspects</a>
+
+                    <p>
+                        To finish the grading, click the green button. Then there is a summary to do a final check on the
+                        grades.
+                        When everything is correct, the grades can be printed or exported.
+                        <b>After printing or exporting, editing is no longer possible.</b>
+                    </p>
+
                 {% else %}
                     {% if final %}
                         <div class="bg-darkRed fg-white padding10 margin10">
@@ -98,7 +102,6 @@
                                         {% endfor %}
                                     </tr>
                                 {% endfor %}
-
                             </table>
                         {% else %}
                             <p>This category has no aspects.</p>

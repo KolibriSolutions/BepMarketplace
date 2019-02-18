@@ -49,6 +49,7 @@ TEMPLATES = [
                 'templates.context_processors.debugsetting',
                 'templates.context_processors.general',
             ],
+            #  'string_if_invalid': '!VARIABLE ERROR IN TEMPLATE ("%s") !'  # enable to debug template variables
         },
     },
 ]

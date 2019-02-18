@@ -24,7 +24,10 @@ urlpatterns = [
     path('group/edit/<int:pk>/', views.edit_group, name='editgroup'),
     path('group/listall/<int:pk>/', views.list_groups, name='listgroups'),
     path('group/assign/<int:pk>/', views.assign, name='assignshuffle'),
-    path('group/listown/', views.list_own_groups, name='listowngroups'),
-    path('group/switch/<int:frompk>/<int:topk>)/', views.switch_group, name='switchgroups'),
+    path('group/', views.list_own_groups, name='listowngroups'),
+    # path('group/switch/<int:frompk>/<int:topk>)/', views.switch_group, name='switchgroups'),
+    path('group/switch/<int:pk>/', views.switch_group, name='switchgroups'),
     path('group/members/<int:pk>/', views.list_group_members, name='listgroupmembers'),
+
+    path('extensions/', views.edit_extensions, name='extensions'),
 ]

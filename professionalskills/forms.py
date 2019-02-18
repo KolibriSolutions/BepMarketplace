@@ -3,7 +3,7 @@ from django.forms import ValidationError
 
 from templates import widgets
 from timeline.utils import get_timeslot
-from .models import FileType, StaffReponse, StudentGroup
+from .models import FileType, StaffResponse, StudentGroup, FileExtension
 
 
 class FileTypeModelForm(forms.ModelForm):
@@ -37,46 +37,44 @@ class FileTypeModelForm(forms.ModelForm):
             'Deadline': widgets.MetroDateInput,
             'Description': widgets.MetroTextInput,
             'AllowedExtensions': widgets.MetroSelectMultiple,
-            'CheckedBySupervisor' : widgets.MetroCheckBox,
+            'CheckedBySupervisor': widgets.MetroCheckBox,
         }
         labels = {
             'AllowedExtensions': 'Allowed file extensions',
-            'CheckedBySupervisor': 'Supervisor check'
+            'CheckedBySupervisor': 'Supervisor check',
         }
         help_texts = {
-            'CheckedBySupervisor': 'Check this box if the supervisor of the project has to review and grade this professional skill.'
+            'CheckedBySupervisor': 'Check this box if the supervisor of the project has to review and grade this professional skill.',
+            'AllowedExtensions': 'If more extensions are needed, edit them using the professionalskills->extensions menu',
         }
 
-    def clean(self):
-        cleaned_data = super().clean()
-        # Title should be unique within one timeslot, a new filetype is always created in the current timeslot.
-        title = cleaned_data.get('Name')
-        p = FileType.objects.filter(TimeSlot=get_timeslot(), Name__iexact=title)
-        if p.exists():
-            for conflict_or_self in p:
-                if conflict_or_self.id != self.instance.id:
-                    raise ValidationError('A professional skill with this name already exists in this timeslot')
-        return cleaned_data
+        def clean(self):
+            cleaned_data = super().clean()
+            # Title should be unique within one timeslot, a new filetype is always created in the current timeslot.
+            title = cleaned_data.get('Name')
+            p = FileType.objects.filter(TimeSlot=get_timeslot(), Name__iexact=title)
+            if p.exists():
+                for conflict_or_self in p:
+                    if conflict_or_self.id != self.instance.id:
+                        raise ValidationError('A professional skill with this name already exists in this timeslot')
+            return cleaned_data
 
 
-class ConfirmForm(forms.Form):
-    confirm = forms.BooleanField(widget=widgets.MetroCheckBox, label='Confirm:')
-
-
-class StaffReponseForm(forms.ModelForm):
+class StaffResponseForm(forms.ModelForm):
     """
     A response from a staff member to a professionalskill file of a student.
     """
+
     class Meta:
-        model = StaffReponse
+        model = StaffResponse
 
         fields = [
             'Explanation',
             'Status',
         ]
         widgets = {
-            'Explanation' : widgets.MetroTextInput,
-            'Status' : widgets.MetroSelect,
+            'Explanation': widgets.MetroTextInput,
+            'Status': widgets.MetroSelect,
         }
 
 
@@ -84,6 +82,7 @@ class StudentGroupForm(forms.ModelForm):
     """
     A group of students for a PRV
     """
+
     class Meta:
         model = StudentGroup
         fields = [
@@ -93,10 +92,10 @@ class StudentGroupForm(forms.ModelForm):
             'Max',
         ]
         widgets = {
-            'PRV' : widgets.MetroSelect,
-            'Number' : widgets.MetroNumberInputInteger,
-            'Start' : widgets.MetroDateTimeInput,
-            'Max' : widgets.MetroNumberInputInteger,
+            'PRV': widgets.MetroSelect,
+            'Number': widgets.MetroNumberInputInteger,
+            'Start': widgets.MetroDateTimeInput,
+            'Max': widgets.MetroNumberInputInteger,
         }
         labels = {
             'PRV': 'Professional skill',
@@ -114,9 +113,24 @@ class StudentGroupChoice(forms.Form):
     """
 
     """
-    Group = forms.ModelChoiceField(queryset=StudentGroup.objects.none() ,widget=widgets.MetroSelect)
+    Group = forms.ModelChoiceField(queryset=StudentGroup.objects.none(), widget=widgets.MetroSelect)
 
     def __init__(self, *args, **kwargs):
         self.PRV = kwargs.pop('PRV')
         super().__init__(*args, **kwargs)
-        self.fields['Group'].queryset = self.PRV.groups.all()
+        self.fields['Group'].queryset = self.PRV.groups
+
+
+class FileExtensionForm(forms.ModelForm):
+    """
+    Used in modelform factory to choose file extensions available for student uploading files.
+    """
+
+    class Meta:
+        model = FileExtension
+        fields = [
+            'Name',
+        ]
+        widgets = {
+            'Name': widgets.MetroTextInput,
+        }

@@ -12,7 +12,6 @@ class CategoryResultForm(forms.ModelForm):
         self.fields['Comments'].disabled = disabled
         self.fields['Comments'].widget.attrs['placeholder'] = "Please give some comments on the grade"
 
-
     class Meta:
         model = CategoryResult
         fields = ['Grade', 'Comments']

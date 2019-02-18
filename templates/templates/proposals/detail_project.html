@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
-{% load custom_filters %}
-{% GetPhaseNumber as phasenumber %}
+{% load timeline_tags %}
+{% load proposal_tags %}
+{% load index_tags %}
+{% get_timephase_number as phasenumber %}
 {% block body %}
     {% if bodyhtml %}
         {% autoescape off %}
@@ -119,7 +121,7 @@
                             {% comment %}
                             Apply / retract buttons are inserted using a .format on the {} below.
                             {% endcomment %}
-                            {% if not user|has_group:"type4staff" and not project.Private.all %}
+                            {% if not project.Private.all %}
                                 {}
                             {% endif %}
                         {% else %}

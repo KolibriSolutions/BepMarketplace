@@ -4,11 +4,14 @@
     <p>Download excel exports and handed in professional skills from previous years. To download exports of the current year, please use the regular menu entries.</p>
     <table class="table striped hovered">
         <thead>
-        <th>TimeSlot</th>
-        <th>Stats</th>
-        <th data-searchable="false" data-sortable="false">Exports</th>
-        <th data-searchable="false" data-sortable="false">Downloads</th>
+        <tr>
+            <th>TimeSlot</th>
+            <th>Stats</th>
+            <th data-searchable="false" data-sortable="false">Exports</th>
+            <th data-searchable="false" data-sortable="false">Downloads</th>
+        </tr>
         </thead>
+        <tbody>
         {% for timeslot in timeslots %}
             <tr>
                 <td>{{ timeslot }}</td>
@@ -23,6 +26,7 @@
                     <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'distributions' %}">Distributions</a>
                     <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'students' %}">Students & Grades</a>
                     <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'presentations' %}">Presentations</a>
+                    <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'nonfull' %}">Non-full projects</a>
                 </td>
                 <td>
                     {% for filetype in timeslot.filetypes.all %}
@@ -30,7 +34,9 @@
                     {% endfor %}
                 </td>
             </tr>
+
         {% endfor %}
+        </tbody>
     </table>
 {% endblock %}
 {% block scripts %}

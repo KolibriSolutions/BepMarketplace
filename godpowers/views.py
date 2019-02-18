@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.utils import timezone
 
-from BepMarketplace.decorators import superuser_required
+from index.decorators import superuser_required
 from general_view import get_grouptype, get_all_students
 from timeline.utils import get_timeslot
 from tracking.models import ProposalTracking

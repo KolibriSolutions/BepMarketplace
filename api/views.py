@@ -6,7 +6,8 @@ from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from BepMarketplace.decorators import group_required, can_edit_proposal, can_downgrade_proposal
+from index.decorators import group_required
+from proposals.decorators import can_edit_proposal, can_downgrade_proposal
 from api.utils import getStatStr
 from general_mail import mail_proposal_all, send_mail
 from general_view import get_grouptype
@@ -199,7 +200,7 @@ def list_public_projects_api(request):
     """
     data = {}
 
-    for group in CapacityGroup.objects.all():  # TODO Change to capacity group model
+    for group in CapacityGroup.objects.all():
         data[group.ShortName] = {
             "name": group.ShortName,
             "projects": [prop.id for prop in
@@ -241,7 +242,7 @@ def detail_proposal_api(request, pk):
         "id": prop.id,
         "detaillink": reverse("proposals:details", kwargs={'pk': prop.id}),
         "title": prop.Title,
-        "group": prop.Group,
+        "group": prop.Group.ShortName,
         "track": str(prop.Track),
         "reponsible": str(prop.ResponsibleStaff),
         "assistants": [str(u) for u in list(prop.Assistants.all())],

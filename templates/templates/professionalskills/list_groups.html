@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block body %}
+    <h1>All enrolled groups</h1>
+    <table class="table bordered hovered striped">
+        <thead>
+        <tr>
+            <th>Professional skill</th>
+            <th>Current Group</th>
+            <th>Possible Groups</th>
+            <th>Switch</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for group in groups %}
+            <tr>
+                <td>{{ group.PRV }}</td>
+                <td>{{ group }}</td>
+                <td>
+                    <ul>
+                        {% for gr in group.PRV.groups.all %}
+                            <li><a href="{% url 'professionalskills:listgroupmembers' gr.pk %}">{{ gr }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </td>
+                <td>
+                    <a href="{% url 'professionalskills:switchgroups' group.PRV.pk %}" class="button primary">Switch groups</a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

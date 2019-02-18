@@ -1,7 +1,25 @@
 from django.contrib import admin
+
 from .models import CategoryResult, GradeCategory, GradeCategoryAspect, CategoryAspectResult
 
-admin.site.register(GradeCategoryAspect)
-admin.site.register(CategoryAspectResult)
-admin.site.register(CategoryResult)
-admin.site.register(GradeCategory)
+
+class GradeCategoryAdmin(admin.ModelAdmin):
+    list_filter = ['TimeSlot']
+
+
+class GradeCategoryAspectAdmin(admin.ModelAdmin):
+    list_filter = ('Category', 'Category__TimeSlot')
+
+
+class CategoryResultAdmin(admin.ModelAdmin):
+    list_filter = ('Category', 'Category__TimeSlot')
+
+
+class CategoryAspectResultAdmin(admin.ModelAdmin):
+    list_filter = ('CategoryAspect__Category__TimeSlot', 'CategoryAspect__Category', 'CategoryResult')
+
+
+admin.site.register(GradeCategoryAspect, GradeCategoryAspectAdmin)
+admin.site.register(CategoryAspectResult, CategoryAspectResultAdmin)
+admin.site.register(CategoryResult, CategoryResultAdmin)
+admin.site.register(GradeCategory, GradeCategoryAdmin)

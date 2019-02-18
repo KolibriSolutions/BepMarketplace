@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% load custom_filters %}
+{% load timeline_tags %}
 {% block stylesheets %}
     <link href="{% static "css/jquery.datetimepicker.min.css" %}" rel="stylesheet">
     <link href="{% static "css/lightbox.css" %}" rel="stylesheet">
@@ -113,7 +113,7 @@
                 step: 5,
                 {% if not skip_date_validate %}
                     minDate: '-1970-01-02', // yesterday
-                    maxDate: '{% GetEndDate %}'//last date in this timeslot
+                    maxDate: '{% get_timeslot_end_date %}'//last date in this timeslot
                 {% endif %}
 
             });
@@ -122,7 +122,7 @@
                 format: 'Y-m-d',
                 {% if not skip_date_validate %}
                     minDate: '-1970-01-02', // yesterday
-                    maxDate: '{% GetEndDate %}' //last date in this timeslot
+                    maxDate: '{% get_timeslot_end_date %}' //last date in this timeslot
                 {% endif %}
             });
         });

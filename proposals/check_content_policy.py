@@ -1,7 +1,7 @@
 import difflib
 import re
 
-from proposals.utils import get_all_projects
+from .utils import get_all_projects
 
 # regex pattern matching checks:
 content_policies = (

@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
-{% load custom_filters %}
+{% load index_tags %}
 {% block body %}
     <h1>Professional Skills</h1>
     {% if not user|has_group:'any' %}{# for students #}
-        To hand in a prv you can upload files <a href="{% url 'students:addfile' %}">here</a>.<br/>
-        Your previous handins can be found <a href="{% url 'professionalskills:listownfiles' %}">here</a>.<br/>
+{#        To hand in a prv you can upload files <a href="{% url 'students:addfile' %}">here</a>.<br/>#}
+{#        Your previous handins can be found <a href="{% url 'professionalskills:listownfiles' %}">here</a>.<br/>#}
+        <p>To upload files or view your previous uploads, use the 'Files' menu at the top.</p>
         <a href="{% url 'professionalskills:listowngroups' %}" class="button primary">List Enrolled Groups</a>
     {% elif user|has_group:"type6staff;type3staff" %}
         <a href="{% url 'professionalskills:mailoverduestudents' %}" class="button primary">Mail Overdue
             Students</a>
-        <a class="button primary" href="{% url 'professionalskills:printprvforms' %}">Print Prv Results</a>
+        <a class="button primary" href="{% url 'professionalskills:printprvforms' %}">Print Results</a>
         <a class="button primary" href="{% url 'professionalskills:filetypecreate' %}">Create New</a>
 
     {% endif %}
@@ -58,7 +59,7 @@
     {{ block.super }}
     <script>
         $(document).ready(function () {
-            var dt = $('.datatable').dt_wrapper();
+            $('.datatable').dt_wrapper();
         });
     </script>
 {% endblock %}

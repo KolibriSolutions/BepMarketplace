@@ -1,11 +1,10 @@
 from datetime import datetime
 
-from django.db.models import Count, Sum
 from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 
 from general_view import timestamp
-from professionalskills.models import FileType, StaffReponse
+from professionalskills.models import FileType, StaffResponse
 from proposals.utils import get_share_link
 from results.models import GradeCategory
 from timeline.utils import get_timeslot
@@ -82,12 +81,13 @@ def get_list_students_xlsx(des, typ):
                 row.append(d.files.filter(Type=prv).order_by('-id')[0].staffreponse.Status)
             except IndexError:
                 row.append('no file')
-            except StaffReponse.DoesNotExist:
+            except StaffResponse.DoesNotExist:
                 row.append('no grading')
 
         ws.append(row)
 
     return save_virtual_workbook(wb)
+
 
 #  Does not filter on timeslot, depricated.
 # def get_list_staff_xlsx(staff):
@@ -206,7 +206,7 @@ def get_list_distributions_xlsx(proposals):
     return save_virtual_workbook(wb)
 
 
-def get_list_proposals_xlsx(proposals):
+def get_list_projects_xlsx(proposals):
     """
     Excel export of proposals with sharelinks
 
@@ -220,7 +220,7 @@ def get_list_proposals_xlsx(proposals):
     ws = wb.active
     ws.title = "BEP Projects"
 
-    ws['A1'] = 'Proposals from BEP Marketplace'
+    ws['A1'] = 'Projects from BEP Marketplace'
     ws['A1'].style = 'Headline 2'
     ws['F1'] = "Exported on: " + str(datetime.now())
 

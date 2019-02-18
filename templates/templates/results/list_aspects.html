@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load custom_filters %}
 {% block body %}
     <h1>Aspects</h1>
     <p>Grade aspects for category {{ cat }}</p>
@@ -33,7 +32,7 @@
     <script type="text/javascript">
         //live search for proposals, using datatables jquery.
         $(document).ready(function () {
-           var dt = $('.datatable').dt_wrapper();
+           $('.datatable').dt_wrapper();
         });
     </script>
 {% endblock %}

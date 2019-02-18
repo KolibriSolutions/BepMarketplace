@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% load custom_filters %}
+{% load timeline_tags %}
+{% load index_tags %}
 {% load static %}
 {% block body %}
 
@@ -11,7 +13,7 @@
             <div class="cell colspan3">
                 <h1>Bachelor Final Project Marketplace</h1>
                 <h4>Hello and welcome to the marketplace!</h4>
-                <p>At this moment we are in timephase <i>"{% GetPhase %}"</i> in timeslot <i>{% GetSlot %}</i></p>
+                <p>At this moment we are in time phase <i>"{% get_timephase %}"</i> in time slot <i>{% get_timeslot %}</i></p>
                 {% if user.is_authenticated %}
                     <p>{{ info }}</p>
                     <p>If you have any questions about the system or your role in the system, please contact the {{ support_role }}, {{ support_name }} at {{ support_email }}</p>

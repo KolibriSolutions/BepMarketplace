@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% load custom_filters %}
+{% load timeline_tags %}
 {% load static %}
-{% GetPhaseNumber as phasenumber %}
+{% get_timephase_number as phasenumber %}
 {% block stylesheets %}
     <style>
         ul.studentList {
@@ -10,21 +10,17 @@
             min-height: 20px;
             user-select: none; /*disable text selection*/
         }
-
         li.student {
             list-style: none;
         }
-
         li.student > div.button {
             width: 100%;
             text-align: left;
         }
-
     </style>
 
 {% endblock %}
 {% block scripts %}
-
     {{ block.super }}
     {# jquery ui is used for the 'sortable' for the list items #}
     <script src="{% static "js/jquery-ui.sortable.min.js" %}"></script>

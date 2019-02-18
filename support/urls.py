@@ -9,7 +9,6 @@ urlpatterns = [
     path('mail/', views.mailing, name='mailinglist'),
     path('mail/trackheads/', views.mail_track_heads, name='mailtrackheads'),
 
-    path('contentpolicy/', views.content_policy, name='contentpolicy'),
     # path('ectsform/', views.ECTSForm, name='ectsform'), #deprecated due to osirisdata
     # path('stats/', views.stats, name='stats'),
 
@@ -42,16 +41,10 @@ urlpatterns = [
     path('students/', views.list_students, name='liststudents'),
     path('students/xlsx/', views.list_students_xlsx, name='liststudentsXls'),
 
-    path('projects/private/', views.list_private_projects, name='privateproposals'),
-    path('projects/group/', views.list_group_projects, name='listgroupproposals'),
-    path('projects/studyadvisor/', views.list_studyadvisor_projects, name='listproposalsadvisor'),
     # path('liststudentsldap/', views.listStudentsLdap, name='liststudentsldap'),# might be re-introduced when OSIRIS link is finished.
     # path('clearcacheallstudentslist/', views.clearCacheAllStudentsList, name='clearcacheallstudentslist'),
 
     path('verifyassistants/', views.verify_assistants, name='verifyassistants'),
-
-    path('nonfull/', views.list_non_full_proposals, name='listnonfullprojects'),
-    path('nonfull/<int:timeslot>', views.list_non_full_proposals_xlsx, name='listnonfullprojectsxlsx'),
 
     path('history/', views.history, name='history'),
     path('history_download/<int:timeslot>/<str:download>/', views.history_download, name='history_download'),

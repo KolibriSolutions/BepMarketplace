@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 
-from BepMarketplace.decorators import superuser_required
+from index.decorators import superuser_required
 from general_view import get_sessions
 from timeline.utils import get_timeslot
 from .models import ProposalStatusChange, UserLogin, ApplicationTracking

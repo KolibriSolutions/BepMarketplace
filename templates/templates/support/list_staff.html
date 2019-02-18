@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load custom_filters %}
+{% load index_tags %}
 {% block body %}
     <h1>List Staff</h1>
     <h3>Showing all supervisor staff and assistants. Number of projects are numbers for the current timeslot (year)</h3>
@@ -55,7 +55,7 @@
     {{ block.super }}
     <script>
         $(document).ready(function () {
-            var dt = $('.datatable').dt_wrapper([
+            $('.datatable').dt_wrapper([
                     {column_number: 0, filter_type: "text"},
                     {column_number: 1, filter_type: "select"},
                     {
@@ -67,17 +67,6 @@
                     }, //to parse ul-li, timeslots
                 ]
             );
-            {#var cols = [#}
-            {#    null, //name#}
-            {#    null, //type#}
-            {#    {"searchable": false, "sortable": false}, //proposals both#}
-            {#    null, //proposals#}
-            {#    {"searchable": false, "sortable": false},  //distribution both#}
-            {#    null, //distribution#}
-            {#    {"searchable": false, "sortable": false} //button#}
-            {#];#}
-            {#var dropdownColumns = [1];#}
-            {#MPDataTable(cols, dropdownColumns);#}
         })
     </script>
 {% endblock %}

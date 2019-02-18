@@ -4,14 +4,45 @@ from . import views
 
 app_name = 'proposals'
 
-urlpatterns = [
+# urlpatterns are split for tests.
+
+general_urlpatterns = [
+    # public list
     path('', views.list_public_projects, name='list'),
-    path('favorites/', views.list_favorited_projects, name='favorites'),
-    path('details/<int:pk>/', views.detail_project, name='details'),
+    path('favorites/', views.list_favorite_projects, name='favorites'),
+
+    # proposal
     path('create/', views.create_project, name='create'),
-    path('edit/', views.list_own_projects, name='chooseedit'),
+    re_path(r'^share/(?P<token>[0-9A-Za-z_\-:]+)/$', views.view_share_link, name='viewsharelink'),
+
+    # lists
+    path('pending/', views.list_pending, name='pending'),
+    path('timeslot/future/', views.list_own_projects, name='chooseedit'),
+    path('timeslot/<int:timeslot>/', views.list_own_projects, name='chooseedit'),
+    path('track/future/', views.list_track, name='listtrackproposals'),
+    path('track/<int:timeslot>/', views.list_track, name='listtrackproposals'),
+    path('private/future/', views.list_private_projects, name='privateproposals'),
+    path('private/<int:timeslot>/', views.list_private_projects, name='privateproposals'),
+    path('group/future/', views.list_group_projects, name='listgroupproposals'),
+    path('group/<int:timeslot>/', views.list_group_projects, name='listgroupproposals'),
+
+    # stats
+    path('stats/future/', views.project_stats, name='stats'),
+    path('stats/<int:timeslot>/', views.project_stats, name='stats'),
+
+    path('stats/<int:timeslot>/personal/', views.stats_personal, name='statspersonal'),
+    path('stats/<int:timeslot>/personal/<int:step>/', views.stats_personal, name='statspersonal'),
+    # path('stats/general/', views.stats_general, name='statsgeneral'),
+    # path('stats/general/<int:step>/', views.stats_general, name='statsgeneral'),
+
+    # cpv
+    path('contentpolicy/', views.content_policy, name='contentpolicy'),
+]
+status_urlpatterns = [
+    path('details/<int:pk>/', views.detail_project, name='details'),
     path('edit/<int:pk>/', views.edit_project, name='edit'),
     path('copy/<int:pk>/', views.copy_project, name='copy'),
+    path('getshare/<int:pk>/', views.share, name='sharelink'),
 
     path('files/add/<str:ty>/<int:pk>/', views.add_file, name='addfile'),
     path('files/edit/<str:ty>/<int:pk>/', views.edit_file, name='editfile'),
@@ -21,19 +52,6 @@ urlpatterns = [
 
     path('status/upgrade/<int:pk>/', views.upgrade_status, name='upgradestatus'),
     path('status/downgrade/<int:pk>/', views.downgrade_status, name='downgradestatusmessage'),
-
-    path('pending/', views.list_pending, name='pending'),
-
-    path('share/<int:pk>/', views.share, name='sharelink'),
-    re_path(r'^share/(?P<token>[0-9A-Za-z_\-:]+)/$', views.view_share_link, name='viewsharelink'),
-
-    path('track/', views.list_track, name='listtrackproposals'),
-
-    path('stats/', views.project_stats, name='stats'),
-    path('stats/<int:timeslot>', views.project_stats, name='stats'),
-
-    path('stats/personal', views.stats_personal, name='statspersonal'),
-    path('stats/personal/<int:step>/', views.stats_personal, name='statspersonal'),
-    path('stats/general/', views.stats_general, name='statsgeneral'),
-    path('stats/general/<int:step>/', views.stats_general, name='statsgeneral'),
 ]
+
+urlpatterns = general_urlpatterns + status_urlpatterns

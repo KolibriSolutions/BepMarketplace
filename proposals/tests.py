@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from general_test import ViewsTest, ProjectViewsTestGeneral
 from students.models import Application
+from .urls import general_urlpatterns, status_urlpatterns
 
 
 class ProposalViewsTest(ProjectViewsTestGeneral):
@@ -17,42 +18,55 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
 
     def test_view_status_general(self):
         s = self
+        self.allurls = [x.name for x in general_urlpatterns]
 
         code_general = [
             [['viewsharelink', {'token': 'blabla'}], [s.p_anonymous]],
-            [['stats', None], [s.p_staff12345]],
+            [['stats', None], [s.p_staff_veri]],
+            [['contentpolicy', None], self.p_support],
+            [['privateproposals', None], self.p_support_prv],
+            [['privateproposals', {'timeslot': self.ts.pk}], self.p_support_prv],
+            [['listgroupproposals', None], self.p_cgadmin],
+            [['listgroupproposals', {'timeslot': self.ts.pk}], self.p_cgadmin],
+            [['chooseedit', None], s.p_staff122u35],
+            [['chooseedit', {'timeslot': self.ts.pk}], s.p_staff122u35],
+            [['list', None], s.p_all],
+            [['favorites', None], s.p_all],
+            [['create', None], s.p_staff_prop],
+            [['pending', None], s.p_pending],
+            [['listtrackproposals', None], s.p_track],
         ]
-        code_general_phase12345 = [
-            [['list', None],                       s.p_all],
-            [['favorites', None],                 s.p_all],
-            [['create', None],                     s.p_staff_prop],
-            [['chooseedit', None],                 s.p_staff_prop_no4],
-            [['pending', None],                    s.p_pending],
-            [['statspersonal', None],              s.p_forbidden],  #TODO s.p_staff12345
-            [['statsgeneral', None],               s.p_forbidden],  #TODO s.p_staff12345
-            [['listtrackproposals', None],         s.p_track],
+        code_general_phase1234 = [
+            [['statspersonal', {'timeslot': self.ts.pk}], s.p_forbidden],
+            [['statspersonal', {'timeslot': self.ts.pk, 'step': 0}], s.p_forbidden],
+            [['statspersonal', {'timeslot': self.ts.pk, 'step': 1}], s.p_forbidden],
         ]
-        code_general_phase67 = [
-            [['list', None],                       s.p_all],
-            [['favorites', None],                 s.p_all],
-            [['create', None],                     s.p_staff_prop],
-            [['chooseedit', None],                 s.p_staff_prop_no4],
-            [['pending', None],                    s.p_pending],
-            [['statspersonal', None],              s.p_staff_prop_no4],
-            [['statsgeneral', None],               s.p_staff_prop],
-            [['listtrackproposals', None],         s.p_track],
+            # [['statspersonal', None],              s.p_forbidden],
+            # [['statsgeneral', None],               s.p_forbidden],
+        # ]
+        code_general_phase567 = [
+
+            [['statspersonal', {'timeslot': self.ts.pk}], s.p_staff_prop_nou],
+            [['statspersonal', {'timeslot': self.ts.pk, 'step': 0}], s.p_staff_prop_nou],
+            [['statspersonal', {'timeslot': self.ts.pk, 'step': 1}], s.p_staff_prop_nou],
         ]
+            # [['statspersonal', None],              s.p_staff_prop_nou],
+            # [['statsgeneral', None],               s.p_staff_veri],
+        # ]
 
         if s.debug:
             print("Testing general")
         s.status = 1
         self.info['type'] = 'general'
-        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5], code_general_phase12345)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4], code_general_phase1234)
         self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], code_general)  # share link
-        self.loop_phase_code_user([6, 7], code_general_phase67)
+        self.loop_phase_code_user([5, 6, 7], code_general_phase567)
 
+        self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")
 
     def test_view_status_nophase(self):
+        self.allurls = [x.name for x in status_urlpatterns]
+
         s = self
         # no phase. Same as "TimePhase 3 and later" but without student rights.
         code_phase_nophase = [
@@ -77,7 +91,10 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         self.info['type'] = 'proposal no phase'
         self.loop_phase_code_user([-1], code_phase_nophase)
 
+        self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")
+
     def test_view_status_ts(self):
+        self.allurls = [x.name for x in status_urlpatterns]
         s = self
 
         code_next_ts = [
@@ -137,6 +154,7 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         self.info['type'] = 'proposal previous timeslot'
         self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], code_prev_ts)
 
+        self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")
 
     def test_view_status_phases(self):
         """
@@ -148,9 +166,8 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
 
         :return:
         """
+        self.allurls = [x.name for x in status_urlpatterns]
         s = self
-
-
         # These permissions are for a given proposal, which is active in this timeslot (this year).
         #     (1, "Generating project proposals"),
         #     (2, "Projects quality check"),
@@ -221,7 +238,6 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
 
         ]
 
-
         # Testing proposal specific pages
 
         # TimePhase 1
@@ -247,6 +263,8 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         self.info['type'] = 'proposal details private phase7'
         self.loop_phase_code_user([7], code_phase7)
 
+        self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")
+
     # def test_edit_form(self): #TODO: test if the correct form is shown with self.client.post to a field allowed
     #                                   in the full form but not in the shorter
 
@@ -254,72 +272,72 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
     #     # make sure all urls of this app are tested.
     #     self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")
 
-    def test_apply_buttons(s):
+    def test_apply_buttons(self):
         """
         Test if the apply/retract buttons show at the right time
 
         :return:
         """
-        s.status = 4
-        s.proposal.Status = 4
-        s.privateproposal.Status = 4
-        s.privateproposal.save()
-        s.proposal.save()
-        s.tp.Description = 3
-        s.tp.save()
-        if s.debug:
+        self.status = 4
+        self.proposal.Status = 4
+        self.privateproposal.Status = 4
+        self.privateproposal.save()
+        self.proposal.save()
+        self.tp.Description = 3
+        self.tp.save()
+        if self.debug:
             print("Testing apply buttons for student")
 
         user = User.objects.get(username='r-s')
-        s.client.force_login(user)
+        self.client.force_login(user)
         view = "proposals:details"
 
-        if s.debug:
+        if self.debug:
             print("Test apply")
         txta = "Apply</a>"
-        response = s.client.get(reverse(view, kwargs={"pk": s.p}))
-        s.assertContains(response, txta)
+        response = self.client.get(reverse(view, kwargs={"pk": self.p}))
+        self.assertContains(response, txta)
 
-        if s.debug:
+        if self.debug:
             print("Test retract")
-        a = Application(Student=user, Proposal=s.proposal, Priority=1)
+        a = Application(Student=user, Proposal=self.proposal, Priority=1)
         a.save()
         txtr = "Retract Application</a>"
-        response = s.client.get(reverse(view, kwargs={"pk": s.p}))
-        s.assertContains(response, txtr)
+        response = self.client.get(reverse(view, kwargs={"pk": self.p}))
+        self.assertContains(response, txtr)
 
-        if s.debug:
+        if self.debug:
             print("Test private")
-        s.client.logout()
+        self.client.logout()
         user = User.objects.get(username='t-p')
-        s.client.force_login(user)
-        response = s.client.get(reverse(view, kwargs={"pk": s.ppriv}))
-        s.assertNotContains(response, txta)
-        s.assertNotContains(response, txtr)
-        s.client.logout()
+        self.client.force_login(user)
+        response = self.client.get(reverse(view, kwargs={"pk": self.ppriv}))
+        self.assertNotContains(response, txta)
+        self.assertNotContains(response, txtr)
+        self.client.logout()
 
-    def test_links_visible(s):
+    def test_links_visible(self):
         """
         Test if the visible buttons do return a 200
 
         :return:
         """
-        s.proposal.Status = 4
-        s.privateproposal.Status = 4
-        s.status = 4
-        s.proposal.save()
-        s.privateproposal.save()
+        self.proposal.Status = 4
+        self.privateproposal.Status = 4
+        self.status = 4
+        self.proposal.save()
+        self.privateproposal.save()
 
         # only test last timephase
-        s.tp.Description = 7
-        s.tp.save()
+        self.tp.Description = 7
+        self.tp.save()
 
         # assistants will all be verified
-        s.usernames.remove('t-u')
+        self.usernames.remove('t-u')
 
-        if s.debug:
+        if self.debug:
             print("Testing all links for users")
 
         view = "proposals:details"
 
-        ViewsTest.links_in_view_test(s, reverse(view, kwargs={"pk": s.proposal.id}))
+        ViewsTest.links_in_view_test(self, reverse(view, kwargs={"pk": self.proposal.id}))

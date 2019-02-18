@@ -2,6 +2,7 @@
 
 {% block body %}
 <h1>Groups for {{ PRV }}</h1>
+    <p>Students can be divided in groups for a professional skill if limited space is available for a meeting or lecture. Groups do not have further implications in the system. </p>
     <a href="{% url 'professionalskills:assignshuffle' PRV.pk %}" class="button warning">Shuffle Students</a>
 <a href="{% url 'professionalskills:creategroup' PRV.pk %}" class="button primary">Create New</a>
 <table class="table bordered hovered striped datatable">

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
-{% load custom_filters %}
-{% GetPhaseNumber as phasenumber %}
+{% load index_tags %}
+{% load timeline_tags %}
+{% get_timephase_number as phasenumber %}
 {% block body %}
 
     <h1>Students with project</h1>

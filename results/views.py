@@ -3,15 +3,16 @@ from io import BytesIO
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models.aggregates import Sum
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 
-from BepMarketplace.decorators import group_required, phase_required
 from general_form import ConfirmForm
 from general_view import get_grouptype
+from index.decorators import group_required
 from students.models import Distribution
+from timeline.decorators import phase_required
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number
 from .forms import MakeVisibleForm, GradeCategoryForm, GradeCategoryAspectForm, AspectResultForm, CategoryResultForm
@@ -24,9 +25,9 @@ def finalize(request, pk, version=0):
     """
     Finalize the grades and print. Only for assessors.
 
-    :param version:
     :param request:
-    :param pk:
+    :param pk: pk of Distribution to grade
+    :param version: 0 for summary page, 1 for printable page, 2 for pdf export
     :return:
     """
     ts = get_timeslot()
@@ -47,17 +48,23 @@ def finalize(request, pk, version=0):
         raise PermissionDenied("You are not the correct owner of this distribution. "
                                " Grades can only be finalized by assessors or track heads. "
                                " To get a preview of the print view, use the 'Print Preview' button.")
-
-    vals = [cat.is_valid() for cat in dstr.results.all()]
-    if dstr.results.count() < GradeCategory.objects.filter(TimeSlot=get_timeslot()).count() or not all(
-            val is True for val in vals):
+    version = int(version)
+    # check if grade is valid
+    error_list = ''
+    for cat in GradeCategory.objects.filter(TimeSlot=get_timeslot()):
+        try:
+            cat_res = cat.results.get(Distribution=dstr)
+            if not cat_res.is_valid():
+                error_list += ('<li>Category {} is not completed.</li>'.format(cat))
+        except CategoryResult.DoesNotExist:
+            error_list += ('<li>Category {} is missing</li>'.format(cat))
+    if error_list:
         return render(request, "base.html", context={
-            "Message": "Not all categories and aspects have been filled in, please complete the grading first.",
+            'Message': '<h1>The results of this student are not yet finished</h1><p>The following error(s) occurred:</p><ul>{}</ul>'.format(error_list),
             "return": "results:gradeformstaff",
             "returnget": str(pk),
         })
 
-    version = int(version)
     if version == 0:  # The normal page summarizing the grades of the student
         return render(request, "results/finalize_grades.html", {
             "dstr": dstr,
@@ -66,42 +73,33 @@ def finalize(request, pk, version=0):
             "finalgrade": dstr.TotalGradeRounded(),
             "preview": False,
         })
-    elif version == 1:  # printable page with grades
+    else:  # type 1 and 2, finalize grades.
         if get_timephase_number() != 7:
-            raise PermissionDenied("Not yet possible to finalize in this timephase")
-        for cat in dstr.results.all():
-            # set final to True, disable editing from here onward.
+            raise PermissionDenied("Finalize grades is only possible in the time phase 'Presentation of results'")
+        for cat in dstr.results.all():  # set final to True, disable editing from here onward.
             cat.Final = True
             cat.save()
-
-        return render(request, "results/print_grades_pdf.html", {
-            "dstr": dstr,
-            "catresults": dstr.results.all(),
-            "finalgrade": dstr.TotalGradeRounded(),
-        })
-    elif version == 2:  # pdf with grades
-        if get_timephase_number() != 7:
-            raise PermissionDenied("Not yet possible to finalize in this timephase")
-        for cat in dstr.results.all():
-            cat.Final = True
-            cat.save()
-
-        template = get_template('results/print_grades_pdf.html')
-
-        htmlblock = template.render({
-            "dstr": dstr,
-            "catresults": dstr.results.all(),
-            "finalgrade": dstr.TotalGradeRounded(),
-        })
-
-        buffer = BytesIO()
-        pisaStatus = pisa.CreatePDF(htmlblock.encode('utf-8'), dest=buffer, encoding='utf-8')
-        if pisaStatus.err:
-            raise Exception("Pisa Failed PDF creation in print final grade for distr {}.".format(dstr.id))
-        buffer.seek(0)
-        response = HttpResponse(buffer, 'application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="bepresult_{}.pdf"'.format(dstr.Student.usermeta.get_nice_name())
-        return response
+        if version == 1:  # printable page with grades
+            return render(request, "results/print_grades_pdf.html", {
+                "dstr": dstr,
+                "catresults": dstr.results.all(),
+                "finalgrade": dstr.TotalGradeRounded(),
+            })
+        elif version == 2:  # pdf with grades
+            html = get_template('results/print_grades_pdf.html').render({
+                "dstr": dstr,
+                "catresults": dstr.results.all(),
+                "finalgrade": dstr.TotalGradeRounded(),
+            })
+            buffer = BytesIO()
+            pisa_status = pisa.CreatePDF(html.encode('utf-8'), dest=buffer, encoding='utf-8')
+            if pisa_status.err:
+                raise Exception("Pisa Failed PDF creation in print final grade for distribution {}.".format(dstr))
+            buffer.seek(0)
+            response = HttpResponse(buffer, 'application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="bepresult_{}.pdf"'.format(dstr.Student.usermeta.get_nice_name())
+            return response
+    raise PermissionDenied('Invalid type.')
 
 
 @group_required('type1staff', 'type3staff')
@@ -122,9 +120,7 @@ def finalize_preview(request, pk, step=0):
     else:
         if not get_timeslot().resultoptions.Visible:
             raise PermissionDenied("Results menu is not yet visible.")
-
     dstr = get_object_or_404(Distribution, pk=pk)
-
     if not hasattr(dstr, 'presentationtimeslot'):
         raise PermissionDenied('This student does not have a presentation planned. Please plan it first.')
 
@@ -133,14 +129,11 @@ def finalize_preview(request, pk, step=0):
             request.user != dstr.Proposal.ResponsibleStaff and \
             get_grouptype('3') not in request.user.groups.all() and \
             request.user not in dstr.presentationtimeslot.Presentations.Assessors.all():
-        raise PermissionDenied("You are not the correct owner of this distribution. "
-                               "Only track heads and responsible staff can edit grades.")
-
-    cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
+        raise PermissionDenied("You do not have the correct permissions to view print preview.")
     return render(request, "results/finalize_grades.html", {
         "dstr": dstr,
         "catresults": dstr.results.all(),
-        "final": all(f.Final is True for f in dstr.results.all()),
+        "final": all(f.Final is True for f in dstr.results.all()) if dstr.results.all() else False,
         "finalgrade": dstr.TotalGradeRounded(),
         "preview": True,
     })
@@ -164,12 +157,9 @@ def staff_form(request, pk, step=0):
     else:
         if not get_timeslot().resultoptions.Visible:
             raise PermissionDenied("Results menu is not yet visible.")
-
     dstr = get_object_or_404(Distribution, pk=pk)
-
     if not hasattr(dstr, 'presentationtimeslot'):
         raise PermissionDenied('This student does not have a presentation planned. Please plan it first.')
-
     if not request.user.is_superuser and \
             request.user != dstr.Proposal.Track.Head and \
             request.user != dstr.Proposal.ResponsibleStaff and \
@@ -187,79 +177,64 @@ def staff_form(request, pk, step=0):
             "pk": pk,
             "categories": cats,
             "dstr": dstr,
-            "final": all(f.Final is True for f in dstr.results.all()),
+            "final": all(f.Final is True for f in dstr.results.all()) if dstr.results.all() else False,  # fix for all([])=True
         })
     elif step <= numcategories:
         saved = False
         cat = cats[step - 1]
-        try:
-            catresult = CategoryResult.objects.get(Distribution=dstr, Category=cat)
-        except:
-            catresult = CategoryResult(Distribution=dstr, Category=cat)
-        if request.method == "POST":
-            if catresult.Final:
-                return render(request, "base.html", status=410, context={
+        try:  # existing category result
+            cat_result = CategoryResult.objects.get(Distribution=dstr, Category=cat)
+        except CategoryResult.DoesNotExist:  # new result
+            cat_result = CategoryResult(Distribution=dstr, Category=cat)
+
+        if request.method == "POST":  # submitted form
+            if cat_result.Final:
+                return render(request, "base.html", context={
                     "Message": "Category Result has already been finalized! Editing is not allowed anymore. "
                                "If this has to be changed, contact support staff"
                 })
-            categoryform = CategoryResultForm(request.POST, instance=catresult, prefix='catform')
-            aspectforms = []
-
+            category_form = CategoryResultForm(request.POST, instance=cat_result, prefix='catform')
+            aspect_forms = []
             for i, aspect in enumerate(cat.aspects.all()):
-                try:
-                    aspresult = CategoryAspectResult.objects.get(CategoryResult=catresult, CategoryAspect=aspect)
-                except:
-                    aspresult = CategoryAspectResult(CategoryResult=catresult, CategoryAspect=aspect)
-                aspectforms.append({
-                    "form": AspectResultForm(request.POST, instance=aspresult, prefix="aspect" + str(i)),
+                try:  # try find existing form
+                    aspect_result = CategoryAspectResult.objects.get(CategoryResult=cat_result, CategoryAspect=aspect)
+                except CategoryAspectResult.DoesNotExist:  # new clean form
+                    aspect_result = CategoryAspectResult(CategoryResult=cat_result, CategoryAspect=aspect)
+                aspect_forms.append({
+                    "form": AspectResultForm(request.POST, instance=aspect_result, prefix="aspect" + str(i)),
                     "aspect": aspect,
                 })
-
-            vals = [form['form'].is_valid() for form in aspectforms]
-            if categoryform.is_valid() and all(val is True for val in vals):
-                catresult = categoryform.save()
-                for form in aspectforms:
-                    obj = form['form'].instance
-                    obj.CategoryResult = catresult
-                    obj.save()
+            if category_form.is_valid() and all([form['form'].is_valid() for form in aspect_forms]):
+                cat_result = category_form.save()
+                for form in aspect_forms:
+                    aspect_result = form['form'].instance
+                    aspect_result.CategoryResult = cat_result
+                    aspect_result.save()
                 saved = True
-
-            return render(request, "results/wizard.html", {
-                "step": step,
-                "categories": cats,
-                "category": cat,
-                "categoryform": categoryform,
-                "aspectsforms": aspectforms,
-                "dstr": dstr,
-                "pk": pk,
-                "saved": saved,
-                "final": catresult.Final,
-                "aspectlabels": CategoryAspectResult.ResultOptions,
-            })
         else:
-            categoryform = CategoryResultForm(instance=catresult, prefix='catform', disabled=catresult.Final)
-            aspectforms = []
+            category_form = CategoryResultForm(instance=cat_result, prefix='catform', disabled=cat_result.Final)
+            aspect_forms = []
             for i, aspect in enumerate(cat.aspects.all()):
                 try:
-                    aspresult = CategoryAspectResult.objects.get(CategoryResult=catresult, CategoryAspect=aspect)
-                except:
-                    aspresult = CategoryAspectResult(CategoryResult=catresult, CategoryAspect=aspect)
-                aspectforms.append({
-                    "form": AspectResultForm(instance=aspresult, prefix="aspect" + str(i), disabled=catresult.Final),
+                    aspect_result = CategoryAspectResult.objects.get(CategoryResult=cat_result, CategoryAspect=aspect)
+                except CategoryAspectResult.DoesNotExist:
+                    aspect_result = CategoryAspectResult(CategoryResult=cat_result, CategoryAspect=aspect)
+                aspect_forms.append({
+                    "form": AspectResultForm(instance=aspect_result, prefix="aspect" + str(i), disabled=cat_result.Final),
                     "aspect": aspect,
                 })
-            return render(request, "results/wizard.html", {
-                "step": step,
-                "categories": cats,
-                "category": cat,
-                "categoryform": categoryform,
-                "aspectsforms": aspectforms,
-                "dstr": dstr,
-                "pk": pk,
-                "saved": False,
-                "final": catresult.Final,
-                "aspectlabels": CategoryAspectResult.ResultOptions
-            })
+        return render(request, "results/wizard.html", {
+            "step": step,
+            "categories": cats,
+            "category": cat,
+            "categoryform": category_form,
+            "aspectsforms": aspect_forms,
+            "dstr": dstr,
+            "pk": pk,
+            "saved": saved,
+            "final": cat_result.Final,
+            "aspectlabels": CategoryAspectResult.ResultOptions
+        })
     else:
         raise PermissionDenied("This category does not exist.")
 
