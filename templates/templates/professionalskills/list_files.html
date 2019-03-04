@@ -20,9 +20,10 @@
             <th>Created</th>
             <th>Updated</th>
             <th>Supervisors Email</th>
-            <th>Supervisor Approval</th>
-            <th>Approval Timestamp</th>
-            <th data-sortable="false">Supervisor comments</th>
+            <th>Supervisor feedback</th>
+            {#            <th>Approval Timestamp</th>#}
+            {#            <th data-sortable="false">Supervisor comments</th>#}
+            <th>Rubric</th>
         </tr>
         </thead>
         <tbody>
@@ -48,34 +49,47 @@
                 </td>
                 <td>
                     {% if file.Type.CheckedBySupervisor %}
-                        {% if file.staffreponse.Status == 'V' or file.staffreponse.Status == 'G' %}
-                            {{ file.staffreponse.Status }}: <span class="mif-checkmark fg-green"></span>
-                        {% elif file.staffreponse %}
-                            {{ file.staffreponse.Status }}: <span class="mif-cross fg-red"></span>
+                        {% if file.staffresponse.Status == 'V' or file.staffresponse.Status == 'G' %}
+                            {{ file.staffresponse.Status }}: <span class="mif-checkmark fg-green"></span>
+                        {% elif file.staffresponse %}
+                            {{ file.staffresponse.Status }}: <span class="mif-cross fg-red"></span>
                         {% else %}
-                            Not yet graded.
+                            No feedback given.
                         {% endif %}
                     {% else %}
                         No check needed
                     {% endif %}
                 </td>
+                {#                <td>#}
+                {#                    {% if file.Type.CheckedBySupervisor %}#}
+                {#                        {{ file.staffresponse.TimestampLastEdited }}#}
+                {#                    {% else %}#}
+                {#                        No check needed#}
+                {#                    {% endif %}#}
+                {#                </td>#}
+                {#                <td>#}
+                {#                     {% if file.Type.CheckedBySupervisor %}#}
+                {#                     {{ file.staffresponse.Explanation|default:'-' }}#}
+                {#                    {% endif %}#}
+                {#                </td>#}
                 <td>
                     {% if file.Type.CheckedBySupervisor %}
-                        {{ file.staffreponse.TimestampLastEdited }}
-                    {% else %}
-                        No check needed
-                    {% endif %}
-                </td>
-                <td>
-                    {% if file.Type.CheckedBySupervisor %}
-                        {{ file.staffreponse.Explanation }}
                         {% if respond %}
-                            <a href="{% url 'professionalskills:respondfile' file.id %}" class="button primary">Respond</a>
+                            <a href="{% url 'professionalskills:respondfile' file.id %}" class="button primary">Edit</a>
                         {% endif %}
+                        <a href="{% url 'professionalskills:viewresponse' file.id %}" class="button primary">View</a>
                     {% else %}
                         No check needed
                     {% endif %}
                 </td>
+                {#                {% if respond %}#}
+                {#                    <td>#}
+                {#                    {% if file.Type.results.exists %}#}
+                {#                        <a href="{% url 'results:gradeformstafffiles' file.Distribution.pk %}" class="button primary">Grades</a>#}
+                {#                        {% else %}#}
+                {#                        No official grade is required for this file.#}
+                {#                        {% endif %}#}
+                {#                    </td>{% endif %}#}
             </tr>
         {% endfor %}
         </tbody>

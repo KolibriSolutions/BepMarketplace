@@ -78,7 +78,7 @@ def get_list_students_xlsx(des, typ):
         row.append(d.TotalGradeRounded())
         for prv in prvs:
             try:
-                row.append(d.files.filter(Type=prv).order_by('-id')[0].staffreponse.Status)
+                row.append(d.files.filter(Type=prv).order_by('-id')[0].staffresponse.Status)
             except IndexError:
                 row.append('no file')
             except StaffResponse.DoesNotExist:
@@ -179,7 +179,7 @@ def get_list_distributions_xlsx(proposals):
         ws[col + '2'].style = 'Headline 3'
 
     for p in proposals:
-        des = p.distributions.filter(Timeslot=get_timeslot())
+        des = p.distributions.filter(TimeSlot=get_timeslot())
         row = [p.Title, p.Track.__str__(), p.Group.__str__(),
                p.ResponsibleStaff.usermeta.get_nice_name()]
         assistants = ''

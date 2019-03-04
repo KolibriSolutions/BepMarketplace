@@ -38,7 +38,8 @@ urlpatterns = [
     path('staff/', views.list_staff, name='liststaff'),
     path('staff/projects/<int:pk>/', views.list_staff_projects, name='liststaffproposals'),
     # path('staff/xlsx/', views.list_staff_xlsx, name='liststaffXls'),  # depricated
-    path('students/', views.list_students, name='liststudents'),
+    # path('students/', views.list_students, name='liststudents'), # depricated replaced by dist-timeslot view.
+    path('students/<int:timeslot>/', views.list_students, name='liststudents'),
     path('students/xlsx/', views.list_students_xlsx, name='liststudentsXls'),
 
     # path('liststudentsldap/', views.listStudentsLdap, name='liststudentsldap'),# might be re-introduced when OSIRIS link is finished.

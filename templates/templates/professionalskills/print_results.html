@@ -26,13 +26,22 @@ td, th {
 <tr>
     <th>Prof. skill</th>
     <th>Response</th>
+    <th>Aspects</th>
 </tr>
 </thead>
 <tbody>
 {% for f in page.files %}
 <tr>
 <td>{{ f.File.Type }}</td>
-<td>{{ f.Status }}</td>
+<td>{{ f.get_Status_display }}<br />{{ f.Explanation }}</td>
+<td><ul>
+    {% for aspect in f.aspects.all %}
+        <li>
+        {{ aspect.Aspect.Name }} - {{ aspect.get_Grade_display }}
+        </li>
+
+        {% endfor %}
+</ul></td>
 </tr>
 {% endfor %}
 </tbody>

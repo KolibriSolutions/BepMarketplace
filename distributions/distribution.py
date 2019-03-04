@@ -78,6 +78,7 @@ def get_valid_students():
 
     :return: list of user objects.
     """
+    # TODO personal_proposal should be filtered by timeslot
     return get_all_students().filter(personal_proposal__isnull=True, applications__isnull=False).filter(applications__Proposal__TimeSlot=get_timeslot()).distinct()
     # usermeta__ECTS__gt=0).distinct()
 

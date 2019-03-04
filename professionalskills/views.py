@@ -23,8 +23,8 @@ from general_mail import send_mail, EmailThreadTemplate
 from general_view import get_grouptype, get_all_students
 from students.models import Distribution
 from timeline.utils import get_timeslot, get_timephase_number
-from .forms import FileTypeModelForm, StaffResponseForm, StudentGroupForm, StudentGroupChoice, FileExtensionForm
-from .models import FileType, StaffResponse, StudentFile, StudentGroup, FileExtension
+from .forms import FileTypeModelForm, StaffResponseForm, StudentGroupForm, StudentGroupChoice, FileExtensionForm, StaffResponseFileAspectResultForm
+from .models import FileType, StaffResponse, StudentFile, StudentGroup, FileExtension, StaffResponseFileAspectResult
 
 
 @group_required('type3staff', 'type6staff')
@@ -39,15 +39,18 @@ def download_all_of_type(request, pk):
     ftype = get_object_or_404(FileType, pk=pk)
     if ftype.TimeSlot == get_timeslot():  # current year download
         if get_timephase_number() < 5:  # only in phase 5, 6 and 7
-            raise PermissionDenied("This page is not available in the current timephase.")
+            raise PermissionDenied("This page is not available in the current time phase.")
     in_memory = BytesIO()
     with zipfile.ZipFile(in_memory, 'w') as archive:
         for file in ftype.files.all():
             trck = file.Distribution.Proposal.Track
-            with open(file.File.path, 'rb') as fstream:
-                archive.writestr(
+            try:
+                with open(file.File.path, 'rb') as fstream:
+                    archive.writestr(
                     '{}/{}.{}'.format(str(trck), file.Distribution.Student.usermeta.get_nice_name().replace(' ', ''),
                                       file.File.name.split('.')[-1]), fstream.read())
+            except (IOError, ValueError):  # happens if a file is referenced from database but does not exist on disk.
+                return render(request, 'base.html', {'Message': 'These files cannot be downloaded, please contact support staff.'})
     in_memory.seek(0)
 
     response = HttpResponse(content_type="application/zip")
@@ -71,14 +74,14 @@ def create_filetype(request):
         if form.is_valid():
             form.save()
             return render(request, 'base.html', {
-                'Message': 'File Type created!',
+                'Message': 'File type created!',
                 'return': 'professionalskills:filetypelist',
             })
     else:
         form = FileTypeModelForm()
 
     return render(request, 'GenericForm.html', {
-        'formtitle': 'Create New FileType',
+        'formtitle': 'Create new file type',
         'form': form,
         'buttontext': 'Create'
     })
@@ -209,20 +212,29 @@ def list_student_files(request, pk):
     :param pk: id of distribution
     :return:
     """
-    dist = get_object_or_404(Distribution, pk=pk)
-    respondrights = False
-    editrights = False
-    if dist.Student == request.user:
-        editrights = True
-    elif request.user in dist.Proposal.Assistants.all() \
-            or request.user == dist.Proposal.ResponsibleStaff \
-            or request.user == dist.Proposal.Track.Head:
-        respondrights = True
-    elif get_grouptype("3") in request.user.groups.all() or get_grouptype('6') in request.user.groups.all():
-        pass
-    else:
-        raise PermissionDenied("You are not allowed to view these files")
+    if get_grouptype('2u') in request.user.groups.all():
+        raise PermissionDenied("Please have your account verified first.")
 
+    dist = get_object_or_404(Distribution, pk=pk)
+    if dist.TimeSlot == get_timeslot():
+        # current timeslot
+        respondrights = False
+        editrights = False
+        if dist.Student == request.user:
+            editrights = True
+        elif request.user in dist.Proposal.Assistants.all() \
+                or request.user == dist.Proposal.ResponsibleStaff \
+                or request.user == dist.Proposal.Track.Head \
+                or get_grouptype('3') in request.user.groups.all():
+            respondrights = True
+        elif get_grouptype('6') in request.user.groups.all():
+            pass
+        else:
+            raise PermissionDenied("You are not allowed to view these files")
+    else:
+        # no changing of history.
+        respondrights = False
+        editrights = False
     files = dist.files.all()
     return render(request, "professionalskills/list_files.html",
                   {"dist": dist, "files": files, "respond": respondrights, 'edit': editrights})
@@ -273,7 +285,51 @@ def mail_overdue_students(request):
     })
 
 
-@group_required('type1staff', 'type2staff')
+@can_access_professionalskills
+@phase_required(5, 6, 7)
+def view_response(request, pk):
+    """
+    Form to let a student view a staff response / rubric
+
+    :param request:
+    :param pk: pk of studentfile
+    :return:
+    """
+    if get_grouptype('2u') in request.user.groups.all():
+        raise PermissionDenied("Please have your account verified first.")
+
+    fileobj = get_object_or_404(StudentFile, pk=pk)
+    # allow type3 and type6 to view results and all responsibles.
+    if not get_grouptype('3') in request.user.groups.all() and not get_grouptype('6') in request.user.groups.all():
+        if (request.user not in fileobj.Distribution.Proposal.Assistants.all() and
+            request.user != fileobj.Distribution.Proposal.ResponsibleStaff and
+            request.user != fileobj.Distribution.Proposal.Track.Head and
+            request.user != fileobj.Distribution.Student):
+            raise PermissionDenied("You cannot view this file response.")
+
+    try:
+        responseobj = fileobj.staffresponse
+    except StaffResponse.DoesNotExist:
+        return render(request, 'base.html', {"Message": "This file is not (yet) graded."})
+
+    aspect_forms = []
+    for i, aspect in enumerate(fileobj.Type.aspects.all()):
+        try:
+            aspect_result = StaffResponseFileAspectResult.objects.get(Aspect=aspect, Response=responseobj)
+        except StaffResponseFileAspectResult.DoesNotExist:
+            aspect_result = StaffResponseFileAspectResult(Aspect=aspect, Response=responseobj)
+        aspect_forms.append({
+            "form": StaffResponseFileAspectResultForm(instance=aspect_result, prefix="aspect" + str(i)),
+            "aspect": aspect
+        })
+    return render(request, 'professionalskills/view_response.html', {
+        'file': fileobj,
+        'response': responseobj,
+        'aspectoptions': StaffResponseFileAspectResult.ResultOptions
+    })
+
+
+@group_required('type1staff', 'type2staff', 'type3staff')
 @can_access_professionalskills
 @phase_required(5, 6, 7)
 def respond_file(request, pk):
@@ -286,42 +342,82 @@ def respond_file(request, pk):
     """
 
     fileobj = get_object_or_404(StudentFile, pk=pk)
-    if (request.user not in fileobj.Distribution.Proposal.Assistants.all() and
-        request.user != fileobj.Distribution.Proposal.ResponsibleStaff) \
-            or not fileobj.Type.CheckedBySupervisor:
-        raise PermissionDenied("You cant respond to this file")
+    if not get_grouptype('3') in request.user.groups.all():
+        if (request.user not in fileobj.Distribution.Proposal.Assistants.all() and
+            request.user != fileobj.Distribution.Proposal.ResponsibleStaff and
+            request.user != fileobj.Distribution.Proposal.Track.Head) \
+                or not fileobj.Type.CheckedBySupervisor:
+            raise PermissionDenied("You cannot respond to this file.")
+    if fileobj.Distribution.TimeSlot != get_timeslot():
+        raise PermissionDenied("Changing history is not allowed.")
 
     try:
-        responseobj = fileobj.staffreponse
+        responseobj = fileobj.staffresponse
         responseobj.Staff = request.user
         statusorig = responseobj.Status
-    except:
+    except StaffResponse.DoesNotExist:
         responseobj = StaffResponse()
         responseobj.File = fileobj
         responseobj.Staff = request.user
         statusorig = None
 
+
     if request.method == 'POST':
-        form = StaffResponseForm(request.POST, instance=responseobj)
-        if form.is_valid():
-            if form.cleaned_data['Status'] != statusorig:
+        aspect_forms = []
+        for i, aspect in enumerate(fileobj.Type.aspects.all()):
+            try:
+                aspect_result = StaffResponseFileAspectResult.objects.get(Aspect=aspect, Response=responseobj)
+            except StaffResponseFileAspectResult.DoesNotExist:
+                aspect_result = StaffResponseFileAspectResult(Aspect=aspect, Response=responseobj)
+            aspect_forms.append({
+                "form": StaffResponseFileAspectResultForm(request.POST, instance=aspect_result, prefix="aspect" + str(i)),
+                "aspect": aspect
+            })
+        response_form = StaffResponseForm(request.POST, instance=responseobj, prefix='response')
+        if response_form.is_valid() and all([form['form'].is_valid() for form in aspect_forms]):
+            if response_form.cleaned_data['Status'] != statusorig:
                 send_mail('Professional skill feedback', 'email/prvresponse.html', {
                     'student': fileobj.Distribution.Student,
-                    'status': form.cleaned_data['Status'],
-                    'explanation': form.cleaned_data['Explanation'],
+                    'status': response_form.cleaned_data['Status'],
+                    'explanation': response_form.cleaned_data['Explanation'],
                     'type': fileobj.Type.Name,
                 }, fileobj.Distribution.Student.email)
-            form.save()
+            response_form.save()
+            #for first time saving, refetch all aspects as they are now tied to responseobj that is actually saved
+            aspect_forms = []
+            for i, aspect in enumerate(fileobj.Type.aspects.all()):
+                try:
+                    aspect_result = StaffResponseFileAspectResult.objects.get(Aspect=aspect, Response=responseobj)
+                except StaffResponseFileAspectResult.DoesNotExist:
+                    aspect_result = StaffResponseFileAspectResult(Aspect=aspect, Response=responseobj)
+                aspect_forms.append({
+                    "form": StaffResponseFileAspectResultForm(request.POST, instance=aspect_result, prefix="aspect" + str(i)),
+                    "aspect": aspect
+                })
+            all([form['form'].save() for form in aspect_forms])
             return render(request, 'base.html', {
                 'Message': 'Response saved!',
                 'return': 'support:liststudents',
+                'returnget': fileobj.Distribution.TimeSlot.pk,
             })
     else:
-        form = StaffResponseForm(instance=responseobj)
+        aspect_forms = []
+        for i, aspect in enumerate(fileobj.Type.aspects.all()):
+            try:
+                aspect_result = StaffResponseFileAspectResult.objects.get(Aspect=aspect, Response=responseobj)
+            except StaffResponseFileAspectResult.DoesNotExist:
+                aspect_result = StaffResponseFileAspectResult(Aspect=aspect, Response=responseobj)
+            aspect_forms.append({
+                "form": StaffResponseFileAspectResultForm(instance=aspect_result, prefix="aspect" + str(i)),
+                "aspect": aspect
+            })
+        response_form = StaffResponseForm(instance=responseobj, prefix='response')
 
-    return render(request, 'GenericForm.html', {
-        'form': form,
-        'formtitle': 'Respond to {} from {}'.format(fileobj.Type.Name, fileobj.Distribution.Student.usermeta.get_nice_name())
+    return render(request, 'professionalskills/staffresponseform.html', {
+        'form': response_form,
+        'formtitle': 'Respond to {} from {}'.format(fileobj.Type.Name, fileobj.Distribution.Student.usermeta.get_nice_name()),
+        'aspectforms' : aspect_forms,
+        "aspectlabels": StaffResponseFileAspectResult.ResultOptions,
     })
 
 
@@ -335,7 +431,7 @@ def list_own_files(request):
     :param request:
     :return:
     """
-    dist = get_object_or_404(Distribution, Student=request.user, Timeslot=get_timeslot())
+    dist = get_object_or_404(Distribution, Student=request.user, TimeSlot=get_timeslot())
     return list_student_files(request, dist.pk)
 
 
@@ -350,7 +446,7 @@ def print_forms(request):
     """
     template = get_template('professionalskills/print_results.html')
     pages = []
-    for dstr in Distribution.objects.filter(Timeslot=get_timeslot()):
+    for dstr in Distribution.objects.filter(TimeSlot=get_timeslot()):
         obj = {
             'student': dstr.Student,
             'proposal': dstr.Proposal,

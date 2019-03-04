@@ -64,9 +64,9 @@
 {% endblock %}
 {% block scripts %}
     {{ block.super }}
-    <script src="{% static "channels/js/websocketbridge.js" %}"></script>
+    <script src="{% static "js/websocketbridge.js" %}"></script>
     <script src="{% static "js/favorite.js" %}"></script>
-    <script type="text/javascript">
+    <script>
         $(document).ready(function () {
             // custom sort for favorite button, https://datatables.net/examples/plug-ins/dom_sort.html
             $.fn.dataTable.ext.order['dom-order-favorite'] = function (settings, col) {

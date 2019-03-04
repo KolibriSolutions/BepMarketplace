@@ -168,28 +168,6 @@ def verify_assistant_fn(user):
               user.email)
     return True
 
-#
-# @group_required('type3staff')
-# def get_group_admins(request, group=""):
-#     """
-#     Get all capacity group administration members as JSON
-#
-#     :param request:
-#     :param group: the group where you want the administration member from
-#     :return:
-#     """
-#     objs = CapacityGroupAdministration.objects.filter(Group=group)
-#     if not objs.exists():
-#         return HttpResponse("Could not find group")
-#     else:
-#         obj = objs[0]
-#
-#     mmbrs = set()
-#     for m in obj.Members.all():
-#         mmbrs.add(str(m.id))
-#     return JsonResponse(list(mmbrs), safe=False)
-#
-
 @login_required
 def list_public_projects_api(request):
     """

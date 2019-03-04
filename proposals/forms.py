@@ -272,7 +272,7 @@ class ProjectForm(forms.ModelForm):
             'GeneralDescription': 'General description',
             'StudentsTaskDescription': 'Students task description',
             'ExtensionDescription': 'Description for extension work',
-            'TimeSlot': 'Timeslot (year)',
+            'TimeSlot': 'Time slot (year)',
             'Private': 'Change private students',
         }
         widgets = {

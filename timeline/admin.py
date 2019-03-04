@@ -4,7 +4,7 @@ from .models import TimePhase, TimeSlot
 
 
 class TimePhaseAdmin(admin.ModelAdmin):
-    list_filter = ['Timeslot']
+    list_filter = ['TimeSlot']
 
 
 admin.site.register(TimePhase, TimePhaseAdmin)

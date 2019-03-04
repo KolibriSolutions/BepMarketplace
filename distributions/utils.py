@@ -7,14 +7,19 @@ from timeline.utils import get_timeslot
 from presentations.utils import planning_public
 
 
-def get_distributions(user):
+def get_distributions(user, timeslot=None):
     """
     Function to return the distributions that a given staff user is allowed to see
     Type3 and 6 should see all distributions, to be able to mail them.
 
     :param user: The user to test
+    :param timeslot: TimeSlot to get distributions from
     """
-    des_all = Distribution.objects.filter(Timeslot=get_timeslot())
+    if timeslot is None:
+        timeslot = get_timeslot()
+        if timeslot is None:
+            return None
+    des_all = Distribution.objects.filter(TimeSlot=timeslot)
     if get_grouptype("3") in user.groups.all() or user.is_superuser or get_grouptype("6") in user.groups.all():
         return des_all
     else:

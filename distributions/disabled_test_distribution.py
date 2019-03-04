@@ -58,7 +58,7 @@ class AutomaticDistributionTest(TestCase):
             ts.save()
             assert not ts.timephases.exists(), 'there should be no timephases.'
             tp = TimePhase(
-                Timeslot=ts,
+                TimeSlot=ts,
                 Begin=n - timedelta(days=2),
                 End=n + timedelta(days=2),
                 Description=4,

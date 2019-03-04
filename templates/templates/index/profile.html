@@ -50,10 +50,10 @@
     </table>
 
     {% if not student %}
-        <h4>Rights</h4>
+        <h4>Permissions</h4>
         <table class="table striped">
             <tr>
-                <td>User can be head of a project (type 1):</td>
+                <td>User can be responsible for a project (type 1):</td>
                 <td><span class="mif-{{ type1|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
             </tr>
             <tr>
@@ -68,10 +68,6 @@
             <tr>
                 <td>User is supporting staff (type 3):</td>
                 <td><span class="mif-{{ type3|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
-            </tr>
-            <tr>
-                <td>User is group administration (type 4):</td>
-                <td><span class="mif-{{ type4|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
             </tr>
             <tr>
                 <td>User is study advisor (type 5):</td>
@@ -93,30 +89,27 @@
                     </td>
                 </tr>
             {% endif %}
-            <tr>
-                <td>User is admin:</td>
-                <td><span class="mif-{{ user.is_staff|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
-            </tr>
             {% if user.is_superuser %}
                 <tr>
                     <td>User is God:</td>
                     <td><span class="mif-checkmark fg-green"></span></td>
                 </tr>
             {% endif %}
-
-            {% if user.groupadministrations.exists %}
+            {% if user.administratoredgroups.exists %}
                 <tr>
                     <td>User is administrator of groups:</td>
                     <td>
                         <ul>
-                            {% for group in user.groupadministrations.all %}
-                                <li>{{ group.Group }}</li>
+                            {% for group in user.administratoredgroups.all %}
+                                <li>
+                                    {{ group.Group.ShortName }}
+                                    ({% if group.Super %}Read and write access{% else %}Read only access{% endif %})
+                                </li>
                             {% endfor %}
                         </ul>
                     </td>
                 </tr>
             {% endif %}
-
         </table>
 
     {% else %}

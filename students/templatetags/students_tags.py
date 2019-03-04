@@ -21,7 +21,7 @@ def get_distribution_tag(user):
     # check if user has distributions
     timeslot = get_timeslot()
     try:
-        dist = user.distributions.get(Timeslot=timeslot)
+        dist = user.distributions.get(TimeSlot=timeslot)
     except Distribution.DoesNotExist:
         return ''
     url = reverse('proposals:details', args=[dist.Proposal.pk])

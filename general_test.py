@@ -23,13 +23,24 @@ from timeline.models import TimeSlot, TimePhase
 from django.conf import settings
 from general_view import get_timephase_number
 
+TEST_HTML_VALID = False
+#
+# if TEST_HTML_VALID:
+#     from htmlvalidator.client import ValidatingClient
 
 # disable cache for all tests
 @override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}},
                    EMAIL_BACKEND='django.core.mail.backends.filebased.EmailBackend', EMAIL_FILE_PATH='./test_mail.log',
                    MIDDLEWARE_CLASSES=[mc for mc in settings.MIDDLEWARE
-                                       if mc != 'tracking.middleware.TelemetryMiddleware']
-                   )
+                                       if mc != 'tracking.middleware.TelemetryMiddleware'],
+)
+# @override_settings(
+#                 HTMLVALIDATOR_ENABLED = True,  # to test html valid
+#                 # HTMLVALIDATOR_DUMPDIR = 'validationerrors/',  # default it /tmp
+#                 HTMLVALIDATOR_OUTPUT = 'stdout',  # default is 'file'
+#                 HTMLVALIDATOR_VNU_URL = 'http://localhost:8888/',
+#                 HTMLVALIDATOR_FAILFAST = True,
+#                )
 class ViewsTest(TestCase):
     """
     Class with testclient to test views. Some functions to setup data in the database.
@@ -47,7 +58,10 @@ class ViewsTest(TestCase):
         self.allurls = [x.name for x in urlpatterns]
 
         # the client used for testing
-        self.client = Client()
+        if TEST_HTML_VALID:
+            self.client = ValidatingClient()
+        else:
+            self.client = Client()
         # info string to show debug info in case of test assertion failure
         self.info = {}
 
@@ -56,7 +70,7 @@ class ViewsTest(TestCase):
         self.ts.save()
 
         # The timephase used for testing. The Description is changed every test.
-        self.tp = TimePhase(Begin=datetime.now(), End=datetime.now() + timedelta(days=3), Timeslot=self.ts,
+        self.tp = TimePhase(Begin=datetime.now(), End=datetime.now() + timedelta(days=3), TimeSlot=self.ts,
                             Description=1)
         self.tp.save()
 
@@ -129,8 +143,9 @@ class ViewsTest(TestCase):
 
         self.p_all_this =       [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 403, 200, 302]  # staff of this proposal
         self.p_all_this_pres=   [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 200, 200, 302]  # staff of this proposal including ta-1
-        self.p_all_this_dist=   [403, 200, 403, 200, 403, 200, 200, 200, 200, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # staff of this proposal, as distributed to r-s (not t-p!). Also type6. For prv (NOT YET ASSESSORS!)
+        self.p_all_this_dist=   [403, 200, 403, 200, 403, 200, 403, 200, 200, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # staff of this proposal, as distributed to r-s (not t-p!). Also type6. For prv (no assessors)
         self.p_no_assistant =   [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 200, 302]  # staff of this proposal except assistants. For up/downgrading and edit proposal.
+        self.p_staff_prv_results=[403, 200, 403, 200, 403, 200, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal except assistants including assessors. For results staff grading form, without assessor.
         self.p_staff_results =  [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal except assistants including assessors. For results staff grading form.
         self.p_all_this_view =  [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 403, 200, 302]  # staff of this proposal including view only users (type4)
 
@@ -462,13 +477,13 @@ class ProjectViewsTestGeneral(ViewsTest):
         self.distribution_random = Distribution(
             Proposal=self.proposal,
             Student=self.users['r-s'],  # assign the student without private proposal
-            Timeslot=self.ts,
+            TimeSlot=self.ts,
         )
         self.distribution_random.save()
         dp = Distribution(
             Proposal=self.privateproposal,
             Student=self.users['t-p'],  # assign the student with private proposal
-            Timeslot=self.ts,
+            TimeSlot=self.ts,
         )
         dp.save()
         self.results_options = ResultOptions(

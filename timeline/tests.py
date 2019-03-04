@@ -11,10 +11,10 @@ class TimeLineViewsTest(ViewsTest):
 
     def test_view_status(self):
         ntp = TimePhase(Begin=datetime.now() + timedelta(days=1), End=datetime.now() + timedelta(days=3),
-                        Timeslot=self.ts, Description=1)
+                        TimeSlot=self.ts, Description=1)
         ntp.save()
         ptp = TimePhase(Begin=datetime.now() - timedelta(days=3), End=datetime.now() - timedelta(days=1),
-                        Timeslot=self.ts, Description=1)
+                        TimeSlot=self.ts, Description=1)
         ptp.save()
 
         codes = [

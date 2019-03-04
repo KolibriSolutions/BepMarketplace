@@ -44,7 +44,7 @@ def wizard_step1(request):
             # if something changed or if nothing exists yet.
             if form.changed_data or options is None:
                 options = form.save()
-                options.Timeslot = ts
+                options.TimeSlot = ts
                 options.save()
                 return render(request, "base.html", {"Message": "Presentation options saved. <br />\
                 If there were already presentations planned and you changed the durations, "
@@ -181,7 +181,7 @@ def wizard_step4(request):
                 slotObj.save()
         return JsonResponse({'type': 'success', 'txt': 'Data saved!'})
     else:
-        dists = Distribution.objects.filter(Q(presentationtimeslot__isnull=True) & Q(Timeslot=get_timeslot()))
+        dists = Distribution.objects.filter(Q(presentationtimeslot__isnull=True) & Q(TimeSlot=get_timeslot()))
         sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts)
         opts = ts.presentationoptions
         types = PresentationTimeSlot.SlotTypes

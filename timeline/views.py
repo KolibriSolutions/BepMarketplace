@@ -117,7 +117,7 @@ def add_timephase(request, timeslot):
                 'returnget': ts.pk,
             })
     else:
-        form = TimePhaseForm(initial={'Timeslot': ts})
+        form = TimePhaseForm(initial={'TimeSlot': ts})
     return render(request, 'GenericForm.html', {
         'form': form,
         'formtitle': 'Add TimePhase',
@@ -146,13 +146,13 @@ def edit_timephase(request, timephase):
                 return render(request, 'base.html', {
                     'Message': 'TimePhase saved!',
                     'return': 'timeline:list_timephases',
-                    'returnget': tp.Timeslot.pk,
+                    'returnget': tp.TimeSlot.pk,
                 })
             else:
                 return render(request, 'base.html', {
                     'Message': 'TimePhase not edited.',
                     'return': 'timeline:list_timephases',
-                    'returnget': tp.Timeslot.pk,
+                    'returnget': tp.TimeSlot.pk,
                 })
     else:
         form = TimePhaseForm(instance=tp)
@@ -181,7 +181,7 @@ def copy_timephases(request):
             copied = []
             for tp in form.cleaned_data['ts_from'].timephases.all().order_by("Description"):
                 try:
-                    tp.Timeslot = form.cleaned_data['ts_to']
+                    tp.TimeSlot = form.cleaned_data['ts_to']
                     tp.id = None  # to make a copy.
                     tp.Begin = tp.Begin + diff
                     tp.End = tp.End + diff
@@ -231,7 +231,7 @@ def delete_timephase(request, timephase):
             return render(request, 'base.html', {
                 'Message': '{} deleted.'.format(name),
                 'return': 'timeline:list_timephases',
-                'returnget': obj.Timeslot.pk})
+                'returnget': obj.TimeSlot.pk})
     else:
         form = ConfirmForm()
     return render(request, 'GenericForm.html', {

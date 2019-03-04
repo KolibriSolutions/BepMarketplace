@@ -23,19 +23,21 @@ def has_group(user, group_names):
     if user.is_anonymous:
         return False
     if user.is_superuser:
-        return True
+        if group_names == "students":
+            return False
+        else:
+            return True
     if group_names == "any":
         if user.groups.exists():
-            # if get_grouptype('4') not in user.groups.all() and \
-            #         get_grouptype('5') not in user.groups.all() and \
-            #         get_grouptype('6') not in user.groups.all():
-            #     return True
-            # if user.groups.count() > 1:
-            #     return True
-            # return False
             return True
         else:
             return False
+    elif group_names == "students":
+        if not user.groups.exists():
+            return True
+        else:
+            return False
+    # check groups
     for group_name in group_names.split(';'):
         if group_name == 'type2staffunverified':
             shortname = '2u'
@@ -47,19 +49,9 @@ def has_group(user, group_names):
     return False
 
 
-@register.filter(name='is_track_head')
-def is_track_head(user):
-    """
-
-    :param user:
-    :return:
-    """
-    if user.is_superuser:
-        return True
-    if get_grouptype("1") in user.groups.all():
-        if user.tracks.exists():
-            return True
-    return False
+@register.filter(name='is_writable_groupadmin')
+def is_writable_groupadmin(user):
+    return len(get_writable_admingroups(user)) != 0
 
 
 @register.simple_tag
@@ -105,6 +97,16 @@ def broadcast_available(user):
         return False
 
 
-@register.filter(name='is_writable_groupadmin')
-def is_writable_groupadmin(user):
-    return len(get_writable_admingroups(user)) != 0
+@register.filter(name='is_track_head')
+def is_track_head(user):
+    """
+
+    :param user:
+    :return:
+    """
+    if user.is_superuser:
+        return True
+    if get_grouptype("1") in user.groups.all():
+        if user.tracks.exists():
+            return True
+    return False

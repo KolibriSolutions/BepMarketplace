@@ -1,5 +1,6 @@
 from io import BytesIO
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models.aggregates import Sum
@@ -11,11 +12,12 @@ from xhtml2pdf import pisa
 from general_form import ConfirmForm
 from general_view import get_grouptype
 from index.decorators import group_required
+from professionalskills.models import StudentFile
 from students.models import Distribution
 from timeline.decorators import phase_required
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number
-from .forms import MakeVisibleForm, GradeCategoryForm, GradeCategoryAspectForm, AspectResultForm, CategoryResultForm
+from .forms import MakeVisibleForm, GradeCategoryForm, GradeCategoryAspectForm, AspectResultForm, CategoryResultForm, CategoryResultFormFile
 from .models import GradeCategory, CategoryResult, CategoryAspectResult, GradeCategoryAspect, ResultOptions
 
 
@@ -138,10 +140,22 @@ def finalize_preview(request, pk, step=0):
         "preview": True,
     })
 
+#
+# def staff_form_file(request, *args, **kwargs):
+#     """
+#     Results wizard to edit grades for files.
+#
+#     :param request:
+#     :param args:
+#     :param kwargs:
+#     :return:
+#     """
+#     return staff_form(request, files=True, *args, **kwargs)
+
 
 @group_required('type1staff', 'type3staff')
 @phase_required(6, 7)
-def staff_form(request, pk, step=0):
+def staff_form(request, pk, step=0, files=False):
     """
     Edit grade for a category as indexed by step. For each student as given by pk.
     Also edit the individual aspects of each grade category. For trackheads and responsible staff
@@ -158,7 +172,7 @@ def staff_form(request, pk, step=0):
         if not get_timeslot().resultoptions.Visible:
             raise PermissionDenied("Results menu is not yet visible.")
     dstr = get_object_or_404(Distribution, pk=pk)
-    if not hasattr(dstr, 'presentationtimeslot'):
+    if not hasattr(dstr, 'presentationtimeslot') and not files:
         raise PermissionDenied('This student does not have a presentation planned. Please plan it first.')
     if not request.user.is_superuser and \
             request.user != dstr.Proposal.Track.Head and \
@@ -168,7 +182,7 @@ def staff_form(request, pk, step=0):
         raise PermissionDenied("You are not the correct owner of this distribution. "
                                "Only track heads and responsible staff can edit grades.")
 
-    cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
+    cats = GradeCategory.objects.filter(TimeSlot=get_timeslot(), File__isnull=(not files)).distinct()
     numcategories = len(cats)
     step = int(step)
     if step == 0:
@@ -178,22 +192,28 @@ def staff_form(request, pk, step=0):
             "categories": cats,
             "dstr": dstr,
             "final": all(f.Final is True for f in dstr.results.all()) if dstr.results.all() else False,  # fix for all([])=True
+            "files": files,
+
         })
     elif step <= numcategories:
         saved = False
         cat = cats[step - 1]
         try:  # existing category result
             cat_result = CategoryResult.objects.get(Distribution=dstr, Category=cat)
+            initial = None
         except CategoryResult.DoesNotExist:  # new result
             cat_result = CategoryResult(Distribution=dstr, Category=cat)
-
+            initial = {'Files': list(StudentFile.objects.filter(Type=cat_result.Category.File, Distribution=cat_result.Distribution).distinct())}
         if request.method == "POST":  # submitted form
             if cat_result.Final:
                 return render(request, "base.html", context={
                     "Message": "Category Result has already been finalized! Editing is not allowed anymore. "
                                "If this has to be changed, contact support staff"
                 })
-            category_form = CategoryResultForm(request.POST, instance=cat_result, prefix='catform')
+            if files:
+                category_form = CategoryResultFormFile(request.POST, instance=cat_result, prefix='catform')
+            else:
+                category_form = CategoryResultForm(request.POST, instance=cat_result, prefix='catform')
             aspect_forms = []
             for i, aspect in enumerate(cat.aspects.all()):
                 try:  # try find existing form
@@ -206,13 +226,21 @@ def staff_form(request, pk, step=0):
                 })
             if category_form.is_valid() and all([form['form'].is_valid() for form in aspect_forms]):
                 cat_result = category_form.save()
-                for form in aspect_forms:
+                # return the form with the cleaned grade, not the one with the (uncleaned) post data:
+                if files:
+                    category_form = CategoryResultFormFile(instance=cat_result, prefix='catform')
+                else:
+                    category_form = CategoryResultForm(instance=cat_result, prefix='catform')
+                for form in aspect_forms:  # these forms do not need to be updated as aspect data is not cleaned.
                     aspect_result = form['form'].instance
                     aspect_result.CategoryResult = cat_result
                     aspect_result.save()
                 saved = True
         else:
-            category_form = CategoryResultForm(instance=cat_result, prefix='catform', disabled=cat_result.Final)
+            if files:
+                category_form = CategoryResultFormFile(instance=cat_result, initial=initial, prefix='catform', disabled=cat_result.Final)
+            else:
+                category_form = CategoryResultForm(instance=cat_result, prefix='catform', disabled=cat_result.Final)
             aspect_forms = []
             for i, aspect in enumerate(cat.aspects.all()):
                 try:
@@ -233,7 +261,9 @@ def staff_form(request, pk, step=0):
             "pk": pk,
             "saved": saved,
             "final": cat_result.Final,
-            "aspectlabels": CategoryAspectResult.ResultOptions
+            "aspectlabels": CategoryAspectResult.ResultOptions,
+            "files": files,
+            'rounding': settings.CATEGORY_GRADE_QUANTIZATION
         })
     else:
         raise PermissionDenied("This category does not exist.")

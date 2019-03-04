@@ -33,11 +33,6 @@ def get_pending_tag(user):
         return format_html(html.format(num))
 
 
-@register.filter(name='group_administrator_status')
-def group_administrator_status_tag(proj, user):
-    return group_administrator_status(proj, user)
-
-
 @register.simple_tag
 def get_personal_tag(user):
     """
@@ -68,6 +63,11 @@ def get_personal_tag(user):
 @register.simple_tag
 def is_favorite(project, user):
     return project.favorites.filter(User=user).exists()
+
+
+@register.filter(name='group_administrator_status')
+def group_administrator_status_tag(proj, user):
+    return group_administrator_status(proj, user)
 
 
 @register.filter(name='can_create_project')

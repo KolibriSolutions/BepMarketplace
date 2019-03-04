@@ -4,6 +4,7 @@
     <p>
     Current TimeSlot: {{ ts }}.
     </p>
+
     <a href="{% url "results:copy_overview" %}" class="button primary">Import from other time slot</a>
     <a href="{% url "results:add_category" %}" class="button primary">Add Category</a>
 
@@ -26,12 +27,18 @@
             </form>
         </div>
     {% endif %}
+    {% if gsum != 100 %}
+        <div class="bg-darkRed fg-white padding10 margin10">
+                            Warning, the total of all categories is not 100%.
+                        </div>
+    {% endif %}
     <table class="table bordered hovered striped datatable">
         <thead>
         <tr>
             <th>Name</th>
             <th data-priority="1">Weight</th>
             <th>Aspects</th>
+{#            <th>File grade</th>#}
             <th>Edit/Aspects</th>
         </tr>
         </thead>
@@ -51,13 +58,13 @@
                 <td>
                     <ul>{{ p.aspects.all|unordered_list }}</ul>
                 </td>
+{#                <td>{{ p.File|default_if_none:'Not related to a file.' }}</td>#}
                 <td>
                     <a href="{% url 'results:edit_category' p.pk %}" class="button primary">Edit</a>
                     <a href="{% url 'results:delete_category' p.pk %}" class="button warning">Delete</a>
 
                     <a href="{% url 'results:list_aspects' p.pk %}" class="button primary">List Aspects</a>
                     <a href="{% url "results:add_aspect" p.pk %}" class="button primary">Add Aspect</a>
-
                 </td>
             </tr>
         {% endfor %}
@@ -67,7 +74,7 @@
 {% endblock %}
 {% block scripts %}
     {{ block.super }}
-    <script type="text/javascript">
+    <script>
         //live search for proposals, using datatables jquery.
         $(document).ready(function () {
             $('.datatable').dt_wrapper();

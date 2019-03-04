@@ -29,6 +29,6 @@ if __name__ == "__main__":
         t = TimePhase(Begin=datetime.now() - timedelta(days=2),
                   End=datetime.now() + timedelta(days=40),
                   Description=n,
-                  Timeslot=get_timeslot())
+                  TimeSlot=get_timeslot())
         t.save()
     cache.clear()

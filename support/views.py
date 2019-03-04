@@ -11,22 +11,23 @@ from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from htmlmin.decorators import not_minified_response
 
-from index.decorators import group_required
 from distributions.utils import get_distributions
 from general_form import ConfirmForm
 from general_mail import EmailThreadTemplate, mail_track_heads_pending, send_mail
 from general_model import print_list
 from general_view import get_all_students, get_all_staff, get_grouptype
+from index.decorators import group_required
 from index.models import Track, UserMeta
 from osirisdata.data import osirisData
 from presentations.exports import get_list_presentations_xlsx
 from presentations.models import PresentationSet
 from proposals.models import Proposal
 from proposals.utils import get_all_proposals
+from results.models import CategoryResult
 from results.models import GradeCategory
 from students.models import Distribution
 from timeline.models import TimeSlot
-from timeline.utils import get_timeslot, get_timephase_number
+from timeline.utils import get_timeslot, get_timephase_number, get_recent_timeslots
 from .exports import get_list_students_xlsx, get_list_distributions_xlsx, get_list_projects_xlsx
 from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm, UserGroupsForm, \
     GroupadministratorEdit, CapacityGroupForm
@@ -500,7 +501,7 @@ def list_staff_projects(request, pk):
 
 
 @group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
-def list_students(request):
+def list_students(request, timeslot):
     """
     For support staff, responsibles and assistants to view their students.
     List all students with distributions that the current user is allowed to see.
@@ -508,43 +509,62 @@ def list_students(request):
     In later timephase shows the grades as well.
 
     :param request:
+    :param timeslot: the timeslot to look at. None for current timeslot (Future distributions do not exist)
     :return:
     """
+    ts = get_object_or_404(TimeSlot, pk=timeslot)
+    if ts.Begin > timezone.now().date():
+        raise PermissionDenied("Future students are not yet known.")
+    if ts == get_timeslot():
+        current_ts = True
+    else:
+        current_ts = False
 
-    if get_timephase_number() < 0:  # no timephase
-        if get_timeslot() is None:  # no timeslot
-            raise PermissionDenied("System is closed.")
+    if current_ts:
+        # for current timeslot, check time phases.
+        if get_timephase_number() < 0:  # no timephase
+            if get_timeslot() is None:  # no timeslot
+                raise PermissionDenied("System is closed.")
+        else:
+            if get_timephase_number() < 4:
+                raise PermissionDenied("Students are not yet distributed")
+            if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
+                return render(request, "base.html", {'Message':
+                                                         "When the phase 'Distribution of projects' is finished, you can view your students here."})
+        if get_timephase_number() == -1 or get_timephase_number() >= 6:  # also show grades when timeslot but no timephase.
+            show_grades = True
+        else:
+            show_grades = False
     else:
-        if get_timephase_number() < 4:
-            raise PermissionDenied("Students are not yet distributed")
-        if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
-            return render(request, "base.html", {'Message':
-                                                     "When the phase 'Distribution of projects' is finished, you can view your students here."})
-    if get_timephase_number() == -1 or get_timephase_number() >= 6:  # also show grades when timeslot but no timephase.
-        show_grades = True
-    else:
+        # historic view of distributions. Hide grades, as they might have changed outside the system.
         show_grades = False
-    cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
-    # des = get_distributions(request.user)
-    des = get_distributions(request.user).select_related('Proposal__ResponsibleStaff',
-                                                         'Proposal__Track',
-                                                         'Student__usermeta', ).prefetch_related(
-        'results__Category',
-        'Proposal__Assistants')
+
+    des = get_distributions(request.user, ts).select_related('Proposal__ResponsibleStaff',
+                                                             'Proposal__Track',
+                                                             'Student__usermeta').prefetch_related('Proposal__Assistants')
+    cats = None
+    if show_grades:
+        cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
+        des.prefetch_related('results__Category')
     deslist = []
     # make grades
     for d in des:
         reslist = []
-        for c in cats:
-            try:
-                reslist.append(d.results.get(Category=c).Grade)
-            except:
-                reslist.append('-')
+        if show_grades:
+            for c in cats:
+                try:
+                    reslist.append(d.results.get(Category=c).Grade)
+                except CategoryResult.DoesNotExist:
+                    reslist.append('-')
         deslist.append([d, reslist])
     return render(request, "support/list_students.html", {'des': deslist,
                                                           'typ': cats,
                                                           'show_grades': show_grades,
-                                                          'hide_sidebar': True})
+                                                          'hide_sidebar': True,
+                                                          'timeslots': get_recent_timeslots(),
+                                                          'timeslot': ts,
+                                                          'is_current': current_ts,
+                                                          })
 
 
 @not_minified_response
@@ -774,7 +794,7 @@ def history_download(request, timeslot, download):
         response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
     elif download == 'students':
         typ = GradeCategory.objects.filter(TimeSlot=ts)
-        des = Distribution.objects.filter(Timeslot=ts)
+        des = Distribution.objects.filter(TimeSlot=ts)
         file = get_list_students_xlsx(des, typ)
         response = HttpResponse(content=file)
         response['Content-Disposition'] = 'attachment; filename=students-grades.xlsx'

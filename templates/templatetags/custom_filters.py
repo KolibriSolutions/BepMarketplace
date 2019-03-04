@@ -1,5 +1,7 @@
 from django import template
 
+from general_model import print_list
+
 register = template.Library()
 
 
@@ -39,3 +41,8 @@ def get_hash():
         return h[:10]
     except FileNotFoundError:
         return "None"
+
+
+@register.filter(name='print_list')
+def print_list_tag(list):
+    return print_list(list)

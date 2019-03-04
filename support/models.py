@@ -41,8 +41,7 @@ class PublicFile(models.Model):
     """
     Public file. Support staff can upload these and the files are shown for each user on the frontpage.
     """
-    @staticmethod
-    def make_upload_path(filename):
+    def make_upload_path(instance, filename):
         """
         Upload path for a public file. Stored in /media/public_files/{timeslot-id}/{uuid.ext}
 

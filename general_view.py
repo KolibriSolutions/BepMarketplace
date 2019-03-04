@@ -46,7 +46,7 @@ def get_all_students(undistributed=False):
         return users
     else:
         # only students with a distributions
-        return users.filter(Q(distributions__Timeslot=get_timeslot()))
+        return users.filter(Q(distributions__TimeSlot=get_timeslot()))
 
 
 def get_all_staff():

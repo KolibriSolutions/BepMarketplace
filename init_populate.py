@@ -154,7 +154,7 @@ phds = list(type2staff.user_set.all())
 print("creating timeslot and timephase")
 ts = TimeSlot(Name="semester", Begin=date.today(), End=date.today().replace(year=date.today().year+1))
 ts.save()
-tp = TimePhase(Description=4, Timeslot=ts, Begin=date.today(), End=date.today().replace(month=date.today().month + 3))
+tp = TimePhase(Description=4, TimeSlot=ts, Begin=date.today(), End=date.today().replace(month=date.today().month + 3))
 tp.save()
 
 

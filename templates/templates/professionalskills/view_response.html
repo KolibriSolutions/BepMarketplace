@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+    <h1>Response to file {{ file }}</h1>
+    <h3>Professional skill grade</h3>
+    <p>
+        {% if response.Status == 'V' or response.Status == 'G' %}
+            {{ response.get_Status_display }}: <span class="mif-checkmark fg-green"></span>
+        {% elif file.staffresponse %}
+            {{ response.get_Status_display }}: <span class="mif-cross fg-red"></span>
+        {% else %}
+            No feedback given.
+        {% endif %}
+    </p>
+    <h3>Comment</h3>
+    <p>
+        {{ response.Explanation|default:"No comments given." }}
+    </p>
+    {% if response.aspects.all %}
+        <h3>Aspects</h3>
+        <table style="width:100%; table-layout:fixed;" class="table bordered">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Grade</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            {% for aspect in response.aspects.all %}
+                <tr>
+                    <td>
+                        {{ aspect.Aspect.Name }}
+                    </td>
+                    <td>
+                        {{ aspect.Aspect.Description }}
+                    </td>
+                    <td>
+                        {{ aspect.get_Grade_display }}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+    {% endif %}
+    <h3>Grade options</h3>
+        <p>Professional skill grade:</p>
+    <ul>
+        {% for opt in response.StatusOptions %}
+            <li>{{ opt.1 }} ({{ opt.0 }})</li>
+        {% endfor %}
+    </ul>
+    <p>Aspect grade options:</p>
+    <ul>
+        {% for opt in aspectoptions %}
+            <li>{{ opt.1 }} ({{ opt.0 }})</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

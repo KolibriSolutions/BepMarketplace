@@ -40,6 +40,8 @@ class ResultsViewsTest(ProjectViewsTestGeneral):
         codes_phase12345 = [
             [['gradeformstaff', {'pk': d.pk}], self.p_forbidden],
             [['gradeformstaff', {'pk': d.pk, 'step': 0}], self.p_forbidden],
+            # [['gradeformstafffiles', {'pk': d.pk}], self.p_forbidden],
+            # [['gradeformstafffiles', {'pk': d.pk, 'step': 0}], self.p_forbidden],
             [['gradefinal', {'pk': d.pk}], self.p_forbidden],
             [['gradefinal', {'pk': d.pk, 'version': 0}], self.p_forbidden],
             [['gradefinalpreview', {'pk': d.pk}], self.p_forbidden],
@@ -47,6 +49,8 @@ class ResultsViewsTest(ProjectViewsTestGeneral):
         codes_phase67_notvisible = [
             [['gradeformstaff', {'pk': d.pk}], self.p_forbidden],
             [['gradeformstaff', {'pk': d.pk, 'step': 0}], self.p_forbidden],
+            # [['gradeformstafffiles', {'pk': d.pk}], self.p_forbidden],
+            # [['gradeformstafffiles', {'pk': d.pk, 'step': 0}], self.p_forbidden],
             [['gradefinal', {'pk': d.pk}], self.p_forbidden],
             [['gradefinal', {'pk': d.pk, 'version': 0}], self.p_forbidden],
             [['gradefinalpreview', {'pk': d.pk}], self.p_forbidden],

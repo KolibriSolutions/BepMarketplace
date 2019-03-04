@@ -1,12 +1,16 @@
+from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models.aggregates import Sum
+
 from general_model import clean_text
-from timeline.utils import get_timeslot_id
 from index.models import Track
+from professionalskills.models import FileType, StudentFile
 from students.models import Distribution
 from timeline.models import TimeSlot
-from django.core.exceptions import ValidationError
+from timeline.utils import get_timeslot_id
+from .utils import quantize_number
 
 
 class ResultOptions(models.Model):
@@ -28,11 +32,14 @@ class GradeCategory(models.Model):
     Name = models.CharField(max_length=255)
     TimeSlot = models.ForeignKey(TimeSlot, default=get_timeslot_id, related_name='gradecategories', blank=False,
                                  on_delete=models.PROTECT)
+    File = models.ForeignKey(FileType, related_name='results', blank=True, null=True, on_delete=models.CASCADE, help_text='If this category is to grade a file or professional skill, select the file type here.')
 
     class Meta:
         ordering = ["-Weight", "Name"]
 
     def __str__(self):
+        if self.File:
+            return '{} for {} ({}%)'.format(self.Name, self.File, self.Weight)
         return '{} ({}%)'.format(self.Name, self.Weight)
 
     def clean(self):
@@ -57,9 +64,10 @@ class CategoryResult(models.Model):
     Grade = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(10)], default=0.0)
     Comments = models.TextField(blank=True, null=True)
     Final = models.BooleanField(default=False)
+    Files = models.ManyToManyField(StudentFile, related_name='results', blank=True)
 
     def __str__(self):
-        return self.Category.Name + " to " + self.Distribution.__str__() + " grade: " + str(self.Grade)
+        return '{} to {} grade: {}'.format(self.Category.Name, self.Distribution.__str__(), self.Grade)
 
     def is_valid(self):
         """
@@ -74,6 +82,7 @@ class CategoryResult(models.Model):
 
     def clean(self):
         self.Comments = clean_text(self.Comments)
+        self.Grade = quantize_number(self.Grade, base=settings.CATEGORY_GRADE_QUANTIZATION)  # rounds grade to step from settings.
 
 
 class GradeCategoryAspect(models.Model):
@@ -100,11 +109,11 @@ class CategoryAspectResult(models.Model):
     The score of a student to a particular aspect of a category. Linked to the students categoryresult.
     """
     ResultOptions = (
-        ("F", "Fail (< 6)"),
-        ("S", "Sufficient (6-7)"),
-        ("G", "Good (7-8)"),
-        ("VG", "Very Good (8-9)"),
-        ("E", "Excellent (9-10)"),
+        ("F", "Fail"),
+        ("S", "Sufficient"),
+        ("G", "Good"),
+        ("VG", "Very Good"),
+        ("E", "Excellent"),
     )
 
     CategoryAspect = models.ForeignKey(GradeCategoryAspect, on_delete=models.CASCADE, related_name='results')

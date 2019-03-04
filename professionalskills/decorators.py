@@ -8,7 +8,7 @@ from timeline.utils import get_timephase_number
 def can_access_professionalskills(fn):
     """
     Tests if it is the correct timephase and person with access rights to look at profesionalskills
-    # TODO maybe add presentation assessors??
+    # In future presentation assessors might be added.
 
     :param fn:
     :return:

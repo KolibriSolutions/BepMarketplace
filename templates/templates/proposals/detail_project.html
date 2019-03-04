@@ -303,7 +303,7 @@
 
     {{ block.super }}
     <script src="{% static "js/lightbox.js" %}"></script>
-    <script src="{% static "channels/js/websocketbridge.js" %}"></script>
+    <script src="{% static "js/websocketbridge.js" %}"></script>
     {% if user.is_authenticated %}{# not when using sharelink #}
         <script src="{% static "js/favorite.js" %}"></script>
     {% endif %}

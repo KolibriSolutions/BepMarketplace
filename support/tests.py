@@ -18,6 +18,7 @@ class SupportViewsTest(ViewsTest):
         # create dummy public file for edit and delete
         self.publicfile = PublicFile(File='/home/django/dummy.txt')
         self.publicfile.save()
+        # self.debug =True
 
     def test_view_status(self):
         codes_general_phase1234567 = [  # including no-timephase
@@ -56,11 +57,15 @@ class SupportViewsTest(ViewsTest):
         ]
 
         codes_stud_phase123 = [  # not available when applications/distributions have not yet been made.
-            [['liststudents', None], self.p_forbidden],
+            [['liststudents', {'timeslot': self.ts.pk}], self.p_forbidden],
+            [['liststudents', {'timeslot': self.nts.pk}], self.p_forbidden],
+            [['liststudents', {'timeslot': self.pts.pk}], self.p_staff_stud],
             [['liststudentsXls', None], self.p_forbidden]
         ]
         codes_stud_phase4567 = [  # list students is also available when no-timephase (but not when no-timeslot)
-            [['liststudents', None], self.p_staff_stud],
+            [['liststudents', {'timeslot': self.ts.pk}], self.p_staff_stud],
+            [['liststudents', {'timeslot': self.nts.pk}], self.p_forbidden],
+            [['liststudents', {'timeslot': self.pts.pk}], self.p_staff_stud],
             [['liststudentsXls', None], self.p_staff_stud]
         ]
 

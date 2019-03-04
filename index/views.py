@@ -188,7 +188,7 @@ def feedback_confirm(request, pk):
     obj = get_object_or_404(FeedbackReport, pk=pk)
     if obj.Status != 1:
         return render(request, "base.html", {
-            "Message": "Report not in open status",
+            "Message": "Report is not in open status.",
             "return": "index:list_feedback"
         })
     obj.Status = 2
@@ -198,7 +198,7 @@ def feedback_confirm(request, pk):
     }, obj.Reporter.email)
 
     return render(request, "base.html", {
-        "Message": "Report confirmed and reporter notified",
+        "Message": "Report confirmed and reporter notified.",
         "return": "index:list_feedback"
     })
 
@@ -216,7 +216,7 @@ def feedback_close(request, pk):
 
     if obj.Status == 3:
         return render(request, "base.html", {
-            "Message": "Report already closed",
+            "Message": "Report is already closed.",
             "return": "index:list_feedback"
         })
 
@@ -233,7 +233,7 @@ def feedback_close(request, pk):
             }, obj.Reporter.email)
 
             return render(request, "base.html", {
-                "Message": "Report closed and reporter notified",
+                "Message": "Report closed and reporter notified.",
                 "return": "index:list_feedback"
             })
     else:

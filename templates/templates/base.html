@@ -103,9 +103,8 @@
                                 <li>
                                     <a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Distribution</a>
                                     <ul class="d-menu" data-role="dropdown">
-                                        {% if phasenumber == 6 and user.is_superuser %}
-                                            <li><a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
-                                                Manually (superuser)</a></li>
+                                        {% if phasenumber == 6 %}
+                                            <li><a href="{% url 'distributions:supportDistributeApplications' %}">Change</a></li>
                                         {% endif %}
                                         {% if phasenumber == 4 or phasenumber == 5 %}
                                             <li>
@@ -214,7 +213,7 @@
                         {% endif %}
                         {% if user|has_group:'type1staff;type2staff;type3staff;type6staff' %}
                             {% if phasenumber > 3 or phasenumber < 0 and timeslotpresent %}
-                                <li><a href="{% url 'support:liststudents' %}"><span class="mif-users icon"></span>Students
+                                <li><a href="{% url_timeslot 'support:liststudents' %}"><span class="mif-users icon"></span>Students
                                     {% if phasenumber >= 6 or phasenumber < 0 %} & Grades{% endif %}</a>
                                 </li>
                             {% endif %}
@@ -319,10 +318,6 @@
     {% endblock %}
     <div id="content">
         <div class="grid">
-            {#<div class="row">#}
-            {#                 block 'header' is not used, is now removed jvo #}
-            {#                #}
-            {#            </div>#}
             <div class="row cells5" id="contentGrid">
                 <div class="cell colspan4" id="cellContent">
                     {% block body %}
@@ -338,20 +333,21 @@
                     {% endblock %}
                 </div>
                 <div class="cell" id="cellSidebar">
-                    {% broadcast_available user as status %}
-                    {% if status %}
-                        <div class="panel">
-                            <div class="heading">
-                                <span class="title">Announcements</span>
-                            </div>
-                            <div class="content padding5">
-                                {% get_broadcasts user %}
-                            </div>
-                        </div>
-                        <br>
-                    {% endif %}
-                    <p>Current phase: {% get_timephase %}</p>
                     {% if user.is_authenticated %}
+                        {% broadcast_available user as status %}
+                        {% if status %}
+                            <div class="panel">
+                                <div class="heading">
+                                    <span class="title">Announcements</span>
+                                </div>
+                                <div class="content padding5">
+                                    {% get_broadcasts user %}
+                                </div>
+                            </div>
+                            <br>
+                        {% endif %}
+
+                        <p>Current phase: {% get_timephase %}</p>
                         {% if user|has_group:"type1staff;type2staff;type2staffunverified" %}
                             {# Staff #}
                             {% if user|has_group:"type2staffunverified" and not user.is_superuser %}
@@ -366,7 +362,7 @@
 
                             {% if phasenumber < 3 %}
                                 <p>
-                                    Pending proposals: {% get_pending_tag user %}
+                                    Pending projects: {% get_pending_tag user %}
                                 </p>
                             {% elif phasenumber > 5 %}
                                 <div class="panel"> {# staff presentations inside a panel for more clarity #}
@@ -400,15 +396,9 @@
                                 <a href="{% url 'impersonate-stop' %}" class="button primary">Stop impersonating</a>
                             </p>
                         {% endif %}
-
                     {% endif %}
                 </div>
             </div>
-            {#            <div class="row cells5">#}
-            {#                {% block footer %}#}
-            {##}
-            {#                {% endblock %}#}
-            {#            </div>#}
         </div>
     </div>
 </div>
@@ -450,7 +440,7 @@
     {# custom #}
     <script src="{% static "js/custom.js" %}"></script>
     {% if hide_sidebar %}
-        <script type="text/javascript">
+        <script>
             $(function () {
                 hideSidebarFast();
             });

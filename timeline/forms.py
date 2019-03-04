@@ -8,7 +8,7 @@ from .models import TimeSlot, TimePhase
 
 class TimeSlotForm(forms.ModelForm):
     """
-    Form to edit a timeslot
+    Form to edit a time slot
     """
 
     class Meta:
@@ -27,12 +27,12 @@ class TimeSlotForm(forms.ModelForm):
 
 class TimePhaseForm(forms.ModelForm):
     """
-    Form to edit/create a timephase
+    Form to edit/create a time phase
     """
 
     class Meta:
         model = TimePhase
-        fields = ['Description', 'Begin', 'End', 'CountdownEnd', 'Timeslot']
+        fields = ['Description', 'Begin', 'End', 'CountdownEnd', 'TimeSlot']
         labels = {
             'CountdownEnd': 'Countdown end',
         }
@@ -41,7 +41,7 @@ class TimePhaseForm(forms.ModelForm):
             'Begin': widgets.MetroDateInput,
             'End': widgets.MetroDateInput,
             'CountdownEnd': widgets.MetroDateInput,
-            'Timeslot': widgets.MetroSelect,
+            'TimeSlot': widgets.MetroSelect,
         }
 
     def clean(self):
@@ -51,11 +51,11 @@ class TimePhaseForm(forms.ModelForm):
 
 class TimePhaseCopyForm(forms.Form):
     """
-    Form to copy timephases
+    Form to copy time phases
     """
     ts_from = forms.ModelChoiceField(queryset=TimeSlot.objects.filter(timephases__isnull=False).distinct(),
                                      widget=widgets.MetroSelect,
-                                     help_text='Timeslot with timephases to copy timephases from.')
+                                     help_text='Time slot with time phases to copy time phases from.')
     ts_to = forms.ModelChoiceField(queryset=TimeSlot.objects.filter(timephases__isnull=True, End__gt=datetime.now()).distinct(),
                                    widget=widgets.MetroSelect,
-                                   help_text='Timeslot to copy timephases to. Only timeslots without timephases can be chosen.')
+                                   help_text='Time slot to copy time phases to. Only time slots without time phases can be chosen.')

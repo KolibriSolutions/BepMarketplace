@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load timeline_tags %}
 {% block body %}
     {#{% if step != -1 and step != 0 %}#}
     {#    {% if step != 0 %}#}
@@ -10,30 +11,33 @@
     <div class="grid" xmlns:table-layout="http://www.w3.org/1999/xhtml" xmlns:width="http://www.w3.org/1999/xhtml">
         <div class="row cells4">
             <div class="cell">
+                <a href="{% url_timeslot 'support:liststudents' %}" class="button info"><span class="mif-arrow-left"></span> Back To Menu</a>
                 <h5>Currently Editing: {{ dstr }}</h5>
-                <a href="{% url 'results:gradeformstaff' pk 0 %}" style="width:100%"
-                   class="button {% if category %} info{% else %} button-shadow {% endif %}">Information</a>
+                <a href="{% url 'results:gradeformstaff' pk 0 %} " style="width:100%; height:100%;" class="button info full-height">Information</a>
                 <hr/>
                 {% for cat in categories %}
-                    <a href="{% url 'results:gradeformstaff' pk forloop.counter %}" style="width:100%"
-                       class="button {% if cat != category %}primary{% else %} button-shadow {% endif %}">{{ cat }}</a><br/>
+                    <a href="{% url 'results:gradeformstaff' pk forloop.counter %}"
+                       class="button {% if cat != category %}primary{% else %} button-shadow {% endif %} full-size full-height">
+                        {{ cat }}
+                    </a>
+                    <br/>
                 {% endfor %}
                 <hr>
-                <a href="{% url 'results:gradefinalpreview' pk=pk %}" style="width:100%" class="button info">Print Preview</a>
-                <a href="{% url 'results:gradefinal' pk=pk %}" style="width:100%" class="button success">Finish and
+                <a href="{% url 'results:gradefinalpreview' pk=pk %}" class="button info full-size full-height">Print Preview</a>
+                <a href="{% url 'results:gradefinal' pk=pk %}" class="button success full-size full-height">Finish and
                     Print</a>
-                <a href="{% url 'support:liststudents' %}" style="width:100%" class="button warning">Back To Menu</a>
             </div>
             <div class="cell colspan3">
                 {% if step == 0 %}
                     {% if final %}
                         <div class="bg-darkRed fg-white padding10 margin10">All categories for this student have been finalized. You can view the grades but no longer edit them.</div>
                     {% endif %}
-                    <p>
-                        Use the buttons on the left side to grade {{ dstr }}.
-                    </p>
-                    <p>
-                        The dark blue buttons are all categories of the grades.
+                    <h1>Grades</h1>
+                    <h3>
+                        {{ dstr }}
+                    </h3>
+                    <p>}
+                        Use the buttons on the left side to grade, the dark blue buttons are all categories of the grades.
                         Categories consist of multiple aspects.
                     </p>
                     <a href="{% url 'results:about' %}" class="button primary">More information about the categories and aspects</a>
@@ -58,7 +62,7 @@
                         </div>
                     {% endif %}
                     <h1>{{ category }}</h1>
-                    {# TODO                    Grades will be rounded to integers.#}
+                    <p>Category grades are rounded to <i>{{ rounding }}</i>.</p>
                     <form id="gradeform" action="" method="post" enctype="multipart/form-data" novalidate>
                         {% if not final %}
                             <button type="submit" class="button success">Save</button>
@@ -122,7 +126,7 @@
     <script src="{% static "js/jquery.datetimepicker.full.min.js" %}"></script>
     <script src="{% static "js/select2.min.js" %}"></script>
     <script src="{% static "js/jquery.are-you-sure.min.js" %}"></script>
-    <script type="text/javascript">
+    <script>
         $(function () {
             $(".select2-tag-enable").select2({
                 minimumResultsForSearch: 10

@@ -209,7 +209,7 @@ def add_file(request):
 
     :param request:
     """
-    dist = get_object_or_404(Distribution, Student=request.user, Timeslot=get_timeslot())
+    dist = get_object_or_404(Distribution, Student=request.user, TimeSlot=get_timeslot())
 
     if request.method == 'POST':
         form = StudentFileForm(request.POST, request.FILES, request=request)
@@ -237,7 +237,7 @@ def edit_file(request, pk):
     :param request:
     """
     file = get_object_or_404(StudentFile, id=pk)
-    dist = request.user.distributions.filter(Timeslot=get_timeslot()).get()
+    dist = request.user.distributions.filter(TimeSlot=get_timeslot()).get()
     if request.method == 'POST':
         form = StudentFileForm(request.POST, request.FILES, request=request, instance=file)
         if form.is_valid():

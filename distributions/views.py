@@ -94,10 +94,10 @@ def manual(request):
                           'distributions__Student__usermeta')
     # includes students without applications.
     # also show undistributed in phase 6
-    studs = get_all_students(undistributed=True).exclude(distributions__Timeslot=get_timeslot()) \
+    studs = get_all_students(undistributed=True).exclude(distributions__TimeSlot=get_timeslot()) \
         .select_related('usermeta') \
         .prefetch_related('applications__Proposal').distinct()
-    dists = Distribution.objects.filter(Timeslot=get_timeslot()) \
+    dists = Distribution.objects.filter(TimeSlot=get_timeslot()) \
         .select_related('Student__usermeta', 'Proposal', 'Application__Student__usermeta')
     return render(request, 'distributions/manual_distribute.html', {'proposals': props,
                                                                     'undistributedStudents': studs,
@@ -121,7 +121,7 @@ def api_distribute(request):
             student = get_all_students(undistributed=True).get(pk=request.POST['student'])
         except User.DoesNotExist:
             return JsonResponse({'type': 'warning', 'txt': warningString + ' (User cannot be found)'})
-        if student.distributions.filter(Timeslot=get_timeslot()).exists():
+        if student.distributions.filter(TimeSlot=get_timeslot()).exists():
             return JsonResponse({'type': 'warning', 'txt': warningString + ' (Student already distributed)'})
         try:
             dist = Distribution()
@@ -134,7 +134,7 @@ def api_distribute(request):
             except Application.DoesNotExist:
                 appl_prio = -1
                 dist.Application = None
-            dist.Timeslot = get_timeslot()
+            dist.TimeSlot = get_timeslot()
             dist.full_clean()
             dist.save()
         except Exception as e:
@@ -163,7 +163,7 @@ def api_undistribute(request):
         except User.DoesNotExist:
             return JsonResponse({'type': 'warning', 'txt': warningString + ' (User cannot be found)'})
         try:
-            dist = student.distributions.get(Timeslot=get_timeslot())
+            dist = student.distributions.get(TimeSlot=get_timeslot())
         except Distribution.DoesNotExist:
             return JsonResponse({'type': 'warning', 'txt': warningString + ' (Distribution cannot be found)'})
         try:
@@ -196,7 +196,7 @@ def api_redistribute(request):
         except User.DoesNotExist:
             return JsonResponse({'type': 'warning', 'txt': warningString + ' (User cannot be found)'})
         try:
-            dist = student.distributions.get(Timeslot=get_timeslot())
+            dist = student.distributions.get(TimeSlot=get_timeslot())
         except Distribution.DoesNotExist:
             return JsonResponse({'type': 'warning', 'txt': warningString + ' (Distribution cannot be found)'})
         try:
@@ -239,7 +239,7 @@ def mail_distributions(request):
             ts = get_timeslot()
             # iterate through projects, put students directly in the mail list
             for prop in get_all_proposals().filter(Q(distributions__isnull=False)):
-                for dist in prop.distributions.filter(Timeslot=ts):
+                for dist in prop.distributions.filter(TimeSlot=ts):
                     mails.append({
                         'template': 'email/studentdistribution.html',
                         'email': dist.Student.email,
@@ -372,13 +372,13 @@ def automatic(request, dist_type, distribute_random=1, automotive_preference=1):
         form = ConfirmForm(request.POST)
         if form.is_valid():
             # delete all old distributions of this timeslot
-            Distribution.objects.filter(Timeslot=get_timeslot()).delete()
+            Distribution.objects.filter(TimeSlot=get_timeslot()).delete()
             # save the stuff
             for dist in dists:
                 dstdbobj = Distribution()
                 dstdbobj.Student = dist['student']
                 dstdbobj.Proposal = dist['proposal']
-                dstdbobj.Timeslot = get_timeslot()
+                dstdbobj.TimeSlot = get_timeslot()
                 if dist['preference'] > 0:
                     try:
                         dstdbobj.Application = \
@@ -533,20 +533,26 @@ def automatic(request, dist_type, distribute_random=1, automotive_preference=1):
 @phase_required(4, 5, 6)
 def list_second_choice(request):
     """
-    list all students with a random distribution
+    list all students with a random distribution, without project and all non-full projects
 
     :param request:
     :return:
     """
-    props = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=get_timeslot(),
-                                                                               num_distr__lt=F('NumStudentsMax')) \
-        .order_by('Title')
+
+    props = get_all_proposals().filter(Status=4, Private__isnull=True).distinct().annotate(num_distr=Count('distributions')).filter(TimeSlot=get_timeslot(),
+                                                                               num_distr__lt=F('NumStudentsMax')).order_by('Title')
     prop_obj = [[prop, get_share_link(prop.pk)] for prop in props]
+    no_dist = get_all_students(undistributed=True).filter(distributions__isnull=True, applications__isnull=False).distinct()
+    # filter students in this year with only applications in other year
+    no_dist = [s for s in no_dist if s.applications.filter(Proposal__TimeSlot=get_timeslot()).exists()]
+
     return render(request, 'distributions/list_second_choice.html', {
-        'distributions': Distribution.objects.filter(Timeslot=get_timeslot(),
+        'distributions': Distribution.objects.filter(TimeSlot=get_timeslot(),
                                                      Application__isnull=True,
                                                      Proposal__Private__isnull=True).order_by('Student'),
+        'no_dist': no_dist,
         'proposals': prop_obj,
+
     })
 
 
@@ -559,7 +565,7 @@ def delete_random_distributions(request):
     :param request:
     :return:
     """
-    dists = Distribution.objects.filter(Timeslot=get_timeslot(),
+    dists = Distribution.objects.filter(TimeSlot=get_timeslot(),
                                         Application__isnull=True,
                                         Proposal__Private__isnull=True).order_by('Student')
     if request.method == 'POST':

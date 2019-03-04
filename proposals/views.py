@@ -214,7 +214,7 @@ def list_own_projects(request, timeslot=None):
 @can_edit_proposal
 def edit_project(request, pk):
     """
-    Edit a given proposal. Only for staff that is allowed to edit the proposal. Timeslot validation is handled in form.
+    Edit a given proposal. Only for staff that is allowed to edit the proposal. Time slot validation is handled in form.
 
     :param request:
     :param pk: pk of the proposal to edit.
@@ -491,7 +491,7 @@ def list_track(request, timeslot=None):
     List all proposals of the track that the user is head of.
 
     :param request:
-    :param timeslot: Timeslot to show projects from
+    :param timeslot: Time slot to show projects from
     :return:
     """
     if not Track.objects.filter(Head=request.user).exists():
@@ -751,7 +751,7 @@ def project_stats(request, timeslot=None):
     Statistics for projects, allowed for all staff except unverified.
 
     :param request:
-    :param timeslot: the timeslot to view proposals from
+    :param timeslot: the time slot to view proposals from
     :return:
     """
     Project = Proposal
@@ -765,19 +765,24 @@ def project_stats(request, timeslot=None):
     totalnum = p.count()
 
     groups = CapacityGroup.objects.all()
-    group_count = []
+    group_count_prop = []
     group_count_distr = []
     group_count_appl = []
     group_labels = []
     group_labels_appl = []
     group_labels_distr = []
+    group_labels_prop = []
+
     for group in groups:  # groups is tupple of (shortname, longname)
-        group_count.append(p.filter(Group=group).count())
         group_labels.append(str(group))
+        group_count_prop.append(p.filter(Group=group).count())
         group_count_distr.append(p.filter(Group=group, distributions__isnull=False).count())  # not distinct because users.
         group_count_appl.append(p.filter(Group=group, applications__isnull=False).count())  # not distinct because users.
-    if group_count:
-        group_count, group_labels = (list(t) for t in zip(*sorted(zip(group_count, group_labels), reverse=True)))
+
+    # sort both lists for each count-type by count number, make sure labels are in correct order.
+    if group_count_prop:
+        group_count_prop, group_labels_prop = (list(t) for t in
+                                               zip(*sorted(zip(group_count_prop, group_labels), reverse=True)))
     if group_count_distr:
         group_count_distr, group_labels_distr = (list(t) for t in
                                                  zip(*sorted(zip(group_count_distr, group_labels), reverse=True)))
@@ -810,9 +815,9 @@ def project_stats(request, timeslot=None):
         'data': [
             {
                 'label': 'Projects by capacity group',
-                'labels': group_labels,
-                'counts': group_count,
-                'total': sum(group_count),
+                'labels': group_labels_prop,
+                'counts': group_count_prop,
+                'total': sum(group_count_prop),
             }, {
                 #     'label': 'Master program',
                 #     'labels': program_labels,

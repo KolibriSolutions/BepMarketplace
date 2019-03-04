@@ -22,13 +22,15 @@
                 <td>{{ report.get_Status_display }}</td>
                 <td>
                     {% if report.Status != 2 %}
-                        <a href="{% url 'index:confirm_feedback' report.id %}">
-                            <button class="button info">Confirm</button>
-                        </a><br/>
+                        <a href="{% url 'index:confirm_feedback' report.id %}" class="button info">
+                        Confirm
+                        </a>
+                        <br/>
                     {% endif %}
-                    <a href="{% url 'index:close_feedback' report.id %}">
-                        <button class="button success">Close</button>
-                    </a><br/>
+                    <a href="{% url 'index:close_feedback' report.id %}" class="button success">
+                        Close
+                    </a>
+                    <br/>
                 </td>
             </tr>
         {% endfor %}
@@ -37,7 +39,7 @@
 {% endblock %}
 {% block scripts %}
     {{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(document).ready(function () {
             var dt = $('.datatable').dt_wrapper();
         });

@@ -151,3 +151,33 @@ class StaffResponse(models.Model):
 
     def clean(self):
         self.Explanation = clean_text(self.Explanation)
+
+
+class StaffResponseFileAspect(models.Model):
+    Name = models.CharField(max_length=255)
+    Description = models.TextField()
+    File = models.ForeignKey(FileType, on_delete=models.CASCADE, related_name='aspects')
+
+    def clean(self):
+        self.Description = clean_text(self.Description)
+        self.Name = clean_text(self.Name)
+
+    def __str__(self):
+        return '{} to {}'.format(self.Name, self.File)
+
+
+class StaffResponseFileAspectResult(models.Model):
+    ResultOptions = (
+        ("F", "Fail"),
+        ("S", "Sufficient"),
+        ("G", "Good"),
+        ("VG", "Very Good"),
+        ("E", "Excellent"),
+    )
+
+    Response = models.ForeignKey(StaffResponse, on_delete=models.CASCADE, related_name='aspects')
+    Grade = models.CharField(max_length=2, choices=ResultOptions, blank=True, null=True)
+    Aspect = models.ForeignKey(StaffResponseFileAspect, on_delete=models.CASCADE, related_name='results')
+
+    def __str__(self):
+        return '{} to file {}'.format(self.Aspect, self.Response.File)

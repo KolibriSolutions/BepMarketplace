@@ -4,11 +4,21 @@
 {% get_timephase_number as phasenumber %}
 {% block body %}
 
-    <h1>Students with project</h1>
-    {% if phasenumber == 5 %}
-        <p>The current phase is 'Gather and process objections' so distributions of students might still change.</p>
+    <h1>Students with project in {{ timeslot }}</h1>
+    <div class="tabcontrol">
+            <ul class="tabs">
+                {% for ts in timeslots %}
+                    <li {% if ts == timeslot %}class="active"{% endif %}><a href="{% if ts == timeslot %}#{% else %}../{{ ts.pk }}{% endif %}">{{ ts }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% if is_current %}
+        {% if phasenumber == 5 %}
+            <p>The current phase is 'Gather and process objections' so distributions of students might still change.</p>
+        {% endif %}
+        <a href="{% url "support:liststudentsXls" %}" class="button primary">Export Excel</a>
     {% endif %}
-    <a href="{% url "support:liststudentsXls" %}" class="button primary">Export Excel</a>
+
     <a href="#" id="studentinfo" class="columnToggle button"><span></span> student info</a>
     <a href="#" id="projectinfo" class="columnToggle button"><span></span> project info</a>
     {% if show_grades %}
@@ -105,7 +115,7 @@
 
 {% block scripts %}
     {{ block.super }}
-    <script type="text/javascript">
+    <script>
         //live search for proposals, using datatables jquery.
         $(document).ready(function () {
             //set filters and dt_wrapper

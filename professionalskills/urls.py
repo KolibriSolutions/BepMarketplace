@@ -13,7 +13,8 @@ urlpatterns = [
     path('files/', views.list_own_files, name='listownfiles'),
     path('files/type/<int:pk>/all/', views.list_files_of_type, name='listfileoftype'),
     path('files/type/<int:pk>/missing/', views.list_missing_of_type, name='listmissingoftype'),
-    path('file/respond/<int:pk>/', views.respond_file, name='respondfile'),
+    path('file/<int:pk>/respond/', views.respond_file, name='respondfile'),
+    path('file/<int:pk>/', views.view_response, name='viewresponse'),
 
     path('mail/overdue/', views.mail_overdue_students, name='mailoverduestudents'),
     path('print/forms/', views.print_forms, name='printprvforms'),

@@ -3,8 +3,8 @@
 {% block body %}
     <h1>Professional Skills</h1>
     {% if not user|has_group:'any' %}{# for students #}
-{#        To hand in a prv you can upload files <a href="{% url 'students:addfile' %}">here</a>.<br/>#}
-{#        Your previous handins can be found <a href="{% url 'professionalskills:listownfiles' %}">here</a>.<br/>#}
+        {#        To hand in a prv you can upload files <a href="{% url 'students:addfile' %}">here</a>.<br/>#}
+        {#        Your previous handins can be found <a href="{% url 'professionalskills:listownfiles' %}">here</a>.<br/>#}
         <p>To upload files or view your previous uploads, use the 'Files' menu at the top.</p>
         <a href="{% url 'professionalskills:listowngroups' %}" class="button primary">List Enrolled Groups</a>
     {% elif user|has_group:"type6staff;type3staff" %}
@@ -20,6 +20,7 @@
             <th>Name</th>
             <th>Deadline</th>
             <th>Description</th>
+            <th>Grading</th>
             {% if user|has_group:'type3staff;type6staff' %}
                 <th data-searchable="false" data-sortable="false">Actions</th>
             {% endif %}
@@ -31,6 +32,12 @@
                 <td>{{ filetype }}</td>
                 <td data-sort="{{ filetype.Deadline|date:"U" }}">{{ filetype.Deadline }}</td>
                 <td>{{ filetype.Description }}</td>
+                <td>
+                <ul class="unstyled-list">
+{#                    <li>{% if filetype.results.exists %}This file has to be graded using the grading system.{% else %}No official grade is required. {% endif %}</li>#}
+                    <li>{% if filetype.CheckedBySupervisor %}Supervisors can respond to the file to give feedback.{% else %}No feedback for this file is required.{% endif %}</li>
+                </ul>
+                </td>
                 {% if user|has_group:'type3staff;type6staff' %}
                     <td>
                         <a href="{% url 'professionalskills:listfileoftype' filetype.id %}" class="button primary">Delivered</a>

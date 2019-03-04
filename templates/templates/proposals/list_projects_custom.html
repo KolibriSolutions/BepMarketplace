@@ -35,7 +35,7 @@
                 <th><span class="mif-star-half icon"></span></th>
                 <th data-priority="4" data-searchable="false" data-sortable="false">{% if phasenumber < 5 %}
                     Edit{% else %}Distributions{% endif %}</th>
-{#                <th data-visible='false' class="projectinfo">Timeslot</th>#}
+{#                <th data-visible='false' class="projectinfo">TimeSlot</th>#}
                 <th data-priority="1">Name</th>
                 <th data-visible='false' class="projectinfo">Track</th>
                 <th data-visible='false' class="projectinfo">Group</th>
@@ -134,9 +134,9 @@
 {% endblock %}
 {% block scripts %}
     {{ block.super }}
-    <script src="{% static "channels/js/websocketbridge.js" %}"></script>
+    <script src="{% static "js/websocketbridge.js" %}"></script>
     <script src="{% static "js/favorite.js" %}"></script>
-    <script type="text/javascript">
+    <script>
         $(document).ready(function () {
             // custom sort for favorite button, https://datatables.net/examples/plug-ins/dom_sort.html
             $.fn.dataTable.ext.order['dom-order-favorite'] = function (settings, col) {

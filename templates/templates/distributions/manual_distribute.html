@@ -26,6 +26,7 @@
     <script src="{% static "js/jquery-ui.sortable.min.js" %}"></script>
     {% csrf_token %}
     <script>
+        window.tempdictionary = {};
         var dt; // to store the datatable instance
         function csrfSafeMethod(method) {
             // these HTTP methods do not require CSRF protection
@@ -42,13 +43,23 @@
         var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
 
         //error notify
-        function studentError(jqthis) {
-            var errorNotify = {
-                caption: 'Server error',
-                content: 'Please refresh this page (F5) or contact system administrator',
-                icon: "<span class='mif-warning'></span>",
-                type: "alert"
-            };
+        function studentError(jqthis, code) {
+            if(code === 403)
+            {
+                var errorNotify = {
+                    caption: 'Not allowed',
+                    content: 'Action not allowed, please refresh this page (F5) to reset',
+                    icon: "<span class='mif-warning'></span>",
+                    type: "alert"
+                };
+            } else {
+                var errorNotify = {
+                    caption: 'Server error',
+                    content: 'Please refresh this page (F5) or contact system administrator',
+                    icon: "<span class='mif-warning'></span>",
+                    type: "alert"
+                };
+            }
             // change all icons to error icons.
             jqthis.find(".studentLinkIcon").removeClass("mif-link").addClass("mif-warning");
             jqthis.find(".studentApplicationPriority").show().text("-2");
@@ -96,18 +107,27 @@
                 var from = $(ui.sender).data('students-list');
                 var to = jqthis.data('students-list');
                 var student = $(ui.item).attr("id").split('-')[1];  // id has format stdid-<pk> with pk the pk of student.
-                if (from === "distributedStudents") { //from distributed
-                    var propFrom = $(ui.sender).data('proposal');
+                if (to === "dropStudents") {
+                    window.tempdictionary[student] = $(ui.sender);
+                    return;
+                }
+                if (from === "distributedStudents" || from === "dropStudents") { //from distributed
+                    if (from === "dropStudents") {
+                        var sender = window.tempdictionary[student];
+                    } else {
+                        var sender = $(ui.sender);
+                    }
+                    var propFrom = sender.data('proposal');
                     if (to === "distributedStudents") {
                         var propTo = jqthis.data('proposal');
                         //change distribution
-                        $.post("{% url 'distributions:changedistribute' %}", {
+                        var jqxhr = $.post("{% url 'distributions:changedistribute' %}", {
                             student: student,
                             propFrom: propFrom,
                             propTo: propTo
                         }, function (data) {
                             showNotify(data, 'link');
-                            var rowFrom = $(ui.sender).parent().parent();
+                            var rowFrom = sender.parent().parent();
                             var rowTo = jqthis.parent().parent();
                             //update link icon and prio
                             if (data.type === 'success') {
@@ -133,11 +153,11 @@
                             dt.rows(rowTo).invalidate();
                         }, "json")
                             .fail(function () {
-                                studentError(jqthis);
+                                studentError(jqthis, jqxhr.status);
                             });
                     } else if (to === "availableStudents") {
                         //undistribute
-                        $.post("{% url 'distributions:undistribute' %}", {
+                        var jqxhr = $.post("{% url 'distributions:undistribute' %}", {
                             student: student,
                             propFrom: propFrom
                         }, function (data) {
@@ -156,14 +176,14 @@
                             dt.rows(rowFrom).invalidate();
                         }, "json")
                             .fail(function () {
-                                studentError(jqthis);
+                                studentError(jqthis, jqxhr.status);
                             });
                     }
                 } else if (from === "availableStudents") { //from available
                     if (to === "distributedStudents") {
                         var propTo = $(this).data('proposal');
                         //distribute
-                        $.post("{% url 'distributions:distribute' %}", {
+                        var jqxhr = $.post("{% url 'distributions:distribute' %}", {
                             student: student,
                             propTo: propTo
                         }, function (data) {
@@ -188,7 +208,7 @@
                             dt.rows(rowTo).invalidate();
                         }, "json")
                             .fail(function () {
-                                studentError(jqthis);
+                                studentError(jqthis, jqxhr.status);
                             });
                     } else if (to === "availableStudents") {
                         //nothing done
@@ -280,6 +300,9 @@
                 {% for student in undistributedStudents %}
                     {% include "distributions/inc_student_block.html" with distribute=False %}
                 {% endfor %}
+            </ul>
+            <h2>Drop Box (does no action)</h2>
+            <ul class="studentList no-padding-left" data-students-list="dropStudents" id="dropStudents">
             </ul>
         </div>
     </div>

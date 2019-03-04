@@ -27,7 +27,7 @@ class Distribution(models.Model):
     """A student distributed to a proposal.x"""
     Proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE, related_name='distributions')
     Student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='distributions')
-    Timeslot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE, related_name='distributions')
+    TimeSlot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE, related_name='distributions')
     Application = models.OneToOneField(Application, on_delete=models.CASCADE, blank=True, null=True, related_name='distributions')
 
     def TotalGrade(self):
@@ -35,7 +35,7 @@ class Distribution(models.Model):
         Return total grade of student as not-rounded float
         :return:
         """
-        return sum([r.Grade*r.Category.Weight for r in self.results.all()]) / 100
+        return sum([r.Grade*r.Category.Weight for r in self.results.filter(Files__isnull=True)]) / 100
 
     def TotalGradeRounded(self):
         """

@@ -4,7 +4,7 @@ from django.utils import timezone
 
 from general_test import ProjectViewsTestGeneral
 from timeline.utils import get_timeslot
-from .models import FileType, StudentGroup
+from .models import FileType, StudentGroup, StudentFile
 
 
 class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
@@ -20,6 +20,13 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
         )
         f.id = 100
         f.save()
+        sf = StudentFile(
+            Caption='TestFile',
+            Distribution=self.distribution_random,
+            Type=f,
+        )
+        sf.id = 0
+        sf.save()
         g1 = StudentGroup(
             Number=0,
             PRV=f,
@@ -61,6 +68,7 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['liststudentfiles', {'pk': 1}], self.p_support_prv],
             [['listownfiles', None], self.p_forbidden],
             [['respondfile', {'pk': 0}], self.p_forbidden],
+            [['viewresponse', {'pk': 0}], self.p_forbidden],
             [['mailoverduestudents', None], self.p_forbidden],
             [['printprvforms', None], self.p_forbidden],
             [['downloadall', {'pk': 100}], self.p_forbidden],
@@ -76,7 +84,9 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['filetypelist', None], self.p_all],
             [['liststudentfiles', {'pk': 1}], self.p_all_this_dist],
             [['listownfiles', None], self.p_student],
-            # [['respondfile', {'pk': 0}], self.p_all_this],# too complex to test
+            [['respondfile', {'pk': 0}], self.p_staff_prv_results],
+            [['viewresponse', {'pk': 0}], self.p_all_this_dist],
+
             [['mailoverduestudents', None], self.p_support_prv],
             [['printprvforms', None], self.p_support_prv],
             [['downloadall', {'pk': 100}], self.p_support_prv],
@@ -92,5 +102,4 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
         self.loop_phase_code_user([-1, 1, 2, 3, 4], codes_phase1234)
         # self.loop_phase_user([5], codes_phase5)
         self.loop_phase_code_user([5, 6, 7], codes_phase567)
-
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")
