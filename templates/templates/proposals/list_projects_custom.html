@@ -6,24 +6,24 @@
 {% get_timephase_number as phasenumber %}
 {% block body %}
     <h1>
-    {% if title %}
-        {{ title }}
-    {% elif user|has_group:'type3staff' %}
-        All projects
-    {% else %}
-        My projects
-    {% endif %}
-    {% if timeslots %}
-     of {{ timeslot|default_if_none:"future" }}
-    {% endif %}
+        {% if title %}
+            {{ title }}
+        {% elif user|has_group:'type3staff' %}
+            All projects
+        {% else %}
+            My projects
+        {% endif %}
+        {% if timeslots %}
+            of {{ timeslot|default_if_none:"future" }}
+        {% endif %}
     </h1>
     {% if timeslots %}
         <div class="tabcontrol">
             <ul class="tabs">
                 {% for ts in timeslots %}
-                    <li {% if ts == timeslot %}class="active"{% endif %}><a href="{% if ts == timeslot %}#{% else %}../{{ ts.pk }}{% endif %}">{{ ts }}</a></li>
+                    <li {% if ts == timeslot %}class="active" {% endif %}><a href="{% if ts == timeslot %}#{% else %}../{{ ts.pk }}{% endif %}">{{ ts }}</a></li>
                 {% endfor %}
-                <li {% if not timeslot %}class="active"{% endif %}><a href="{% if timeslot %}../future{% else %}#{% endif %}">Future</a></li>
+                <li {% if not timeslot %}class="active" {% endif %}><a href="{% if timeslot %}../future{% else %}#{% endif %}">Future</a></li>
             </ul>
         </div>
     {% endif %}
@@ -34,8 +34,8 @@
             <tr>
                 <th><span class="mif-star-half icon"></span></th>
                 <th data-priority="4" data-searchable="false" data-sortable="false">{% if phasenumber < 5 %}
-                    Edit{% else %}Distributions{% endif %}</th>
-{#                <th data-visible='false' class="projectinfo">TimeSlot</th>#}
+                    Edit{% else %}Distributions{% endif %}
+                </th>
                 <th data-priority="1">Name</th>
                 <th data-visible='false' class="projectinfo">Track</th>
                 <th data-visible='false' class="projectinfo">Group</th>
@@ -43,7 +43,8 @@
                 <th>Assistant(s)</th>
                 <th data-priority="2">Status</th>
                 {% if private %}
-                    <th>Private to student</th>{% endif %}
+                    <th>Private to student</th>
+                {% endif %}
             </tr>
             </thead>
             <tbody>
@@ -65,7 +66,7 @@
                                     {% endif %}
                                 {% endif %}
                             {% else %}
-                                {# show edit buttons for projects of this year in lower timephases  #}
+                                {# show edit buttons for projects of this year in lower timephases #}
                                 {% if phasenumber < 5 %}
                                     <a href="{% url 'proposals:details' project.id %}" class="button primary">View</a>
                                     {% if project|can_edit_project:user %}
@@ -99,7 +100,6 @@
                             {% endif %}
                         {% endif %}
                     </td>
-{#                    <td>{{ project.TimeSlot|default:"Future" }}</td>#}
                     <td><a href="{% url 'proposals:details' project.id %}" class="capitalize">{{ project.Title }}</a>
                     </td>
                     <td>{{ project.Track }}</td>
@@ -195,4 +195,5 @@
                 }
             })
         });
-    </script>  {% endblock %}
+    </script>
+{% endblock %}

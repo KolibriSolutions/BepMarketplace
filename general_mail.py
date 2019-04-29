@@ -167,7 +167,7 @@ class EmailThreadTemplate(threading.Thread):
         self.channel_layer = get_channel_layer()
 
     def run(self):
-        sleep(5)
+        sleep(1)
         for i, mail in enumerate(self.mails):
             if not mail:
                 continue

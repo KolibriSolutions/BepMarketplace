@@ -71,3 +71,24 @@ class FileForm(forms.ModelForm):
 class ConfirmForm(forms.Form):
     """Form to confirm a action. Used for extra validation. Not linked to a model."""
     confirm = forms.BooleanField(widget=widgets.MetroCheckBox, label='Confirm:')
+
+
+class CsvUpload(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # show only csv in file selection dialog
+        self.fields['csvfile'].widget.attrs['accept'] = '.csv'
+
+    csvfile = forms.FileField(widget=widgets.MetroFileInput)
+    delimiter = forms.ChoiceField(widget=widgets.MetroSelect, choices=(
+        (',', ','),
+        (';', ';')
+    ))
+
+    def clean_csvfile(self):
+        file = self.cleaned_data.get("csvfile")
+        if not file:
+            raise ValidationError("No file supplied!")
+
+        if file.content_type != 'text/csv' and file.content_type != 'application/vnd.ms-excel':
+            raise ValidationError("Not a csv file!")

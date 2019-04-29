@@ -66,7 +66,7 @@ class StudentFile(models.Model):
     Created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
-        return self.OriginalName + " - " + self.Caption
+        return '{} - {}'.format(self.OriginalName, self.Caption)
 
     def metro_icon(self):
         return metro_icon_default(self)

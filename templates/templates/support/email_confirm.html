@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Confirm mailing:</h1>
+    {% if template %}
+        <a href="{% url "support:mailingtemplates" %}" class="button primary">View templates</a>
+
+    {% endif %}
+    <h3>Message</h3>
+    <div class="panel">
+        <div class="heading">
+            <span class="title"><span class="mif-mail"></span>{{ NAME }} {{ subject }}</span>
+        </div>
+        <div class="content padding5">
+            {% include 'email/supportstaff_email.html' with name="-name-" %}
+        </div>
+    </div>
+    <h3>Staff recipients</h3>
+    {% if recipients_staff %}
+        <ul>
+            {% for u in recipients_staff %}
+                <li>{{ u.0 }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        None
+    {% endif %}
+    <h3>Student recipients</h3>
+    {% if recipients_students %}
+        <ul>
+
+            {% for u in recipients_students %}
+                <li>{{ u.0 }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        None
+    {% endif %}
+    <h2>Confirm</h2>
+    <form action="{% url 'support:mailingconfirm' %}" method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <table class="table" style="text-align:left;">
+            {{ form.as_table }}
+            <input type="hidden" name="jsondata" value='{{ jsondata|safe }}'>
+            <tr>
+                <td>
+                    <button class="button success" type="submit">Send</button>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+    </form>
+
+{% endblock %}

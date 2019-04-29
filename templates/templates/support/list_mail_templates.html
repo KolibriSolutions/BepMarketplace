@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Mailing list templates</h1>
+    <table class="table datatable striped">
+        <thead>
+        <tr>
+            <th>Created on</th>
+            <th>Subject</th>
+            <th>Message</th>
+            <th data-searchable="false" data-sortable="false">Staff recipients</th>
+            <th data-searchable="false" data-sortable="false">Student recipients</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for t in templates %}
+            <tr>
+                <td>{{ t.Created }}</td>
+                <td>{{ t.Subject }}</td>
+                <td>
+                    {{ t.Message }}
+                </td>
+                <td>
+                    <ul>
+                        {{ t.RecipientsStudentsList|unordered_list }}
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                        {{ t.RecipientsStaffList|unordered_list }}
+                    </ul>
+                </td>
+                <td>
+                    <a href="{% url "support:mailinglisttemplate" t.pk %}" class="button primary">Load</a>
+                    <a href="{% url "support:deletemailingtemplate" t.pk %}" class="button warning">Delete</a>
+                    {% if user.is_superuser %}
+                        <a href="{% url "admin:support_mailtemplate_change" t.pk %}" class="button warning">Admin edit</a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            $('.datatable').dt_wrapper();
+        })
+    </script>
+{% endblock %}

@@ -24,6 +24,7 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
             [['viewsharelink', {'token': 'blabla'}], [s.p_anonymous]],
             [['stats', None], [s.p_staff_veri]],
             [['contentpolicy', None], self.p_support],
+            [['contentpolicycalc', None], self.p_support],
             [['privateproposals', None], self.p_support_prv],
             [['privateproposals', {'timeslot': self.ts.pk}], self.p_support_prv],
             [['listgroupproposals', None], self.p_cgadmin],

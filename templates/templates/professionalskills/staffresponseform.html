@@ -3,50 +3,51 @@
 {% load timeline_tags %}
 
 {% block body %}
-<h1>{{ formtitle }}</h1>
+    <h1>{{ formtitle }}</h1>
 
-<form id="responseform" action="" method="post" enctype="multipart/form-data" novalidate>
-{% csrf_token %}
-<table style="width:100%;">
-    {{ form.as_table }}
-</table>
-
-<table style="width:100%; table-layout:fixed;" class="table bordered">
-<tr>
-    <td colspan="3"><h3>Aspects</h3></td>
-    <td class="align-middle align-center">Not graded</td>
-    {# label for not yet graded. #}
-    {% for aspectlabel in aspectlabels %}
-        <td class="align-middle align-center">{{ aspectlabel.1 }}</td>
-    {% endfor %}
-</tr>
-{% for entry in aspectforms %}
-    <tr>
-        <td colspan="3">
-            {{ entry.aspect.Name }}
-            <span class="mif-question clickable"
-                  data-role="popover"
-                  data-popover-mode="click"
-                  data-popover-shadow="true"
-                  data-popover-position="right"
-                  data-popover-text="{{ entry.aspect.Description }}"
-                  data-popover-background="bg-cyan"
-                  data-popover-color="fg-white">
+    <form id="responseform" action="" method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <table style="width:100%;">
+            {{ form.as_table }}
+        </table>
+        {% if aspectforms %}
+            <table style="width:100%; table-layout:fixed;" class="table bordered">
+                <tr>
+                    <td colspan="3"><h3>Aspects</h3></td>
+                    <td class="align-middle align-center">Not graded</td>
+                    {# label for not yet graded. #}
+                    {% for aspectlabel in aspectlabels %}
+                        <td class="align-middle align-center">{{ aspectlabel.1 }}</td>
+                    {% endfor %}
+                </tr>
+                {% for entry in aspectforms %}
+                    <tr>
+                        <td colspan="3">
+                            {{ entry.aspect.Name }}
+                            <span class="mif-question clickable"
+                                  data-role="popover"
+                                  data-popover-mode="click"
+                                  data-popover-shadow="true"
+                                  data-popover-position="right"
+                                  data-popover-text="{{ entry.aspect.Description }}"
+                                  data-popover-background="bg-cyan"
+                                  data-popover-color="fg-white">
             </span>
-        </td>
-        {% for field in entry.form.visible_fields %}
-            {% if field.errors %}
-                <div class="bg-red fg-white padding10 margin10">
-                    Aspect {{ entry.aspect.Name }} is not graded!
-                </div>
-            {% endif %}
-            {{ field }}
-        {% endfor %}
-    </tr>
-{% endfor %}
-</table>
-<button type="submit" class="button success">Save</button>
-</form>
+                        </td>
+                        {% for field in entry.form.visible_fields %}
+                            {% if field.errors %}
+                                <div class="bg-red fg-white padding10 margin10">
+                                    Aspect {{ entry.aspect.Name }} is not graded!
+                                </div>
+                            {% endif %}
+                            {{ field }}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
+        <button type="submit" class="button success">Save</button>
+    </form>
 {% endblock %}
 
 {% block scripts %}

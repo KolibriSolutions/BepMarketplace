@@ -17,8 +17,8 @@ general_urlpatterns = [
 
     # lists
     path('pending/', views.list_pending, name='pending'),
-    path('timeslot/future/', views.list_own_projects, name='chooseedit'),
-    path('timeslot/<int:timeslot>/', views.list_own_projects, name='chooseedit'),
+    path('own/future/', views.list_own_projects, name='chooseedit'),
+    path('own/<int:timeslot>/', views.list_own_projects, name='chooseedit'),
     path('track/future/', views.list_track, name='listtrackproposals'),
     path('track/<int:timeslot>/', views.list_track, name='listtrackproposals'),
     path('private/future/', views.list_private_projects, name='privateproposals'),
@@ -36,7 +36,8 @@ general_urlpatterns = [
     # path('stats/general/<int:step>/', views.stats_general, name='statsgeneral'),
 
     # cpv
-    path('contentpolicy/', views.content_policy, name='contentpolicy'),
+    path('contentpolicy/', views.content_policy_view, name='contentpolicy'),
+    path('contentpolicy/calc/', views.content_policy_calc, name='contentpolicycalc'),
 ]
 status_urlpatterns = [
     path('details/<int:pk>/', views.detail_project, name='details'),

@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from index.decorators import group_required
-from proposals.decorators import can_edit_proposal, can_downgrade_proposal
+from proposals.decorators import can_edit_project, can_downgrade_project
 from api.utils import getStatStr
 from general_mail import mail_proposal_all, send_mail
 from general_view import get_grouptype
@@ -24,7 +24,7 @@ def api_info(request):
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
-@can_edit_proposal
+@can_edit_project
 def upgrade_status_api(request, pk):
     """
     API call to increase the status of a proposal.
@@ -55,7 +55,7 @@ def upgrade_status_api(request, pk):
     else:
         oldstatus = obj.Status
         if oldstatus == 2:
-            #per default go to publish from 4, 3 is only used if it is explicitly downgraded
+            # per default go to publish from 4, 3 is only used if it is explicitly downgraded
             newstatus = 4
         else:
             newstatus = obj.Status + 1
@@ -83,7 +83,7 @@ def upgrade_status_api(request, pk):
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
-@can_downgrade_proposal
+@can_downgrade_project
 def downgrade_status_api(request, pk, message=''):
     """
     API call to decrease the status of a proposal.
@@ -97,7 +97,7 @@ def downgrade_status_api(request, pk, message=''):
     oldstatus = obj.Status
 
     if oldstatus == 4:
-        #track head downgrade to 3, owner downgrade to 4
+        # track head downgrade to 3, owner downgrade to 4
         if request.user == obj.Track.Head:
             newstatus = 3
         else:
@@ -167,6 +167,7 @@ def verify_assistant_fn(user):
                'user': user},
               user.email)
     return True
+
 
 @login_required
 def list_public_projects_api(request):

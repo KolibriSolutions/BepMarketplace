@@ -23,8 +23,8 @@ from general_mail import send_mail, EmailThreadTemplate
 from general_view import get_grouptype, get_all_students
 from students.models import Distribution
 from timeline.utils import get_timeslot, get_timephase_number
-from .forms import FileTypeModelForm, StaffResponseForm, StudentGroupForm, StudentGroupChoice, FileExtensionForm, StaffResponseFileAspectResultForm
-from .models import FileType, StaffResponse, StudentFile, StudentGroup, FileExtension, StaffResponseFileAspectResult
+from .forms import FileTypeModelForm, StaffResponseForm, StudentGroupForm, StudentGroupChoice, FileExtensionForm, StaffResponseFileAspectResultForm, StaffResponseFileAspectForm
+from .models import FileType, StaffResponse, StudentFile, StudentGroup, FileExtension, StaffResponseFileAspectResult, StaffResponseFileAspect
 
 
 @group_required('type3staff', 'type6staff')
@@ -47,10 +47,10 @@ def download_all_of_type(request, pk):
             try:
                 with open(file.File.path, 'rb') as fstream:
                     archive.writestr(
-                    '{}/{}.{}'.format(str(trck), file.Distribution.Student.usermeta.get_nice_name().replace(' ', ''),
-                                      file.File.name.split('.')[-1]), fstream.read())
+                        '{}/{}.{}'.format(str(trck), file.Distribution.Student.usermeta.get_nice_name().replace(' ', ''),
+                                          file.File.name.split('.')[-1]), fstream.read())
             except (IOError, ValueError):  # happens if a file is referenced from database but does not exist on disk.
-                return render(request, 'base.html', {'Message': 'These files cannot be downloaded, please contact support staff.'})
+                return render(request, 'base.html', {'Message': 'These files cannot be downloaded, please contact support staff. (Error on file: "{}")'.format(file)})
     in_memory.seek(0)
 
     response = HttpResponse(content_type="application/zip")
@@ -59,6 +59,20 @@ def download_all_of_type(request, pk):
     response.write(in_memory.read())
 
     return response
+
+
+@can_access_professionalskills
+def list_filetypes(request):
+    """
+    For students to view a list of all profskills they have to hand in.
+    For type3/type6 staff also shows edit and download buttons
+
+    :param request:
+    :return:
+    """
+    return render(request, 'professionalskills/list_professional_skills.html', {
+        'filetypes': FileType.objects.filter(TimeSlot=get_timeslot())
+    })
 
 
 @group_required('type3staff', 'type6staff')
@@ -151,16 +165,118 @@ def delete_filetype(request, pk):
 
 
 @can_access_professionalskills
-def list_filetypes(request):
+def list_filetype_aspects(request, pk):
     """
-    For students to view a list of all profskills they have to hand in.
-    For type3/type6 staff also shows edit and download buttons
+    List all grading aspects for a prv file.
 
     :param request:
+    :param pk:
     :return:
     """
-    return render(request, 'professionalskills/list_professional_skills.html', {
-        'filetypes': FileType.objects.filter(TimeSlot=get_timeslot())
+    obj = get_object_or_404(FileType, pk=pk)
+    if not obj.CheckedBySupervisor:
+        raise PermissionDenied('This file type does not need a response from the supervisor.')
+    aspects = obj.aspects.all()
+    return render(request, 'professionalskills/list_aspects.html', {
+        'file': obj,
+        'aspects': aspects,
+        'aspectoptions': StaffResponseFileAspectResult.ResultOptions
+    })
+
+
+@group_required('type3staff', 'type6staff')
+def add_filetype_aspect(request, pk):
+    """
+    Add prv result aspect
+
+    :param request:
+    :param pk: pk of FileType to add aspect to
+    :return:
+    """
+    file = get_object_or_404(FileType, pk=pk)
+    if request.method == 'POST':
+        form = StaffResponseFileAspectForm(request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.File = file
+            obj.save()
+            return render(request, 'base.html', {
+                'Message': '{} created!'.format(obj),
+                'return': 'professionalskills:filetypeaspects',
+                'returnget': file.pk,
+            })
+    else:
+        form = StaffResponseFileAspectForm()
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Create aspect for {}'.format(file),
+        'buttontext': 'Create'
+    })
+
+
+@group_required('type3staff', 'type6staff')
+def edit_filetype_aspect(request, pk):
+    """
+    Edit a file type aspect.
+
+    :param request:
+    :param pk: id of the file type aspect.
+    :return:
+    """
+    obj = get_object_or_404(StaffResponseFileAspect, pk=pk)
+    if request.method == 'POST':
+        form = StaffResponseFileAspectForm(request.POST, instance=obj)
+        if form.is_valid():
+            if form.has_changed():
+                form.save()
+                return render(request, 'base.html', {
+                    'Message': 'File type aspect saved!',
+                    'return': 'professionalskills:filetypeaspects',
+                    'returnget': obj.File.pk,
+                })
+            else:
+                return render(request, 'base.html', {
+                    'Message': 'No changes made.',
+                    'return': 'professionalskills:filetypeaspects',
+                    'returnget': obj.File.pk,
+                })
+    else:
+        form = StaffResponseFileAspectForm(instance=obj)
+
+    return render(request, 'GenericForm.html', {
+        'formtitle': 'Edit file type aspect',
+        'form': form,
+        'buttontext': 'Save'
+    })
+
+
+@group_required('type3staff', 'type6staff')
+def delete_filetype_aspect(request, pk):
+    """
+    Delete a file type grade aspect.
+
+    :param request:
+    :param pk: id of the file type aspect
+    :return:
+    """
+    obj = get_object_or_404(StaffResponseFileAspect, pk=pk)
+    pk = obj.File.pk  # store original linked File
+    if request.method == 'POST':
+        form = ConfirmForm(request.POST)
+        if form.is_valid():
+            obj.delete()
+            return render(request, 'base.html', {
+                'Message': 'File type aspect deleted.',
+                'return': 'professionalskills:filetypeaspects',
+                'returnget': pk,
+            })
+    else:
+        form = ConfirmForm()
+
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Confirm deletion of file type aspect {}'.format(obj),
+        'buttontext': 'Confirm'
     })
 
 
@@ -302,9 +418,9 @@ def view_response(request, pk):
     # allow type3 and type6 to view results and all responsibles.
     if not get_grouptype('3') in request.user.groups.all() and not get_grouptype('6') in request.user.groups.all():
         if (request.user not in fileobj.Distribution.Proposal.Assistants.all() and
-            request.user != fileobj.Distribution.Proposal.ResponsibleStaff and
-            request.user != fileobj.Distribution.Proposal.Track.Head and
-            request.user != fileobj.Distribution.Student):
+                request.user != fileobj.Distribution.Proposal.ResponsibleStaff and
+                request.user != fileobj.Distribution.Proposal.Track.Head and
+                request.user != fileobj.Distribution.Student):
             raise PermissionDenied("You cannot view this file response.")
 
     try:
@@ -361,7 +477,6 @@ def respond_file(request, pk):
         responseobj.Staff = request.user
         statusorig = None
 
-
     if request.method == 'POST':
         aspect_forms = []
         for i, aspect in enumerate(fileobj.Type.aspects.all()):
@@ -383,7 +498,7 @@ def respond_file(request, pk):
                     'type': fileobj.Type.Name,
                 }, fileobj.Distribution.Student.email)
             response_form.save()
-            #for first time saving, refetch all aspects as they are now tied to responseobj that is actually saved
+            # for first time saving, refetch all aspects as they are now tied to responseobj that is actually saved
             aspect_forms = []
             for i, aspect in enumerate(fileobj.Type.aspects.all()):
                 try:
@@ -416,7 +531,7 @@ def respond_file(request, pk):
     return render(request, 'professionalskills/staffresponseform.html', {
         'form': response_form,
         'formtitle': 'Respond to {} from {}'.format(fileobj.Type.Name, fileobj.Distribution.Student.usermeta.get_nice_name()),
-        'aspectforms' : aspect_forms,
+        'aspectforms': aspect_forms,
         "aspectlabels": StaffResponseFileAspectResult.ResultOptions,
     })
 
@@ -473,6 +588,22 @@ def print_forms(request):
 
 
 @group_required('type3staff', 'type6staff')
+def list_groups(request, pk):
+    """
+    List all groups of students for one PRV.
+
+    :param request:
+    :param pk:
+    :return:
+    """
+    filetype = get_object_or_404(FileType, pk=pk)
+    return render(request, 'professionalskills/list_student_groups.html', {
+        'groups': filetype.groups.all(),
+        'PRV': filetype
+    })
+
+
+@group_required('type3staff', 'type6staff')
 def create_group(request, pk=None):
     """
     Create a group of students for professional skills. This does not yet fill the group with students.
@@ -524,22 +655,6 @@ def edit_group(request, pk):
         'form': form,
         'formtitle': 'Edit Group',
         'buttontext': 'Save'
-    })
-
-
-@group_required('type3staff', 'type6staff')
-def list_groups(request, pk):
-    """
-    List all groups of students for one PRV.
-
-    :param request:
-    :param pk:
-    :return:
-    """
-    filetype = get_object_or_404(FileType, pk=pk)
-    return render(request, 'professionalskills/list_student_groups.html', {
-        'groups': filetype.groups.all(),
-        'PRV': filetype
     })
 
 

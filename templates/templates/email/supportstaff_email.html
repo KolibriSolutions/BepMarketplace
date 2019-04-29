@@ -1,6 +1,6 @@
 {% extends "email/base_email.html" %}
 {% block header %}
-Dear {{ user.usermeta.get_nice_name }},<br/>
+Dear {{ name }},<br/>
 {% endblock %}
 {% block body %}
 Message from the administration:<br/><br/>

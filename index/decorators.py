@@ -1,5 +1,8 @@
+from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
+from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
+from django.http import HttpResponse
 
 from timeline.utils import get_timephase_number
 
@@ -11,6 +14,7 @@ def group_required(*group_names):
     :param group_names:
     :return:
     """
+
     def in_groups(u):
         if u.is_authenticated:
             if u.groups.filter(name__in=group_names).exists() or u.is_superuser:
@@ -68,3 +72,50 @@ def student_only():
         login_url='index:login',
         redirect_field_name='next',
     )
+
+
+def cache_for_students(fn):
+    def wrapper(*args, **kw):
+        request = args[0]
+        page = request.path
+
+        try:
+            if request.user.groups.exists() or request.user.is_impersonate or request.user.is_superuser or request.user.is_anonymous:
+                # not a student
+                return fn(*args, **kw)
+        except AttributeError:
+            return fn(*args, **kw)
+
+        html = cache.get("student_{}".format(page))
+        if html is None:
+            response = fn(*args, **kw)
+            html = response.content
+            cache.set("student_{}".format(page), html, settings.STATIC_OBJECT_CACHE_DURATION)
+            return response
+        else:
+            return HttpResponse(html, None, None)
+
+    return wrapper
+
+
+def cache_for_anonymous(fn):
+    def wrapper(*args, **kw):
+        request = args[0]
+        page = request.path
+
+        try:
+            if not request.user.is_anonymous:
+                return fn(*args, **kw)
+        except AttributeError:
+            pass
+
+        html = cache.get("anon_{}".format(page))
+        if html is None:
+            response = fn(*args, **kw)
+            html = response.content
+            cache.set("anon_{}".format(page), html, settings.STATIC_OBJECT_CACHE_DURATION)
+            return response
+        else:
+            return HttpResponse(html, None, None)
+
+    return wrapper

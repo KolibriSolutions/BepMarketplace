@@ -8,7 +8,9 @@
         {% endautoescape %}
     {% else %}
 
-        <h1>{% if usrsubject %}Visited by {{ usrsubject.usermeta.get_nice_name }}{% elif favorite %}Favorite Projects{% else %}Published projects{% endif %}</h1>
+        <h1>
+            {% if usrsubject %}Visited by {{ usrsubject.usermeta.get_nice_name }}{% elif favorite %}Favorite Projects{% else %}Published projects{% endif %}
+        </h1>
         {# tabcontrol is now incorrect for visited-by view, but this is only for superusers. #}
         <div class="tabcontrol">
             <ul class="tabs">
@@ -37,8 +39,8 @@
                               class="star-favorite mif-star-empty icon">
                         </span>
                         </td>
-                        <td><a href="{% url 'proposals:details' project.id %}"
-                               class="capitalize">{{ project.Title }}</a>
+                        <td>
+                            <a href="{% url 'proposals:details' project.id %}">{{ project.Title }}</a>
                         </td>
                         <td>{{ project.Track }}</td>
                         <td>{{ project.Group }}</td>

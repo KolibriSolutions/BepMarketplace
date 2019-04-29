@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from index.decorators import student_only
 from students.decorators import can_apply
 from professionalskills.decorators import can_access_professionalskills
-from proposals.decorators import can_view_proposal
+from proposals.decorators import can_view_project
 from professionalskills.models import StudentFile
 from proposals.utils import get_cached_project
 from proposals.models import Proposal
@@ -129,7 +129,7 @@ def retract_application(request, application_id):
     })
 
 
-@can_view_proposal
+@can_view_project
 @can_apply
 def apply(request, pk):
     """
@@ -175,7 +175,7 @@ def apply(request, pk):
     })
 
 
-@can_view_proposal
+@can_view_project
 @can_apply
 def confirm_apply(request, pk):
     """

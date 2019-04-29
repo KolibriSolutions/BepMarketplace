@@ -19,7 +19,7 @@ docutils
 openpyxl
 pillow
 pip
-psycopg2
+psycopg2-binary
 pysaml2
 pytz
 service_identity

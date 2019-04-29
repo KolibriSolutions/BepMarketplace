@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+{% load index_tags %}
+
+{% block body %}
+    <h1>File aspects for {{ file }}</h1>
+    {% if user|has_group:'type3staff,type6staff' %}
+        <a href="{% url 'professionalskills:addaspect' file.pk %}" class="button primary">Add aspect</a>
+    {% endif %}
+    {% if aspects %}
+        <table style="width:100%; table-layout:fixed;" class="table bordered">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                {% if user|has_group:'type3staff,type6staff' %}
+                    <th>Edit</th>
+                {% endif %}
+            </tr>
+            </thead>
+            <tbody>
+
+            {% for aspect in aspects %}
+                <tr>
+                    <td>
+                        {{ aspect.Name }}
+                    </td>
+                    <td>
+                        {{ aspect.Description }}
+                    </td>
+                    {% if user|has_group:'type3staff,type6staff' %}
+                        <td>
+                            <a href="{% url 'professionalskills:editaspect' aspect.pk %}" class="button primary">Edit</a>
+                            <a href="{% url 'professionalskills:deleteaspect' aspect.pk %}" class="button warning">Delete</a>
+                        </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No professional skill grade aspects have been defined.</p>
+    {% endif %}
+    <h2>Grade options</h2>
+    <ul>
+        {% for opt in aspectoptions %}
+            <li>{{ opt.1 }} ({{ opt.0 }})</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

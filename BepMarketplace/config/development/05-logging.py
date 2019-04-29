@@ -1,6 +1,6 @@
 import os
 
-LOG_DIR = os.path.join(BASE_DIR, '..', 'logging')
+LOG_DIR = os.path.join(BASE_DIR, 'logging')
 
 # Log to a logfile and send errors to the devteam.
 LOGGING = {

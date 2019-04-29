@@ -19,7 +19,7 @@ from general_view import get_grouptype, truncate_string
 from index.decorators import group_required
 from index.models import Track
 from proposals import check_content_policy
-from proposals.decorators import can_view_proposal, can_edit_proposal, can_share_proposal, can_downgrade_proposal, can_create_project
+from proposals.decorators import can_view_project, can_edit_project, can_share_project, can_downgrade_project, can_create_project
 from students.views import get_all_applications
 from support.models import CapacityGroup
 from timeline.decorators import phase_required
@@ -30,7 +30,7 @@ from tracking.utils import tracking_visit_project
 from .forms import ProposalFormEdit, ProposalFormCreate, ProposalImageForm, ProposalDowngradeMessageForm, \
     ProposalAttachmentForm, ProposalFormLimited
 from .models import Proposal, ProposalImage, ProposalAttachment
-from .utils import can_edit_project_fn, prefetch, get_favorites, get_all_projects, get_share_link, get_cached_project, updatePropCache
+from .utils import can_edit_project_fn, prefetch, get_favorites, get_all_projects, get_share_link, get_cached_project, update_cached_project
 
 
 @login_required
@@ -73,7 +73,157 @@ def list_favorite_projects(request):
     })
 
 
-@can_view_proposal
+@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type5staff')
+def list_own_projects(request, timeslot=None):
+    """
+    This lists all proposals that the given user has something to do with. Either a responsible or assistant. For
+    Type3staff this lists all proposals. This is the usual view for staff to view their proposals.
+
+    :param request:
+    :param timeslot: optional timeslot to view proposals from, default is current ts.
+    :return:
+    """
+    if timeslot:
+        ts = get_object_or_404(TimeSlot, pk=timeslot)
+        projects = get_all_projects(old=True).filter(TimeSlot=ts)
+    else:
+        ts = None
+        projects = get_all_projects(old=True).filter(TimeSlot=None)  # proposals of future timeslot
+
+    if get_grouptype("3") in request.user.groups.all() or get_grouptype("5") in request.user.groups.all():
+        pass
+    else:
+        projects = projects.filter(Q(ResponsibleStaff=request.user) |
+                                   Q(Assistants=request.user)).distinct()
+    projects = prefetch(projects)
+    return render(request, 'proposals/list_projects_custom.html', {
+        'hide_sidebar': True,
+        'projects': projects,
+        'favorite_projects': get_favorites(request.user),
+        'timeslots': get_recent_timeslots(),
+        'timeslot': ts,
+    })
+
+
+@group_required('type4staff')
+def list_group_projects(request, timeslot=None):
+    """
+    List all proposals of a group.
+
+    :param request:
+    :param timeslot: timeslot to view.l
+    :return:
+    """
+    if timeslot:
+        ts = get_object_or_404(TimeSlot, pk=timeslot)
+        projects = get_all_projects(old=True).filter(TimeSlot=ts)
+    else:
+        ts = None
+        projects = get_all_projects(old=True).filter(TimeSlot=None)  # proposals of future timeslot
+
+    projects = prefetch(projects.filter(Group__Administrators=request.user).distinct())
+    return render(request, 'proposals/list_projects_custom.html', {
+        'hide_sidebar': True,
+        'projects': projects,
+        'favorite_projects': get_favorites(request.user),
+        'title': 'Proposals of {}'.format(print_list(request.user.administratoredgroups.all().values_list('Group__ShortName', flat=True))),
+        'timeslots': get_recent_timeslots(),
+        'timeslot': ts,
+    })
+
+
+@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type4staff')
+def list_pending(request):
+    """
+    Get and show the pending proposals for a given user.
+
+    :param request:
+    :return:
+    """
+    projects = []
+    if get_grouptype("2") in request.user.groups.all() or get_grouptype("2u") in request.user.groups.all():
+        # type2 can only be assistant
+        projects = get_all_projects().filter(Q(Assistants__id=request.user.id) & Q(Status__exact=1))
+
+    elif get_grouptype("1") in request.user.groups.all():
+        # type1 can be responsible, trackhead or assistant
+        projects = get_all_projects().filter((Q(Assistants__id=request.user.id) & Q(Status__exact=1)) |
+                                             (Q(ResponsibleStaff=request.user.id) & Q(Status__exact=2)) |
+                                             (Q(Track__Head=request.user.id) & Q(Status__exact=3))
+                                             ).distinct()
+    if get_grouptype('4') in request.user.groups.all() and request.user.administratorgroups.exists():
+        for group in request.user.administratorgroups.all():
+            projects = set(list(chain(list(projects), list(get_all_projects().filter(Q(Group=group) & Q(Status__lte=2))))))
+        title = 'Pending projects for your group'
+    else:
+        title = 'Pending projects'
+    return render(request, "proposals/list_projects_custom.html", {
+        'projects': projects,
+        'favorite_projects': get_favorites(request.user),
+        "title": title,
+    })
+
+
+@group_required('type1staff')
+def list_track(request, timeslot=None):
+    """
+    List all proposals of the track that the user is head of.
+
+    :param request:
+    :param timeslot: Time slot to show projects from
+    :return:
+    """
+    if not Track.objects.filter(Head=request.user).exists():
+        raise PermissionDenied("This page is only for track heads.")
+    tracks = Track.objects.filter(Head__id=request.user.id)
+
+    if timeslot:
+        ts = get_object_or_404(TimeSlot, pk=timeslot)
+        projects = get_all_projects(old=True).filter(TimeSlot=ts)
+    else:
+        ts = None
+        projects = get_all_projects(old=True).filter(TimeSlot=None)  # proposals of future timeslot
+    projects = projects.filter(Track__in=tracks)
+    projects = prefetch(projects)
+    return render(request, "proposals/list_projects_custom.html", {
+        'projects': projects,
+        'favorite_projects': get_favorites(request.user),
+        "title": "Proposals of track {}".format(print_list(tracks)),
+        'timeslots': get_recent_timeslots(),
+        'timeslot': ts,
+    })
+
+
+
+@group_required('type3staff', 'type6staff')
+def list_private_projects(request, timeslot=None):
+    """
+    List all private proposals.
+
+    :param request:
+    :param timeslot: timeslot to show projects from.
+    :return:
+    """
+    if timeslot:
+        ts = get_object_or_404(TimeSlot, pk=timeslot)
+        projects = get_all_projects(old=True).filter(TimeSlot=ts)
+    else:
+        ts = None
+        projects = get_all_projects(old=True).filter(TimeSlot=None)  # proposals of future timeslot
+
+    projects = prefetch(projects.filter(Private__isnull=False).distinct())
+    return render(request, "proposals/list_projects_custom.html", {
+        'hide_sidebar': True,
+        'projects': projects,
+        'favorite_projects': get_favorites(request.user),
+        "title": "All private proposals",
+        'timeslots': get_recent_timeslots(),
+        'timeslot': ts,
+        "private": True  # to show extra column with private students
+    })
+
+
+@can_view_project
 def detail_project(request, pk):
     """
     Detailview page for a given proposal. Displays all information for the proposal. Used for students to choose a
@@ -84,7 +234,7 @@ def detail_project(request, pk):
     Private proposals don't have a apply/retract button, because the template doesn't have the {} in it then.
 
     :param request:
-    :param pk: pk of the proposal
+    :param pk: pk of the project
     :return:
     """
     prop = get_cached_project(pk)
@@ -140,6 +290,7 @@ def detail_project(request, pk):
         else:
             data['Editlock'] = allowed[1]
         data['fav'] = prop.favorites.filter(User=request.user).exists()
+        data['cpv'] = cache.get('cpv_proj_{}'.format(prop.id))  # if cpv is not in cache, ignore
         return render(request, "proposals/detail_project.html", data)
 
 
@@ -157,6 +308,7 @@ def create_project(request):
         if form.is_valid():
             prop = form.save()
             mail_proposal_all(request, prop)
+            check_content_policy.CPVCheckThread(prop).start()
             if prop.Private.all():
                 for std in prop.Private.all():
                     mail_proposal_private(prop, std, "A private proposal was created for you.")
@@ -178,40 +330,8 @@ def create_project(request):
                                                     'buttontext': 'Create and go to next step'})
 
 
-@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type5staff')
-def list_own_projects(request, timeslot=None):
-    """
-    This lists all proposals that the given user has something to do with. Either a responsible or assistant. For
-    Type3staff this lists all proposals. This is the usual view for staff to view their proposals.
-
-    :param request:
-    :param timeslot: optional timeslot to view proposals from, default is current ts.
-    :return:
-    """
-    if timeslot:
-        ts = get_object_or_404(TimeSlot, pk=timeslot)
-        projects = get_all_projects(old=True).filter(TimeSlot=ts)
-    else:
-        ts = None
-        projects = get_all_projects(old=True).filter(TimeSlot=None)  # proposals of future timeslot
-
-    if get_grouptype("3") in request.user.groups.all() or get_grouptype("5") in request.user.groups.all():
-        pass
-    else:
-        projects = projects.filter(Q(ResponsibleStaff=request.user) |
-                                   Q(Assistants=request.user)).distinct()
-    projects = prefetch(projects)
-    return render(request, 'proposals/list_projects_custom.html', {
-        'hide_sidebar': True,
-        'projects': projects,
-        'favorite_projects': get_favorites(request.user),
-        'timeslots': get_recent_timeslots(),
-        'timeslot': ts,
-    })
-
-
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
-@can_edit_proposal
+@can_edit_project
 def edit_project(request, pk):
     """
     Edit a given proposal. Only for staff that is allowed to edit the proposal. Time slot validation is handled in form.
@@ -232,7 +352,8 @@ def edit_project(request, pk):
         if form.is_valid():
             obj = form.save()
             if form.changed_data:
-                updatePropCache(obj)
+                update_cached_project(obj)
+                check_content_policy.CPVCheckThread(obj).start()
                 if obj.Private.all():
                     for std in obj.Private.all():
                         mail_proposal_private(obj, std, "Your private proposal was edited.")
@@ -247,7 +368,7 @@ def edit_project(request, pk):
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
-@can_view_proposal
+@can_view_project
 def copy_project(request, pk):
     """
     Copy a proposal from a previous timeslot. Only for staff that is allowed to see the proposal to copy.
@@ -286,14 +407,14 @@ def copy_project(request, pk):
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
-@can_edit_proposal
+@can_edit_project
 def add_file(request, pk, ty):
     """
-    Add a file of type ty to a proposal. The type can be an image or a file (usually pdf). The image is shown in an
+    Add a file of type ty to a project. The type can be an image or a file (usually pdf). The image is shown in an
     image slider, an attachment is shown as a download button.
 
     :param request:
-    :param pk: pk of the proposal
+    :param pk: pk of the project
     :param ty: type of file to add. i for image, a for attachment
     :return:
     """
@@ -316,17 +437,16 @@ def add_file(request, pk, ty):
             return render(request, "proposals/message_project.html",
                           {"Message": "File to Proposal saved! Click the button below to add another file.",
                            "Proposal": obj})
-    # else:
-    #    form = ProposalImageFormAdd(request=request, instance=obj)
+
     return render(request, 'GenericForm.html',
-                  {'form': form, 'formtitle': 'Add ' + ty + ' to Proposal ' + obj.Title, 'buttontext': 'Save'})
+                  {'form': form, 'formtitle': 'Add ' + ty + ' to project ' + obj.Title, 'buttontext': 'Save'})
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
-@can_edit_proposal
+@can_edit_project
 def edit_file(request, pk, ty):
     """
-    Edit a file of a proposal.
+    Edit a file of a project.
 
     :param request:
     :param pk: pk of the proposal to edit file of
@@ -357,7 +477,7 @@ def edit_file(request, pk, ty):
             return render(request, "proposals/message_project.html",
                           {"Message": "File changes saved!", "Proposal": obj})
     return render(request, 'GenericForm.html',
-                  {'formset': formset, 'formtitle': 'All ' + ty + 's in Proposal ' + obj.Title, "Proposal": obj.pk,
+                  {'formset': formset, 'formtitle': 'All ' + ty + 's in project ' + obj.Title, "Proposal": obj.pk,
                    'buttontext': 'Save changes'})
 
 
@@ -422,7 +542,7 @@ def upgrade_status(request, pk):
                   status=r.status_code)
 
 
-@can_downgrade_proposal
+@can_downgrade_project
 def downgrade_status(request, pk):
     """
     Downgrade the status of a proposal, and send the affected users (responsible and assistants) a mail that their
@@ -455,123 +575,9 @@ def downgrade_status(request, pk):
                       status=r.status_code)
 
 
-@group_required('type1staff', 'type2staff', 'type2staffunverified', 'type4staff')
-def list_pending(request):
-    """
-    Get and show the pending proposals for a given user.
-
-    :param request:
-    :return:
-    """
-    projects = []
-    if get_grouptype("2") in request.user.groups.all() or get_grouptype("2u") in request.user.groups.all():
-        # type2 can only be assistant
-        projects = get_all_projects().filter(Q(Assistants__id=request.user.id) & Q(Status__exact=1))
-
-    elif get_grouptype("1") in request.user.groups.all():
-        # type1 can be responsible, trackhead or assistant
-        projects = get_all_projects().filter((Q(Assistants__id=request.user.id) & Q(Status__exact=1)) |
-                                             (Q(ResponsibleStaff=request.user.id) & Q(Status__exact=2)) |
-                                             (Q(Track__Head=request.user.id) & Q(Status__exact=3))
-                                             ).distinct()
-    projects = list(projects)
-
-    if get_grouptype('4') in request.user.groups.all() and request.user.administratorgroups.exists():
-        for group in request.user.administratorgroups.all():
-            projects = set(list(chain(projects, list(get_all_projects().filter(Q(Group=group) & Q(Status__lte=2))))))
-        title = 'Pending projects for your group'
-    else:
-        title = 'Pending projects'
-    return render(request, "proposals/list_pending.html", {"projects": projects, 'title': title})
-
-
-@group_required('type1staff')
-def list_track(request, timeslot=None):
-    """
-    List all proposals of the track that the user is head of.
-
-    :param request:
-    :param timeslot: Time slot to show projects from
-    :return:
-    """
-    if not Track.objects.filter(Head=request.user).exists():
-        raise PermissionDenied("This page is only for track heads.")
-    tracks = Track.objects.filter(Head__id=request.user.id)
-
-    if timeslot:
-        ts = get_object_or_404(TimeSlot, pk=timeslot)
-        projects = get_all_projects(old=True).filter(TimeSlot=ts)
-    else:
-        ts = None
-        projects = get_all_projects(old=True).filter(TimeSlot=None)  # proposals of future timeslot
-    projects = projects.filter(Track__in=tracks)
-    projects = prefetch(projects)
-    return render(request, "proposals/list_projects_custom.html", {
-        'projects': projects,
-        'favorite_projects': get_favorites(request.user),
-        "title": "Proposals of track {}".format(print_list(tracks)),
-        'timeslots': get_recent_timeslots(),
-        'timeslot': ts,
-    })
-
-
-@group_required('type4staff')
-def list_group_projects(request, timeslot=None):
-    """
-    List all proposals of a group.
-
-    :param request:
-    :param timeslot: timeslot to view.l
-    :return:
-    """
-    if timeslot:
-        ts = get_object_or_404(TimeSlot, pk=timeslot)
-        projects = get_all_projects(old=True).filter(TimeSlot=ts)
-    else:
-        ts = None
-        projects = get_all_projects(old=True).filter(TimeSlot=None)  # proposals of future timeslot
-
-    projects = prefetch(projects.filter(Group__Administrators=request.user).distinct())
-    return render(request, 'proposals/list_projects_custom.html', {
-        'hide_sidebar': True,
-        'projects': projects,
-        'favorite_projects': get_favorites(request.user),
-        'title': 'Proposals of {}'.format(print_list(request.user.administratoredgroups.all().values_list('Group__ShortName', flat=True))),
-        'timeslots': get_recent_timeslots(),
-        'timeslot': ts,
-    })
-
-
-@group_required('type3staff', 'type6staff')
-def list_private_projects(request, timeslot=None):
-    """
-    List all private proposals.
-
-    :param request:
-    :param timeslot: timeslot to show projects from.
-    :return:
-    """
-    if timeslot:
-        ts = get_object_or_404(TimeSlot, pk=timeslot)
-        projects = get_all_projects(old=True).filter(TimeSlot=ts)
-    else:
-        ts = None
-        projects = get_all_projects(old=True).filter(TimeSlot=None)  # proposals of future timeslot
-
-    projects = prefetch(projects.filter(Private__isnull=False).distinct())
-    return render(request, "proposals/list_projects_custom.html", {
-        'hide_sidebar': True,
-        'projects': projects,
-        'favorite_projects': get_favorites(request.user),
-        "title": "All private proposals",
-        'timeslots': get_recent_timeslots(),
-        'timeslot': ts,
-        "private": True  # to show extra column with private students
-    })
-
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
-@can_share_proposal
+@can_share_project
 def share(request, pk):
     """
     Get a sharelink for a given proposal. This link is a public view link for a proposal-detailpage for when the
@@ -860,18 +866,27 @@ def project_stats(request, timeslot=None):
 
 
 @group_required('type3staff')
-def content_policy(request):
+def content_policy_calc(request):
     """
     List of proposal description/assignment texts that do not met the expected text.
     Example of a policy violation is an email address in a proposal description.
 
     :param request:
     """
-    data = {
-        'pattern_violations': check_content_policy.cpv_regex(),
-        'length_violations': check_content_policy.cpv_length(),
-        'diff_violations': check_content_policy.cpv_diff(),
+    projects = get_all_projects(old=False)
+    check_content_policy.CPVCheckThread(projects).start()
+    return render(request, "proposals/cpv_progress.html")
+
+
+@group_required('type3staff')
+def content_policy_view(request):
+    results = []
+    for pk in get_all_projects(old=False).values_list('pk', flat=True):
+        c = cache.get('cpv_proj_{}'.format(pk))
+        if c:
+            results.append(c)
+    return render(request, 'proposals/content_policy_violations.html', {
         'pattern_policies': check_content_policy.content_policies,
         'length_requirements': check_content_policy.length_requirements.items(),
-    }
-    return render(request, 'proposals/content_policy_violations.html', data)
+        'results': results,
+    })

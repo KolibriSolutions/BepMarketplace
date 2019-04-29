@@ -164,11 +164,14 @@ class ProposalFormLimited(forms.ModelForm):
     """
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
+        self.support = get_grouptype('3') in self.request.user.groups.all()
         super().__init__(*args, **kwargs)
         self.fields['Assistants'].label_from_instance = self.user_label_from_instance
         self.fields['Assistants'].queryset = get_grouptype('2').user_set.all() | \
                                              get_grouptype('2u').user_set.all() | \
                                              get_grouptype('1').user_set.all()
+        if not self.support:
+            self.fields.pop('ResponsibleStaff')
 
     @staticmethod
     def user_label_from_instance(self):
@@ -179,11 +182,13 @@ class ProposalFormLimited(forms.ModelForm):
 
         fields = [
             'Title',
+            'ResponsibleStaff',
             'Assistants'
         ]
 
         widgets = {
             'Title': widgets.MetroTextInput,
+            'ResponsibleStaff' : widgets.MetroSelect,
             'Assistants': widgets.MetroSelectMultiple,
         }
 

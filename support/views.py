@@ -1,4 +1,5 @@
 import json
+import base64
 from datetime import date, datetime
 
 from django.conf import settings
@@ -7,7 +8,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Sum, F, Q
 from django.forms import modelformset_factory
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 from htmlmin.decorators import not_minified_response
 
@@ -15,10 +16,9 @@ from distributions.utils import get_distributions
 from general_form import ConfirmForm
 from general_mail import EmailThreadTemplate, mail_track_heads_pending, send_mail
 from general_model import print_list
-from general_view import get_all_students, get_all_staff, get_grouptype
+from general_view import get_all_staff, get_grouptype
 from index.decorators import group_required
 from index.models import Track, UserMeta
-from osirisdata.data import osirisData
 from presentations.exports import get_list_presentations_xlsx
 from presentations.models import PresentationSet
 from proposals.models import Proposal
@@ -31,146 +31,187 @@ from timeline.utils import get_timeslot, get_timephase_number, get_recent_timesl
 from .exports import get_list_students_xlsx, get_list_distributions_xlsx, get_list_projects_xlsx
 from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm, UserGroupsForm, \
     GroupadministratorEdit, CapacityGroupForm
-from .models import GroupAdministratorThrough, PublicFile, CapacityGroup
+from .models import GroupAdministratorThrough, PublicFile, CapacityGroup, mail_staff_options, mail_student_options, MailTemplate
 
 
 #########
 # Mailing#
 #########
-
-
-#        (1, 'All users (danger)'),
-#        (2, 'type1 staff'),
-#        (3, 'type2 staff'),
-#        (4, 'type2 staff unverified'),
-#        (5, 'all type2 staff'),
-#        (6, 'all staff'),
-#        (7, 'staff with non finished proposal'),
-#        (8, 'type3 staff'),
-#        (9, 'all students on marketplace'),
-#        (10, 'all students on marketplace 10ects'),
-#        (11, 'all students on marketplace 15ects'),
 @group_required('type3staff')
-def mailing(request):
+def list_mailing_templates(request):
+    return render(request, 'support/list_mail_templates.html', {'templates': MailTemplate.objects.all()})
+
+
+@group_required('type3staff')
+def delete_mailing_template(request, pk):
     """
 
     :param request:
+    :param pk: pk of template
     :return:
     """
-    options = (
-        ('all', 'All users'),
-        ('type1', 'Type1 staff'),
-        ('type2', 'Type2 staff'),
-        ('type2un', 'Type2 staff unverified'),
-        ('type2', 'All type2 staff'),
-        ('staffnonfinishedprop', 'Staff with non finished proposal'),
-        ('type3', 'Type3 staff'),
-        ('osirisstudents', 'All students enrolled on osiris'),
-        ('allstudents', 'All students on marketplace'),
-        ('10ectsstud', 'Students on marketplace 10ECTS'),
-        ('15ectsstud', 'Students on marketplace 15ECTS'),
-        ('nostudprof', 'Professors with no students'),
-        ('staffdistr', 'Staff with distributed students'),
-    )
-
+    name = 'Mailing template'
+    obj = get_object_or_404(MailTemplate, pk=pk)
     if request.method == 'POST':
-        form = ChooseMailingList(request.POST, options=options)
+        form = ConfirmForm(request.POST)
         if form.is_valid():
-            recipients = set()
+            obj.delete()
+            return render(request, 'base.html', {
+                'Message': '{} deleted.'.format(name),
+                'return': 'support:mailingtemplates'})
+    else:
+        form = ConfirmForm()
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Delete {}?'.format(name),
+        'buttontext': 'Delete'
+    })
 
-            # iterate through all selected users
-            if form.cleaned_data['people_all']:
-                # users
-                for user in list(get_all_students()) + list(get_all_staff()):
-                    recipients.add(user)
-            if form.cleaned_data['people_type1']:
-                # all type1staff
-                for user in get_all_staff().filter(groups=get_grouptype("1")):
-                    recipients.add(user)
-            if form.cleaned_data['people_type2']:
-                # type2staff
-                for user in get_all_staff().filter(groups=get_grouptype("2")):
-                    recipients.add(user)
-            if form.cleaned_data['people_type2un']:
-                # type2unverifiedstaff
-                for user in get_all_staff().filter(groups=get_grouptype("2u")):
-                    recipients.add(user)
-            if form.cleaned_data['people_staffnonfinishedprop']:
-                # staff with projects of stats < 3
-                props = get_all_proposals().filter(Status__lt=3)
-                for prop in props:
-                    recipients.add(prop.ResponsibleStaff)
-                    for ass in prop.Assistants.all():
-                        recipients.add(ass)
-            if form.cleaned_data['people_type3']:
-                # type3staff
-                for user in get_all_staff().filter(groups=get_grouptype("3")):
-                    recipients.add(user)
-            if form.cleaned_data['people_osirisstudents']:
-                # students on osiris
-                data = osirisData()
-                for email in data.getallEmail():
-                    recipients.add(email)
-            if form.cleaned_data['people_allstudents']:
-                # all students on marketplace
-                for user in get_all_students():
-                    recipients.add(user)
-            if form.cleaned_data['people_10ectsstud']:
-                # all students marketplace 10ects
-                for user in get_all_students().filter(usermeta__EnrolledExt=False):
-                    recipients.add(user)
-            if form.cleaned_data['people_15ectsstud']:
-                # all students marketplace 15ects
-                for user in get_all_students().filter(usermeta__EnrolledExt=True):
-                    recipients.add(user)
-            if form.cleaned_data['people_nostudprof']:
-                # professors with no students
-                props = get_all_proposals().filter(distributions__isnull=True).distinct()
-                for prop in props:
-                    recipients.add(prop.ResponsibleStaff)
-            if form.cleaned_data['people_staffdistr']:
-                # staff with students
-                props = get_all_proposals().filter(distributions__isnull=False).distinct()
-                for prop in props:
-                    recipients.add(prop.ResponsibleStaff)
-                    for ass in prop.Assistants.all():
-                        recipients.add(ass)
 
-            # add support staff and study advisors
-            for sup in list(get_grouptype("3").user_set.all()):
-                recipients.add(sup)
-            for sup in list(Group.objects.get(name='type5staff').user_set.all()):
-                recipients.add(sup)
-            for sup in list(Group.objects.get(name='type6staff').user_set.all()):
-                recipients.add(sup)
+@group_required('type3staff')
+def mailing(request, pk=None):
+    """
+    Mailing list to mail users.
+
+    :param request:
+    :param pk: optional key of a mailing template
+    :return:
+    """
+    if request.method == 'POST':
+        form = ChooseMailingList(request.POST, staff_options=mail_staff_options, student_options=mail_student_options, )
+        if form.is_valid():
+            recipients_staff = set()
+            recipients_students = set()
+            # staff
+            if form.cleaned_data['SaveTemplate']:
+                t = MailTemplate(
+                    RecipientsStaff=json.dumps(form.cleaned_data['Staff']),
+                    RecipientsStudents=json.dumps(form.cleaned_data['Students']),
+                    Message=form.cleaned_data['Message'],
+                    Subject=form.cleaned_data['Subject'],
+                )
+                t.save()
+
+            ts = form.cleaned_data['TimeSlot']
+            for s in form.cleaned_data['Staff']:
+                try:
+                    # staff selected by group
+                    recipients_staff.update(Group.objects.get(name=s).user_set.all())
+                    if s not in ['type3staff', 'type4staff', 'type5staff', 'type6staff']:
+                        # if user group is not a support type, mail only users with project in this year.
+                        for staff in list(recipients_staff):
+                            if not staff.proposalsresponsible.filter(TimeSlot=ts).exists() and not staff.proposals.filter(TimeSlot=ts).exists():
+                                # user has no project in the selected timeslots.
+                                recipients_staff.remove(staff)
+                except Group.DoesNotExist:
+                    # not a group object, staff selected by custom options.
+                    projs = get_all_proposals(old=True).filter(
+                        TimeSlot=ts)
+                    if s == 'staffnonfinishedproj':
+                        for proj in projs.filter(Status__lt=3).distinct():
+                            recipients_staff.add(proj.ResponsibleStaff)
+                            recipients_staff.update(proj.Assistants.all())
+                    elif s == 'distributedstaff':
+                        for proj in projs.filter(distributions__isnull=False).distinct():
+                            recipients_staff.add(proj.ResponsibleStaff)
+                            recipients_staff.update(proj.Assistants.all())
+                    elif s == 'staffnostudents':
+                        for proj in projs.filter(distributions__isnull=True).distinct():
+                            recipients_staff.add(proj.ResponsibleStaff)
+                            recipients_staff.update(proj.Assistants.all())
+                    elif s == 'assessors':
+                        dists = Distribution.objects.filter(TimeSlot=ts).distinct()
+                        for d in dists:
+                            recipients_staff.update(d.presentationtimeslot.Presentations.Assessors.all())
+                        recipients_staff.update(User.objects.filter(tracks__isnull=False))  # add trackheads
+            # students
+            students = User.objects.filter(
+                Q(usermeta__TimeSlot=ts) &
+                Q(usermeta__EnrolledBEP=True) &
+                Q(groups=None))
+            for s in form.cleaned_data['Students']:
+                if s == 'all':
+                    recipients_students.update(students)
+                elif s == '10ectsstd':
+                    recipients_students.update(students.filter(usermeta__EnrolledExt=False))
+                elif s == '15ectsstd':
+                    recipients_students.update(students.filter(usermeta__EnrolledExt=True))
+                elif s == 'distributedstd':
+                    recipients_students.update(students.filter(
+                        distributions__isnull=False,
+                        distributions__TimeSlot=ts).distinct())
 
             # always send copy to admins
             for user in User.objects.filter(is_superuser=True):
-                recipients.add(user)
+                recipients_staff.add(user)
+            # always send copy to self
+            if request.user not in recipients_students or \
+                    request.user not in recipients_staff:
+                recipients_staff.update([request.user])
+            context = {
+                'message': form.cleaned_data['Message'],
+                'subject': form.cleaned_data['Subject'],
+                'recipients_staff': [(u.usermeta.get_nice_name(), u.email) for u in recipients_staff],
+                'recipients_students': [(u.usermeta.get_nice_name(), u.email) for u in recipients_students],
+                'form': ConfirmForm(initial={'confirm': True}),
+                'template': form.cleaned_data['SaveTemplate'],
+                'jsondata': json.dumps({'message': base64.b64encode(form.cleaned_data['Message'].encode()).decode(),
+                             'subject': base64.b64encode(form.cleaned_data['Subject'].encode()).decode(),
+                             'recipients_staff': [(u.usermeta.get_nice_name(), u.email) for u in recipients_staff],
+                             'recipients_students': [(u.usermeta.get_nice_name(), u.email) for u in recipients_students],
+                             })
+            }
+            return render(request, "support/email_confirm.html",
+                          context=context)
+    else:
+        initial = None
+        if pk:
+            template = get_object_or_404(MailTemplate, pk=pk)
+            initial = {
+                'Message': template.Message,
+                'Subject': template.Subject,
+                'Staff': json.loads(template.RecipientsStaff),
+                'Students': json.loads(template.RecipientsStudents),
+            }
+        form = ChooseMailingList(initial=initial, staff_options=mail_staff_options, student_options=mail_student_options)
+    return render(request, "GenericForm.html", {
+        "form": form,
+        "formtitle": "Send mailing list",
+        "buttontext": "Go to confirm",
+    })
 
+
+@group_required('type3staff')
+def confirm_mailing(request):
+    if request.method == 'POST':
+        jsondata = request.POST.get('jsondata', None)
+        if jsondata is None:
+            return render(request, 'base.html', {'Message': 'Invalid POST data'})
+        try:
+            data = json.loads(jsondata)  # json blob with message and recipients
+            data['message'] = base64.b64decode(data['message']).decode()
+            data['subject'] = base64.b64decode(data['subject']).decode()
+        except ValueError:
+            return render(request, 'base.html', {'Message': 'Invalid JSON POST data.'})
+
+        form = ConfirmForm(request.POST)
+        if form.is_valid():
             # loop over all collected email addresses to create a message
             mails = []
-            subject = form.cleaned_data['subject'] or 'message from support staff'
-            for recipient in recipients:
+            for recipient in data['recipients_students'] + data['recipients_staff']:
                 mails.append({
                     'template': 'email/supportstaff_email.html',
-                    'email': recipient.email,
-                    'subject': subject,
+                    'email': recipient[1],
+                    'subject': data['subject'],
                     'context': {
-                        'message': form.cleaned_data['message'],
-                        'user': recipient,
+                        'message': data['message'],
+                        'name': recipient[0],
                     }
                 })
             EmailThreadTemplate(mails).start()
             return render(request, "support/email_progress.html")
-    else:
-        form = ChooseMailingList(options=options)
-
-    return render(request, "GenericForm.html", {
-        "form": form,
-        "formtitle": "Send mailling list",
-        "buttontext": "Send",
-    })
+        raise PermissionDenied('The confirm checkbox was unchecked.')
+    raise PermissionDenied("No post data supplied!")
 
 
 @group_required('type3staff')
@@ -333,7 +374,7 @@ def list_users(request):
     :return:
     """
     return render(request, "support/list_users.html", {
-        "users": User.objects.all().prefetch_related('groups', 'usermeta', 'usermeta__TimeSlot'),
+        "users": User.objects.all().prefetch_related('groups', 'usermeta', 'usermeta__TimeSlot', 'administratoredgroups'),
         'hide_sidebar': True,
     })
 
@@ -499,7 +540,6 @@ def list_staff_projects(request, pk):
 #     response['Content-Disposition'] = 'attachment; filename=marketplace-staff-list.xlsx'
 #     return response
 
-
 @group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
 def list_students(request, timeslot):
     """
@@ -654,6 +694,23 @@ def edit_user_groups(request, pk):
         'formtitle': 'Set user groups for {}'.format(usr.username),
         'form': form,
     })
+
+
+@group_required("type3staff")
+def toggle_disable_user(request, pk):
+    """
+    en/disable a user to prevent him/her from login
+
+    :param request:
+    :param pk:
+    :return:
+    """
+
+    usr = get_object_or_404(User, pk=pk)
+    usr.is_active = not usr.is_active
+    usr.save()
+
+    return redirect('support:listusers')
 
 
 # deprecated due to osirisdata

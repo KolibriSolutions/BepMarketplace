@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 
 from general_test import ViewsTest
 from index.models import UserMeta
-from support.models import PublicFile, CapacityGroup
+from support.models import PublicFile, CapacityGroup, MailTemplate
 
 
 class SupportViewsTest(ViewsTest):
@@ -19,10 +19,22 @@ class SupportViewsTest(ViewsTest):
         self.publicfile = PublicFile(File='/home/django/dummy.txt')
         self.publicfile.save()
         # self.debug =True
+        t = MailTemplate(
+            Message='test',
+            Subject='test',
+            RecipientsStaff='[]',
+            RecipientsStudents='[]',
+        )
+        t.pk = 1
+        t.save()
 
     def test_view_status(self):
         codes_general_phase1234567 = [  # including no-timephase
             [['mailinglist', None], self.p_support],
+            [['mailinglisttemplate', {'pk': 1}], self.p_support],
+            [['mailingconfirm', None], self.p_forbidden],  # requires post
+            [['mailingtemplates', None], self.p_support],
+            [['deletemailingtemplate', {'pk': 1}], self.p_support],
             [['mailtrackheads', None], self.p_support],
             # [['stats', None], self.p_staff12345],
             # public files
@@ -45,6 +57,7 @@ class SupportViewsTest(ViewsTest):
 
             # lists
             [['listusers', None], self.p_support_prv],
+            [['toggledisable', {'pk': self.dummy.id}], [302 if x == 200 else x for x in self.p_support]],
             [['liststaff', None], self.p_support_prv],
             [['liststaffproposals', {'pk': 1}], self.p_support],
             [['editfile', {'pk': self.publicfile.id}], self.p_support],

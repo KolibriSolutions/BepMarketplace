@@ -27,7 +27,7 @@
                 <td>
                 {% if MASTERMP %}
                     {# https://master.ele.tue.nl/studyguide/capacitygroup/ #}
-                    <a href="{{ MASTERMP }}/studyguide/{{ group.ShortName }}/"
+                    <a href="{{ MASTERMP }}/studyguide/capacitygroup/detail/{{ group.ShortName }}/"
                        class="button primary rounded">Details</a>
                 {% endif %}
                     {% if user|has_group:"type3staff" %}

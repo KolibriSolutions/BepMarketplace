@@ -54,7 +54,7 @@ class PresentationSet(models.Model):
         return "Presentationset for " + self.PresentationOptions.TimeSlot.__str__() + " and track: " + self.Track.__str__()
 
     class Meta:
-        ordering = ["PresentationRoom"]
+        ordering = ["DateTime"]
 
 
 class PresentationTimeSlot(models.Model):

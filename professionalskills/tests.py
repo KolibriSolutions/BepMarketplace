@@ -4,7 +4,7 @@ from django.utils import timezone
 
 from general_test import ProjectViewsTestGeneral
 from timeline.utils import get_timeslot
-from .models import FileType, StudentGroup, StudentFile
+from .models import FileType, StudentGroup, StudentFile, StaffResponseFileAspect
 
 
 class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
@@ -20,6 +20,13 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
         )
         f.id = 100
         f.save()
+        fa = StaffResponseFileAspect(
+            Name='Testaspect;',
+            Description='TestAspectDescription',
+            File=f,
+        )
+        fa.id=100
+        fa.save()
         sf = StudentFile(
             Caption='TestFile',
             Distribution=self.distribution_random,
@@ -54,6 +61,9 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['filetypecreate', None], self.p_support_prv],
             [['filetypeedit', {'pk': 100}], self.p_support_prv],
             [['filetypedelete', {'pk': 100}], self.p_support_prv],
+            [['addaspect', {'pk': 100}], self.p_support_prv],
+            [['editaspect', {'pk': 100}], self.p_support_prv],
+            [['deleteaspect', {'pk': 100}], self.p_support_prv],
 
             [['creategroup', {'pk': 100}], self.p_support_prv],
             [['creategroup', None], self.p_support_prv],
@@ -65,6 +75,7 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['listfileoftype', {'pk': 100}], self.p_forbidden],
             [['listmissingoftype', {'pk': 100}], self.p_forbidden],
             [['filetypelist', None], self.p_support_prv],
+            [['filetypeaspects', {'pk': 100}], self.p_support_prv],
             [['liststudentfiles', {'pk': 1}], self.p_support_prv],
             [['listownfiles', None], self.p_forbidden],
             [['respondfile', {'pk': 0}], self.p_forbidden],
@@ -82,6 +93,7 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['listfileoftype', {'pk': 100}], self.p_support_prv],
             [['listmissingoftype', {'pk': 100}], self.p_support_prv],
             [['filetypelist', None], self.p_all],
+            [['filetypeaspects', {'pk': 100}], self.p_all],
             [['liststudentfiles', {'pk': 1}], self.p_all_this_dist],
             [['listownfiles', None], self.p_student],
             [['respondfile', {'pk': 0}], self.p_staff_prv_results],

@@ -35,7 +35,7 @@ class Distribution(models.Model):
         Return total grade of student as not-rounded float
         :return:
         """
-        return sum([r.Grade*r.Category.Weight for r in self.results.filter(Files__isnull=True)]) / 100
+        return sum([r.Grade*r.Category.Weight for r in self.results.all()]) / 100
 
     def TotalGradeRounded(self):
         """

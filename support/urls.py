@@ -7,6 +7,10 @@ app_name = 'support'
 urlpatterns = [
 
     path('mail/', views.mailing, name='mailinglist'),
+    path('mail/templates/<int:pk>/', views.mailing, name='mailinglisttemplate'),
+    path('mail/confirm', views.confirm_mailing, name='mailingconfirm'),
+    path('mail/templates/', views.list_mailing_templates, name='mailingtemplates'),
+    path('mail/templates/delete/<int:pk>/', views.delete_mailing_template, name='deletemailingtemplate'),
     path('mail/trackheads/', views.mail_track_heads, name='mailtrackheads'),
 
     # path('ectsform/', views.ECTSForm, name='ectsform'), #deprecated due to osirisdata
@@ -26,6 +30,7 @@ urlpatterns = [
     # path('users/downgrade/<int:pk>/', views.downgrade_user, name='downgradeuser'),
     path('users/overruleusermeta/<int:pk>/', views.usermeta_overrule, name='overruleusermeta'),
     path('users/groups/<int:pk>/', views.edit_user_groups, name='usergroups'),
+    path('user/toggle/<int:pk>/', views.toggle_disable_user, name='toggledisable'),
 
     path('capacitygroup/list/', views.list_capacity_groups, name='listcapacitygroups'),  # listing new way of all capacitygroups
     path('capacitygroup/add/', views.add_capacity_group, name='addcapacitygroup'),

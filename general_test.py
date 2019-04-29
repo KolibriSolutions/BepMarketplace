@@ -96,6 +96,7 @@ class ViewsTest(TestCase):
             ("PHI", "Photonic Integration"),
             ("EM", "Electromagnetics")
         )
+
         for group in groups:
             self.c, created = CapacityGroup.objects.get_or_create(ShortName=group[0], FullName=group[1])
             assert created

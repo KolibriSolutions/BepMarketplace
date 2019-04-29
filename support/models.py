@@ -1,6 +1,8 @@
+import json
+
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, utils
 from django.db.models.signals import pre_delete
 from django.dispatch.dispatcher import receiver
 from django.forms import ValidationError
@@ -9,6 +11,28 @@ from general_model import file_delete_default, metro_icon_default, filename_defa
 from general_model import print_list, get_ext
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timeslot_id
+
+try:
+    from django.contrib.auth.models import Group
+    # mailing list options
+    # do not remove items, as they might be stored in mailtemplates.
+    mail_student_options = (
+        ('all', 'All students'),
+        ('10ectsstd', 'Students on marketplace with 10ECTS'),
+        ('15ectsstd', 'Students on marketplace with 15ECTS'),
+        ('distributedstd', 'Students with assigned project'),
+    )
+    mail_staff_options = tuple(Group.objects.all().values_list('name', 'name'))
+    mail_staff_options += (
+        ('staffnonfinishedproj', 'Staff with non-finished project'),
+        ('distributedstaff', 'Staff with students'),
+        ('staffnostudents', 'Staff with no students'),
+        ('assessors', 'Presentation assessors and track heads'),
+    )
+except utils.OperationalError:
+    # happens during migrations
+    mail_staff_options = ((),())
+    mail_student_options = ((),())
 
 
 class CapacityGroup(models.Model):
@@ -37,10 +61,29 @@ class GroupAdministratorThrough(models.Model):
     Super = models.BooleanField(default=False, blank=True)
 
 
+class MailTemplate(models.Model):
+    """
+    Template for a mailing list mail
+    """
+    RecipientsStudents = models.CharField(max_length=400)
+    RecipientsStaff = models.CharField(max_length=400)
+    Subject = models.CharField(max_length=400)
+    Message = models.TextField()
+    TimeStamp = models.DateTimeField(auto_now=True, null=True)
+    Created = models.DateTimeField(auto_now_add=True, null=True)
+
+    def RecipientsStudentsList(self):
+        return [dict(mail_student_options).get(a) for a in json.loads(self.RecipientsStudents)]
+
+    def RecipientsStaffList(self):
+        return [dict(mail_staff_options).get(a) for a in json.loads(self.RecipientsStaff)]
+
+
 class PublicFile(models.Model):
     """
     Public file. Support staff can upload these and the files are shown for each user on the frontpage.
     """
+
     def make_upload_path(instance, filename):
         """
         Upload path for a public file. Stored in /media/public_files/{timeslot-id}/{uuid.ext}

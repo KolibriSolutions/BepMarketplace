@@ -2,7 +2,7 @@ from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 
-from proposals.models import Proposal
+from proposals.models import Project
 from timeline.utils import get_timephase_number, get_timeslot
 
 
@@ -26,14 +26,14 @@ def can_apply(fn):
                 redirect_field_name='next', )
 
         if get_timephase_number() != 3:
-            raise PermissionDenied("Not correct timephase!")
+            raise PermissionDenied("Apply is not possible in this time phase.")
         if request.user.groups.exists():
             raise PermissionDenied("Only students can apply to proposals")
         if request.user.personal_proposal.filter(TimeSlot=get_timeslot()).exists():
             raise PermissionDenied("You cannot apply/retract because there is a private proposal for you.")
         if 'pk' in kw:
             pk = int(kw['pk'])
-            prop = get_object_or_404(Proposal, pk=pk)
+            prop = get_object_or_404(Project, pk=pk)
             if prop.Private.exists():
                 raise PermissionDenied("This proposal is private. It is already assigned.")
         return fn(*args, **kw)

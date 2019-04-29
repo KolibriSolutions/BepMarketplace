@@ -5,10 +5,11 @@ from django.contrib.auth.models import User, Group
 from django.forms import ValidationError
 
 from general_form import clean_file_default, FileForm
-from general_model import get_ext, print_list
+from general_model import get_ext, print_list, clean_text
 from general_view import get_grouptype
 from index.models import UserMeta
 from templates import widgets
+from timeline.models import TimeSlot
 from .models import PublicFile, CapacityGroup
 
 
@@ -26,18 +27,42 @@ class ChooseMailingList(forms.Form):
     """
 
     def __init__(self, *args, **kwargs):
-        options = kwargs.pop('options')
+        staff_options = kwargs.pop('staff_options')
+        student_options = kwargs.pop('student_options')
         super().__init__(*args, **kwargs)
-        for option in options:
-            self.fields['people_{}'.format(option[0])] = forms.BooleanField(widget=widgets.MetroCheckBox,
-                                                                            label=option[1],
-                                                                            required=False)
+        self.fields['Staff'].choices = staff_options
+        self.fields['Students'].choices = student_options
 
-    subject = forms.CharField(widget=widgets.MetroTextInput,
-                              label='Subject: (leave empty for default)',
-                              required=False)
-    message = forms.CharField(widget=widgets.MetroMultiTextInput,
-                              label='Message (check this twice):')
+    Subject = forms.CharField(widget=widgets.MetroTextInput,
+                              label='Subject:',
+                              help_text="Subject for your message. The text '{}' is placed in front of this text".format(settings.NAME_PRETTY),
+                              initial='message from support staff')
+    Message = forms.CharField(widget=widgets.MetroMultiTextInput,
+                              label='Message:',
+                              help_text='The body message of the email.')
+    Staff = forms.MultipleChoiceField(widget=widgets.MetroSelectMultiple,
+                                      label='Staff to mail:',
+                                      required=False,
+                                      help_text='Only staff with projects in the selected "Only for year" time slot will be mailed',
+                                      )
+    Students = forms.MultipleChoiceField(widget=widgets.MetroSelectMultiple,
+                                         label='Students to mail:',
+                                         required=False,
+                                         help_text='Only students active in the selected year/timeslot will be mailed.')
+    TimeSlot = forms.ModelChoiceField(widget=widgets.MetroSelect,
+                                      label='Only for year:',
+                                      help_text='Only users active in this year will be mailed.',
+                                      queryset=TimeSlot.objects.all())
+    SaveTemplate = forms.BooleanField(widget=widgets.MetroCheckBox,
+                                      required=False,
+                                      label='Save form as template',
+                                      help_text='Save this mailing list as template.')
+
+    def clean_Subject(self):
+        return clean_text(self.cleaned_data.get('Subject'))
+
+    def clean_Message(self):
+        return clean_text(self.cleaned_data.get('Message'))
 
 
 class PublicFileForm(FileForm):
@@ -74,7 +99,6 @@ class OverRuleUserMetaForm(forms.ModelForm):
 class GroupadministratorEdit(forms.Form):
     """
     Form to assign groupadministrators to capacitygroups.
-    Backported from mastermp, not yet used. Replacement for CapacityGroupAdministrionForm
     """
     group = forms.ModelChoiceField(queryset=CapacityGroup.objects.all(), widget=widgets.MetroSelect,
                                    label='Capacity group:')
@@ -108,6 +132,7 @@ class GroupadministratorEdit(forms.Form):
 
 class UserGroupsForm(forms.ModelForm):
     """Form to assign groups to a user."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['groups'].queryset = Group.objects.exclude(name='type2staffunverified')

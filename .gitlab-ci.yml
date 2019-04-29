@@ -4,11 +4,12 @@ mastermp:
     - . bepmarketplaceenv/bin/activate
     - python -V
     - pip -V
-    - mkdir -p ../logging
+    - mkdir -p logging
     - mkdir -p tracking/telemetry/data/
     - pip install -r requirements.txt
     - pip install -r requirements_development.txt
     - pip install tblib
     - python general_generate_secret_key.py
+    - touch startup.lock
     - python manage.py migrate --settings=BepMarketplace.settings_development
     - python manage.py test --settings=BepMarketplace.settings_development --parallel

@@ -1,8 +1,12 @@
 {% extends 'base.html' %}
 {% block body %}
     <h1>Content Policy Violations</h1>
-    There are three different types of content policy violations. Forbidden pattern matches, minimum length requirements
-    and difference with other projects.
+    <p>
+        There are three different types of content policy violations. Forbidden pattern matches, minimum length requirements
+        and difference with other projects.
+        <br/>
+        <a href="{% url 'proposals:contentpolicycalc' %}" class="button primary">Recalculate</a>
+    </p>
     <h2>Pattern matching checks</h2>
     Policies:
     <ul>
@@ -10,31 +14,6 @@
             <li>{{ policy.1 }}</li>
         {% endfor %}
     </ul>
-    <br/>
-    <table class="table bordered striped datatable" id="regexviolationstable">
-        <thead>
-        <tr>
-            <th>Location</th>
-            <th>Project id</th>
-            <th>Policy</th>
-            <th>Start index</th>
-            <th>Character</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for violation in pattern_violations %}
-            <tr>
-                <td>{{ violation.location }}</td>
-                <td><a href="{% url 'proposals:details' violation.id %}">{{ violation.id }}</a></td>
-                <td>{{ violation.policy }}</td>
-                <td>{{ violation.start }}</td>
-                <td>{{ violation.matchstring }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    <br/>
-
     <h2>Length requirement checks</h2>
     Policies:
     <ul>
@@ -42,56 +21,18 @@
             <li>{{ policy.0 }}: minimum {{ policy.1 }} characters</li>
         {% endfor %}
     </ul>
-    <br/>
-    <table class="table bordered striped datatable" id="lengthviolationstable">
-        <thead>
-        <tr>
-            <th>Location</th>
-            <th>Project id</th>
-            <th>Length</th>
-            <th>Text</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for violation in length_violations %}
-            <tr>
-                <td>{{ violation.location }}</td>
-                <td><a href="{% url 'proposals:details' violation.id %}">{{ violation.id }}</a></td>
-                <td>{{ violation.length }}</td>
-                <td>{{ violation.text }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    <br/>
-
-    <h2>Difference checks</h2>
-    <table class="table bordered striped datatable" id="diffviolationstable">
-        <thead>
-        <tr>
-            <th>Location</th>
-            <th>id 1</th>
-            <th>id 2</th>
-            <th>Text 1</th>
-            <th>Text 2</th>
-            <th>Ratio</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for violation in diff_violations %}
-            <tr>
-                <td>{{ violation.location }}</td>
-                <td><a href="{% url 'proposals:details' violation.id1 %}">{{ violation.id1 }}</a></td>
-                <td><a href="{% url 'proposals:details' violation.id2 %}">{{ violation.id2 }}</a></td>
-                <td>{{ violation.str1|truncatewords:'100' }}</td>
-                <td>{{ violation.str2|truncatewords:'100' }}</td>
-                <td>{{ violation.ratio }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <h1>Results</h1>
+    {% for cpv in results %}
+        <div class="accordion" data-role="accordion">
+            <div class="frame">
+                <div class="heading">{{ cpv.project }}</div>
+                <div class="content">
+                    {% include 'proposals/inc_cpv_proj.html' %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
 {% endblock %}
-
 {% block scripts %}
     {{ block.super }}
     <script>
@@ -99,5 +40,4 @@
             $('.datatable').DataTable();
         })
     </script>
-
 {% endblock %}

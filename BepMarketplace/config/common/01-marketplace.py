@@ -23,12 +23,11 @@ SECRET_KEY = SECRET_KEY_IMPORT
 SETTINGS_DIR = 'BepMarketplace'
 
 CONTACT_EMAIL = 'bepmarketplace@tue.nl'
+DEV_EMAIL = 'bepmarketplace@kolibrisolutions.nl'
 
 SUPPORT_ROLE = 'program director'
 SUPPORT_NAME = 'Sjoerd Hulshof'
 SUPPORT_EMAIL = 's.hulshof@tue.nl'
-
-DEV_EMAIL = 'bepmarketplace@kolibrisolutions.nl'
 
 ADMINS = [('Kolibri Solutions', DEV_EMAIL)]
 MANAGERS = ADMINS  # to mail broken links to, not used now.

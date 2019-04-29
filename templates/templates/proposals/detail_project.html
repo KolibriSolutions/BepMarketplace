@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
+{% load index_tags %}
 {% load timeline_tags %}
 {% load proposal_tags %}
-{% load index_tags %}
 {% get_timephase_number as phasenumber %}
 {% block body %}
     {% if bodyhtml %}
@@ -65,8 +65,10 @@
                     <p>{{ project.GeneralDescription|linebreaksbr }}</p>
                     <h4>Students task description</h4>
                     <p>{{ project.StudentsTaskDescription|linebreaksbr }}</p>
-                    <h4>Student task description for extension (if applicable)</h4>
-                    <p>{{ project.ExtensionDescription }}</p>
+                    {% if project.ExtensionDescription %}
+                        <h4>Student task description for extension (if applicable)</h4>
+                        <p>{{ project.ExtensionDescription }}</p>
+                    {% endif %}
                     {% if project.attachments.exists %}
                         <h4>Attachments:</h4>
                         {% for attachment in project.attachments.all %}
@@ -142,18 +144,24 @@
                                 {% endif %}
                                 <br/><br/>
                                 {# share link always visible for staff when system is still closed for students #}
-                                <a href="{% url 'proposals:sharelink' project.id %}" class="button primary">Get
-                                    share link</a>
+                                <a href="{% url 'proposals:sharelink' project.id %}" class="button primary">Get share link</a>
                                 {% if user|has_group:"type3staff" and project.Status < 3 %}
                                     <a class="button warning"
                                        href="{% url 'proposals:askdeleteproposal' project.id %}">
                                         <span class="mif-bin"></span>Delete</a>
                                 {% endif %}
+                                {# policy violations #}
+                                {% if cpv %}
+                                        <h2>Content policy violations:</h2>
+                                        {% include 'proposals/inc_cpv_proj.html' %}
+                                {% endif %}
                             {% endif %}
+
                         {% endif %}
                     {% endif %}
                 </div>
 
+                {# sidebar starts here #}
                 <div class="cell">
                     <table class="table">
                         {% if project.Assistants.all %}
@@ -262,7 +270,7 @@
                             </tr>
                         {% endif %}
                     </table>
-                </div>
+                </div> <!--sidebar-->
             </div>
         </div>
     {% endif %}

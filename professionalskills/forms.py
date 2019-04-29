@@ -3,7 +3,7 @@ from django.forms import ValidationError
 
 from templates import widgets
 from timeline.utils import get_timeslot
-from .models import FileType, StaffResponse, StudentGroup, FileExtension, StaffResponseFileAspectResult
+from .models import FileType, StaffResponse, StudentGroup, FileExtension, StaffResponseFileAspectResult, StaffResponseFileAspect
 
 
 class FileTypeModelForm(forms.ModelForm):
@@ -133,6 +133,16 @@ class FileExtensionForm(forms.ModelForm):
         ]
         widgets = {
             'Name': widgets.MetroTextInput,
+        }
+
+
+class StaffResponseFileAspectForm(forms.ModelForm):
+    class Meta:
+        model = StaffResponseFileAspect
+        fields = ['Name', 'Description']
+        widgets = {
+            'Name': widgets.MetroTextInput,
+            'Description': widgets.MetroMultiTextInput,
         }
 
 

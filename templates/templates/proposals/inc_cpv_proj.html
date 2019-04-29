@@ -1,0 +1,42 @@
+    {% if cpv.pattern_violations %}
+        <h3>Pattern checks</h3>
+        <ul>
+            {% for d in cpv.pattern_violations %}
+                <li>
+                    Violation at {{ d.location }}
+                    <ul>
+                        <li>{{ d.policy }}</li>
+                        <li>Text '{{ d.matchstring }}' is not allowed</li>
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% if cpv.length_violations %}
+        <h3>Length checks</h3>
+        <ul>
+            {% for d in cpv.length_violations %}
+                <li>
+                    Violation at {{ d.location }}
+                    <ul>
+                        <li>Length: {{ d.length }} characters</li>
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% if cpv.diff_violations %}
+        <h3>Uniqueness with other projects</h3>
+        <ul>
+            {% for d in cpv.diff_violations %}
+                <li>
+                    Violation at {{ d.location }}
+                    <ul>
+                        <li>With: <a href="{% url 'proposals:details' d.proj.id %}">{{ d.proj }}</a>
+                        </li>
+                        <li>Difference Ratio: {{ d.ratio }}</li>
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}

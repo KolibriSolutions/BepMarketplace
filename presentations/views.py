@@ -10,11 +10,12 @@ from django.shortcuts import render
 from django.urls import reverse
 from htmlmin.decorators import not_minified_response
 
-from index.decorators import group_required
-from timeline.decorators import phase_required
 from general_view import get_grouptype
+from index.decorators import group_required
 from index.models import Track
 from students.models import Distribution
+from timeline.decorators import phase_required
+from timeline.models import TimePhase
 from timeline.utils import get_timephase_number
 from .exports import get_list_presentations_xlsx
 from .forms import PresentationOptionsForm, PresentationRoomForm, PresentationSetForm, get_timeslot, MakePublicForm
@@ -111,14 +112,14 @@ def wizard_step3(request):
     # this is needed because the form validation uses the presentation timeslot
     try:
         ts.timephases.get(Description=7)
-    except:
+    except TimePhase.DoesNotExist:
         return render(request, "base.html", {
             'Message':
                 "There is no timephase for presentations defined, please define a timephase using the 'Timeline Edit' menu or contact the support staff."})
 
     form = PresentationSetForm
-    form_set = modelformset_factory(PresentationSet, form=form, can_delete=True, extra=4)
-    formset = form_set(queryset=PresentationSet.objects.all())
+    form_set = modelformset_factory(PresentationSet, form=form, can_delete=True, extra=24)
+    formset = form_set(queryset=PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts))
 
     if request.method == 'POST':
         formset = form_set(request.POST)
@@ -229,7 +230,7 @@ def export_presentations(request):
             except:
                 return render(request, 'base.html', {'Message': 'The Presentations are not yet planned.'})
             if not public:
-                return render(request, 'base.html', {'Message': 'The Presentationsplanning is not yet public'})
+                return render(request, 'base.html', {'Message': 'The Presentations planning is not yet public'})
 
     sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=get_timeslot())
     if not sets:

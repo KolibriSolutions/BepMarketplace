@@ -5,6 +5,7 @@
 {% load proposal_tags %}
 {% load presentations_tags %}
 {% load students_tags %}
+{% load support_tags %}
 
 {% get_timephase_number as phasenumber %}
 <!DOCTYPE html>
@@ -170,6 +171,7 @@
                                         </ul>
                                     </li>
                                     <li><a href="{% url 'support:mailinglist' %}">Mailing List</a></li>
+                                    <li><a href="{% url 'support:mailingtemplates' %}">Mailing Templates</a></li>
                                     <li>
                                         <a href="#" class="dropdown-toggle">Osiris Data</a>
                                         <ul class="d-menu" data-role="dropdown">
@@ -348,7 +350,23 @@
                         {% endif %}
 
                         <p>Current phase: {% get_timephase %}</p>
+                        {% if user|has_group:'type3staff' %}
+                            {% get_unverified_users as unverifieds %}
+                            <div class="panel">
+                                <div class="heading">
+                                    <span class="title">Unverified users</span>
+                                </div>
+                                <div class="content padding5">
+                                    <ul>
+                                        {{ unverifieds|unordered_list }}
+                                    </ul>
+                                    <a href="{% url 'support:listusers' %}" class="button primary">Review user list</a>
+                                </div>
+                            </div>
+                            <br />
+                        {% endif %}
                         {% if user|has_group:"type1staff;type2staff;type2staffunverified" %}
+
                             {# Staff #}
                             {% if user|has_group:"type2staffunverified" and not user.is_superuser %}
                                 <p><strong>
@@ -418,7 +436,7 @@
     </div>
 
     <div class="place-right text-small">
-        <div class="cell place-left padding10" onclick="roll('li')">By: Kolibri Solutions 2016-2019</div>
+        <div class="cell place-left padding10"><a href="{% url 'index:about' %}" title="Kolibri Solutions" class="fg-black">By Kolibri Solutions 2016-2019</a></div>
         <div class="cell place-left padding10">Currently deployed: {% get_hash %}</div>
     </div>
 </div>

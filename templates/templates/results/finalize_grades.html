@@ -12,7 +12,7 @@
             Scroll to bottom for the print button to get the pdf or printable webpage.
         </div>
     {% endif %}
-    <a class="button primary" href="{% url 'results:gradeformstaff' dstr.id %}">Go back to editing</a>
+    <a class="button primary" href="{% url 'results:gradeformstaff' dstr.id %}"><span class="mif-arrow-left"></span> Back to editing</a>
     {% block report %}
         <h1>{% if preview %}Preview of: {% endif %}Results for <i>{{ dstr.Student.usermeta.get_nice_name }}</i> for project <i>{{ dstr.Proposal.Title }}</i></h1>
         <h3>Responsible Staff member: {{ dstr.Proposal.ResponsibleStaff.usermeta.get_nice_name }}</h3>

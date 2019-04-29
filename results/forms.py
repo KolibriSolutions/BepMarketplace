@@ -63,24 +63,24 @@ class CategoryResultForm(forms.ModelForm):
             'Comments': widgets.MetroMultiTextInput,
         }
 
-
-class CategoryResultFormFile(CategoryResultForm):
-    """
-    Inherits from CategoryResultForm, and gives the extra option to link specific files to a grade.
-    This can be used to grade files, as a student can upload multiple files for each filetype.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # self.fields['Files'].queryset = StudentFile.objects.filter(Type=self.instance.Category.File, Distribution=self.instance.Distribution).distinct()
-
-    class Meta(CategoryResultForm.Meta):
-        fields = ['Grade', 'Comments']#, 'Files']
-        widgets = {
-            'Grade': widgets.MetroNumberInput,
-            'Comments': widgets.MetroMultiTextInput,
-            # 'Files': widgets.MetroSelectMultiple,
-        }
+#
+# class CategoryResultFormFile(CategoryResultForm):
+#     """
+#     Inherits from CategoryResultForm, and gives the extra option to link specific files to a grade.
+#     This can be used to grade files, as a student can upload multiple files for each filetype.
+#     """
+#
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         # self.fields['Files'].queryset = StudentFile.objects.filter(Type=self.instance.Category.File, Distribution=self.instance.Distribution).distinct()
+#
+#     class Meta(CategoryResultForm.Meta):
+#         fields = ['Grade', 'Comments']#, 'Files']
+#         widgets = {
+#             'Grade': widgets.MetroNumberInput,
+#             'Comments': widgets.MetroMultiTextInput,
+#             # 'Files': widgets.MetroSelectMultiple,
+#         }
 
 
 class GradeCategoryAspectForm(forms.ModelForm):

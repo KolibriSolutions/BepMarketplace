@@ -5,8 +5,8 @@ from django.db import models
 from django.db.models.aggregates import Sum
 
 from general_model import clean_text
-from index.models import Track
-from professionalskills.models import FileType, StudentFile
+# from index.models import Track
+# from professionalskills.models import FileType, StudentFile
 from students.models import Distribution
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot_id
@@ -32,14 +32,14 @@ class GradeCategory(models.Model):
     Name = models.CharField(max_length=255)
     TimeSlot = models.ForeignKey(TimeSlot, default=get_timeslot_id, related_name='gradecategories', blank=False,
                                  on_delete=models.PROTECT)
-    File = models.ForeignKey(FileType, related_name='results', blank=True, null=True, on_delete=models.CASCADE, help_text='If this category is to grade a file or professional skill, select the file type here.')
+    # File = models.ForeignKey(FileType, related_name='results', blank=True, null=True, on_delete=models.CASCADE, help_text='If this category is to grade a file or professional skill, select the file type here.')  # replaced by PRV grade system.
 
     class Meta:
         ordering = ["-Weight", "Name"]
 
     def __str__(self):
-        if self.File:
-            return '{} for {} ({}%)'.format(self.Name, self.File, self.Weight)
+        # if self.File:
+        #     return '{} for {} ({}%)'.format(self.Name, self.File, self.Weight)
         return '{} ({}%)'.format(self.Name, self.Weight)
 
     def clean(self):
@@ -64,7 +64,7 @@ class CategoryResult(models.Model):
     Grade = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(10)], default=0.0)
     Comments = models.TextField(blank=True, null=True)
     Final = models.BooleanField(default=False)
-    Files = models.ManyToManyField(StudentFile, related_name='results', blank=True)
+    # Files = models.ManyToManyField(StudentFile, related_name='results', blank=True)
 
     def __str__(self):
         return '{} to {} grade: {}'.format(self.Category.Name, self.Distribution.__str__(), self.Grade)

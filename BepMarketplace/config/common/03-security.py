@@ -44,14 +44,6 @@ SENDFILE_ROOT = MEDIA_ROOT
 SENDFILE_URL = '/protected/'
 
 if not DEBUG:
-    ## SSL
-    # Nginx should have:  proxy_set_header X-Forwarded-Protocol https;
-    # to let django know it is https using the next setting:
-    # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
-    # To make sure it isn't forgotten to set this header, redirect to bullshit domain if it fails.
-    # SECURE_SSL_REDIRECT = True  # if x_forwarde_protocol fails, redirect to:
-    # SECURE_SSL_HOST = 'the-nginx-config-is-failing.test'
-
     SECURE_HSTS_SECONDS = 63072000  # half year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
