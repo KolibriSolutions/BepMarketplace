@@ -44,10 +44,12 @@ def download_all_of_type(request, pk):
     with zipfile.ZipFile(in_memory, 'w') as archive:
         for file in ftype.files.all():
             trck = file.Distribution.Proposal.Track
+            fname = file.Distribution.Student.usermeta.get_nice_name().split()[-1] + "".join(
+                file.Distribution.Student.usermeta.get_nice_name().split(' ')[:-1])
             try:
                 with open(file.File.path, 'rb') as fstream:
                     archive.writestr(
-                        '{}/{}.{}'.format(str(trck), file.Distribution.Student.usermeta.get_nice_name().replace(' ', ''),
+                        '{}/{}.{}'.format(str(trck), fname,
                                           file.File.name.split('.')[-1]), fstream.read())
             except (IOError, ValueError):  # happens if a file is referenced from database but does not exist on disk.
                 return render(request, 'base.html', {'Message': 'These files cannot be downloaded, please contact support staff. (Error on file: "{}")'.format(file)})

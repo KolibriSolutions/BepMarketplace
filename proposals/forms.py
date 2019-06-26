@@ -10,7 +10,7 @@ from django.core.files.base import ContentFile
 from django.core.files.images import get_image_dimensions
 from django.forms import ValidationError
 
-from djangosaml2_custom.backends import get_user
+from BepMarketplace.util import get_user
 from general_form import clean_file_default, FileForm
 from general_mail import mail_project_private, mail_project_single
 from general_model import get_ext, print_list

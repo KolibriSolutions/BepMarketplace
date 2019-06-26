@@ -58,7 +58,7 @@ LOGGING = {
             'level': 'CRITICAL',  # to disable logging on unsolicitedresponses etc.
         },
         'javascript_error': {
-            'handlers': ['mail_admins', 'js_file'],
+            'handlers': ['js_file'],
             'level': 'ERROR',
             'propagate': True,
         },

@@ -3,8 +3,8 @@
 Dear {{ name }},<br/>
 {% endblock %}
 {% block body %}
-Message from the administration:<br/><br/>
-{% autoescape off %}
-{{  message|linebreaksbr }}
-{% endautoescape %}
+    Message from the administration:<br/><br/>
+    {% autoescape off %}
+        {{ message|linebreaksbr }}
+    {% endautoescape %}
 {% endblock %}

@@ -177,6 +177,7 @@ def staff_form(request, pk, step=0):
     if not request.user.is_superuser and \
             request.user != dstr.Proposal.Track.Head and \
             request.user != dstr.Proposal.ResponsibleStaff and \
+            (get_grouptype('1') not in request.user.groups.all() or request.user not in dstr.Proposal.Assistants.all()) and \
             get_grouptype('3') not in request.user.groups.all() and \
             request.user not in dstr.presentationtimeslot.Presentations.Assessors.all():
         raise PermissionDenied("You are not the correct owner of this distribution. "

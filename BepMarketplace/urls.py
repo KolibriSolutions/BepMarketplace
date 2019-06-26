@@ -26,13 +26,13 @@ urlpatterns = [
     path('professionalskills/', include('professionalskills.urls')),
     path('proposals/', include('proposals.urls')),
     path('results/', include('results.urls')),
-    path('saml2/', include('djangosaml2_custom.urls')),
     path('student/', include('students.urls')),
     path('support/', include('support.urls')),
     path('timeline/', include('timeline.urls')),
     path('tracking/', include('tracking.urls')),
     path('two_factor/', include('two_factor_custom.urls')),
     path('canvas/', include('canvas.urls')),
+    path('shen/', include('shen_ring.urls')),
 ]
 
 if settings.DEBUG and True:

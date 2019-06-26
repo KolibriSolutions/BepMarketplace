@@ -1,6 +1,6 @@
 from django.shortcuts import HttpResponse
 from django.urls import path
-from djangosaml2.views import login
+from shen_ring.views import login
 
 from . import views
 

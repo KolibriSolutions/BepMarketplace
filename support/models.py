@@ -31,8 +31,8 @@ try:
     )
 except utils.OperationalError:
     # happens during migrations
-    mail_staff_options = ((),())
-    mail_student_options = ((),())
+    mail_staff_options = ((), ())
+    mail_student_options = ((), ())
 
 
 class CapacityGroup(models.Model):
@@ -77,6 +77,25 @@ class MailTemplate(models.Model):
 
     def RecipientsStaffList(self):
         return [dict(mail_staff_options).get(a) for a in json.loads(self.RecipientsStaff)]
+
+    def __str__(self):
+        return '{} at {}'.format(self.Subject, self.TimeStamp)
+
+
+class Mailing(models.Model):
+    """
+    A mailing sent using the system.
+    """
+    RecipientsStaff = models.ManyToManyField(User, related_name='received_mailings_staff', default=None, blank=True)
+    RecipientsStudents = models.ManyToManyField(User, related_name='received_mailings_students', default=None, blank=True)
+    Subject = models.CharField(max_length=400)
+    Message = models.TextField()
+    Sent = models.BooleanField(default=False)
+    TimeStamp = models.DateTimeField(auto_now=True, null=True)
+    Created = models.DateTimeField(auto_now_add=True, null=True)
+
+    def __str__(self):
+        return '{} at {} (sent:{})'.format(self.Subject, self.TimeStamp, self.Sent)
 
 
 class PublicFile(models.Model):

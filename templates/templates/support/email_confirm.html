@@ -8,28 +8,27 @@
     <h3>Message</h3>
     <div class="panel">
         <div class="heading">
-            <span class="title"><span class="mif-mail"></span>{{ NAME }} {{ subject }}</span>
+            <span class="title"><span class="mif-mail"></span>{{ NAME }} {{ mailing.Subject }}</span>
         </div>
         <div class="content padding5">
-            {% include 'email/supportstaff_email.html' with name="-name-" %}
+            {% include 'email/supportstaff_email.html' with name="-name-" message=mailing.Message subject=mailing.Subject %}
         </div>
     </div>
     <h3>Staff recipients</h3>
-    {% if recipients_staff %}
+    {% if mailing.RecipientsStaff.exists %}
         <ul>
-            {% for u in recipients_staff %}
-                <li>{{ u.0 }}</li>
+            {% for u in mailing.RecipientsStaff.all %}
+                <li>{{ u.usermeta.get_nice_name }}</li>
             {% endfor %}
         </ul>
     {% else %}
         None
     {% endif %}
     <h3>Student recipients</h3>
-    {% if recipients_students %}
+    {% if mailing.RecipientsStudents.exists %}
         <ul>
-
-            {% for u in recipients_students %}
-                <li>{{ u.0 }}</li>
+            {% for u in mailing.RecipientsStudents.all %}
+                <li>{{ u.usermeta.get_nice_name }}</li>
             {% endfor %}
         </ul>
     {% else %}
@@ -40,7 +39,7 @@
         {% csrf_token %}
         <table class="table" style="text-align:left;">
             {{ form.as_table }}
-            <input type="hidden" name="jsondata" value='{{ jsondata|safe }}'>
+            <input type="hidden" name="mailingid" value='{{ mailing.id }}'>
             <tr>
                 <td>
                     <button class="button success" type="submit">Send</button>

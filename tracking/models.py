@@ -74,7 +74,7 @@ def generate_key(length=64):
 class TelemetryKey(models.Model):
     Created = models.DateTimeField(auto_now_add=True)
     ValidUntil = models.DateField(blank=True, null=True)
-    Key = models.CharField(max_length=64, unique=True, default=generate_key)
+    key = models.CharField(max_length=64, unique=True, default=generate_key)
 
     def is_valid(self):
         if self.ValidUntil is None:

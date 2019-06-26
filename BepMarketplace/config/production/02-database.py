@@ -1,4 +1,7 @@
-from BepMarketplace.config.secret import DATABASE_PASSWORD_IMPORT
+try:
+    from BepMarketplace.config.secret import SECRET_KEY_IMPORT, PYLTI_CONFIG, DATABASE_PASSWORD_IMPORT
+except ImportError:
+    from BepMarketplace.secret import SECRET_KEY_IMPORT, PYLTI_CONFIG, DATABASE_PASSWORD_IMPORT
 
 DATABASES = {
     'default': {

@@ -9,7 +9,15 @@ from index.decorators import superuser_required
 from general_view import get_sessions
 from timeline.utils import get_timeslot
 from .models import ProposalStatusChange, UserLogin, ApplicationTracking
-
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+import zipfile
+from io import BytesIO
+from django.http import HttpResponse
+from django.core.exceptions import PermissionDenied
+from .models import TelemetryKey
+import os
+from django.conf import settings
 
 @superuser_required()
 def list_user_login(request):
@@ -75,3 +83,34 @@ def telemetry_user_detail(request, pk):
         'telemetry': telemetry,
         'toppages': sorted(pages_count, key=pages_count.__getitem__, reverse=True)[:3],
     })
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def download_telemetry(request):
+    key = request.POST.get('key', None)
+    if key is None:
+        raise PermissionDenied("No key specified")
+    try:
+        key_obj = TelemetryKey.objects.get(key=key)
+        if not key_obj.is_valid():
+            raise PermissionDenied("Key not valid")
+    except TelemetryKey.DoesNotExist:
+        raise PermissionDenied("Key not valid")
+
+
+    in_memory = BytesIO()
+    zipf = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
+    for root, dirs, files in os.walk(os.path.join(settings.BASE_DIR, "tracking/telemetry/data/")):
+        for file in files:
+            zipf.write(os.path.join(root, file), arcname="logs/" + file)
+
+    zipf.close()
+
+
+    response = HttpResponse(content_type="application/zip")
+    response['Content-Disposition'] = 'attachment; filename="logs.zip"'
+
+    in_memory.seek(0)
+    response.write(in_memory.read())
+
+    return response

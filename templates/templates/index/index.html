@@ -19,11 +19,8 @@
                     <p>If you have any questions about the system or your role in the system, please contact the {{ support_role }}, {{ support_name }} at {{ support_email }}</p>
                 {% else %}
                     <p>
-                    {% if DEBUG %}
-                    Please start by <a href="{% url 'two_factor:login' %}" class="button primary">logging in</a><br/>
-                    {% else %}
-                    Please start by <a href="{% url 'djangosaml2_custom:saml2_login' %}" class="button primary">logging in</a><br/>
-                    {% endif %}
+                    {% csrf_token %}
+                    Please start by <a href="{% url 'shen_ring:login' %}" class="button primary">logging in</a><br/>
                     {% if phasenumber < 3 %}
                         After logging in, you can be granted staff access. With staff access it is possible to create and edit proposals.
                     {% endif %}

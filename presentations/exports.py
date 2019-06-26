@@ -18,12 +18,18 @@ def get_list_presentations_xlsx(sets):
     wb.remove_sheet(wb.active)
     wss = []
     for pset in sets:
-        tit = str(pset.id) + " (" + pset.Track.Name + ")"
+        try:
+            track = pset.Track.Name
+            thead = pset.Track.Head.usermeta.get_nice_name()
+        except (AttributeError, ValueError):
+            track = 'No track'
+            thead = 'No track head'
+        tit = str(pset.id) + " (" + track + ")"
         ws = wb.create_sheet(title=tit)
         wss.append(ws)
         ws['C1'] = timezone.localtime(pset.DateTime).date().strftime("%A %d %B %Y")
-        ws['C3'] = "Track: " + pset.Track.Name
-        ws['C4'] = "Track responsible staff: " + pset.Track.Head.usermeta.get_nice_name()
+        ws['C3'] = "Track: " + track
+        ws['C4'] = "Track responsible staff: " + thead
         ws['C5'] = "Exported on: " + timestamp()
         ws['C6'] = "Presentation room: " + pset.PresentationRoom.Name
         ws['C7'] = "Assessment room: " + pset.AssessmentRoom.Name

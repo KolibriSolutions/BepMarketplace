@@ -47,3 +47,6 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 63072000  # half year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+## shen
+USERMETA_LOCAL_FIELDS = ['ECTS', 'EnrolledBEP', 'EnrolledExt']

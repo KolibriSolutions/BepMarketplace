@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import PublicFile, CapacityGroup, GroupAdministratorThrough, MailTemplate
+from .models import PublicFile, CapacityGroup, GroupAdministratorThrough, MailTemplate, Mailing
 
 
 class PublicFileAdmin(admin.ModelAdmin):
@@ -12,3 +12,4 @@ admin.site.register(PublicFile, PublicFileAdmin)
 admin.site.register(CapacityGroup)
 admin.site.register(GroupAdministratorThrough)
 admin.site.register(MailTemplate)
+admin.site.register(Mailing)

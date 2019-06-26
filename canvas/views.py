@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from index.models import UserMeta
 from timeline.utils import get_timeslot
 from tracking.models import CanvasLogin
-from djangosaml2_custom.backends import get_user
+from BepMarketplace.util import get_user
 
 @require_http_methods(["POST"])
 @csrf_exempt

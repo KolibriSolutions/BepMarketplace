@@ -1,18 +1,11 @@
 /**
  * Custom javascript for all pages of Marketplaces ELE
- * Jeroen van Oorschot, Kolibri Solutions 2016-2018
+ * Jeroen van Oorschot, Kolibri Solutions 2016-2019
  */
-// function roll(name) {
-//     $(name).removeClass("roll");
-//     setTimeout(function () {
-//         $(name).removeClass('roll');
-//     }, 5000);
-//     $(name).addClass("roll");
-// }
-
+"use strict";
 //global
-var sidebar = null;
-var sidebarVisible = true;
+let sidebar = null;
+let sidebarVisible = true;
 
 //display warning for unsupported browsers
 window.onload = function () {
@@ -37,40 +30,6 @@ $(function () {
             $(window).trigger('resize');  // trigger the window resize event, to let jquery.DoubleScroll resize the second bar.
             $('#cellContent').removeClass('transitionWidth')
         }, false);
-
-        //init markdownx custom event handlers.
-        let element = document.getElementsByClassName('markdownx');
-        //
-        // Object.keys(element).map(key =>
-        //     element[key].addEventListener('markdownx.update', event => console.log('updated!', event.detail))
-        // );
-        Object.keys(element).map(function (key) {
-            element[key].addEventListener('markdownx.updateError', function (event) {
-                $.Notify({
-                    caption: 'Markdown preview error.',
-                    content: 'Please refresh the page to continue.',
-                    type: 'alert'
-                })
-            })
-        });
-        Object.keys(element).map(function (key) {
-            element[key].addEventListener('markdownx.fileUploadEnd', function (event) {
-                $.Notify({
-                    caption: 'File uploaded!',
-                    content: event.detail[0].image_code,
-                    type: 'success'
-                })
-            })
-        });
-        Object.keys(element).map(function (key) {
-            element[key].addEventListener('markdownx.fileUploadError', function (event) {
-                $.Notify({
-                    caption: 'File upload failed!',
-                    content: event.detail[0].__all__.concat().toString(),
-                    type: 'alert'
-                })
-            })
-        });
     }
 );
 
@@ -83,7 +42,7 @@ function toggleSidebar() {
 }
 
 function hideSidebar() {
-    var c = $('#cellContent');
+    let c = $('#cellContent');
     $('#cellSidebar').css('opacity', 0);
     $('#toggleSidebarButtonIcon').css('transform', 'rotate(180deg)');
     sidebarVisible = false;
@@ -94,7 +53,7 @@ function hideSidebar() {
 }
 
 function hideSidebarFast() {
-    var c = $('#cellSidebar');
+    let c = $('#cellSidebar');
     c.css('opacity', 0);
     $('#toggleSidebarButtonIcon').css('transform', 'rotate(180deg)');
     sidebarVisible = false;
@@ -106,7 +65,7 @@ function hideSidebarFast() {
 }
 
 function showSidebar() {
-    var c = $('#cellContent');
+    let c = $('#cellContent');
     c.addClass('transitionWidth');
     c.removeClass('colspan5').addClass('colspan4');
     $('#toggleSidebarButtonIcon').css('transform', '');

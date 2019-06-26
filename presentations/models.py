@@ -63,7 +63,8 @@ class PresentationTimeSlot(models.Model):
     """
     SlotTypes = (
         (1, 'Assessment'),
-        (2, 'Break')
+        (2, 'Break'),
+        (3, 'Cancelled')
     )
     DateTime = models.DateTimeField()
     Presentations = models.ForeignKey(PresentationSet, on_delete=models.CASCADE, related_name="timeslots")

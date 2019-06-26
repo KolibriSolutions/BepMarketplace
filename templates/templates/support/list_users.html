@@ -2,8 +2,13 @@
 {% load index_tags %}
 {% block body %}
     <h1>List all users</h1>
+    <p>
+        After first login, users are 'unverified'. Verify them using the green 'Verify' button to allow them to use the system.
+        To disallow someone to login, press 'Disable' to disable the user.
+        Use the 'groups' button to give users different permissions in the system.
+    </p>
     <a href="{% url 'support:groupadministratorsform' %}" class="button primary">Capacity Group Administration</a>
-{#    <a href="{% url 'support:capacitygroupadministration' %}" class="button primary">Capacity Group Administration</a>#}
+    {#    <a href="{% url 'support:capacitygroupadministration' %}" class="button primary">Capacity Group Administration</a>#}
     <a href="{% url 'index:edit_tracks' %}" class="button primary">Track heads</a>
     <a href="{% url 'support:verifyassistants' %}" class="button primary">Verify type2staffunverified</a>
 
@@ -70,9 +75,9 @@
                             {# student #}
                             <a href="{% url 'support:overruleusermeta' u.id %}" class="button primary">User Meta</a>
                         {% endif %}
-                            {% if u.is_active %}<a href="{% url 'support:toggledisable' u.id %}" class="button primary">Disable</a>
-                            {% else %}<a href="{% url 'support:toggledisable' u.id %}" class="button primary">Enable</a>
-                            {% endif %}
+                        {% if u.is_active %}<a href="{% url 'support:toggledisable' u.id %}" class="button warning">Disable</a>
+                        {% else %}<a href="{% url 'support:toggledisable' u.id %}" class="button success">Enable</a>
+                        {% endif %}
                     </td>
                     {% if user.is_superuser %}
                         <td>

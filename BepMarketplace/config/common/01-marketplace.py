@@ -61,7 +61,7 @@ ALLOWED_PROPOSAL_ASSISTANT_DOMAINS = ALLOWED_PROJECT_ASSISTANT_DOMAINS
 STUDENT_EMAIL_DOMAINS = ['student.tue.nl', ]
 ALLOWED_PRIVATE_STUDENT_DOMAINS = STUDENT_EMAIL_DOMAINS
 
-CATEGORY_GRADE_QUANTIZATION = 0.05
+CATEGORY_GRADE_QUANTIZATION = 0.25
 
 # How long to cache models that are assumed static. (Group types, timeslots, timphases)
 STATIC_OBJECT_CACHE_DURATION = 15*60  # 15 minutes.
@@ -71,7 +71,6 @@ STATIC_OBJECT_CACHE_DURATION = 15*60  # 15 minutes.
 INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'distributions.apps.DistributionsConfig',
-    'djangosaml2_custom.apps.Djangosaml2CustomConfig',
     'download.apps.DownloadConfig',
     'godpowers.apps.GodpowersConfig',
     'index.apps.IndexConfig',
@@ -87,6 +86,7 @@ INSTALLED_APPS = [
     'two_factor_custom.apps.TwoFactorCustomConfig',
     'osirisdata.apps.OsirisdataConfig',
     'canvas.apps.CanvasConfig',
+    'shen_ring.apps.ShenRingConfig',
 
     'django.contrib.admin',
     'django.contrib.admindocs',
@@ -102,7 +102,6 @@ INSTALLED_APPS = [
 
     'channels',
     'csp',
-    'djangosaml2',
     'impersonate',
     'openpyxl',
     'sendfile',

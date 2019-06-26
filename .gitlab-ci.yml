@@ -1,4 +1,4 @@
-mastermp:
+bepmp:
   script:
     - virtualenv bepmarketplaceenv
     - . bepmarketplaceenv/bin/activate

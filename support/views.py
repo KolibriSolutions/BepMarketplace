@@ -1,5 +1,6 @@
 import json
-import base64
+import json
+import logging
 from datetime import date, datetime
 
 from django.conf import settings
@@ -20,19 +21,18 @@ from general_view import get_all_staff, get_grouptype
 from index.decorators import group_required
 from index.models import Track, UserMeta
 from presentations.exports import get_list_presentations_xlsx
-from presentations.models import PresentationSet
+from presentations.models import PresentationSet, PresentationTimeSlot
 from proposals.models import Proposal
 from proposals.utils import get_all_proposals
-from results.models import CategoryResult
-from results.models import GradeCategory
-from students.models import Distribution
-from timeline.models import TimeSlot
+from results.models import CategoryResult, GradeCategory
+from students.models import Distribution, TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number, get_recent_timeslots
 from .exports import get_list_students_xlsx, get_list_distributions_xlsx, get_list_projects_xlsx
 from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm, UserGroupsForm, \
     GroupadministratorEdit, CapacityGroupForm
-from .models import GroupAdministratorThrough, PublicFile, CapacityGroup, mail_staff_options, mail_student_options, MailTemplate
+from .models import GroupAdministratorThrough, PublicFile, CapacityGroup, mail_staff_options, mail_student_options, MailTemplate, Mailing
 
+logger = logging.getLogger('django')
 
 #########
 # Mailing#
@@ -122,7 +122,10 @@ def mailing(request, pk=None):
                     elif s == 'assessors':
                         dists = Distribution.objects.filter(TimeSlot=ts).distinct()
                         for d in dists:
-                            recipients_staff.update(d.presentationtimeslot.Presentations.Assessors.all())
+                            try:
+                                recipients_staff.update(d.presentationtimeslot.Presentations.Assessors.all())
+                            except PresentationTimeSlot.DoesNotExist:
+                                continue
                         recipients_staff.update(User.objects.filter(tracks__isnull=False))  # add trackheads
             # students
             students = User.objects.filter(
@@ -148,18 +151,18 @@ def mailing(request, pk=None):
             if request.user not in recipients_students or \
                     request.user not in recipients_staff:
                 recipients_staff.update([request.user])
+
+            mailing_obj = Mailing(
+                Subject=form.cleaned_data['Subject'],
+                Message=form.cleaned_data['Message'],
+            )
+            mailing_obj.save()
+            mailing_obj.RecipientsStaff.set(recipients_staff)
+            mailing_obj.RecipientsStudents.set(recipients_students)
             context = {
-                'message': form.cleaned_data['Message'],
-                'subject': form.cleaned_data['Subject'],
-                'recipients_staff': [(u.usermeta.get_nice_name(), u.email) for u in recipients_staff],
-                'recipients_students': [(u.usermeta.get_nice_name(), u.email) for u in recipients_students],
                 'form': ConfirmForm(initial={'confirm': True}),
                 'template': form.cleaned_data['SaveTemplate'],
-                'jsondata': json.dumps({'message': base64.b64encode(form.cleaned_data['Message'].encode()).decode(),
-                             'subject': base64.b64encode(form.cleaned_data['Subject'].encode()).decode(),
-                             'recipients_staff': [(u.usermeta.get_nice_name(), u.email) for u in recipients_staff],
-                             'recipients_students': [(u.usermeta.get_nice_name(), u.email) for u in recipients_students],
-                             })
+                'mailing': mailing_obj,
             }
             return render(request, "support/email_confirm.html",
                           context=context)
@@ -184,31 +187,24 @@ def mailing(request, pk=None):
 @group_required('type3staff')
 def confirm_mailing(request):
     if request.method == 'POST':
-        jsondata = request.POST.get('jsondata', None)
-        if jsondata is None:
-            return render(request, 'base.html', {'Message': 'Invalid POST data'})
-        try:
-            data = json.loads(jsondata)  # json blob with message and recipients
-            data['message'] = base64.b64decode(data['message']).decode()
-            data['subject'] = base64.b64decode(data['subject']).decode()
-        except ValueError:
-            return render(request, 'base.html', {'Message': 'Invalid JSON POST data.'})
-
+        mailing_obj = get_object_or_404(Mailing, id=request.POST.get('mailingid', None))
         form = ConfirmForm(request.POST)
         if form.is_valid():
             # loop over all collected email addresses to create a message
             mails = []
-            for recipient in data['recipients_students'] + data['recipients_staff']:
+            for recipient in mailing_obj.RecipientsStaff.all() | mailing_obj.RecipientsStudents.all():
                 mails.append({
                     'template': 'email/supportstaff_email.html',
-                    'email': recipient[1],
-                    'subject': data['subject'],
+                    'email': recipient.email,
+                    'subject': mailing_obj.Subject,
                     'context': {
-                        'message': data['message'],
-                        'name': recipient[0],
+                        'message': mailing_obj.Message,
+                        'name': recipient.usermeta.get_nice_name(),
                     }
                 })
             EmailThreadTemplate(mails).start()
+            mailing_obj.Sent = True
+            mailing_obj.save()
             return render(request, "support/email_progress.html")
         raise PermissionDenied('The confirm checkbox was unchecked.')
     raise PermissionDenied("No post data supplied!")
@@ -480,7 +476,7 @@ def user_info(request, pk):
 @group_required('type3staff', 'type6staff')
 def list_staff(request):
     """
-    List all staff with a distributed proposal
+    List all staff with a distributed projects
 
     :param request:
     :return:
@@ -705,11 +701,9 @@ def toggle_disable_user(request, pk):
     :param pk:
     :return:
     """
-
     usr = get_object_or_404(User, pk=pk)
     usr.is_active = not usr.is_active
     usr.save()
-
     return redirect('support:listusers')
 
 
