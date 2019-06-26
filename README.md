@@ -1,13 +1,14 @@
 # BEP Marketplace
-This repo holds the source code for the BEP Marketplace as developed by Kolibri Solutions for the ELE department of the TU/e.
-The BEP Marketplace facilitates the organisation of the Bachelor End Projects of the department. Staff members can enter proposals for projects, these are checked by track heads. Then students can make their preference known after wich the projects are distributed according to a set of rules. Then students execute their distributed projects and can upload deliverables. In the end the resulting grades are entered in the system by staff members.
-The system unifies and digitizes the administration of the BEP system making it streamlined and as efficient as possible. For more information about the inner workings please consult the documentation. These are written in the sphinx system.
+This repo holds the source code for the BEP Marketplace as developed by Kolibri Solutions for the ELE department of the TU/e.  
+The BEP Marketplace facilitates the organisation of the Bachelor End Projects of the department. Staff members can enter proposals for projects, these are checked by track heads. Then students can make their preference known after wich the projects are distributed according to a set of rules. Then students execute their distributed projects and can upload deliverables. In the end the resulting grades are entered in the system by staff members.  
+The system unifies and digitizes the administration of the BEP system making it streamlined and as efficient as possible. For more information about the inner workings please consult the documentation. These are written in the sphinx system.  
+The commit history is a summary of our internal repository. They do not reflect one on one the commit history of development.
 
 # Installing the marketplace
 ## Single sign-on
-The marketplace uses the SAML single sign on system of the TU/e. This enables TU/e members to login with their TU/e credentials.
-If you decide to host your own version of the Marketplace you have to change the SAML settings to that of your own organization.
-For more information check the documentation of PySAML2 at ```http://pysaml-test.readthedocs.io/en/latest/```
+The marketplace uses the SAML single sign on system of the TU/e through a proxy, called Shen Ring. This enables TU/e members to login with their TU/e credentials.
+If you decide to host your own version of the Marketplace you have to host your own shen ring or change the shen_ring app to use another oauth source.
+For more information check the Shen Ring repo
 
 ## Installing necesarry software
 1. install latest version of python3
@@ -24,6 +25,7 @@ For more information check the documentation of PySAML2 at ```http://pysaml-test
 1. install postgress
 1. install redis
 1. setup postgress database, update ```secrets.py``` with correct credentials if necesarry (In the variables ```SECRET_KEY_IMPORT``` and ```DATABASE_PASSWORD_IMPORT```)
+1. setup an oauth application in for example Shen Ring and set the credentials in ```secret.py``` with the variables ```SHEN_RING_CLIENT_ID``` and ```SHEN_RING_CLIENT_SECRET```
 1. setup redis, the default config is usually enough as long as it listens on localhost. update settings.py if you change default settings such as port
 1. ```python manage.py collectstatic```
 1. setup nginx, an example nginx.conf can be found in the deployement folder
@@ -32,14 +34,12 @@ For more information check the documentation of PySAML2 at ```http://pysaml-test
 
 ## First time startup
 1. change the contact email, name and hostname to your own at the top of the ```settings.py``` and ```settings_development.py``` files
-1. ```python manage.py makemigrations < names of all apps >```
 1. ```python manage.py migrate```
 1. ```python manage.py createsuperuser```
 1. fill in superuser credentials of your choosing
 1. ```python init_populate.py --mode {production/debug depending on your setting} --create-dummy-data {if you want random data for development}```
 1. browse to /two_factor/login/ and login with superuser, this bypasses the SAML SSO.
 1. put your superuser account in the type3staffgroup
-1. create a key at tracking->telemetrykey and put it in a ```telemetry_key.py``` file with ```API_KEY=<key>```
 
 ### For development
 * for development put --settings=BepMarketplace.settings_development after each ```manage.py``` command
@@ -49,11 +49,9 @@ For more information check the documentation of PySAML2 at ```http://pysaml-test
 For managing deployment systemd scripts are provided and recommended to be used. The following instructions are for using systemd.
 1. copy all systemd scripts and the nginx.conf to the correct system locations
 1. start and enable nginx and redis servers
-1. the following commands setup 4 http workers and 2 websockets. adjust numbers if necesarry
-  * ```systemctl enable httpworker@{1..4}.service```
-  * ```systemctl enable websocketworker@{1..2}.service```
-1. start and enable httpworker.target, websocketworker.target and daphne
-1. start and enable telemetry (please note that the marketplace needs to be and a telemetry key  up for the daemon to connect)
+1. depending on your ssl setup you should either keep or disable the environment line in the daphne service file with the setting ```OAUTHLIB_INSECURE_TRANSPORT=1```. If you terminate your ssl safely before reaching daphne then keep this setting. This is the most common scenario.
+1. start the daphne service, this is enough to run the whole marketplace
+
 
 ### Acknowledgments
 This system is originally created for the ELE department of the TU/e, which paid for its development. Kolibri Solutions would like to thank the department for their support and critical feedback during development.
