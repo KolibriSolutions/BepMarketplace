@@ -10,8 +10,9 @@ RuntimeDirectory=daphne
 PIDFile=/run/daphne/pid
 User=django
 Group=django
+Environment=OAUTHLIB_INSECURE_TRANSPORT=1
 WorkingDirectory=/home/django/BepMarketplaceELE
-ExecStart=/usr/local/bin/daphne -u /tmp/daphne.sock BepMarketplace.asgi:channel_layer
+ExecStart=/home/django/bepmarketplaceenv/bin/daphne -u /tmp/daphne.sock BepMarketplace.asgi:application
 ExecStop=/bin/kill -s TERM $MAINPID
 [Install]
 WantedBy=multi-user.target

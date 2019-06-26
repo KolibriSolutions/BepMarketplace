@@ -522,20 +522,6 @@ def list_staff_projects(request, pk):
                   {"title": "Proposals from " + user.usermeta.get_nice_name(), "proposals": projects})
 
 
-# Does not filter on timeslot, depricated.
-# @not_minified_response
-# @group_required("type3staff")
-# def list_staff_xlsx(request):
-#     """
-#     Same as supportListStaff but as XLSX
-#     """
-#     staff = get_all_staff().filter(Q(groups=get_grouptype("2")) | Q(groups=get_grouptype("1")))
-#     file = get_list_staff_xlsx(staff)
-#     response = HttpResponse(content=file)
-#     response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#     response['Content-Disposition'] = 'attachment; filename=marketplace-staff-list.xlsx'
-#     return response
-
 @group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
 def list_students(request, timeslot):
     """

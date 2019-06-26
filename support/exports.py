@@ -86,64 +86,45 @@ def get_list_students_xlsx(des, typ):
 
         ws.append(row)
 
+    # second tab with prv data
+
+    ws = wb.create_sheet(title='prv-aspects')
+
+    ws['A1'] = "Students grades from Bep Marketplace (only Aspects related to PRV)"
+    ws['A1'].style = 'Headline 2'
+    ws['F1'] = "Exported on: " + timestamp()
+    header = ["Student id", "Student name", "Project", "Responsible teacher"]
+
+    aspects = []  # list of PRV related aspects.
+    for cat in cats:  # each category
+        for aspect in cat.aspects.all():
+            if 'prv' in aspect.Name.lower() or 'prv' in aspect.Description.lower():
+                aspects.append([cat, aspect])
+                header.append(aspect.Name)
+
+    ws.append(header)
+    cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
+            'V', 'W', 'X', 'Y', 'Z'][:len(header)]
+    for col in cols:
+        ws[col + '2'].style = 'Headline 3'
+
+    for colnr in range(1, len(header)):  # set width
+        ws.column_dimensions[cols[colnr]].width = 25
+
+    for d in des:
+        reslist = []
+        for c, a in aspects:
+            try:
+                reslist.append(d.results.get(Category=c).aspectresults.get(CategoryAspect=a).Grade)
+            except:
+                reslist.append('-')
+        row = [d.Student.usermeta.Studentnumber, d.Student.usermeta.get_nice_fullname(), d.Proposal.Title,
+               d.Proposal.ResponsibleStaff.usermeta.get_nice_name()]
+        for r in reslist:
+            row.append(r)
+        ws.append(row)
+
     return save_virtual_workbook(wb)
-
-
-#  Does not filter on timeslot, depricated.
-# def get_list_staff_xlsx(staff):
-#     """
-#     Lists all staff from the marketplace, with number of proposals and distributions
-#
-#     :param staff:
-#     :return:
-#     """
-#
-#     def nint(nr):
-#         """
-#
-#         :param nr:
-#         :return:
-#         """
-#         if nr is None:
-#             return 0
-#         else:
-#             return int(nr)
-#
-#     wb = Workbook()
-#
-#     # grab the active worksheet
-#     ws = wb.active
-#     ws.title = "staff"
-#
-#     ws['A1'] = "Staff from Bep Marketplace"
-#     ws['A1'].style = 'Headline 2'
-#     ws['F1'] = "Exported on: " + timestamp()
-#     header = ["Name", "Email", "Proposals responsible", "Proposals assistant", "Proposals total",
-#               "Distribution responsible ", "Distributions assistant", "Distributions total"]
-#
-#     ws.column_dimensions['A'].width = 25  # name
-#     ws.column_dimensions['B'].width = 25  # mail
-#
-#     ws.append(header)
-#
-#     for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
-#         ws[col + '2'].style = 'Headline 3'
-#
-#     for s in staff:
-#         pt1 = s.proposalsresponsible.count()
-#         pt2 = s.proposals.count()
-#         pts = pt1 + pt2
-#         dt1 = nint(s.proposalsresponsible.all().annotate(Count('distributions')).aggregate(Sum('distributions__count'))[
-#                        'distributions__count__sum'])
-#         dt2 = nint(s.proposals.all().annotate(Count('distributions')).aggregate(Sum('distributions__count'))[
-#                        'distributions__count__sum'])
-#         dts = dt1 + dt2
-#         row = [s.usermeta.get_nice_name(), s.email,
-#                pt1, pt2, pts,
-#                dt1, dt2, dts
-#                ]
-#         ws.append(row)
-#     return save_virtual_workbook(wb)
 
 
 def get_list_distributions_xlsx(proposals):

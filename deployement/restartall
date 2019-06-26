@@ -1,6 +1,0 @@
-systemctl stop daphne
-systemctl stop httpworker.target
-systemctl stop websocketworker.target
-systemctl start httpworker.target
-systemctl start websocketworker.target
-systemctl start daphne

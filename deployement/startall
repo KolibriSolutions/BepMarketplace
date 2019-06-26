@@ -1,3 +1,0 @@
-systemctl start httpworker.target
-systemctl start websocketworker.target
-systemctl start daphne
