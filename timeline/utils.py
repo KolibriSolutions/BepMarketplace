@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from datetime import datetime
 
 from django.conf import settings
@@ -19,7 +23,7 @@ def get_timeslot():
     if ts:
         return ts
     else:
-        ts = TimeSlot.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now()))
+        ts = TimeSlot.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now())).order_by('Begin')
         if not ts:
             return None
         cache.set('timeslot', ts[0], settings.STATIC_OBJECT_CACHE_DURATION)
@@ -40,7 +44,7 @@ def get_timephase():
     else:
         # act as if there isn't a timephase when there is no timeslot.
         if get_timeslot() is not None:
-            tp = TimePhase.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now()))
+            tp = TimePhase.objects.filter(Q(TimeSlot=get_timeslot()) & Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now())).order_by('Begin')
             if not tp:
                 return None
             cache.set('timephase', tp[0], settings.STATIC_OBJECT_CACHE_DURATION)

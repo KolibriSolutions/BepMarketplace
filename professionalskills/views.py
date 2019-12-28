@@ -1,10 +1,14 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 import random
 import zipfile
 from datetime import datetime
 from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
 from django.forms import modelformset_factory
 from django.http import HttpResponse
@@ -14,14 +18,16 @@ from django.utils.html import format_html
 from django.utils.timezone import localtime
 from xhtml2pdf import pisa
 
-from index.decorators import group_required, student_only
-from professionalskills.decorators import can_access_professionalskills
-from timeline.decorators import phase_required
 from distributions.utils import get_distributions
 from general_form import ConfirmForm
 from general_mail import send_mail, EmailThreadTemplate
+from general_model import delete_object
 from general_view import get_grouptype, get_all_students
+from index.decorators import group_required, student_only
+from presentations.utils import planning_public
+from professionalskills.decorators import can_access_professionalskills
 from students.models import Distribution
+from timeline.decorators import phase_required
 from timeline.utils import get_timeslot, get_timephase_number
 from .forms import FileTypeModelForm, StaffResponseForm, StudentGroupForm, StudentGroupChoice, FileExtensionForm, StaffResponseFileAspectResultForm, StaffResponseFileAspectForm
 from .models import FileType, StaffResponse, StudentFile, StudentGroup, FileExtension, StaffResponseFileAspectResult, StaffResponseFileAspect
@@ -151,7 +157,7 @@ def delete_filetype(request, pk):
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
         if form.is_valid():
-            obj.delete()
+            delete_object(obj)
             return render(request, 'base.html', {
                 'Message': 'File type deleted.',
                 'return': 'professionalskills:filetypelist',
@@ -266,7 +272,7 @@ def delete_filetype_aspect(request, pk):
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
         if form.is_valid():
-            obj.delete()
+            delete_object(obj)
             return render(request, 'base.html', {
                 'Message': 'File type aspect deleted.',
                 'return': 'professionalskills:filetypeaspects',
@@ -334,6 +340,31 @@ def list_student_files(request, pk):
         raise PermissionDenied("Please have your account verified first.")
 
     dist = get_object_or_404(Distribution, pk=pk)
+
+    # check permissions
+    if get_grouptype('3') in request.user.groups.all() or \
+            get_grouptype('6') in request.user.groups.all() or \
+            request.user in dist.Proposal.Assistants.all() or \
+            request.user == dist.Proposal.ResponsibleStaff or \
+            request.user == dist.Proposal.Track.Head or \
+            request.user == dist.Student:
+        # allowed
+        pass
+    elif planning_public():
+        try:
+            if request.user in dist.presentationtimeslot.Presentations.Assessors.all():
+                # assessor can view files
+                pass
+            else:
+                # user is not assessor or planning is not public
+                raise PermissionDenied("You are not allowed to view these files")
+        except:
+            # presentations not yet planned or presentationoptions do not exist.
+            raise PermissionDenied("You are not allowed to view these files")
+    else:
+        raise PermissionDenied("You cannot view this file list.")
+
+    # check edit rights
     if dist.TimeSlot == get_timeslot():
         # current timeslot
         respondrights = False
@@ -345,10 +376,6 @@ def list_student_files(request, pk):
                 or request.user == dist.Proposal.Track.Head \
                 or get_grouptype('3') in request.user.groups.all():
             respondrights = True
-        elif get_grouptype('6') in request.user.groups.all():
-            pass
-        else:
-            raise PermissionDenied("You are not allowed to view these files")
     else:
         # no changing of history.
         respondrights = False
@@ -417,14 +444,32 @@ def view_response(request, pk):
         raise PermissionDenied("Please have your account verified first.")
 
     fileobj = get_object_or_404(StudentFile, pk=pk)
-    # allow type3 and type6 to view results and all responsibles.
-    if not get_grouptype('3') in request.user.groups.all() and not get_grouptype('6') in request.user.groups.all():
-        if (request.user not in fileobj.Distribution.Proposal.Assistants.all() and
-                request.user != fileobj.Distribution.Proposal.ResponsibleStaff and
-                request.user != fileobj.Distribution.Proposal.Track.Head and
-                request.user != fileobj.Distribution.Student):
-            raise PermissionDenied("You cannot view this file response.")
+    dist = fileobj.Distribution
 
+    # check permissions
+    if get_grouptype('3') in request.user.groups.all() or \
+            get_grouptype('6') in request.user.groups.all() or \
+            request.user in dist.Proposal.Assistants.all() or \
+            request.user == dist.Proposal.ResponsibleStaff or \
+            request.user == dist.Proposal.Track.Head or \
+            request.user == dist.Student:
+        # allowed
+        pass
+    elif planning_public():
+        try:
+            if request.user in dist.presentationtimeslot.Presentations.Assessors.all():
+                # assessor can view files
+                pass
+            else:
+                # user is not assessor or planning is not public
+                raise PermissionDenied("You are not allowed to view these files")
+        except:
+            # presentations not yet planned or presentationoptions do not exist.
+            raise PermissionDenied("You are not allowed to view these files")
+    else:
+        raise PermissionDenied("You cannot view this file list.")
+
+    # get results
     try:
         responseobj = fileobj.staffresponse
     except StaffResponse.DoesNotExist:
@@ -800,7 +845,7 @@ def edit_extensions(request):
     if request.method == 'POST':
         formset = form_set(request.POST)
         if formset.is_valid():
-            formset.save()
+            formset.save()  # manytomany field, so will always be set_null on delete of extension.
             return render(request, "base.html", {"Message": "File extensions saved!", "return": "index:index"})
     return render(request, 'GenericForm.html',
                   {'formset': formset, 'formtitle': 'All student file extensions', 'buttontext': 'Save'})

@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
@@ -13,7 +17,7 @@ from proposals.models import Proposal
 from proposals.models import ProposalAttachment, ProposalImage
 from support.models import PublicFile
 from timeline.models import TimeSlot
-
+from presentations.utils import planning_public
 """
 Uploads go to /media/ directory
 Download links point to /download
@@ -122,7 +126,7 @@ def student_files(request, fileid, distid=''):
     # first try PK, then filename
     try:
         obj = StudentFile.objects.get(id=fileid)
-    except:
+    except (StudentFile.DoesNotExist, ValueError):
         # accessed by distribution, then by filename, (the old way)
         obj = get_object_or_404(StudentFile, File='dist_{}/{}'.format(distid, fileid))
 
@@ -132,7 +136,21 @@ def student_files(request, fileid, distid=''):
             or request.user in obj.Distribution.Proposal.Assistants.all() \
             or obj.Distribution.Student == request.user:
         # Allowed to view this file
-        return sendfile(request, obj.File.path, attachment=True, attachment_filename=obj.OriginalName)
+        pass
+    elif planning_public():
+        try:
+            if request.user in obj.Distribution.presentationtimeslot.Presentations.Assessors.all():
+                # assessor can view files
+                pass
+            else:
+                # user is not assessor or planning is not public
+                raise PermissionDenied("You are not allowed to view this file")
+        except:
+            # presentation not yet planned or presentationoptions do not exist.
+            raise PermissionDenied("You are not allowed to view this file")
+
     else:
         # not allowed
         raise PermissionDenied("You are not allowed to view this file.")
+
+    return sendfile(request, obj.File.path, attachment=True, attachment_filename=obj.OriginalName)

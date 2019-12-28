@@ -1,4 +1,7 @@
-# Email is using a postfix smarthost, so these settings are not important
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
 EMAIL_HOST_USER = ''

@@ -1,6 +1,11 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 """
 General functions/classes used in tests.
 """
+
 import re
 import sys
 import traceback
@@ -144,7 +149,8 @@ class ViewsTest(TestCase):
 
         self.p_all_this =       [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 403, 200, 302]  # staff of this proposal
         self.p_all_this_pres=   [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 200, 200, 302]  # staff of this proposal including ta-1
-        self.p_all_this_dist=   [403, 200, 403, 200, 403, 200, 403, 200, 200, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # staff of this proposal, as distributed to r-s (not t-p!). Also type6. For prv (no assessors)
+        self.p_all_this_dist=   [403, 200, 403, 200, 403, 200, 403, 200, 200, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # staff of this proposal, as distributed to r-s (not t-p!) and assessor. Also type6.
+        self.p_all_this_dist_ta=[403, 200, 403, 200, 403, 200, 403, 200, 200, 403, 403, 403, 403, 200, 403, 200, 200, 302]  # staff of this proposal, as distributed to r-s (not t-p!) and assessor. Also type6. and assessor
         self.p_no_assistant =   [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 200, 302]  # staff of this proposal except assistants. For up/downgrading and edit proposal.
         self.p_staff_prv_results=[403, 200, 403, 200, 403, 200, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal except assistants including assessors. For results staff grading form, without assessor.
         self.p_staff_results =  [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal except assistants including assessors. For results staff grading form.

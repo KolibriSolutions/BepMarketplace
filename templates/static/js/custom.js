@@ -1,3 +1,10 @@
+/*
+ * Bep Marketplace ELE
+ * Copyright (c) 2016-2019 Kolibri Solutions
+ * License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+ *
+ */
+
 /**
  * Custom javascript for all pages of Marketplaces ELE
  * Jeroen van Oorschot, Kolibri Solutions 2016-2019
@@ -7,14 +14,6 @@
 let sidebar = null;
 let sidebarVisible = true;
 
-//display warning for unsupported browsers
-window.onload = function () {
-    if (!("MutationObserver" in window)) {
-        document.body.innerHTML += "<div style=\"warning-banner\">" +
-            "Your browser is outdated and may not be compatible with this website. Please update your browser or use another browser." +
-            "</div>"
-    }
-};
 $(function () {
         $('#toggleSidebarButton')[0].addEventListener('click', function () {
             toggleSidebar()

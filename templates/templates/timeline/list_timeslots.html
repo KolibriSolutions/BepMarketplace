@@ -2,6 +2,9 @@
 {% block body %}
     <h1>Time slots</h1>
     <p>Current time slot: {{ cur }}</p>
+    <p>
+    Note that all dates are inclusive. The end day of a timeslot should be at least one day before the start day of the next timeslot. If timeslots overlap, the one with oldest begin day is taken.
+    </p>
     <a href="{% url "timeline:add_timeslot" %}" class="button primary">Add time slot</a>
     <a href="{% url "timeline:copy_timephases" %}" class="button primary">Copy time phases</a>
     <table class="table bordered hovered striped datatable">

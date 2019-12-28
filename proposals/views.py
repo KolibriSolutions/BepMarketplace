@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from itertools import chain
 
 from django.conf import settings
@@ -14,7 +18,7 @@ from render_block import render_block_to_string
 from api.views import upgrade_status_api, downgrade_status_api
 from distributions.utils import get_distributions
 from general_mail import mail_proposal_all, mail_proposal_private
-from general_model import print_list
+from general_model import print_list, delete_object
 from general_view import get_grouptype, truncate_string
 from index.decorators import group_required
 from index.models import Track
@@ -192,7 +196,6 @@ def list_track(request, timeslot=None):
         'timeslots': get_recent_timeslots(),
         'timeslot': ts,
     })
-
 
 
 @group_required('type3staff', 'type6staff')
@@ -521,7 +524,7 @@ def delete_project(request, pk):
         if 'ask' in request.META['HTTP_REFERER']:
             # make sure previous page is askdelete
             title = obj.Title
-            obj.delete()
+            delete_object(obj)
             return render(request, "proposals/message_project.html",
                           {"Message": "Proposal " + title + " is removed", "return": ""})
     raise PermissionDenied("You should not access this page directly")
@@ -573,7 +576,6 @@ def downgrade_status(request, pk):
         r = downgrade_status_api(request, pk)
         return render(request, "proposals/message_project.html", {"Message": r.content.decode(), "Proposal": obj},
                       status=r.status_code)
-
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')

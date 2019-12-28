@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 import logging
 import re
 from datetime import datetime
@@ -10,7 +14,7 @@ from django.core.files.base import ContentFile
 from django.core.files.images import get_image_dimensions
 from django.forms import ValidationError
 
-from BepMarketplace.util import get_user
+from BepMarketplace.utils import get_user
 from general_form import clean_file_default, FileForm
 from general_mail import mail_project_private, mail_project_single
 from general_model import get_ext, print_list
@@ -288,9 +292,9 @@ class ProjectForm(forms.ModelForm):
             'Group': widgets.MetroSelect,
             'NumStudentsMin': widgets.MetroNumberInputInteger,
             'NumStudentsMax': widgets.MetroNumberInputInteger,
-            'GeneralDescription': widgets.MetroMultiTextInput,
-            'StudentsTaskDescription': widgets.MetroMultiTextInput,
-            'ExtensionDescription': widgets.MetroMultiTextInput,
+            'GeneralDescription': widgets.MetroMarkdownInput,
+            'StudentsTaskDescription': widgets.MetroMarkdownInput,
+            'ExtensionDescription': widgets.MetroMarkdownInput,
             'TimeSlot': widgets.MetroSelect,
             'Private': widgets.MetroSelectMultiple
         }

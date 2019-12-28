@@ -27,6 +27,7 @@
                     <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'students' %}">Students & Grades</a>
                     <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'presentations' %}">Presentations</a>
                     <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'nonfull' %}">Non-full projects</a>
+                    <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'publicfiles' %}">Public Files</a>
                 </td>
                 <td>
                     {% for filetype in timeslot.filetypes.all %}

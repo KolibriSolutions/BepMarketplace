@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
@@ -25,10 +29,10 @@ class Application(models.Model):
 
 class Distribution(models.Model):
     """A student distributed to a proposal.x"""
-    Proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE, related_name='distributions')
+    Proposal = models.ForeignKey(Proposal, on_delete=models.PROTECT, related_name='distributions')
     Student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='distributions')
-    TimeSlot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE, related_name='distributions')
-    Application = models.OneToOneField(Application, on_delete=models.CASCADE, blank=True, null=True, related_name='distributions')
+    TimeSlot = models.ForeignKey(TimeSlot, on_delete=models.PROTECT, related_name='distributions')
+    Application = models.OneToOneField(Application, on_delete=models.SET_NULL, blank=True, null=True, related_name='distributions')
 
     def TotalGrade(self):
         """

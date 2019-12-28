@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from datetime import datetime
 
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -5,7 +9,7 @@ from django.shortcuts import get_object_or_404, render
 
 from index.decorators import group_required
 from general_form import ConfirmForm
-from general_model import print_list
+from general_model import print_list, delete_object
 from .forms import TimePhaseForm, TimeSlotForm, TimePhaseCopyForm
 from .models import TimeSlot, TimePhase
 from .utils import get_timeslot, get_timephase
@@ -227,7 +231,7 @@ def delete_timephase(request, timephase):
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
         if form.is_valid():
-            obj.delete()
+            delete_object(obj)
             return render(request, 'base.html', {
                 'Message': '{} deleted.'.format(name),
                 'return': 'timeline:list_timephases',

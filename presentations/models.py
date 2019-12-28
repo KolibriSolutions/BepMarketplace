@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from datetime import timedelta
 
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -42,10 +46,10 @@ class PresentationSet(models.Model):
     """
     A set of presentations. A set is a number of presentations in the same room for one track.
     """
-    PresentationOptions = models.ForeignKey(PresentationOptions, on_delete=models.CASCADE,
+    PresentationOptions = models.ForeignKey(PresentationOptions, on_delete=models.PROTECT,
                                             related_name="presentationsets")
-    PresentationRoom = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="presentationroom")
-    AssessmentRoom = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="assessmentroom")
+    PresentationRoom = models.ForeignKey(Room, on_delete=models.PROTECT, related_name="presentationroom")
+    AssessmentRoom = models.ForeignKey(Room, on_delete=models.PROTECT, related_name="assessmentroom")
     Track = models.ForeignKey(Track, on_delete=models.CASCADE, blank=True, null=True)
     Assessors = models.ManyToManyField(get_user_model(), blank=True)
     DateTime = models.DateTimeField()

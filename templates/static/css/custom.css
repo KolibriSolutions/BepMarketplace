@@ -1,3 +1,10 @@
+/*
+ * Bep Marketplace ELE
+ * Copyright (c) 2016-2019 Kolibri Solutions
+ * License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+ *
+ */
+
 /*Extra spacing for inline images*/
 [class*=" mif-"], [class^="mif-"] {
     transform: translate(-2px, 0);
@@ -259,3 +266,19 @@ img.promotionlogo {
 @font-face{font-family:"PT Serif Caption";font-style:normal;font-weight:400;src:local("Cambria"),local("PT Serif Caption"),local("PTSerif-Caption"),url(https://themes.googleusercontent.com/static/fonts/ptserifcaption/v6/7xkFOeTxxO1GMC1suOUYWWhBabBbEjGd1iRmpyoZukE.woff)format('woff')}@font-face{font-family:"Open Sans Light";font-style:normal;font-weight:300;src:local("Segoe UI Light"),local("Open Sans Light"),local("OpenSans-Light"),url(https://themes.googleusercontent.com/static/fonts/opensans/v8/DXI1ORHCpsQm3Vp6mXoaTZ1r3JsPcQLi8jytr04NNhU.woff)format('woff')}@font-face{font-family:"Open Sans";font-style:normal;font-weight:400;src:local("Segoe UI"),local("Open Sans"),local("OpenSans"),url(https://themes.googleusercontent.com/static/fonts/opensans/v8/K88pR3goAWT7BTt32Z01mz8E0i7KZn-EPnyo3HZu7kw.woff)format('woff')}@font-face{font-family:"Open Sans Bold";font-style:normal;font-weight:700;src:local("Segoe UI Bold"),local("Open Sans Bold"),local("OpenSans-Bold"),url(https://themes.googleusercontent.com/static/fonts/opensans/v8/k3k702ZOKiLJc3WVjuplzJ1r3JsPcQLi8jytr04NNhU.woff)format('woff')}
  */
 
+.project_label {
+    display: inline-block;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+    line-height: 1.1;
+    font-size: 80%;
+    padding: 2px 5px 3px;
+    background-color: #eeeeee;
+    border-radius: 2px;
+    color: white;
+    vertical-align: middle;
+}
+
+div.popover {
+    /* make sure hints (help_texts) on forms are shown above markdown form */
+    z-index: 100;
+}

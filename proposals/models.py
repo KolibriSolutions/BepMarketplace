@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 import logging
 from datetime import datetime
 
@@ -32,7 +36,7 @@ class Proposal(models.Model):
     Title = models.CharField(max_length=100)
     ResponsibleStaff = models.ForeignKey(User, on_delete=models.PROTECT, related_name='proposalsresponsible')
     Assistants = models.ManyToManyField(User, related_name='proposals', blank=True)
-    Group = models.ForeignKey(CapacityGroup, on_delete=models.CASCADE)
+    Group = models.ForeignKey(CapacityGroup, on_delete=models.PROTECT)
     NumStudentsMin = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(10)])
     NumStudentsMax = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(10)])
     GeneralDescription = models.TextField()
@@ -47,7 +51,10 @@ class Proposal(models.Model):
     Created = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return self.Title + " from " + self.ResponsibleStaff.username
+        try:
+            return '{} from {}'.format(self.Title, self.ResponsibleStaff.usermeta.get_nice_name())
+        except:
+            return '{} from {}'.format(self.Title, self.ResponsibleStaff.username)
 
     def num_distributions(self):
         return int(self.distributions.count())

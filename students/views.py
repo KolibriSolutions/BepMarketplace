@@ -1,16 +1,21 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Max
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render, redirect
 
+from general_model import delete_object
 from index.decorators import student_only
-from students.decorators import can_apply
 from professionalskills.decorators import can_access_professionalskills
-from proposals.decorators import can_view_project
 from professionalskills.models import StudentFile
-from proposals.utils import get_cached_project
+from proposals.decorators import can_view_project
 from proposals.models import Proposal
+from proposals.utils import get_cached_project
+from students.decorators import can_apply
 from students.models import Distribution
 from timeline.utils import get_timeslot
 from tracking.models import ApplicationTracking
@@ -122,7 +127,7 @@ def retract_application(request, application_id):
         if app.Priority > appl.Priority:
             app.Priority -= 1
             app.save()
-    appl.delete()
+    delete_object(appl)
     return render(request, 'base.html', context={
         'Message': 'Deleted application',
         'return': 'students:listapplications',

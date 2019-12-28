@@ -1,2 +1,4 @@
-# The model for distribution is in the students app.
-# from students.models import Distribution
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#

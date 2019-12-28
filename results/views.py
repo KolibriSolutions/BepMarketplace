@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from io import BytesIO
 
 from django.conf import settings
@@ -10,14 +14,14 @@ from django.template.loader import get_template
 from xhtml2pdf import pisa
 
 from general_form import ConfirmForm
+from general_model import delete_object
 from general_view import get_grouptype
 from index.decorators import group_required
-# from professionalskills.models import StudentFile
 from students.models import Distribution
 from timeline.decorators import phase_required
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number
-from .forms import MakeVisibleForm, GradeCategoryForm, GradeCategoryAspectForm, AspectResultForm, CategoryResultForm  #, CategoryResultFormFile
+from .forms import MakeVisibleForm, GradeCategoryForm, GradeCategoryAspectForm, AspectResultForm, CategoryResultForm  # , CategoryResultFormFile
 from .models import GradeCategory, CategoryResult, CategoryAspectResult, GradeCategoryAspect, ResultOptions
 
 
@@ -140,6 +144,7 @@ def finalize_preview(request, pk, step=0):
         "preview": True,
     })
 
+
 #
 # def staff_form_file(request, *args, **kwargs):
 #     """
@@ -159,6 +164,7 @@ def staff_form(request, pk, step=0):
     """
     Edit grade for a category as indexed by step. For each student as given by pk.
     Also edit the individual aspects of each grade category. For trackheads and responsible staff
+    Used for pregrading as well as grading.
 
     :param request:
     :param pk: id of distribution
@@ -301,29 +307,30 @@ def list_categories(request):
     ws = cats.aggregate(Sum('Weight'))['Weight__sum']
     wsa = GradeCategoryAspect.objects.filter(Category__in=cats).count()
 
-    if not hasattr(ts, 'resultoptions'):
-        r = ResultOptions(
-            TimeSlot=ts
-        )
-        r.save()
+    if ts is not None:
+        if not hasattr(ts, 'resultoptions'):
+            r = ResultOptions(
+                TimeSlot=ts
+            )
+            r.save()
 
-    r = ts.resultoptions
+        r = ts.resultoptions
 
-    if request.method == "POST":
-        form = MakeVisibleForm(request.POST, instance=r)
-        if form.is_valid():
-            options = form.save()
-            options.save()
-    else:
-        form = MakeVisibleForm(instance=r)
+        if request.method == "POST":
+            form = MakeVisibleForm(request.POST, instance=r)
+            if form.is_valid():
+                options = form.save()
+                options.save()
+        else:
+            form = MakeVisibleForm(instance=r)
 
     return render(request, "results/list_categories.html", {
         "categories": GradeCategory.objects.filter(TimeSlot=ts),
         'ts': ts,
         'gsum': ws,
         'asum': wsa,
-        'visible': r.Visible,
-        'form': form,
+        'visible': r.Visible if ts is not None else False,
+        'form': form if ts is not None else None,
     })
 
 
@@ -396,8 +403,8 @@ def delete_category(request, pk):
         form = ConfirmForm(request.POST)
         if form.is_valid():
             for aspect in cat.aspects.all():
-                aspect.delete()
-            cat.delete()
+                delete_object(aspect)
+            delete_object(cat)
             return render(request, 'base.html', {
                 'Message': 'Grade category deleted.',
                 'return': 'results:list_categories',

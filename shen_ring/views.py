@@ -1,20 +1,29 @@
-from oauthlib.oauth2 import WebApplicationClient,  MissingCodeError
-from django.conf import settings
-from django.http import HttpResponseRedirect, HttpResponseNotFound
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
+import base64
+import json
+
 import requests
-from django.core import serializers
-from django.contrib.auth.models import User
-from django.db.models import Q
+from django.conf import settings
 from django.contrib import auth
+from django.core import serializers
+from django.core import signing
 from django.core.exceptions import PermissionDenied
+from django.http import HttpResponseRedirect, HttpResponseNotFound
+from django.middleware import csrf
 from django.shortcuts import render
+from django.utils.http import is_safe_url
+from django.views.decorators.csrf import ensure_csrf_cookie
+from oauthlib.oauth2 import WebApplicationClient, MissingCodeError
+
+from BepMarketplace.utils import get_user
 from general_view import get_grouptype
 from osirisdata.data import osirisData
-from timeline.utils import get_timephase_number, get_timeslot
-from django.middleware import csrf
-from django.core import signing
-import json
 from osirisdata.models import AccessGrant
+from timeline.utils import get_timephase_number, get_timeslot
+
 
 def set_level(user):
     try:
@@ -78,6 +87,7 @@ def enrolled_osiris(user):
         return False
     return meta.EnrolledBEP
 
+
 def check_user(request, user):
     # insert checks on login here
     if user.is_superuser:
@@ -121,12 +131,12 @@ def check_user(request, user):
                     # not in this timeslot so old user, canvas app sets timeslot
                     # this security will fail if canvas does not close off old courses as it does now
                     return render(request, 'base.html', status=403, context={"Message": "You already did your BEP once"
-                                                                                    ", login is not allowed."})
+                                                                                        ", login is not allowed."})
     return True
 
 
 def callback(request):
-    #parse the incomming answer from oauth
+    # parse the incoming answer from oauth
     client = WebApplicationClient(settings.SHEN_RING_CLIENT_ID)
     try:
         response = client.parse_request_uri_response(request.build_absolute_uri())
@@ -138,55 +148,67 @@ def callback(request):
 
     if not settings.SHEN_RING_NO_CSRF:
         if 'state' not in response:
-            raise PermissionDenied("csrf_state_check_failed")
+            raise PermissionDenied("Authentication failed. (csrf state not available)")
 
-        if request.session.get(csrf.CSRF_SESSION_KEY, '') != response['state']:
-            raise PermissionDenied("csrf_state_check_failed")
+        if '-' in response['state']:
+            csrf_token, next_url = response['state'].split('-')
+            next_url = base64.b64decode(next_url.encode()).decode()
+        else:
+            csrf_token = response['state']
+            next_url = None
 
-    #upgrade grant code to access code
+        if request.session.get(csrf.CSRF_SESSION_KEY, '') != csrf_token:
+            raise PermissionDenied("Authentication failed. (csrf token failed)")
+    else:
+        if '-' in response.get('state', ""):
+            next_url = base64.b64decode(response['state'].strip('-').encode()).decode()
+        else:
+            next_url = None
+
+    # upgrade grant code to access code
     session = requests.Session()
-    session.headers['User-Agent'] = 'BEP Marketplace ELE'
-    #get parameters
+    session.headers['User-Agent'] = settings.NAME_PRETTY
+    # get parameters
     data = client.prepare_request_body(code=response['code'], client_secret=settings.SHEN_RING_CLIENT_SECRET,
-                                include_client_id=True)
+                                       include_client_id=True)
     # convert to requests dictionary
     data_dict = {}
     for itm in data.split("&"):
         data_dict[itm.split('=')[0]] = itm.split('=')[1]
 
-    #request accesstoken
+    # request accesstoken
     try:
         access_code_data = requests.post(settings.SHEN_RING_URL + "oauth/token/", data=data_dict).json()
     except:
-        raise PermissionDenied("invalid_json_data")
+        raise PermissionDenied("Authentication failed. (invalid_json_data)")
     if 'access_token' not in access_code_data:
         raise PermissionDenied(access_code_data['error'])
 
-    #request account information
-    ## this assumes that timeslot pk is identical on both shen and local db!
-    r = session.get(settings.SHEN_RING_URL + "info/", headers={"Authorization" : "Bearer {}".format(access_code_data["access_token"])})
+    # request account information
+    # this assumes that timeslot pk is identical on both shen and local db!
+    r = session.get(settings.SHEN_RING_URL + "info/", headers={"Authorization": "Bearer {}".format(access_code_data["access_token"])})
 
     if r.status_code != 200:
-        raise PermissionDenied("shen_link_failed")
+        raise PermissionDenied("Authentication failed. (shen_link_failed)")
 
     try:
         value = json.dumps(signing.loads(r.text, settings.SHEN_RING_CLIENT_SECRET))
     except signing.BadSignature:
-        raise PermissionDenied("shen_signing_failed")
+        raise PermissionDenied("Authentication failed. (shen_signing_failed)")
 
-
-    #login or create the user
+    # login or create the user
     try:
         user, usermeta = serializers.deserialize('json', value)
     except:
-        raise PermissionDenied('corrupted_user_info_retrieved')
-    ## data from info is directly saved to db, this means that the appointed shen system is fully trusted
-    ##  this is breached when the shen server is man in the middled, but then an attacker needs to steal both the domain as well as the secret keys
+        raise PermissionDenied('Authentication failed. (corrupted_user_info_retrieved)')
+    # data from info is directly saved to db, this means that the appointed shen system is fully trusted
+    #  this is breached when the shen server is man in the middled, but then an attacker needs to steal both the domain as well as the secret keys
 
-
-    if User.objects.filter(Q(username=user.object.username) & Q(email=user.object.email)).count() == 1:
-        #user exists
-        existent_user = User.objects.filter(Q(username=user.object.username) & Q(email=user.object.email))[0]
+    # find user and map shen user to local user
+    existent_user = get_user(user.object.email, user.object.username)
+    if existent_user:
+        if not existent_user.is_active:
+            raise PermissionDenied("Your user is disabled. Please contact support.")
         user.object.pk = existent_user.pk
         existent_usermeta = existent_user.usermeta
         usermeta.object.pk = existent_usermeta.pk
@@ -201,19 +223,19 @@ def callback(request):
             usermeta.object.User = user.object
             usermeta.save()
         except:
-            raise PermissionDenied("Authentication failed")
-        #overwrite the timeslots, this needs to be done after usermeta save due to begin a m2m relation
+            raise PermissionDenied("Authentication failed. (user_save_failed)")
+        # overwrite the timeslots, this needs to be done after usermeta save due to begin a m2m relation
         usermeta.object.TimeSlot.clear()
         for ts in timeslots:
             usermeta.object.TimeSlot.add(ts)
         usermeta.object.save()
-        #foreignkeys on the user to other models are wiped with this method, foreignkeys from other models to user keep working
+        # foreignkeys on the user to other models are wiped with this method, foreignkeys from other models to user keep working
         # has to be done after save because its an m2m relation
         for group in groups:
             user.object.groups.add(group)
         user.object.save()
-    elif User.objects.filter(Q(username=user.object.username) & Q(email=user.object.email)).count() == 0:
-        #user does not exist
+    elif existent_user is None:
+        # user does not exist
         user.object.pk = None
         usermeta.object.pk = None
         try:
@@ -224,9 +246,10 @@ def callback(request):
             usermeta.object.TimeSlot.clear()
             usermeta.save()
         except:
-            raise PermissionDenied("Authentication failed")
+            raise PermissionDenied("Authentication failed. (create_new_user_failed)")
     else:
-        #more then one user found with this combination, db corrupted, abort
+        # more then one user found with this combination, db corrupted, abort
+        # this will not happen, as get_user already raises exception
         return HttpResponseNotFound()
     user = user.object
     usermeta = usermeta.object
@@ -234,22 +257,29 @@ def callback(request):
     if response is not True:
         return response
 
-    #login user
+    # login user
     auth.login(request, user)
 
-    #TODO: fix that next parameter is taken into account
+    if next_url is not None:
+        if is_safe_url(next_url, None):
+            return HttpResponseRedirect(next_url)
+
     return HttpResponseRedirect("/")
 
 
-
+@ensure_csrf_cookie
 def login(request):
+    """
+    Set session cookie and redirect to shen
+    :param request:
+    :return:
+    """
     client = WebApplicationClient(settings.SHEN_RING_CLIENT_ID)
     if not settings.SHEN_RING_NO_CSRF:
-        csrftoken = request.session.get(csrf.CSRF_SESSION_KEY, "")
-        if csrftoken == "":
-            csrftoken = csrf.get_token(request)
-            request.session[csrf.CSRF_SESSION_KEY] = csrftoken
-        url = client.prepare_request_uri(settings.SHEN_RING_URL + "oauth/authorize/", state=csrftoken, approval_prompt='auto')
+        state = request.META.get("CSRF_COOKIE", "ERROR")
     else:
-        url = client.prepare_request_uri(settings.SHEN_RING_URL + "oauth/authorize/", approval_prompt='auto')
+        state = ""
+    if request.GET.get('next', None) is not None:
+        state += "-" + base64.b64encode(request.GET.get('next').encode()).decode()
+    url = client.prepare_request_uri(settings.SHEN_RING_URL + "oauth/authorize/", state=state, approval_prompt='auto')
     return HttpResponseRedirect(url)

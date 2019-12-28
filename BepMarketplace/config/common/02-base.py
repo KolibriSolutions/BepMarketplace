@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 ## DJANGO SETTTINGS
 
 ## 02-base.py
@@ -59,7 +63,6 @@ WSGI_APPLICATION = SETTINGS_DIR + '.wsgi.application'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/
-LANGUAGE_CODE = 'en-US'
 TIME_ZONE = 'Europe/Amsterdam'
 USE_I18N = False  # translation backend, not used, so False.
 USE_L10N = False  # number formatting based on user's browser locale

@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 
 ALLOWED_HOSTS = (HOSTNAME,)  # where requests can come from
 
@@ -49,4 +53,4 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
 
 ## shen
-USERMETA_LOCAL_FIELDS = ['ECTS', 'EnrolledBEP', 'EnrolledExt']
+USERMETA_LOCAL_FIELDS = ['ECTS', 'EnrolledBEP', 'EnrolledExt', 'Overruled', 'Studentnumber']

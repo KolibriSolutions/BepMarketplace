@@ -1,7 +1,12 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 """
 Mail all trackheads with the proposal that they have to check. (All pending proposals)
 This script can be used to automatically mail track heads in (for instance) a cron job.
 """
+
 from general_mail import mail_track_heads_pending
 
 if __name__ == '__main__':

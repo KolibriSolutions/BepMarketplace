@@ -1,11 +1,17 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from datetime import datetime
 
 from django import template
+from django.conf import settings
 from django.db.models import Q
 from django.utils.html import format_html
 
 from general_view import get_grouptype
 from index.models import Broadcast
+from index.utils import markdown_safe
 from proposals.utils import get_writable_admingroups
 
 register = template.Library()
@@ -110,3 +116,19 @@ def is_track_head(user):
         if user.tracks.exists():
             return True
     return False
+
+
+@register.filter
+def show_markdown(text):
+    return format_html(markdown_safe(text))
+
+
+@register.filter
+def show_markdown_restricted(text):
+    # return format_html(markdown_safe(markdown_link_checker(text)))
+    return format_html(markdown_safe(text))
+
+
+@register.simple_tag
+def get_max_upload_size():
+    return settings.MAX_UPLOAD_SIZE

@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from django.forms.widgets import PasswordInput, Select, TextInput, CheckboxInput, FileInput, DateTimeInput, TimeInput, DateInput, RadioSelect
 
 
@@ -95,9 +99,30 @@ class MetroSelectMultiple(Select):
     option_template_name = 'widgets/select_option.html'
 
 
+class MetroSelectMultipleColor(MetroSelectMultiple):
+    def create_option(self, *args, **kwargs):
+        options = super().create_option(*args, **kwargs)
+        name, color = options['label'].split(':')
+        options['attrs']['data-color'] = color
+        options['label'] = name
+        return options
+
+
 class MetroCheckBox(CheckboxInput):
     input_type = 'checkbox'
     template_name = 'widgets/checkbox.html'
+
+
+class MetroMarkdownInput(MetroMultiTextInput):
+    """
+    A text input with markdown editor
+    Used with https://github.com/Ionaru/easy-markdown-editor in GenericForm
+    """
+    input_type = 'text'
+
+    def __init__(self, *args, **kwargs):
+        kwargs['attrs'] = {'class': 'markdown-tag-enable'}  # javascript runs on this tag.
+        super().__init__(*args, **kwargs)
 
 
 class MetroFileInput(FileInput):

@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from datetime import datetime
 
 from django.utils import timezone
@@ -94,10 +98,8 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['listmissingoftype', {'pk': 100}], self.p_support_prv],
             [['filetypelist', None], self.p_all],
             [['filetypeaspects', {'pk': 100}], self.p_all],
-            [['liststudentfiles', {'pk': 1}], self.p_all_this_dist],
             [['listownfiles', None], self.p_student],
             [['respondfile', {'pk': 0}], self.p_staff_prv_results],
-            [['viewresponse', {'pk': 0}], self.p_all_this_dist],
 
             [['mailoverduestudents', None], self.p_support_prv],
             [['printprvforms', None], self.p_support_prv],
@@ -108,10 +110,23 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['listgroupmembers', {'pk': 0}], self.p_all],
             [['assignshuffle', {'pk': 100}], self.p_support_prv],
         ]
+        codes_phase56_planning_hidden = [
+            [['liststudentfiles', {'pk': 1}], self.p_all_this_dist],
+            [['viewresponse', {'pk': 0}], self.p_all_this_dist],
+
+        ]
+        codes_phase7_planning_visible = [
+            [['liststudentfiles', {'pk': 1}], self.p_all_this_dist_ta],
+            [['viewresponse', {'pk': 0}], self.p_all_this_dist_ta],
+
+        ]
         self.info['type'] = 'general'
         self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes_general)
         self.info['type'] = 'phase'
         self.loop_phase_code_user([-1, 1, 2, 3, 4], codes_phase1234)
         # self.loop_phase_user([5], codes_phase5)
         self.loop_phase_code_user([5, 6, 7], codes_phase567)
+        self.loop_phase_code_user([5, 6], codes_phase56_planning_hidden)
+
+        self.loop_phase_code_user([7], codes_phase7_planning_visible)
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

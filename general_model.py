@@ -1,8 +1,16 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 """
 General functions mostly used in models (models.py)
 """
+
 import re
 import uuid
+
+from django.core.exceptions import PermissionDenied
+from django.db.models import ProtectedError
 from django.utils.html import strip_tags
 
 
@@ -28,8 +36,21 @@ def file_delete_default(sender, instance, **kwargs):
     try:
         instance.File.delete(False)
     except:
-        #in case the file is locked by another process.
+        # in case the file is locked by another process.
         print("Error in removing the file. Only the object will be removed.")
+
+
+def delete_object(obj):
+    """
+    Try to delete an object. Raise permissiondenied if obj is protected
+
+    :param obj:
+    :return:
+    """
+    try:
+        obj.delete()
+    except ProtectedError as e:
+        raise PermissionDenied('This object ({}) can not be deleted, as other objects depend on it. Please remove the others first. Depending objects: {}'.format(obj, print_list(e.protected_objects)))
 
 
 def metro_icon_default(fobject):
@@ -42,17 +63,17 @@ def metro_icon_default(fobject):
     extension = get_ext(fobject.File.name)
     if extension == 'pdf':
         return 'pdf'
-    elif extension in ['doc', 'docx', 'odf','rtf']:
+    elif extension in ['doc', 'docx', 'odf', 'rtf']:
         return 'word'
-    elif extension in ['jpg', 'jpeg','png','bmp','gif']:
+    elif extension in ['jpg', 'jpeg', 'png', 'bmp', 'gif']:
         return 'image'
     elif extension in ['xls', 'xlsx', 'ods']:
         return 'excel'
-    elif extension in ['ppt','pptx','odp']:
+    elif extension in ['ppt', 'pptx', 'odp']:
         return 'powerpoint'
     elif extension in ['tex']:
         return 'code'
-    elif extension in ['zip','rar','gz']:
+    elif extension in ['zip', 'rar', 'gz']:
         return 'archive'
     elif extension in ['txt']:
         return 'text'
@@ -110,4 +131,4 @@ def print_list(lst):
             tx += str(item) + ', '
         tx = tx[:-2]
         i = tx.rfind(',')
-        return tx[:i] + ' &' + tx[i+1:]
+        return tx[:i] + ' &' + tx[i + 1:]

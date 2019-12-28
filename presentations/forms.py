@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from datetime import time
 
 from django import forms
@@ -41,9 +45,14 @@ class PresentationSetForm(forms.ModelForm):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['Assessors'].label_from_instance = self.user_label_from_instance
         self.fields['Assessors'].queryset = get_grouptype('2').user_set.all() | \
                                             get_grouptype('2u').user_set.all() | \
                                             get_grouptype('1').user_set.all()
+
+    @staticmethod
+    def user_label_from_instance(self):
+        return self.usermeta.get_nice_name
 
     class Meta:
         model = PresentationSet

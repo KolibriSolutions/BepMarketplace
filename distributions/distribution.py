@@ -1,6 +1,7 @@
-"""
-Automatic distribution of proposals
-"""
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from random import shuffle
 
 from django.conf import settings
@@ -217,7 +218,7 @@ def calculate_1_from_student(distribute_random, automotive_preference):
                             distribution_proposals.append(DistributionProposal(s.id, proposal.id, n))
                             # remove this student from queryset because it is now distributed
                             students_done.append(s)
-                        #else: this might be a tie between students, check and if yes log.
+                        #TODO else: this might be a tie between students, check and if yes log.
 
     # loop over all cohorts, take the youngest students first
     # for all students

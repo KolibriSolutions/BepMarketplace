@@ -1,9 +1,13 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 import json
 from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db.models import Q, ProtectedError
 from django.forms import modelformset_factory
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
@@ -11,6 +15,7 @@ from django.urls import reverse
 from htmlmin.decorators import not_minified_response
 
 from general_view import get_grouptype
+from general_model import delete_object, print_list
 from index.decorators import group_required
 from index.models import Track
 from students.models import Distribution
@@ -83,7 +88,11 @@ def wizard_step2(request):
         formset = form_set(request.POST)
 
         if formset.is_valid():
-            formset.save()
+            try:
+                formset.save()
+            except ProtectedError as e:
+                raise PermissionDenied('Room can not be deleted, as other objects depend on it. Please remove the others first. Depending objects: {}'.format(print_list(e.protected_objects)))
+
             return render(request, "base.html", {"Message": "Rooms saved!  <br />\
             <a class='button success' href='" + reverse(
                 "presentations:presentationswizardstep3") + "'>Go to next step</a> <a class='button primary' href='" + reverse(
@@ -164,7 +173,7 @@ def wizard_step4(request):
         distobjs = json.loads(jsondata)
         # remove all current presentations
         for slot in PresentationTimeSlot.objects.filter(Presentations__PresentationOptions__TimeSlot=get_timeslot()):
-            slot.delete()
+            delete_object(slot)
         # generate new
         for dset in distobjs:
             #            print(dset)

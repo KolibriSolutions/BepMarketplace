@@ -1,4 +1,7 @@
-# MIDDLEWARE.remove("htmlmin.middleware.HtmlMinifyMiddleware")
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 
 # to allow websockets in CSP over plain http
 CSP_CONNECT_SRC = ("'self'", "ws://localhost:*")  # websockets and ajax. Make sure wss:// is set and not ws://.

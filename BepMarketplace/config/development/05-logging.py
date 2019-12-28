@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 import os
 
 LOG_DIR = os.path.join(BASE_DIR, 'logging')
@@ -62,7 +66,7 @@ LOGGING = {
             'level': 'INFO',  # to disable logging on unsolicitedresponses etc.
         },
         'javascript_error': {
-            'handlers': ['console', 'js_file'],
+            'handlers': ['js_file'],
             'level': 'INFO',
             # 'filters': ['skip_bots', 'skip_ie7'],
             'propagate': True,

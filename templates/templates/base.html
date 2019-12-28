@@ -38,6 +38,13 @@
         <b>Your browser is not compatible with this website. Please update your browser or use another browser.</b>
         </div>
     <![endif]-->
+    <script>
+        if (navigator.appVersion.indexOf("MSIE 10") !== -1) {
+            document.write('        <div style="background: #e00; text-align: center; position: absolute; top: 5em; height:7em; left:20%; right:20%; color: #FFF; z-index:1000; padding: 5px;">' +
+                '        <b>Your browser is not compatible with this website. Please update your browser or use another browser.</b>' +
+                '        <a href="http://windows.microsoft.com/en-us/internet-explorer/download-ie" target="_blank" style="color: #fff; text-decoration: underline;">Please upgrade here.</a></div>');
+        }
+    </script>
 
     <noscript>
         <div class="warning-banner">
@@ -443,8 +450,8 @@
 {% block scripts %}
     <script src="{% url 'js-error-handler-js' %}"></script>
     {# for js error logging, load first to capture load errors #}
-
     <script src="{% static "js/jquery-3.2.1.min.js" %}"></script>
+    {# fancy dropdown select #}
     <script src="{% static "js/select2.min.js" %}"></script>
     {# for top horizontal scroll bar #}
     <script src="{% static "js/jquery.doubleScroll.min.js" %}"></script>
@@ -457,6 +464,7 @@
     <script src="{% static "js/metro.min.js" %}"></script>
     {# custom #}
     <script src="{% static "js/custom.js" %}"></script>
+
     {% if hide_sidebar %}
         <script>
             $(function () {

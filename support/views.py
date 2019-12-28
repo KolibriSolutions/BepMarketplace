@@ -1,7 +1,14 @@
-import json
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
+
+
 import json
 import logging
+import zipfile
 from datetime import date, datetime
+from io import BytesIO
 
 from django.conf import settings
 from django.contrib.auth.models import User, Group
@@ -16,7 +23,7 @@ from htmlmin.decorators import not_minified_response
 from distributions.utils import get_distributions
 from general_form import ConfirmForm
 from general_mail import EmailThreadTemplate, mail_track_heads_pending, send_mail
-from general_model import print_list
+from general_model import print_list, delete_object
 from general_view import get_all_staff, get_grouptype
 from index.decorators import group_required
 from index.models import Track, UserMeta
@@ -30,9 +37,11 @@ from timeline.utils import get_timeslot, get_timephase_number, get_recent_timesl
 from .exports import get_list_students_xlsx, get_list_distributions_xlsx, get_list_projects_xlsx
 from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm, UserGroupsForm, \
     GroupadministratorEdit, CapacityGroupForm
-from .models import GroupAdministratorThrough, PublicFile, CapacityGroup, mail_staff_options, mail_student_options, MailTemplate, Mailing
+from .models import GroupAdministratorThrough, PublicFile, CapacityGroup, mail_staff_options, mail_student_options, \
+    MailTemplate, Mailing
 
 logger = logging.getLogger('django')
+
 
 #########
 # Mailing#
@@ -55,7 +64,7 @@ def delete_mailing_template(request, pk):
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
         if form.is_valid():
-            obj.delete()
+            delete_object(obj)
             return render(request, 'base.html', {
                 'Message': '{} deleted.'.format(name),
                 'return': 'support:mailingtemplates'})
@@ -100,7 +109,8 @@ def mailing(request, pk=None):
                     if s not in ['type3staff', 'type4staff', 'type5staff', 'type6staff']:
                         # if user group is not a support type, mail only users with project in this year.
                         for staff in list(recipients_staff):
-                            if not staff.proposalsresponsible.filter(TimeSlot=ts).exists() and not staff.proposals.filter(TimeSlot=ts).exists():
+                            if not staff.proposalsresponsible.filter(
+                                    TimeSlot=ts).exists() and not staff.proposals.filter(TimeSlot=ts).exists():
                                 # user has no project in the selected timeslots.
                                 recipients_staff.remove(staff)
                 except Group.DoesNotExist:
@@ -176,7 +186,8 @@ def mailing(request, pk=None):
                 'Staff': json.loads(template.RecipientsStaff),
                 'Students': json.loads(template.RecipientsStudents),
             }
-        form = ChooseMailingList(initial=initial, staff_options=mail_staff_options, student_options=mail_student_options)
+        form = ChooseMailingList(initial=initial, staff_options=mail_staff_options,
+                                 student_options=mail_student_options)
     return render(request, "GenericForm.html", {
         "form": form,
         "formtitle": "Send mailing list",
@@ -264,7 +275,7 @@ def groupadministrators_form(request):
                 u.save()
             for g in GroupAdministratorThrough.objects.filter(Group=group):
                 if g.User not in form.cleaned_data['readmembers'] and g.User not in form.cleaned_data['writemembers']:
-                    g.delete()
+                    delete_object(g)
                     if g.User.administratoredgroups.count() == 0:
                         g.User.groups.remove(administratorusergroup)
                         g.User.save()
@@ -329,7 +340,7 @@ def delete_capacity_group(request, pk):
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
         if form.is_valid():
-            obj.delete()
+            delete_object(obj)
             return render(request, 'base.html', {
                 'Message': 'Capacity group {} deleted.'.format(obj),
                 'return': 'support:listcapacitygroups'
@@ -370,7 +381,8 @@ def list_users(request):
     :return:
     """
     return render(request, "support/list_users.html", {
-        "users": User.objects.all().prefetch_related('groups', 'usermeta', 'usermeta__TimeSlot', 'administratoredgroups'),
+        "users": User.objects.all().prefetch_related('groups', 'usermeta', 'usermeta__TimeSlot',
+                                                     'administratoredgroups'),
         'hide_sidebar': True,
     })
 
@@ -501,8 +513,10 @@ def list_staff(request):
         pt1 = p1.count()
         pt2 = p2.count()
         pts = pt1 + pt2
-        dt1 = nint(p1.annotate(Count('distributions')).aggregate(Sum('distributions__count'))['distributions__count__sum'])
-        dt2 = nint(p2.annotate(Count('distributions')).aggregate(Sum('distributions__count'))['distributions__count__sum'])
+        dt1 = nint(
+            p1.annotate(Count('distributions')).aggregate(Sum('distributions__count'))['distributions__count__sum'])
+        dt2 = nint(
+            p2.annotate(Count('distributions')).aggregate(Sum('distributions__count'))['distributions__count__sum'])
         dts = dt1 + dt2
         se.append({"user": s, "pt1": pt1, "pt2": pt2, "pts": pts, "dt1": dt1, "dt2": dt2, "dts": dts})
     return render(request, 'support/list_staff.html', {"staff": se})
@@ -563,7 +577,8 @@ def list_students(request, timeslot):
 
     des = get_distributions(request.user, ts).select_related('Proposal__ResponsibleStaff',
                                                              'Proposal__Track',
-                                                             'Student__usermeta').prefetch_related('Proposal__Assistants')
+                                                             'Student__usermeta').prefetch_related(
+        'Proposal__Assistants')
     cats = None
     if show_grades:
         cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
@@ -761,7 +776,7 @@ def edit_file(request, pk):
 @group_required('type3staff')
 def edit_files(request):
     """
-    Edit public files. Only for supportstaff
+    Edit public files. Only for support staff
     These files are shown on the homepage for every logged in user.
 
     :param request:
@@ -792,7 +807,7 @@ def delete_file(request, pk):
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
         if form.is_valid():
-            obj.delete()
+            delete_object(obj)
             return render(request, "base.html", {"Message": "Public file removed!", "return": "index:index"})
     else:
         form = ConfirmForm()
@@ -823,18 +838,23 @@ def history(request):
 def history_download(request, timeslot, download):
     ts = get_object_or_404(TimeSlot, pk=timeslot)
     if ts == get_timeslot() or ts.Begin > timezone.now().date():
-        raise PermissionDenied("Downloads of the current and future timeslots are not allowed. Please use the regular menu entries.")
+        raise PermissionDenied(
+            "Downloads of the current and future timeslots are not allowed. Please use the regular menu entries.")
     if download == 'distributions':
         projects = Proposal.objects.filter(TimeSlot=ts, Status=4).distinct()
         file = get_list_distributions_xlsx(projects)
         response = HttpResponse(content=file)
         response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
     elif download == 'students':
         typ = GradeCategory.objects.filter(TimeSlot=ts)
         des = Distribution.objects.filter(TimeSlot=ts)
         file = get_list_students_xlsx(des, typ)
         response = HttpResponse(content=file)
         response['Content-Disposition'] = 'attachment; filename=students-grades.xlsx'
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
     elif download == 'presentations':
         sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts)
         if not sets:
@@ -843,14 +863,40 @@ def history_download(request, timeslot, download):
         file = get_list_presentations_xlsx(sets)
         response = HttpResponse(content=file)
         response['Content-Disposition'] = 'attachment; filename=presentations-planning.xlsx'
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
     elif download == 'nonfull':
-        projects = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=ts, num_distr__lt=F('NumStudentsMax')).order_by('Title')
+        projects = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=ts, num_distr__lt=F(
+            'NumStudentsMax')).order_by('Title')
         file = get_list_projects_xlsx(projects)
         response = HttpResponse(content=file)
         response['Content-Disposition'] = 'attachment; filename=non-full-proposals-{}.xlsx'.format(ts.Name)
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+    elif download == 'publicfiles':
+        in_memory = BytesIO()
+        with zipfile.ZipFile(in_memory, 'w') as archive:
+            files = PublicFile.objects.filter(TimeSlot=ts)
+            if not files:
+                return render(request, 'base.html', {'Message': 'This time slot has no public files.'})
+            for file in files:
+                fname = file.OriginalName
+                try:
+                    with open(file.File.path, 'rb') as fstream:
+                        archive.writestr(
+                            '{}.{}'.format(fname, file.File.name.split('.')[-1]), fstream.read())
+                except (
+                        IOError,
+                        ValueError):  # happens if a file is referenced from database but does not exist on disk.
+                    return render(request, 'base.html', {
+                        'Message': 'These files cannot be downloaded, please contact support staff. (Error on file: "{}")'.format(
+                            file)})
+        in_memory.seek(0)
+        response = HttpResponse(content_type="application/zip")
+        response['Content-Disposition'] = 'attachment; filename="publicfiles-{}.zip"'.format(ts.Name)
+        response.write(in_memory.read())
     else:
         raise PermissionDenied("Invalid options.")
-    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     return response
 
 #######

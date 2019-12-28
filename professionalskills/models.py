@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
@@ -61,7 +65,7 @@ class StudentFile(models.Model):
     OriginalName = models.CharField(max_length=200, blank=True, null=True)
     File = models.FileField(default=None, upload_to=make_upload_path)
     Distribution = models.ForeignKey(Distribution, on_delete=models.CASCADE, related_name='files')
-    Type = models.ForeignKey(FileType, on_delete=models.CASCADE, related_name='files')
+    Type = models.ForeignKey(FileType, on_delete=models.PROTECT, related_name='files')
     TimeStamp = models.DateTimeField(auto_now=True)
     Created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 

@@ -3,7 +3,7 @@ asgi_redis
 bleach
 channels>=2
 daphne>=2
-django>=2.0.10
+django==2.*  # at least django csp is not yet compatible with 3.0
 django-csp
 django-htmlmin
 django-impersonate
@@ -29,3 +29,4 @@ phonenumbers
 pylti
 oauthlib
 requests
+markdown

@@ -1,3 +1,8 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
+
 try:
     from BepMarketplace.config.secret import SECRET_KEY_IMPORT, PYLTI_CONFIG, DATABASE_PASSWORD_IMPORT
 except ImportError:
@@ -15,7 +20,6 @@ DATABASES = {
     }
 }
 
-# Use REDIS to cache certain pages and variables.
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',

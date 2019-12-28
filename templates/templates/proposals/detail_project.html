@@ -61,13 +61,13 @@
                         </div>
 
                     {% endif %}
-                    <h4>General description</h4>
-                    <p>{{ project.GeneralDescription|linebreaksbr }}</p>
-                    <h4>Students task description</h4>
-                    <p>{{ project.StudentsTaskDescription|linebreaksbr }}</p>
+                    <h2>General description</h2>
+                    <p>{{ project.GeneralDescription|show_markdown_restricted }}</p>
+                    <h2>Students task description</h2>
+                    <p>{{ project.StudentsTaskDescription|show_markdown_restricted }}</p>
                     {% if project.ExtensionDescription %}
-                        <h4>Student task description for extension (if applicable)</h4>
-                        <p>{{ project.ExtensionDescription }}</p>
+                        <h2>Student task description for extension (if applicable)</h2>
+                        <p>{{ project.ExtensionDescription|show_markdown_restricted }}</p>
                     {% endif %}
                     {% if project.attachments.exists %}
                         <h4>Attachments:</h4>

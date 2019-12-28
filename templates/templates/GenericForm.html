@@ -1,9 +1,13 @@
 {% extends "base.html" %}
 {% load static %}
 {% load timeline_tags %}
+{% load index_tags %}
 {% block stylesheets %}
     <link href="{% static "css/jquery.datetimepicker.min.css" %}" rel="stylesheet">
     <link href="{% static "css/lightbox.css" %}" rel="stylesheet">
+    <link href="{% static "css/easymde.min.css" %}" rel="stylesheet">
+    <link href="{% static "css/fontawesome.min.css" %}" rel="stylesheet">  {# needed for easymde icons #}
+    <link href="{% static "css/fontawesome-solid.min.css" %}" rel="stylesheet">  {# needed for easymde icons #}
 {% endblock %}
 {% block body %}
     {% if formtitle %}
@@ -96,8 +100,51 @@
     <script src="{% static "js/jquery.datetimepicker.full.min.js" %}"></script>
     {#    <script src="{% static "js/select2.min.js" %}"></script> Included in base.html #}
     <script src="{% static "js/lightbox.js" %}"></script> {# for image form image preview #}
+    <script src="{% static "js/easymde.min.js" %}"></script> {# for image form image preview #}
     <script>
+        let mde_editors = [];  // array of mde editors, to be able to access them afterwards.
         $(function () {
+            // fix for IE for markdown editor polyfills:
+            if (window.navigator.userAgent.indexOf('Trident/') > -1) {
+                var script = document.createElement("script");  // create a script DOM node
+                script.src = '{% static "js/polyfill.min.js" %}';
+                document.head.appendChild(script);
+            }
+
+            $('.markdown-tag-enable').each(function (i, obj) {
+                mde_editors[i] = new EasyMDE({
+                    element: obj,
+                    autoDownloadFontAwesome: false,
+                    spellChecker: false,
+                    {% if upload_image %}
+                        toolbar: ['bold', 'italic', 'heading', '|', 'code', 'unordered-list', 'ordered-list', 'link', 'upload-image', '|', 'preview', 'side-by-side', 'fullscreen', '|', 'guide'],
+                        uploadImage: true,
+                        imageMaxSize: {% get_max_upload_size %},  // 10 mb
+                        imageUploadEndpoint: '/markdown/upload/',
+                        imageCSRFToken: '{{ csrf_token }}',
+                        errorCallback: function (errorMessage) {
+                            metroDialog.create({
+                                title: "Error",
+                                content: errorMessage,
+                                actions: [
+                                    {
+                                        title: "Ok",
+                                        onclick: function (el) {
+                                            $(el).data('dialog').close();
+                                        }
+                                    },
+                                ],
+                                options: { // dialog options
+                                    type: 'alert',
+                                }
+                            });
+                        },
+                    {% else %}
+                        toolbar: ['bold', 'italic', 'heading', '|', 'code', 'unordered-list', 'ordered-list', 'link', '|', 'preview', 'side-by-side', 'fullscreen', '|', 'guide'],
+                    {% endif %}
+                });
+            });
+
             $(".select2-tag-enable").select2({
                 minimumResultsForSearch: 6,
                 width: '100%',
@@ -106,11 +153,16 @@
             $('.metrotimepicker').datetimepicker({
                 datepicker: false,
                 format: 'H:i',
-                step: 5
+                step: 5,
+                scrollTime: false,
+                scrollInput: false,
             });
             $('.metrodatetimepicker').datetimepicker({
                 format: 'Y-m-d H:i',
                 step: 5,
+                scrollMonth: false,
+                scrollTime: false,
+                scrollInput: false,
                 {% if not skip_date_validate %}
                     minDate: '-1970-01-02', // yesterday
                     maxDate: '{% get_timeslot_end_date %}'//last date in this timeslot
@@ -120,6 +172,8 @@
             $('.metrodatepicker').datetimepicker({
                 timepicker: false,
                 format: 'Y-m-d',
+                scrollMonth: false,
+                scrollInput: false,
                 {% if not skip_date_validate %}
                     minDate: '-1970-01-02', // yesterday
                     maxDate: '{% get_timeslot_end_date %}' //last date in this timeslot

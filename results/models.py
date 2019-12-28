@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -17,7 +21,7 @@ class ResultOptions(models.Model):
     """
     Global options and guidelines for all results
     """
-    TimeSlot = models.OneToOneField(TimeSlot, on_delete=models.CASCADE, related_name="resultoptions")
+    TimeSlot = models.OneToOneField(TimeSlot, on_delete=models.PROTECT, related_name="resultoptions")
     Visible = models.BooleanField(default=False)
 
     def __str__(self):
@@ -60,7 +64,7 @@ class CategoryResult(models.Model):
     The score of a student on a particular grade category.
     """
     Distribution = models.ForeignKey(Distribution, on_delete=models.CASCADE, related_name='results')
-    Category = models.ForeignKey(GradeCategory, on_delete=models.CASCADE, related_name='results')
+    Category = models.ForeignKey(GradeCategory, on_delete=models.PROTECT, related_name='results')
     Grade = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(10)], default=0.0)
     Comments = models.TextField(blank=True, null=True)
     Final = models.BooleanField(default=False)
@@ -116,7 +120,7 @@ class CategoryAspectResult(models.Model):
         ("E", "Excellent"),
     )
 
-    CategoryAspect = models.ForeignKey(GradeCategoryAspect, on_delete=models.CASCADE, related_name='results')
+    CategoryAspect = models.ForeignKey(GradeCategoryAspect, on_delete=models.PROTECT, related_name='results')
     Grade = models.CharField(max_length=2, choices=ResultOptions, blank=True, null=True)
     CategoryResult = models.ForeignKey(CategoryResult, on_delete=models.CASCADE, related_name='aspectresults')
 

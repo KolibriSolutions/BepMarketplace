@@ -1,3 +1,8 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
+from django.conf import settings
 from django.utils import timezone
 from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
@@ -12,8 +17,6 @@ def get_list_presentations_xlsx(sets):
     :param sets:
     :return:
     """
-    codeExt = "5XED0"
-    codeBEP = "5XEC0"
     wb = Workbook()
     wb.remove_sheet(wb.active)
     wss = []
@@ -54,7 +57,7 @@ def get_list_presentations_xlsx(sets):
         ws.column_dimensions['I'].width = 50  # project name
 
         header = ["Type", "Stud. id", "Full Name", "Name", "Responsible teacher", "Assistants",
-                  codeBEP, codeExt, "Project", "Time", "Duration"]
+                  settings.COURSE_CODE_BEP, settings.COURSE_CODE_EXT, "Project", "Time", "Duration"]
         ws.append(header)
         for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']:
             ws[col + '10'].style = 'Headline 3'

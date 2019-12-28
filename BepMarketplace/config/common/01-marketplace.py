@@ -1,3 +1,7 @@
+#  Bep Marketplace ELE
+#  Copyright (c) 2016-2019 Kolibri Solutions
+#  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+#
 ## DJANGO SETTTINGS
 
 ## 01-marketplace.py
@@ -7,9 +11,9 @@
 import os
 
 try:
-    from BepMarketplace.config.secret import SECRET_KEY_IMPORT, PYLTI_CONFIG
+    from BepMarketplace.config.secret import *
 except:
-    from BepMarketplace.secret import SECRET_KEY_IMPORT, PYLTI_CONFIG
+    from BepMarketplace.secret import *
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -25,15 +29,19 @@ SETTINGS_DIR = 'BepMarketplace'
 CONTACT_EMAIL = 'bepmarketplace@tue.nl'
 DEV_EMAIL = 'bepmarketplace@kolibrisolutions.nl'
 
-SUPPORT_ROLE = 'program director'
-SUPPORT_NAME = 'Sjoerd Hulshof'
-SUPPORT_EMAIL = 's.hulshof@tue.nl'
+# To define in secret.py:
+# SUPPORT_ROLE
+# SUPPORT_NAME
+# SUPPORT_EMAIL
 
 ADMINS = [('Kolibri Solutions', DEV_EMAIL)]
 MANAGERS = ADMINS  # to mail broken links to, not used now.
 
 NAME_CODE = 'BEPMarketplace'
 NAME_PRETTY = 'BEP Marketplace'
+
+COURSE_CODE_EXT = "5XED0"
+COURSE_CODE_BEP = "5XEC0"
 
 # used for studyguide capacitygroup detail link to mastermp. Not required, remove if not used.
 MASTERMARKETPLACE_URL = 'https://master.ele.tue.nl'
