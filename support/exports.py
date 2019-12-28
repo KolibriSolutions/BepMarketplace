@@ -4,6 +4,7 @@
 #
 from datetime import datetime
 
+from django.conf import settings
 from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 
@@ -30,7 +31,7 @@ def get_list_students_xlsx(des, typ):
     ws = wb.active
     ws.title = "grades"
 
-    ws['A1'] = "Students grades from Bep Marketplace"
+    ws['A1'] = "Students grades from {}".format(settings.NAME_PRETTY)
     ws['A1'].style = 'Headline 2'
     ws['F1'] = "Exported on: " + timestamp()
 
@@ -94,7 +95,7 @@ def get_list_students_xlsx(des, typ):
 
     ws = wb.create_sheet(title='prv-aspects')
 
-    ws['A1'] = "Students grades from Bep Marketplace (only Aspects related to PRV)"
+    ws['A1'] = "Students grades from {} (only Aspects related to PRV)".format(settings.NAME_PRETTY)
     ws['A1'].style = 'Headline 2'
     ws['F1'] = "Exported on: " + timestamp()
     header = ["Student id", "Student name", "Project", "Responsible teacher"]
@@ -145,7 +146,7 @@ def get_list_distributions_xlsx(proposals):
     ws = wb.active
     ws.title = "distributions"
 
-    ws['A1'] = "Proposals with students and staff from Bep Marketplace"
+    ws['A1'] = "Proposals with students and staff from {}".format(settings.NAME_PRETTY)
     ws['A1'].style = 'Headline 2'
     ws['F1'] = "Exported on: " + str(datetime.now())
 
@@ -205,7 +206,7 @@ def get_list_projects_xlsx(proposals):
     ws = wb.active
     ws.title = "BEP Projects"
 
-    ws['A1'] = 'Projects from BEP Marketplace'
+    ws['A1'] = 'Projects from {}'.format(settings.NAME_PRETTY)
     ws['A1'].style = 'Headline 2'
     ws['F1'] = "Exported on: " + str(datetime.now())
 
