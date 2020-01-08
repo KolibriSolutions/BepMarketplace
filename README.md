@@ -9,7 +9,7 @@ The marketplace uses the SAML single sign on system of the TU/e. This enables TU
 If you decide to host your own version of the Marketplace you have to change the SAML settings to that of your own organization.
 For more information check the documentation of PySAML2 at ```http://pysaml-test.readthedocs.io/en/latest/```
 
-## Installing necesarry software
+## Installing necessary software
 1. install latest version of python3
 1. ```python3 -m ensurepip```
 1. ```pip install -U pip, setuptools```
