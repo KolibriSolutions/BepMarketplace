@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2019 Kolibri Solutions
+#  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from datetime import datetime
@@ -65,10 +65,11 @@ def index(request):
         s = 0
     else:
         # if there is a countdown end take that one, otherwise take the real one
+        # take max time of the endday, because the last day is inclusive.
         if ts.CountdownEnd is not None:
-            tdelta = datetime.combine(ts.CountdownEnd, datetime.min.time()) - datetime.now()
+            tdelta = datetime.combine(ts.CountdownEnd, datetime.max.time()) - datetime.now()
         else:
-            tdelta = datetime.combine(ts.End, datetime.min.time()) - datetime.now()
+            tdelta = datetime.combine(ts.End, datetime.max.time()) - datetime.now()
         if tdelta.total_seconds() < 0:
             d = 0
             s = 0

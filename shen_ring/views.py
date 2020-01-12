@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2019 Kolibri Solutions
+#  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 import base64
@@ -23,6 +23,10 @@ from general_view import get_grouptype
 from osirisdata.data import osirisData
 from osirisdata.models import AccessGrant
 from timeline.utils import get_timephase_number, get_timeslot
+
+import logging
+
+logger = logging.getLogger('django')
 
 
 def set_level(user):
@@ -222,8 +226,9 @@ def callback(request):
             user.save()
             usermeta.object.User = user.object
             usermeta.save()
-        except:
-            raise PermissionDenied("Authentication failed. (user_save_failed)")
+        except Exception as e:
+            logger.exception('User save failed with Shen login for existing user {}. Exception {}'.format(user, e))
+            raise PermissionDenied("Something went wrong while logging you in. Please contact support at {} to get this resolved.".format(settings.CONTACT_EMAIL))
         # overwrite the timeslots, this needs to be done after usermeta save due to begin a m2m relation
         usermeta.object.TimeSlot.clear()
         for ts in timeslots:
@@ -245,8 +250,9 @@ def callback(request):
             # clear timeslots as this is handled internally
             usermeta.object.TimeSlot.clear()
             usermeta.save()
-        except:
-            raise PermissionDenied("Authentication failed. (create_new_user_failed)")
+        except Exception as e:
+            logger.exception('User save failed with Shen login for new user {}. Exception {}'.format(user, e))
+            raise PermissionDenied("Something went wrong while logging you in. Please contact support at {} to get this resolved.".format(settings.CONTACT_EMAIL))
     else:
         # more then one user found with this combination, db corrupted, abort
         # this will not happen, as get_user already raises exception

@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2019 Kolibri Solutions
+#  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from channels.db import database_sync_to_async
@@ -12,11 +12,9 @@ from tracking.utils import get_ProposalTracking
 
 
 def checkauthcurrentviewnumber(user, track):
-    if user != track.Subject.ResponsibleStaff and \
-            user not in track.Subject.Assistants.all() and \
-            auth.models.Group.objects.get(name="type3staff") not in user.groups.all() and \
-            not user.is_superuser:
-        return True
+    # user | has_group: "any" and project.Status == 3
+    if track.Subject.Status != 4 or not user.groups.exists():
+        return True  # deny student and unpublished
     return False
 
 

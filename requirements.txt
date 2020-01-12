@@ -1,32 +1,36 @@
-asgiref>=2
+Sphinx
 asgi_redis
+asgiref>=2
+beautifulsoup4
 bleach
 channels>=2
+channels_redis
 daphne>=2
-django==2.*  # at least django csp is not yet compatible with 3.0
 django-csp
 django-htmlmin
 django-impersonate
 django-ipware
 django-js-error-hook
+django-js-error-hook
 django-redis
-channels_redis
 django-render-block
 django-sendfile
 django-two-factor-auth
+django==2.*  # at least django csp is not yet compatible with 3.0
 djangosaml2>=0.16.11
 docutils
-openpyxl
+lxml
+markdown
+oauthlib
+openpyxl==3.0.1  # bug when used together with lxml https://bitbucket.org/openpyxl/openpyxl/issues/1373/broken-writer-with-lxml-defusedxml
+phonenumbers
 pillow
 pip
 psycopg2-binary
+pylti
 pysaml2
 pytz
-service_identity
-Sphinx
-xhtml2pdf>=0.2b1
-phonenumbers
-pylti
-oauthlib
+pyyaml
 requests
-markdown
+service_identity
+xhtml2pdf>=0.2b1

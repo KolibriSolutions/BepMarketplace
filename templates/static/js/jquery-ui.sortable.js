@@ -1,3 +1,9 @@
+/*
+ * Bep Marketplace ELE
+ * Copyright (c) 2016-2020 Kolibri Solutions
+ * License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+ */
+
 /*! jQuery UI - v1.12.1 - 2017-12-26
 * http://jqueryui.com
 * Includes: widget.js, data.js, scroll-parent.js, widgets/sortable.js, widgets/mouse.js, effect.js, effects/effect-blind.js, effects/effect-bounce.js, effects/effect-clip.js, effects/effect-drop.js, effects/effect-explode.js, effects/effect-fade.js, effects/effect-fold.js, effects/effect-highlight.js, effects/effect-puff.js, effects/effect-pulsate.js, effects/effect-scale.js, effects/effect-shake.js, effects/effect-size.js, effects/effect-slide.js, effects/effect-transfer.js

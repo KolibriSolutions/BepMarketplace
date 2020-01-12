@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2019 Kolibri Solutions
+#  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.conf import settings
@@ -115,7 +115,7 @@ def can_downgrade_project_fn(user, proj):
         return False, "This is an old proposal. Changing history is not allowed."
 
     if proj.Status == 1:
-        return False, "Already at first stage."
+        return False, "This proposal is already at the first stage. It cannot be downgraded."
 
     # support staf, superusers are always allowed to downgrade
     if get_grouptype("3") in user.groups.all() \

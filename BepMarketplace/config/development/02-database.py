@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2019 Kolibri Solutions
+#  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 
@@ -7,6 +7,11 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'OPTIONS': {  # increase timeout to reduce table is locked errors.
+            # ...
+            'timeout': 120,
+            # ...
+        }
     }
 }
 

@@ -1,30 +1,48 @@
 {% extends "base.html" %}
+{% load proposal_tags %}
+
 {% block body %}
-    <h1>Proposal: {{ Proposal.Title }}</h1>
+    <h1>Project: {{ project.Title }}</h1>
     {% autoescape off %}
         <p>{{ Message }}</p>
     {% endautoescape %}
+    <h3>Status <span class="mif-question clickable"
+                     data-role="popover"
+                     data-popover-mode="click"
+                     data-popover-shadow="true"
+                     data-popover-position="right"
+                     data-popover-text="Status of the project. Assistants can upgrade a proposal to status 2. Responsible staff can upgrade proposals to status 4.<br />Change the status using the upgrade/downgrade buttons on the project page.<br />Students can only view the project in status 4.<br />Only projects of the current year can be published, future proposals cannot be published."
+
+                     data-popover-background="bg-cyan"
+                     data-popover-color="fg-white">
+                                </span>
+    </h3>
+    <ol>
+
+        {% for opt in project.StatusOptions %}
+            <li class="{% if opt.0 == project.Status %}text-accent fg-navy{% else %}text-secondary{% endif %}">{{ opt.1 }}</li>
+        {% endfor %}
+    </ol>
+    {# additional publish button #}
+    {% if project|can_edit_project:user and project.Status == 2 %}
+        <a href="{% url 'proposals:upgradestatus' project.id %}" class="button success">Publish proposal</a>
+    {% endif %}
+    <hr/>
     <p>
-        {% if Proposal %}{# for in case this page is requested after a delete. #}
-            <a href="{% url "proposals:addfile" 'i' Proposal.pk %}">
-                <button class="button primary"><span class="mif-image"></span>Add image to proposal</button>
-            </a>
-            <a href="{% url "proposals:editfile" 'i' Proposal.pk %}">
-                <button class="button primary"><span class="mif-images"></span>Edit images of this proposal</button>
-            </a>
-            <a href="{% url "proposals:addfile" 'a' Proposal.pk %}">
-                <button class="button primary"><span class="mif-file-pdf"></span>Add attachment to proposal</button>
-            </a>
-            <a href="{% url "proposals:editfile" 'a' Proposal.pk %}">
-                <button class="button primary"><span class="mif-file-pdf"></span>Edit attachments of this proposal
-                </button>
-            </a>
-            <a href="{% url 'proposals:details' Proposal.pk %}">
-                <button class="button primary">View this proposal</button>
-            </a><br/>
-        {% endif %}
-        <a href="{% url 'proposals:chooseedit' %}">
-            <button class="button primary"><span class="mif-list"></span>View all my proposals</button>
-        </a>
+        <a href="{% url "proposals:addfile" 'i' project.pk %}" class="button primary"><span class="mif-image"></span>Add image to proposal</a>
+        <a href="{% url "proposals:editfile" 'i' project.pk %}" class="button primary"><span class="mif-images"></span>Edit images of this proposal</a>
+        <br/>
+        <a href="{% url "proposals:addfile" 'a' project.pk %}" class="button primary"><span class="mif-file-pdf"></span>Add attachment to proposal</a>
+        <a href="{% url "proposals:editfile" 'a' project.pk %}" class="button primary"><span class="mif-file-pdf"></span>Edit attachments of this proposal</a>
     </p>
+    <br/>
+    <a href="{% url 'proposals:details' project.pk %}" class="button primary"><span class="mif-eye"></span>View this proposal</a>
+    <br/>
+    <hr/>
+    {% if project.TimeSlot %}
+        <a href="{% url 'proposals:chooseedit' project.TimeSlot.id %}" class="button primary"><span class="mif-list"></span>View all my proposals of {{ project.TimeSlot }}</a>
+    {% else %}
+        <a href="{% url 'proposals:chooseedit' %}" class="button primary"><span class="mif-list"></span>View all my proposals for the future.</a>
+    {% endif %}
+
 {% endblock %}

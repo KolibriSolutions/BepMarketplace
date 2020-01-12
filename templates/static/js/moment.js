@@ -1,3 +1,9 @@
+/*
+ * Bep Marketplace ELE
+ * Copyright (c) 2016-2020 Kolibri Solutions
+ * License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+ */
+
 //! moment.js
 //! version : 2.20.0
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors

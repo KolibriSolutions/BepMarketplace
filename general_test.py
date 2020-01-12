@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2019 Kolibri Solutions
+#  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 """
@@ -279,6 +279,8 @@ class ViewsTest(TestCase):
         :return:
         """
         for user in self.users.values():
+            if self.debug:
+                print(user)
             if (user.username == 't-u' or user.username == 'r-u') and \
                     self.tp.Description > 3:
                 # ignore unverfied assistants in later timephases
@@ -288,6 +290,13 @@ class ViewsTest(TestCase):
                 # ignore students in first timephases
                 continue
             self.client.force_login(user)
+            self.proposal.Status = 4
+            self.privateproposal.Status = 4
+            self.status = 4
+            self.proposal.save()
+            self.privateproposal.save()
+
+            self.view_test_status(sourceurl, 200)
             response = self.client.get(sourceurl)
             urls = re.findall('/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+/',
                               str(response.content))
@@ -300,14 +309,19 @@ class ViewsTest(TestCase):
                                         and "tracking/viewnumber/" not in x
                                         and "js_error_hook" not in x
                                         and x not in skip)]
-
             for link in urls:  # select the url in href for all a tags(links)
                 if link in skip:
                     continue
                 if self.debug:
                     print('url: {}'.format(link))
+                self.proposal.Status = 4
+                self.privateproposal.Status = 4
+                self.status = 4
+                self.proposal.save()
+                self.privateproposal.save()
                 self.info['user'] = user.username
                 self.view_test_status(link, 200)
+
             self.client.logout()
 
     def loop_phase_code_user(self, phases, codes):

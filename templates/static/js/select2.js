@@ -1,3 +1,9 @@
+/*
+ * Bep Marketplace ELE
+ * Copyright (c) 2016-2020 Kolibri Solutions
+ * License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+ */
+
 /*!
  * Select2 4.0.6-rc.1
  * https://select2.github.io

@@ -21,7 +21,10 @@
                     <thead>
                     <tr>
                         <th>{{ stat.label }}</th>
-                        <th>Count</th>
+                        <th>{{stat.count_label|default:'Count'}}</th>
+                        {% if stat.total2 %}
+                        <th>{{ stat.count_label2 }}</th>
+                        {% endif %}
                     </tr>
                     </thead>
                     <tbody>
@@ -29,6 +32,9 @@
                         <tr>
                             <td>{{ l }}</td>
                             <td>{{ stat.counts|index:forloop.counter0 }}</td>
+                        {% if stat.counts2 %}
+                                                    <td>{{ stat.counts2|index:forloop.counter0 }}</td>
+{% endif %}
                         </tr>
                     {% endfor %}
                     </tbody>
@@ -36,6 +42,9 @@
                     <tr>
                         <th><b>Total</b></th>
                         <th>{{ stat.total }}</th>
+                        {% if stat.total2 %}
+                        <th>{{ stat.total2 }}</th>
+                        {% endif %}
                     </tr>
                     </tfoot>
                 </table>

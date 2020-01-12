@@ -1,3 +1,9 @@
+/*
+ * Bep Marketplace ELE
+ * Copyright (c) 2016-2020 Kolibri Solutions
+ * License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+ */
+
 /*!
  * FullCalendar v3.8.0
  * Docs & License: https://fullcalendar.io/

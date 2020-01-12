@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2019 Kolibri Solutions
+#  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.conf import settings
@@ -42,7 +42,8 @@ def list_applications(request):
     """
     return render(request, 'students/list_applications.html', context={
         'applications': get_all_applications(request.user),
-        'private': request.user.personal_proposal.filter(TimeSlot=get_timeslot()).exists()
+        'private': request.user.personal_proposal.filter(TimeSlot=get_timeslot()).exists(),
+        'num_app': settings.MAX_NUM_APPLICATIONS,
     })
 
 

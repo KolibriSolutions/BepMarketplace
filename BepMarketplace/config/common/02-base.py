@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2019 Kolibri Solutions
+#  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 ## DJANGO SETTTINGS
@@ -8,9 +8,6 @@
 ## Common settings for all django projects in development and production
 
 DOMAIN = 'https://'+HOSTNAME  # also used for SAML metadata
-
-# markdownx
-MARKDOWNX_MARKDOWNIFY_FUNCTION = 'markdownx_custom.utils.markdownify_safe'
 
 # django-ipware, used in tracking.
 IPWARE_TRUSTED_PROXY_LIST = []
@@ -28,6 +25,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'csp.middleware.CSPMiddleware',
+
     'impersonate.middleware.ImpersonateMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'htmlmin.middleware.HtmlMinifyMiddleware',

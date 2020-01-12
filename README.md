@@ -1,6 +1,6 @@
 # BEP Marketplace
 This repo holds the source code for the BEP Marketplace as developed by Kolibri Solutions for the ELE department of the TU/e.
-The BEP Marketplace facilitates the organisation of the Bachelor End Projects of the department. Staff members can enter proposals for projects, these are checked by track heads. Then students can make their preference known after wich the projects are distributed according to a set of rules. Then students execute their distributed projects and can upload deliverables. In the end the resulting grades are entered in the system by staff members.
+The BEP Marketplace facilitates the organisation of the Bachelor End Projects of the department. Staff members can enter proposals for projects, these are checked by track heads. Then students can make their preference known after which the projects are distributed according to a set of rules. Then students execute their distributed projects and can upload deliverables. In the end the resulting grades are entered in the system by staff members.
 The system unifies and digitizes the administration of the BEP system making it streamlined and as efficient as possible. For more information about the inner workings please consult the documentation. These are written in the sphinx system.
 
 # Installing the marketplace
@@ -26,9 +26,9 @@ For more information check the documentation of PySAML2 at ```http://pysaml-test
 1. setup postgress database, update ```secrets.py``` with correct credentials if necesarry (In the variables ```SECRET_KEY_IMPORT``` and ```DATABASE_PASSWORD_IMPORT```)
 1. setup redis, the default config is usually enough as long as it listens on localhost. update settings.py if you change default settings such as port
 1. ```python manage.py collectstatic```
-1. setup nginx, an example nginx.conf can be found in the deployement folder
-1. setup systemd, again example services and targets can be found in the deployement folder
-1. if you have changed the example configs in the deployement folder make sure they are compatible with eachother! (ie if you change the way daphne is served, make sure nginx sends it to the right thing)
+1. setup nginx, an example nginx.conf can be found in the deployment folder
+1. setup systemd, again example services and targets can be found in the deployment folder
+1. if you have changed the example configs in the deployment folder make sure they are compatible with each other! (ie if you change the way daphne is served, make sure nginx sends it to the right thing)
 
 ## First time startup
 1. change the contact email, name and hostname to your own at the top of the ```settings.py``` and ```settings_development.py``` files
@@ -45,11 +45,11 @@ For more information check the documentation of PySAML2 at ```http://pysaml-test
 * for development put --settings=BepMarketplace.settings_development after each ```manage.py``` command
 * to login use the url ```/two_factor/login``` to bypass the SAML SSO.
 
-### For deployement
+### For deployment
 For managing deployment systemd scripts are provided and recommended to be used. The following instructions are for using systemd.
 1. copy all systemd scripts and the nginx.conf to the correct system locations
 1. start and enable nginx and redis servers
-1. the following commands setup 4 http workers and 2 websockets. adjust numbers if necesarry
+1. the following commands setup 4 http workers and 2 websockets. adjust numbers if necessary
   * ```systemctl enable httpworker@{1..4}.service```
   * ```systemctl enable websocketworker@{1..2}.service```
 1. start and enable httpworker.target, websocketworker.target and daphne

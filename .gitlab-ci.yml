@@ -1,6 +1,6 @@
 bepmp:
   script:
-    - virtualenv bepmarketplaceenv
+    - virtualenv bepmarketplaceenv -p /usr/bin/python3.7
     - . bepmarketplaceenv/bin/activate
     - python -V
     - pip -V
@@ -9,7 +9,7 @@ bepmp:
     - pip install -r requirements.txt
     - pip install -r requirements_development.txt
     - pip install tblib
-    - python general_generate_secret_key.py
+    - python dev_generate_secrets.py
     - touch startup.lock
     - python manage.py migrate --settings=BepMarketplace.settings_development
     - python manage.py test --settings=BepMarketplace.settings_development --parallel

@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2019 Kolibri Solutions
+#  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 
@@ -35,6 +35,7 @@ IMPERSONATE = {
 
 
 ## Media
+MARKDOWN_IMAGE_UPLOAD_FOLDER = 'markdown'
 # path for media upload. Media download is not available on this path.
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/download/'

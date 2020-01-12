@@ -1,10 +1,16 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2019 Kolibri Solutions
+#  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
+import logging
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import (
     MultipleObjectsReturned, )
+from django.core.exceptions import PermissionDenied
+
+logger = logging.getLogger('django')
 
 
 def get_user(email, username):
@@ -31,6 +37,6 @@ def get_user(email, username):
             # logger.debug('Email not succeeded. Username not succeeded.')
             return None  # user does not exist.
     except MultipleObjectsReturned as e:
-        # logger.debug('User has multiple accounts.')
         # user email has a duplicate account with other username.
-        raise MultipleObjectsReturned(e, "{} - {}".format(email, username))
+        logger.exception('Login user with multiple accounts: {} - {}'.format(email, username))
+        raise PermissionDenied("You have multiple user accounts. Please contact support at {} to get this resolved.".format(settings.CONTACT_EMAIL))

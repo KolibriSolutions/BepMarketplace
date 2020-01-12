@@ -3,8 +3,8 @@
 {% load index_tags %}
 {% load timeline_tags %}
 {% load proposal_tags %}
-{% get_timephase_number as phasenumber %}
 {% block body %}
+    {% get_timephase_number as phasenumber %}
     {% if bodyhtml %}
         {% autoescape off %}
             {{ bodyhtml }}
@@ -124,10 +124,10 @@
                             Apply / retract buttons are inserted using a .format on the {} below.
                             {% endcomment %}
                             {% if not project.Private.all %}
-                                {}
+                                {apply_buttons}
                             {% endif %}
                         {% else %}
-                            {% if phasenumber < 3 and phasenumber > 0 %}
+                            {% if phasenumber < 3 and phasenumber > 0 or user|has_group:'type3staff' %}
                                 {% if project|can_edit_project:user and project.Status != 4 %}
                                     {% if proposal.Status == 2 %}
                                         <a href="{% url 'proposals:upgradestatus' proposal.id %}" class="button success">Publish proposal</a>
@@ -152,8 +152,8 @@
                                 {% endif %}
                                 {# policy violations #}
                                 {% if cpv %}
-                                        <h2>Content policy violations:</h2>
-                                        {% include 'proposals/inc_cpv_proj.html' %}
+                                    <h2>Content policy violations:</h2>
+                                    {% include 'proposals/inc_cpv_proj.html' %}
                                 {% endif %}
                             {% endif %}
 
@@ -194,7 +194,7 @@
                                 {% endif %}
                             </td>
                         </tr>
-                        {% if project.Track.Name == "Automotive" and project.Private is None %}
+                        {% if project.Track.ShortName == "AU" and not project.Private.exists %}
                             <tr>
                                 <td>Warning</td>
                                 <td>Please note that AU students have priority over EE students for AU projects</td>
@@ -230,10 +230,27 @@
                                 <td>{{ project.TimeSlot|default:"Future" }}</td>
                             </tr>
                         {% endif %}
+                        {% if phasenumber > 2 and phasenumber < 5 and project.curyear %}{# View number of applications, visible for all in phase 3 and 4. #}
+                            <tr>
+                                <td>Applications:</td>
+                                <td>
+                                    {% if cache_string_render %} {# True if this is bodyhtml being rendered. #}
+                                        {applications_counter}
+                                    {% else %}
+                                        {% if project.applications.exists %}
+                                            {{ project.applications.count }} student{{ project.applications.count|pluralize }}
+                                        {% else %}
+                                            No one applied to this project yet.
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+
+                            </tr>
+                        {% endif %}
                         {% if user|has_group:"type3staff" %}
                             {% if applications %}
                                 <tr>
-                                    <td>Applications:</td>
+                                    <td>Applied students:</td>
                                     <td>
                                         <ul>
                                             {% for application in applications %}

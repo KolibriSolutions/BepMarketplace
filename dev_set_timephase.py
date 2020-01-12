@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2019 Kolibri Solutions
+#  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 import os
@@ -29,10 +29,13 @@ if __name__ == "__main__":
     assert n >= 0, 'too low number'
     assert n <= 7, 'too high number'
     TimePhase.objects.all().delete()
-    if n>0:
+    if n > 0:
         t = TimePhase(Begin=datetime.now() - timedelta(days=2),
-                  End=datetime.now() + timedelta(days=40),
-                  Description=n,
-                  TimeSlot=get_timeslot())
+                      End=datetime.now() + timedelta(days=40),
+                      Description=n,
+                      TimeSlot=get_timeslot())
         t.save()
+        print('Set phase {}'.format(t))
+    else:
+        print('Cleared all phases')
     cache.clear()

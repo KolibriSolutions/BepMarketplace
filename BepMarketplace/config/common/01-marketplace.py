@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2019 Kolibri Solutions
+#  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 ## DJANGO SETTTINGS
@@ -51,7 +51,6 @@ TESTING = False
 # General settings for the projects
 ####################################
 MAX_NUM_APPLICATIONS = 5              # number of applications a student can have.
-EMAILREGEXCHECK = '(^[a-zA-Z0-9]{1}[a-zA-Z0-9_.+-~]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)'  # regex that checks for email.
 MAX_UPLOAD_SIZE = 10*1024*1024  # max size of any uploaded file 10MB. This limit should be lower than the NGINX limit
 MAXAGESHARELINK = 60*60*24*7
 
@@ -72,8 +71,10 @@ ALLOWED_PRIVATE_STUDENT_DOMAINS = STUDENT_EMAIL_DOMAINS
 CATEGORY_GRADE_QUANTIZATION = 0.25
 
 # How long to cache models that are assumed static. (Group types, timeslots, timphases)
-STATIC_OBJECT_CACHE_DURATION = 15*60  # 15 minutes.
+STATIC_OBJECT_CACHE_DURATION = 15 * 60  # 15 minutes.
 
+# regex checks
+EMAILREGEXCHECK = '(^[a-zA-Z0-9]{1}[a-zA-Z0-9_.+-~]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)'  # regex that checks for email.
 
 # Application definition
 INSTALLED_APPS = [

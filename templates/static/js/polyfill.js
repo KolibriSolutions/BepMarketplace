@@ -1,3 +1,9 @@
+/*
+ * Bep Marketplace ELE
+ * Copyright (c) 2016-2020 Kolibri Solutions
+ * License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+ */
+
 /* Polyfill service v3.35.0
  * For detailed credits and licence information see https://github.com/financial-times/polyfill-service.
  * 
