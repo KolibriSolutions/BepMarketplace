@@ -2,6 +2,8 @@
 #  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
+import logging
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.http import HttpResponse
@@ -15,8 +17,6 @@ from BepMarketplace.utils import get_user
 from index.models import UserMeta
 from timeline.utils import get_timeslot
 from tracking.models import CanvasLogin
-
-import logging
 
 logger = logging.getLogger('django')
 
@@ -75,4 +75,4 @@ def lti(request):
     log.Subject = user
     log.save()
 
-    return redirect("https://bep.ele.tue.nl/login/")
+    return redirect("{}/login/".format(settings.DOMAIN))

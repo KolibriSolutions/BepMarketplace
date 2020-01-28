@@ -8,12 +8,13 @@ import logging
 
 logger = logging.getLogger('django')
 
+
 class osirisPerson:
     def __init__(self, csvline):
         self.email = csvline[0]
-        self.idnumber = csvline[1]
-        self.cohort = csvline[2]
-        self.ects = csvline[3]
+        self.idnumber = int(csvline[1])
+        self.cohort = int(csvline[2])
+        self.ects = int(round(float(csvline[3].replace(',', '.'))))
         if csvline[4] == 'yes' or csvline[4] == '1' or csvline[4] == 1:
             self.automotive = True
         else:
@@ -28,7 +29,7 @@ class osirisData:
         self.data = cache.get('osirisdata')
         if self.data is None:
             self._readdata()
-            cache.set('osirisdata', self.data, 24*60*60)
+            cache.set('osirisdata', self.data, 24 * 60 * 60)
 
     def _readdata(self):
         self.data = {}
@@ -36,11 +37,11 @@ class osirisData:
             csvreader = csv.reader(stream, delimiter=';', quotechar='"')
             for i, data in enumerate(csvreader):
                 if i == 0:
-                    continue #skip first line (headers)
+                    continue  # skip first line (headers)
                 try:
                     self.data[data[0]] = osirisPerson(data)
-                except:
-                    logger.error("Invalid csv in osiris csv on line {}".format(i))
+                except Exception as e:
+                    logger.error("Invalid csv in osiris csv on line {}. Error {}".format(i, e))
                     continue
 
     def get(self, email):

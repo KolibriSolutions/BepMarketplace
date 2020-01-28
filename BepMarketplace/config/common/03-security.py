@@ -54,4 +54,4 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
 
 ## shen
-USERMETA_LOCAL_FIELDS = ['ECTS', 'EnrolledBEP', 'EnrolledExt', 'Overruled', 'Studentnumber']
+USERMETA_LOCAL_FIELDS = ['Cohort', 'Study', 'ECTS', 'EnrolledBEP', 'EnrolledExt', 'Overruled', 'Studentnumber', 'SuppressStatusMails']  # not timeslots, these are added in code.

@@ -16,7 +16,7 @@ django-redis
 django-render-block
 django-sendfile
 django-two-factor-auth
-django==2.*  # at least django csp is not yet compatible with 3.0
+django
 djangosaml2>=0.16.11
 docutils
 lxml

@@ -15,10 +15,10 @@
 *.yaml
 .idea/
 /node_modules/
-/node_modules/
 /start_redis.bat
 /virustotal/secret.py
 BepMarketplace/config/secret.py
+BepMarketplace/config/common/01-marketplace.py
 BepMarketplace/secret.py
 Pipfile
 Pipfile.lock

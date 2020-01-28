@@ -6,22 +6,23 @@
 
 ## 01-marketplace.py
 ## Settings specific for this marketplace instance
+
 if DEBUG:
     HOSTNAME = 'localhost'
 else:
     HOSTNAME = 'bep.ele.tue.nl'
 
 # contact email, shown on some pages and in case of errors (500)
-CONTACT_EMAIL = 'bepmarketplace@tue.nl'
+CONTACT_EMAIL = '<contact email>'
 
 # responsible person for the system, shown on homepage.
 SUPPORT_ROLE = 'responsible teacher'
-SUPPORT_NAME = 'Maarten adsf'
-SUPPORT_EMAIL = 'asdf@tue.nl'
+SUPPORT_NAME = '<teacher name>'
+SUPPORT_EMAIL = '<teacher email>'
 
 # for mailing errors and such
-DEV_EMAIL = 'bepmarketplace@kolibrisolutions.nl'
-ADMINS = [('Kolibri Solutions', DEV_EMAIL)]
+DEV_EMAIL = '<dev email>'
+ADMINS = [('<admin name>', DEV_EMAIL)]
 MANAGERS = ADMINS  # to mail broken links to, not used now.
 
 # name as visible on some pages and emails.

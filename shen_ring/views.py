@@ -4,6 +4,7 @@
 #
 import base64
 import json
+import logging
 
 import requests
 from django.conf import settings
@@ -20,11 +21,9 @@ from oauthlib.oauth2 import WebApplicationClient, MissingCodeError
 
 from BepMarketplace.utils import get_user
 from general_view import get_grouptype
-from osirisdata.data import osirisData
+from index.models import UserMeta
 from osirisdata.models import AccessGrant
 from timeline.utils import get_timephase_number, get_timeslot
-
-import logging
 
 logger = logging.getLogger('django')
 
@@ -45,25 +44,26 @@ def set_level(user):
         user.save()
 
 
-def set_osiris(user, osirisdata):
-    """
-    Set usermeta based on osiris data
-
-    :param user:
-    :param osirisdata:
-    :return:
-    """
-    meta = user.usermeta
-    if not meta.Overruled:
-        if osirisdata.automotive:
-            meta.Study = 'Automotive'
-        else:
-            meta.Study = 'Eletrical Engineering'
-        meta.Cohort = osirisdata.cohort
-        meta.ECTS = osirisdata.ects
-        meta.Studentnumber = osirisdata.idnumber
-        meta.full_clean()
-        meta.save()
+#
+# def set_osiris(user, osirisdata):
+#     """
+#     Set usermeta based on osiris data
+#
+#     :param user:
+#     :param osirisdata:
+#     :return:
+#     """
+#     meta = user.usermeta
+#     if not meta.Overruled:
+#         if osirisdata.automotive:
+#             meta.Study = 'Automotive'
+#         else:
+#             meta.Study = 'Eletrical Engineering'
+#         meta.Cohort = osirisdata.cohort
+#         meta.ECTS = osirisdata.ects
+#         meta.Studentnumber = osirisdata.idnumber
+#         meta.full_clean()
+#         meta.save()D
 
 
 def is_staff(user):
@@ -87,7 +87,7 @@ def enrolled_osiris(user):
     """
     try:
         meta = user.usermeta
-    except:
+    except UserMeta.DoesNotExist:
         return False
     return meta.EnrolledBEP
 
@@ -119,10 +119,11 @@ def check_user(request, user):
                                                                                     "this timephase."})
             else:
                 # student is enrolled in osiris. Set its usermeta from the osiris data
-                data = osirisData()
-                osirisdata = data.get(user.email)
-                if osirisdata is not None:
-                    set_osiris(user, osirisdata)
+                # 20200117 disabled. Osiris data is only updated using rewrite Meta function.
+                # data = osirisData()
+                # osirisdata = data.get(user.email)
+                # if osirisdata is not None:
+                #     set_osiris(user, osirisdata)
 
                 if get_timephase_number() > 5:  # only students with project are allowed
                     if not user.distributions.exists():

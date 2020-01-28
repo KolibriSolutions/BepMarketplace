@@ -16,7 +16,6 @@ conffiles = [
 ]
 
 DEBUG = False
-HOSTNAME = 'bep.ele.tue.nl'
 
 for f in conffiles:
     fo = open(os.path.abspath(f))

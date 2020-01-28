@@ -272,7 +272,7 @@ def detail_project(request, pk):
         tracking_visit_project(prop, request.user)  # always log visits from students
 
         # applications counter
-        if prop.applications.exists:
+        if prop.applications.exists():
             applications_count = prop.applications.count()
             applications_count_txt = '{} student'.format(applications_count)
             if applications_count > 1:

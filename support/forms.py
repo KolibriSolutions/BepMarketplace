@@ -88,6 +88,7 @@ class OverRuleUserMetaForm(forms.ModelForm):
         fields = [
             'Study',
             'Cohort',
+            'ECTS',
             'EnrolledBEP',
             'EnrolledExt'
         ]
@@ -95,6 +96,7 @@ class OverRuleUserMetaForm(forms.ModelForm):
         widgets = {
             'Study': widgets.MetroTextInput,
             'Cohort': widgets.MetroNumberInput,
+            'ECTS': widgets.MetroNumberInput,
             'EnrolledBEP': widgets.MetroCheckBox,
             'EnrolledExt': widgets.MetroCheckBox,
         }

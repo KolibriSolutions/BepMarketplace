@@ -6,6 +6,22 @@
 
 ## 02-base.py
 ## Common settings for all django projects in development and production
+import os
+
+try:
+    from BepMarketplace.config.secret import *
+except:
+    from BepMarketplace.secret import *
+
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+TESTING = False
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = SECRET_KEY_IMPORT
+
+SETTINGS_DIR = 'BepMarketplace'
 
 DOMAIN = 'https://'+HOSTNAME  # also used for SAML metadata
 
@@ -71,3 +87,48 @@ DATE_FORMAT = 'N j, Y'
 SHORT_DATE_FORMAT = 'd-m-Y'
 DATETIME_FORMAT = 'N j, Y, H:i'
 SHORT_DATETIME_FORMAT = 'd-m-Y H:i'
+
+# regex checks
+EMAILREGEXCHECK = '(^[a-zA-Z0-9]{1}[a-zA-Z0-9_.+-~]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)'  # regex that checks for email.
+
+# Application definition
+INSTALLED_APPS = [
+    'api.apps.ApiConfig',
+    'distributions.apps.DistributionsConfig',
+    'download.apps.DownloadConfig',
+    'godpowers.apps.GodpowersConfig',
+    'index.apps.IndexConfig',
+    'presentations.apps.PresentationsConfig',
+    'professionalskills.apps.ProfessionalskillsConfig',
+    'proposals.apps.ProposalsConfig',
+    'results.apps.ResultsConfig',
+    'students.apps.StudentsConfig',
+    'support.apps.SupportConfig',
+    'templates.apps.TemplatesConfig',
+    'timeline.apps.TimelineConfig',
+    'tracking.apps.TrackingConfig',
+    'two_factor_custom.apps.TwoFactorCustomConfig',
+    'osirisdata.apps.OsirisdataConfig',
+    'canvas.apps.CanvasConfig',
+    'shen_ring.apps.ShenRingConfig',
+
+    'django.contrib.admin',
+    'django.contrib.admindocs',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
+
+    'channels',
+    'csp',
+    'impersonate',
+    'openpyxl',
+    'sendfile',
+    'two_factor',
+    'django_js_error_hook',
+]

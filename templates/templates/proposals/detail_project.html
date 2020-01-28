@@ -121,9 +121,9 @@
 
                         {% if not user|has_group:"any" %}
                             {% comment %}
-                            Apply / retract buttons are inserted using a .format on the {} below.
+                            Apply / retract buttons are inserted using a .format on the {apply_buttons} below.
                             {% endcomment %}
-                            {% if not project.Private.all %}
+                            {% if not project.Private.all and cache_string_render %} {# True if this is bodyhtml being rendered. #}
                                 {apply_buttons}
                             {% endif %}
                         {% else %}
@@ -234,7 +234,7 @@
                             <tr>
                                 <td>Applications:</td>
                                 <td>
-                                    {% if cache_string_render %} {# True if this is bodyhtml being rendered. #}
+                                    {% if cache_string_render %} {# True if this is bodyhtml being rendered, for students cache #}
                                         {applications_counter}
                                     {% else %}
                                         {% if project.applications.exists %}

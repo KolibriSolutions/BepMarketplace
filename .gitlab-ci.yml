@@ -1,6 +1,6 @@
 bepmp:
   script:
-    - virtualenv bepmarketplaceenv -p /usr/bin/python3.7
+    - virtualenv bepmarketplaceenv
     - . bepmarketplaceenv/bin/activate
     - python -V
     - pip -V

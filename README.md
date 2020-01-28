@@ -21,11 +21,23 @@ For more information check the documentation of PySAML2 at ```http://pysaml-test
 ### For deployement
 1. install nginx
 1. ```pip install psycopg2```
-1. install postgress
+1. install postgres
 1. install redis
-1. setup postgress database, update ```secrets.py``` with correct credentials if necesarry (In the variables ```SECRET_KEY_IMPORT``` and ```DATABASE_PASSWORD_IMPORT```)
-1. setup redis, the default config is usually enough as long as it listens on localhost. update settings.py if you change default settings such as port
+1. setup postgres database, update ```secrets.py``` with correct credentials if necessary (In the variables ```SECRET_KEY_IMPORT``` and ```DATABASE_PASSWORD_IMPORT```)
 1. ```python manage.py collectstatic```
+1. For Shen ring central login system support add ```SHEN_RING_CLIENT_ID``` and ```SHEN_RING_CLIENT_SECRET``` to ```secrets.py``` and add the corresponding entry in Shen.
+1. For canvas integrations, add ```pylti``` config to ```secrets.py```.: 
+``
+PYLTI_CONFIG = {
+    'consumers': {
+        '<consumer key>': {
+            'secret': '<secret key>'
+        }
+    }
+}
+``
+. See the documentation/canvas_module_toevoegen.pdf for more information. 
+1. setup redis, the default config is usually enough as long as it listens on localhost. Update settings.py if you change default settings such as port
 1. setup nginx, an example nginx.conf can be found in the deployment folder
 1. setup systemd, again example services and targets can be found in the deployment folder
 1. if you have changed the example configs in the deployment folder make sure they are compatible with each other! (ie if you change the way daphne is served, make sure nginx sends it to the right thing)

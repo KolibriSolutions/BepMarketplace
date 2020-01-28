@@ -16,7 +16,6 @@ conffiles = [
 ]
 
 DEBUG = True
-HOSTNAME = 'localhost'
 
 for f in conffiles:
     fo = open(os.path.abspath(f))

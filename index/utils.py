@@ -3,20 +3,9 @@
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 
 import re
-# from hashlib import sha256
 
 import bleach
-# from asgiref.sync import async_to_sync
-# from channels.layers import get_channel_layer
-from django.conf import settings
-# from django.core.cache import cache
-# from django.core.exceptions import ValidationError
-# from django.core.validators import URLValidator
 from markdown import markdown
-
-# from virustotal.models import CheckedUrl
-
-# link_regex = re.compile(settings.LINKREGEX)
 
 
 def markdown_safe(payload):

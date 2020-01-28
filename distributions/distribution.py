@@ -60,7 +60,7 @@ def get_cohorts():
             if c not in cohorts:
                 cohorts.append(c)
     cohorts.sort(reverse=True)
-
+    cohorts.append(None)  # to include students without cohort.
     return cohorts
 
 
@@ -75,12 +75,12 @@ def get_valid_proposals():
 
 def get_valid_students():
     """
-    All students with applications, without personal, in this timeslot.
+    All students with applications, with personal, in this timeslot.
+    Personal proposals are distributed as first, so personal prop students will not get to the other distribution.
 
     :return: list of user objects.
     """
-    # TODO personal_proposal should be filtered by timeslot
-    return get_all_students().filter(personal_proposal__isnull=True, applications__isnull=False).filter(applications__Proposal__TimeSlot=get_timeslot()).distinct()
+    return get_all_students().filter(applications__isnull=False).filter(applications__Proposal__TimeSlot=get_timeslot()).distinct()
     # usermeta__ECTS__gt=0).distinct()
 
 
@@ -176,7 +176,7 @@ def calculate_1_from_student(distribute_random, automotive_preference):
     projects_done = []
     distribution_proposals = []  # list of DistributionProposal objects
 
-    # personal proposals:
+    # personal proposals: (has to be before other distribution)
     distribution_proposals, students_done = distribute_personal(distribution_proposals, students_done)
 
     # get all cohorts
@@ -218,7 +218,9 @@ def calculate_1_from_student(distribute_random, automotive_preference):
                             distribution_proposals.append(DistributionProposal(s.id, proposal.id, n))
                             # remove this student from queryset because it is now distributed
                             students_done.append(s)
-                        #TODO else: this might be a tie between students, check and if yes log.
+                        # else:
+                        #     TODO else: this might be a tie between students, check and if yes log.
+                            # print('auto',s)
 
     # loop over all cohorts, take the youngest students first
     # for all students
@@ -253,7 +255,9 @@ def calculate_1_from_student(distribute_random, automotive_preference):
                         distribution_proposals.append(DistributionProposal(s.id, proposal.id, n))
                         # remove this student from queryset because it is now distributed
                         students_done.append(s)
-                    #else: this might be a tie between students, check and if yes log.
+                    # else:
+                        # TODO else: this might be a tie between students, check and if yes log.
+                        # print('auto', s)
 
     if distribute_random:
         distribution_proposals, students_done = distribute_remaining_random(distribution_proposals, students_done)
@@ -274,6 +278,7 @@ def calculate_2_from_project(distribute_random, automotive_preference):
     projects_done = []  # list of proposal objects
     distribution_proposals = []  # list of DistributionProposal objects
 
+    # distribute personal: (has to be before other distribution)
     distribution_proposals, students_done = distribute_personal(distribution_proposals, students_done)
 
     # iterate for all preferences twice

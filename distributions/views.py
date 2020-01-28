@@ -400,7 +400,10 @@ def automatic(request, dist_type, distribute_random=1, automotive_preference=1):
                 'Message': 'Distributions saved!',
                 'return': 'distributions:SupportListApplicationsDistributions',
             })
-
+        else:
+            return render(request, 'base.html', {
+                'Message': 'Please check the confirm checkbox.',
+            })
     else:
         # Handle the most common errors beforehand with a nice message
         error_list = ''
@@ -475,11 +478,12 @@ def automatic(request, dist_type, distribute_random=1, automotive_preference=1):
         'Total': [obj['preference'] for obj in dists if obj['proposal'] is not None],
     }
     for c in cohorts:  # all next columns in table for each cohort. First column is totals.
+        c = str(c)
         columns.append(c)
         prefs[c] = []
         for obj in dists:
             if obj['proposal'] is not None:  # do not count not-distributed students in the stats.
-                if obj['student'].usermeta.Cohort == int(c):
+                if str(obj['student'].usermeta.Cohort) == c:
                     prefs[c].append(obj['preference'])  # list of all individual preferences in this cohort
 
     # make a table
