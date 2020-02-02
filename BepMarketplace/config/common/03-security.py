@@ -16,6 +16,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 ## Filters
 CSRF_USE_SESSIONS = True  # do not use cookies for csrf
+CSRF_FAILURE_VIEW = 'index.views.csrf_failure'
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True  # prevent mime-type sniffing
 X_FRAME_OPTIONS = 'allow-from https://canvas.tue.nl'  # superseded by CPS_FRAME_ANCESTORS, only for backwards compat.

@@ -17,7 +17,7 @@ django-render-block
 django-sendfile
 django-two-factor-auth
 django
-djangosaml2>=0.16.11
+djangosaml2>=0.17
 docutils
 lxml
 markdown

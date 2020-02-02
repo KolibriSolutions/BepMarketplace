@@ -52,3 +52,4 @@ handler400 = 'index.views.error400'
 handler404 = 'index.views.error404'
 handler403 = 'index.views.error403'
 handler500 = 'index.views.error500'
+# handler for 403 csrf in settings.03-security

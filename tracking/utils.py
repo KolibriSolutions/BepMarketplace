@@ -9,7 +9,7 @@ from django.core.cache import cache
 from tracking.models import ProposalTracking
 
 
-def get_ProposalTracking(proposal):
+def get_project_tracking(proposal):
     """
     try retrieving the object from cache, if not in cache from db, if not in db, create it. update cache accordingly
 
@@ -47,7 +47,7 @@ def tracking_visit_project(project, user):
         return
 
     # retrieve object
-    track = get_ProposalTracking(project)
+    track = get_project_tracking(project)
 
     # add if it is unique visitor and write to both db and cache
     if user not in track.UniqueVisitors.all():

@@ -413,6 +413,17 @@ def error403(request, exception):
     return render(request, "403.html", status=403, context={"exception": exception})
 
 
+def csrf_failure(request, reason=''):
+    """
+    http 403 page for CSRF failure
+
+    :param request:
+    :param exception: Reason why this page is forbidden.
+    :return:
+    """
+    return render(request, "403_csrf.html", status=403)
+
+
 def error404(request, exception):
     """
     http 404 page
@@ -433,14 +444,7 @@ def error500(request):
     :param request:
     :return:
     """
-    return render(request, "50x.html", status=500, context={
-        "reason": "Something went wrong in the server. "
-                  "The BEP marketplace team has been automatically notified. </br>"
-                  "Please help them by sending an email to "
-                  "<a href=\"mailto:bepmarketplace@tue.nl?subject=BugReport\">bepmarketplace@tue.nl</a> "
-                  "with more information what you were trying to do. <br/>"
-                  "Thanks in advance!"
-    })
+    return render(request, "50x.html", status=500)
 
 
 def about(request):
