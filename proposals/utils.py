@@ -288,7 +288,7 @@ def get_cached_project(pk):
     if cprop is None:
         prop = get_object_or_404(Proposal, pk=pk)
         if prop.Status == 4:
-            cache.set('proposal_{}'.format(pk), prop, None)
+            cache.set('proposal_{}'.format(pk), prop, settings.PROJECT_OBJECT_CACHE_DURATION)
         return prop
     else:
         return cprop
@@ -305,17 +305,4 @@ def update_cached_project(prop):
     cache.delete('proposaldetail{}'.format(prop.pk))
     cache.delete('cpv_proj_{}'.format(prop.pk))
     if prop.Status == 4:
-        cache.set('proposal_{}'.format(prop.id), prop, None)
-
-#
-# def updatePropCache_pk(pk):
-#     """
-#     Update a cached proposal
-#
-#     :param pk: pk of proposal
-#     :return:
-#     """
-#     prop = get_object_or_404(Proposal, pk=pk)
-#     if prop.Status == 4:
-#         cache.set('proposal_{}'.format(pk), prop, None)
-#
+        cache.set('proposal_{}'.format(prop.id), prop, settings.PROJECT_OBJECT_CACHE_DURATION)

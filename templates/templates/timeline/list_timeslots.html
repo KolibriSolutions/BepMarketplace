@@ -1,13 +1,15 @@
 {% extends "base.html" %}
+{% load timeline_tags %}
 {% block body %}
     <h1>Time slots</h1>
     <p>Current time slot: {{ cur }}</p>
+    <p>Current time phase: {% get_timephase_number %}: {% get_timephase %}</p>
     <p>
     Note that all dates are inclusive. The end day of a timeslot should be at least one day before the start day of the next timeslot. If timeslots overlap, the one with oldest begin day is taken.
     </p>
     <a href="{% url "timeline:add_timeslot" %}" class="button primary">Add time slot</a>
     <a href="{% url "timeline:copy_timephases" %}" class="button primary">Copy time phases</a>
-    <table class="table bordered hovered striped datatable">
+    <table class="table bordered hovered datatable">
         <thead>
         <tr>
             <th>Name</th>
@@ -18,7 +20,7 @@
         </thead>
         <tbody>
         {% for p in tss %}
-            <tr>
+            <tr class="{% if p == cur %}bg-grayLighter{% endif %}">
                 <td>{{ p.Name }}</td>
                 <td data-sort="{{ p.Begin|date:'U' }}">{{ p.Begin }}</td>
                 <td data-sort="{{ p.End|date:'U' }}">{{ p.End }}</td>
@@ -29,7 +31,6 @@
                     {% if user.is_superuser %}
                         <a href="{% url 'admin:timeline_timeslot_change' p.pk %}" class="button warning">Admin
                             edit</a>{% endif %}
-
                 </td>
             </tr>
         {% endfor %}

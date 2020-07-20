@@ -9,6 +9,7 @@ from django.conf import settings
 
 from templates import widgets
 from .models import FeedbackReport, UserMeta, Track
+from general_view import get_grouptype
 
 mailPattern = re.compile(settings.EMAILREGEXCHECK)
 
@@ -59,6 +60,12 @@ class TrackForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['Name'].disabled = True
         self.fields['ShortName'].disabled = True
+        self.fields['Head'].queryset = get_grouptype('1').user_set.all().select_related('usermeta')
+        self.fields['Head'].label_from_instance = self.user_label_from_instance
+
+    @staticmethod
+    def user_label_from_instance(self):
+        return self.usermeta.get_nice_name
 
     class Meta:
         model = Track

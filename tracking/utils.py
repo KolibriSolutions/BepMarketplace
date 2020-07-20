@@ -4,6 +4,7 @@
 #
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.conf import settings
 from django.core.cache import cache
 
 from tracking.models import ProposalTracking
@@ -24,7 +25,7 @@ def get_project_tracking(proposal):
             track = ProposalTracking()
             track.Subject = proposal
             track.save()
-        cache.set('trackprop{}'.format(proposal.id), track, None)
+        cache.set('trackprop{}'.format(proposal.id), track, settings.PROJECT_OBJECT_CACHE_DURATION)
         return track
     else:
         return c_track
@@ -53,7 +54,7 @@ def tracking_visit_project(project, user):
     if user not in track.UniqueVisitors.all():
         track.UniqueVisitors.add(user)
         track.save()
-        cache.set('trackprop{}'.format(project.id), track, None)
+        cache.set('trackprop{}'.format(project.id), track, settings.PROJECT_OBJECT_CACHE_DURATION)
 
         # notify listeners
         channel_layer = get_channel_layer()

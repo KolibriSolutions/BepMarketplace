@@ -283,6 +283,7 @@ def profile(request):
 
         vars = {
             "student": False,
+            "meta": meta,
             "type1": groups.filter(name="type1staff").exists(),
             "type2": type2,
             "type3": groups.filter(name="type3staff").exists(),

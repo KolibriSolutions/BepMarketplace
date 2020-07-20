@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 
 from django.utils.deprecation import MiddlewareMixin
-from ipware.ip import get_real_ip
+from ipware.ip import get_client_ip
 from pytz import utc
 
 
@@ -29,7 +29,7 @@ class TelemetryMiddleware(MiddlewareMixin):
         return {
             'path': request.path,
             'status_code': response.status_code,
-            'ip': get_real_ip(request),
+            'ip': get_client_ip(request),
             'method': request.method,
             'timestamp': int(datetime.utcnow().replace(tzinfo=utc).timestamp()),
             'user_agent': request.META.get('HTTP_USER_AGENT'),

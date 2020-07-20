@@ -29,8 +29,10 @@ from professionalskills.decorators import can_access_professionalskills
 from students.models import Distribution
 from timeline.decorators import phase_required
 from timeline.utils import get_timeslot, get_timephase_number
-from .forms import FileTypeModelForm, StaffResponseForm, StudentGroupForm, StudentGroupChoice, FileExtensionForm, StaffResponseFileAspectResultForm, StaffResponseFileAspectForm
-from .models import FileType, StaffResponse, StudentFile, StudentGroup, FileExtension, StaffResponseFileAspectResult, StaffResponseFileAspect
+from .forms import FileTypeModelForm, StaffResponseForm, StudentGroupForm, StudentGroupChoice, FileExtensionForm, \
+    StaffResponseFileAspectResultForm, StaffResponseFileAspectForm
+from .models import FileType, StaffResponse, StudentFile, StudentGroup, FileExtension, StaffResponseFileAspectResult, \
+    StaffResponseFileAspect
 
 
 @group_required('type3staff', 'type6staff')
@@ -58,7 +60,9 @@ def download_all_of_type(request, pk):
                         '{}/{}.{}'.format(str(trck), fname,
                                           file.File.name.split('.')[-1]), fstream.read())
             except (IOError, ValueError):  # happens if a file is referenced from database but does not exist on disk.
-                return render(request, 'base.html', {'Message': 'These files cannot be downloaded, please contact support staff. (Error on file: "{}")'.format(file)})
+                return render(request, 'base.html', {
+                    'Message': 'These files cannot be downloaded, please contact support staff. (Error on file: "{}")'.format(
+                        file)})
     in_memory.seek(0)
 
     response = HttpResponse(content_type="application/zip")
@@ -532,7 +536,8 @@ def respond_file(request, pk):
             except StaffResponseFileAspectResult.DoesNotExist:
                 aspect_result = StaffResponseFileAspectResult(Aspect=aspect, Response=responseobj)
             aspect_forms.append({
-                "form": StaffResponseFileAspectResultForm(request.POST, instance=aspect_result, prefix="aspect" + str(i)),
+                "form": StaffResponseFileAspectResultForm(request.POST, instance=aspect_result,
+                                                          prefix="aspect" + str(i)),
                 "aspect": aspect
             })
         response_form = StaffResponseForm(request.POST, instance=responseobj, prefix='response')
@@ -553,13 +558,14 @@ def respond_file(request, pk):
                 except StaffResponseFileAspectResult.DoesNotExist:
                     aspect_result = StaffResponseFileAspectResult(Aspect=aspect, Response=responseobj)
                 aspect_forms.append({
-                    "form": StaffResponseFileAspectResultForm(request.POST, instance=aspect_result, prefix="aspect" + str(i)),
+                    "form": StaffResponseFileAspectResultForm(request.POST, instance=aspect_result,
+                                                              prefix="aspect" + str(i)),
                     "aspect": aspect
                 })
             all([form['form'].save() for form in aspect_forms])
             return render(request, 'base.html', {
                 'Message': 'Response saved!',
-                'return': 'support:liststudents',
+                'return': 'students:liststudents',
                 'returnget': fileobj.Distribution.TimeSlot.pk,
             })
     else:
@@ -575,9 +581,11 @@ def respond_file(request, pk):
             })
         response_form = StaffResponseForm(instance=responseobj, prefix='response')
 
-    return render(request, 'professionalskills/staffresponseform.html', {
+    return render(request, 'professionalskills/staff_response_form.html', {
         'form': response_form,
-        'formtitle': 'Respond to {} from {}'.format(fileobj.Type.Name, fileobj.Distribution.Student.usermeta.get_nice_name()),
+        # 'formtitle': 'Respond to {} from {}'.format(fileobj.Type.Name,
+        #                                             fileobj.Distribution.Student.usermeta.get_nice_name()),
+        'fileobj': fileobj,
         'aspectforms': aspect_forms,
         "aspectlabels": StaffResponseFileAspectResult.ResultOptions,
     })
@@ -665,6 +673,8 @@ def create_group(request, pk=None):
             obj = form.save()
             return render(request, 'base.html', {
                 'Message': '{} created!'.format(obj),
+                'return': 'professionalskills:listgroups',
+                'returnget': obj.PRV.id,
             })
     else:
         if pk is not None:
@@ -695,6 +705,8 @@ def edit_group(request, pk):
             obj = form.save()
             return render(request, 'base.html', {
                 'Message': '{} saved!'.format(obj),
+                'return': 'professionalskills:listgroups',
+                'returnget': obj.PRV.id,
             })
     else:
         form = StudentGroupForm(instance=obj)
@@ -742,7 +754,9 @@ def assign(request, pk):
         if form.is_valid():
             if filetype.groups.all().aggregate(Sum('Max'))['Max__sum'] < get_all_students().count():
                 return render(request, 'base.html', {
-                    'Message': 'Groups capacity not sufficient'
+                    'Message': 'Groups capacity not sufficient. Groups are not changed.',
+                    'return': 'professionalskills:listgroups',
+                    'returnget': filetype.id
                 })
             for group in filetype.groups.all():
                 group.Members.clear()
@@ -763,7 +777,9 @@ def assign(request, pk):
                 g.save()
 
             return render(request, 'base.html', {
-                'Message': 'Students divided over the groups'
+                'Message': 'Students divided over the groups.',
+                'return': 'professionalskills:listgroups',
+                'returnget': filetype.id,
             })
     else:
         form = ConfirmForm()
@@ -780,6 +796,7 @@ def assign(request, pk):
 def switch_group(request, pk):
     """
     Lets a student switch between prv groups. This function is usually not called via URL, only direct.
+    TODO There is no validation on group size
 
     :param request:
     :param pk: pk of PRV for which groups are switched.

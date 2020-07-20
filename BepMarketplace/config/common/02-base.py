@@ -88,9 +88,6 @@ SHORT_DATE_FORMAT = 'd-m-Y'
 DATETIME_FORMAT = 'N j, Y, H:i'
 SHORT_DATETIME_FORMAT = 'd-m-Y H:i'
 
-# regex checks
-EMAILREGEXCHECK = '(^[a-zA-Z0-9]{1}[a-zA-Z0-9_.+-~]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)'  # regex that checks for email.
-
 # Application definition
 INSTALLED_APPS = [
     'api.apps.ApiConfig',

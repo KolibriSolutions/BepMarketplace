@@ -69,11 +69,24 @@ def set_level(user):
 def is_staff(user):
     """
     Check whether the user is staff. Staff has an @tue.nl email, students have @student.tue.nl email.
+    Some students can have type3staff, as TA support. These should be treated as staff.
 
     :param user:
     :return:
     """
     if user.email.split('@')[-1].lower() in settings.STAFF_EMAIL_DOMAINS or get_grouptype('3') in user.groups.all():
+        return True
+    return False
+
+
+def is_student(user):
+    """
+    Check whether the user is student. Students have @student.tue.nl email.
+
+    :param user:
+    :return:
+    """
+    if user.email.split('@')[-1].lower() in settings.STUDENT_EMAIL_DOMAINS:
         return True
     return False
 
@@ -111,9 +124,10 @@ def check_user(request, user):
                 # new staff members get automatically type2staffunverified
                 user.groups.add(get_grouptype("2u"))
             return True
-        else:
+        elif is_student(user):
             if not enrolled_osiris(user):
-                return render(request, 'base.html', status=403, context={"Message": "You are not enrolled in our system yet. Please login once through canvas module BEP Marketplace"})
+                return render(request, 'base.html', status=403,
+                              context={"Message": "You are not enrolled in our system yet. Please login once through canvas module BEP Marketplace"})
             elif get_timephase_number() < 3:  # if there isn't a timephase, this returns -1, so login is blocked.
                 return render(request, 'base.html', status=403, context={"Message": "Student login is not available in "
                                                                                     "this timephase."})
@@ -135,8 +149,10 @@ def check_user(request, user):
                 if get_timeslot() not in user.usermeta.TimeSlot.all():  # user is not active in this timeslot
                     # not in this timeslot so old user, canvas app sets timeslot
                     # this security will fail if canvas does not close off old courses as it does now
-                    return render(request, 'base.html', status=403, context={"Message": "You already did your BEP once"
-                                                                                        ", login is not allowed."})
+                    return render(request, 'base.html', status=403, context={"Message": "You already did your BEP once, login is not allowed."})
+        else:
+            return render(request, 'base.html', status=403,
+                          context={"Message": "Your email address is not known in the system. Login is not allowed. Please contact the support staff."})
     return True
 
 
@@ -213,7 +229,7 @@ def callback(request):
     existent_user = get_user(user.object.email, user.object.username)
     if existent_user:
         if not existent_user.is_active:
-            raise PermissionDenied("Your user is disabled. Please contact support.")
+            raise PermissionDenied("Your user account is disabled. Please contact support.")
         user.object.pk = existent_user.pk
         existent_usermeta = existent_user.usermeta
         usermeta.object.pk = existent_usermeta.pk

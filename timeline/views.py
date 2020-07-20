@@ -2,7 +2,7 @@
 #  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, render
@@ -13,7 +13,7 @@ from general_model import print_list, delete_object
 from .forms import TimePhaseForm, TimeSlotForm, TimePhaseCopyForm
 from .models import TimeSlot, TimePhase
 from .utils import get_timeslot, get_timephase
-
+from django.conf import settings
 
 @group_required('type3staff')
 def list_timeslots(request):
@@ -25,7 +25,7 @@ def list_timeslots(request):
     """
     tss = TimeSlot.objects.all()
     cur = get_timeslot()
-    return render(request, 'timeline/list_timeslots.html', {'tss': tss, 'cur': cur, 'now': datetime.now().date()})
+    return render(request, 'timeline/list_timeslots.html', {'tss': tss, 'cur': cur, 'now': datetime.now().date()-timedelta(days=settings.TIMELINE_EDIT_DAYS_AFTER_FINISH)})
 
 
 @group_required('type3staff')
@@ -56,7 +56,7 @@ def add_timeslot(request):
 @group_required('type3staff')
 def edit_timeslot(request, timeslot):
     ts = get_object_or_404(TimeSlot, pk=timeslot)
-    if ts.End < datetime.now().date():
+    if ts.End < (datetime.now().date()-timedelta(days=settings.TIMELINE_EDIT_DAYS_AFTER_FINISH)): # allow editing 30 days after timeslot ending.
         raise PermissionDenied('This timeslot has already finished.')
     if request.method == 'POST':
         form = TimeSlotForm(request.POST, instance=ts)
@@ -95,7 +95,7 @@ def list_timephases(request, timeslot):
     ph = ts.timephases.all()
     cur = get_timephase()
     return render(request, 'timeline/list_timephases.html',
-                  {'ts': ts, 'ph': ph, 'cur': cur, 'now': datetime.now().date()})
+                  {'ts': ts, 'ph': ph, 'cur': cur, 'now': datetime.now().date()-timedelta(days=settings.TIMELINE_EDIT_DAYS_AFTER_FINISH)})
 
 
 @group_required('type3staff')
@@ -139,7 +139,7 @@ def edit_timephase(request, timephase):
     :return:
     """
     tp = get_object_or_404(TimePhase, pk=timephase)
-    if tp.End < datetime.now().date():
+    if tp.End < datetime.now().date()-timedelta(days=settings.TIMELINE_EDIT_DAYS_AFTER_FINISH):
         raise PermissionDenied('This TimePhase has already finished.')
 
     if request.method == 'POST':

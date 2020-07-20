@@ -27,6 +27,7 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
         code_general = [
             [['viewsharelink', {'token': 'blabla'}], [s.p_anonymous]],
             [['stats', None], [s.p_staff_veri]],
+            [['exports', None], self.p_support],
             [['contentpolicy', None], self.p_support],
             [['contentpolicycalc', None], self.p_support],
             [['privateproposals', None], self.p_support_prv],

@@ -23,6 +23,9 @@ class Track(models.Model):
     def __str__(self):
         return str(self.ShortName)
 
+    class Meta:
+        ordering = ["Name"]
+
 
 class Broadcast(models.Model):
     """

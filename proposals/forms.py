@@ -233,14 +233,14 @@ class ProjectForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
-        self.fields['ResponsibleStaff'].queryset = get_grouptype('1').user_set.all()
-        self.fields['Assistants'].queryset = get_grouptype('2').user_set.all() | \
-                                             get_grouptype('2u').user_set.all() | \
-                                             get_grouptype('1').user_set.all()
+        self.fields['ResponsibleStaff'].queryset = get_grouptype('1').user_set.all().select_related('usermeta')
+        self.fields['Assistants'].queryset = get_grouptype('2').user_set.all().select_related('usermeta') | \
+                                             get_grouptype('2u').user_set.all().select_related('usermeta') | \
+                                             get_grouptype('1').user_set.all().select_related('usermeta')
         self.fields['ResponsibleStaff'].label_from_instance = self.user_label_from_instance
         self.fields['Assistants'].label_from_instance = self.user_label_from_instance
         self.fields['addAssistantsEmail'].widget.attrs['placeholder'] = "Add assistant via email address"
-        self.fields['Private'].queryset = User.objects.filter(groups=None)
+        self.fields['Private'].queryset = User.objects.filter(groups=None).select_related('usermeta')
         self.fields['Private'].label_from_instance = self.user_label_from_instance
 
         # no user label_from_instance for private students because privacy.

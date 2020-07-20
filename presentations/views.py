@@ -24,7 +24,7 @@ from timeline.models import TimePhase
 from timeline.utils import get_timephase_number
 from .exports import get_list_presentations_xlsx
 from .forms import PresentationOptionsForm, PresentationRoomForm, PresentationSetForm, get_timeslot, MakePublicForm
-from .models import Room, PresentationSet, PresentationTimeSlot, PresentationOptions
+from .models import Room, PresentationSet, PresentationTimeSlot, PresentationOptions, Room
 from .utils import planning_public
 
 
@@ -68,10 +68,53 @@ def wizard_step1(request):
 
 @group_required("type3staff")
 @phase_required(5, 6, 7)
+def wizard_step2_edit(request, kind):
+    """
+    Step 2 of the planning of the presentations for the projects.
+    In this step the rooms for the presentations are set. Rooms have just a name. All used rooms have to be supplied.
+
+    :param request:
+    :param kind: Add or edit.
+    :return:
+    """
+    ts = get_timeslot()
+    if not hasattr(ts, 'presentationoptions'):
+        return render(request, "base.html", {
+            "Message": "There are no presentation options yet, please <a class='button success' href='" + reverse(
+                "presentations:presentationswizardstep1") + "'>go back to step 1</a>"})
+
+    if kind == 'add':
+        qs = Room.objects.none()
+        ex = 10
+    elif kind == 'edit':
+        qs = Room.objects.all()
+        ex = 0
+    else:
+        raise PermissionDenied('Wrong kind, choose add or edit.')
+
+    form_set = modelformset_factory(Room, form=PresentationRoomForm, can_delete=kind == 'edit', extra=ex)
+    formset = form_set(queryset=qs)
+    if request.method == 'POST':
+        formset = form_set(request.POST)
+        if formset.is_valid():
+            try:
+                formset.save()
+            except ProtectedError as e:
+                raise PermissionDenied('Room can not be deleted, as other objects depend on it. Please remove the others first. Depending objects: {}'.format(
+                    print_list(e.protected_objects)))
+            return render(request, "base.html", {"Message": "Rooms saved!", "return": "presentations:presentationswizardstep2"})
+    return render(request, 'GenericForm.html',
+                  {'formset': formset, 'formtitle': "Presentations step 2; {} rooms for presentations & assessments".format(kind.capitalize()),
+                   'buttontext': 'Save'})
+
+
+@group_required("type3staff")
+@phase_required(5, 6, 7)
 def wizard_step2(request):
     """
     Step 2 of the planning of the presentations for the projects.
     In this step the rooms for the presentations are set. Rooms have just a name. All used rooms have to be supplied.
+    This view lists the rooms.
 
     :param request:
     :return:
@@ -82,24 +125,13 @@ def wizard_step2(request):
             "Message": "There are no presentation options yet, please <a class='button success' href='" + reverse(
                 "presentations:presentationswizardstep1") + "'>go back to step 1</a>"})
 
-    form_set = modelformset_factory(Room, form=PresentationRoomForm, can_delete=True, extra=6)
-    formset = form_set(queryset=Room.objects.all())
-    if request.method == 'POST':
-        formset = form_set(request.POST)
-
-        if formset.is_valid():
-            try:
-                formset.save()
-            except ProtectedError as e:
-                raise PermissionDenied('Room can not be deleted, as other objects depend on it. Please remove the others first. Depending objects: {}'.format(print_list(e.protected_objects)))
-
-            return render(request, "base.html", {"Message": "Rooms saved!  <br />\
-            <a class='button success' href='" + reverse(
-                "presentations:presentationswizardstep3") + "'>Go to next step</a> <a class='button primary' href='" + reverse(
-                "presentations:presentationswizardstep2") + "'>Add more rooms</a>"})
-    return render(request, 'GenericForm.html',
-                  {'formset': formset, 'formtitle': "Presentations step 2; Rooms for presentations & assessments",
-                   'buttontext': 'Save and go to step 3'})
+    rooms = Room.objects.all()
+    res = []
+    for room in rooms:
+        used = [set for set in PresentationSet.objects.filter(Q(PresentationRoom=room) | Q(AssessmentRoom=room))]
+        years = set([set.PresentationOptions.TimeSlot for set in used])
+        res.append([room, years, used])
+    return render(request, "presentations/list_rooms.html", {'rooms': res})
 
 
 @group_required("type3staff")
@@ -128,7 +160,8 @@ def wizard_step3(request):
 
     form = PresentationSetForm
     form_set = modelformset_factory(PresentationSet, form=form, can_delete=True, extra=24)
-    formset = form_set(queryset=PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts))
+    formset = form_set(
+        queryset=PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts).prefetch_related('Assessors__usermeta', 'PresentationAssessors__usermeta'))
 
     if request.method == 'POST':
         formset = form_set(request.POST)
@@ -191,12 +224,13 @@ def wizard_step4(request):
                 slotObj.save()
         return JsonResponse({'type': 'success', 'txt': 'Data saved!'})
     else:
-        dists = Distribution.objects.filter(Q(presentationtimeslot__isnull=True) & Q(TimeSlot=get_timeslot()))
-        sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts)
+        dists = Distribution.objects.filter(Q(presentationtimeslot__isnull=True) & Q(TimeSlot=get_timeslot())).order_by('Proposal__ResponsibleStaff__last_name',
+                                                                                                                        'Proposal__Track', 'Student__last_name')
+        sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts)  # always ordered by date.
         opts = ts.presentationoptions
         types = PresentationTimeSlot.SlotTypes
         tracks = Track.objects.all()
-        return render(request, 'presentations/planPresentations.html',
+        return render(request, 'presentations/plan_presentations.html',
                       {'dists': dists, 'sets': sets, 'opts': opts, 'types': types, 'tracks': tracks})
 
 
@@ -210,11 +244,14 @@ def list_presentations(request):
     :param request:
     :return:
     """
-    sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=get_timeslot())
+    sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=get_timeslot()).prefetch_related('timeslots__Distribution__Proposal__ResponsibleStaff__usermeta',
+                                                                                                         'timeslots__Distribution__Proposal__Assistants__usermeta',
+                                                                                                         'timeslots__Distribution__Student__usermeta',
+                                                                                                         'Assessors__usermeta','PresentationAssessors__usermeta',)
     if not sets:
         return render(request, "base.html",
                       {"Message": "There is nothing planned yet. Please plan the presentations first."})
-    return render(request, "presentations/listPresentationsPlanning.html", {
+    return render(request, "presentations/list_presentations_planning.html", {
         "sets": sets,
         'hide_sidebar': True}
                   )
@@ -272,7 +309,8 @@ def calendar(request, own=False):
         sets = sets.filter(Q(timeslots__Distribution__Proposal__ResponsibleStaff=request.user) |
                            Q(timeslots__Distribution__Proposal__Assistants=request.user) |
                            Q(Assessors=request.user) |
-                           Q(timeslots__Distribution__Student=request.user)).distinct()
+                           Q(timeslots__Distribution__Student=request.user) |
+                           Q(PresentationAssessors=request.user)).distinct()
     if not sets:
         if own:
             return render(request, "base.html", {"Message": "There are no presentations that you have to attend.",
@@ -298,9 +336,12 @@ def calendar(request, own=False):
                 options.save()
         else:
             form = MakePublicForm(instance=options)
-        return render(request, "presentations/presentationsCalendar.html",
+        return render(request, "presentations/presentations_calendar.html",
                       {"sets": sets, "form": form, "beginCalendar": begin})
 
     # normal view for non-type3 staff
-    return render(request, "presentations/presentationsCalendar.html",
-                  {"sets": sets, "beginCalendar": begin, "own": own})
+    return render(request, "presentations/presentations_calendar.html",
+                  {"sets": sets.prefetch_related('timeslots__Distribution__Proposal__Assistants__usermeta',
+                                                 'timeslots__Distribution__Proposal__ResponsibleStaff__usermeta',
+                                                 'timeslots__Distribution__Proposal__Track__Head__usermeta',
+                                                 'Assessors__usermeta', 'PresentationAssessors__usermeta', ), "beginCalendar": begin, "own": own})

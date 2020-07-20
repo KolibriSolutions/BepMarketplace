@@ -137,6 +137,11 @@ g.save()
 if created:
     print("creating type6staff")
 
+g, created = Group.objects.get_or_create(name='type7staff')
+g.save()
+if created:
+    print("creating type7staff")
+
 if not DUMMY:
     # End of non dummy generation
     sys.exit(0)

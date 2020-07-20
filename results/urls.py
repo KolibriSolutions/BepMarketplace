@@ -15,6 +15,7 @@ urlpatterns = [
     # path('staff/file/<int:pk>/', views.staff_form_file, name='gradeformstafffiles'),
     # path('staff/file/<int:pk>/<int:step>/', views.staff_form_file, name='gradeformstafffiles'),
     path('staff/finalize_preview/<int:pk>/', views.finalize_preview, name='gradefinalpreview'),
+    path('staff/finalize_preview/<int:pk>/<int:version>/', views.finalize_preview, name='gradefinalpreview'),
     path('staff/end/<int:pk>/', views.finalize, name='gradefinal'),
     path('staff/end/<int:pk>/<int:version>/', views.finalize, name='gradefinal'),
 

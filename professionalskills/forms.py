@@ -112,6 +112,14 @@ class StudentGroupForm(forms.ModelForm):
             'Max': 'The maximum number of students in this group',
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        new_number =cleaned_data.get('Number')
+        g = StudentGroup.objects.filter(Number=new_number, PRV=cleaned_data.get('PRV'))
+        if new_number in g.exclude(id=self.instance.id).values_list('Number', flat=True):
+            raise ValidationError('Group with that number already exists for this professional skill')
+        return cleaned_data
+
 
 class StudentGroupChoice(forms.Form):
     """

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% block body %}
+    <p>
     {% if final %}
         <div class="bg-darkRed fg-white padding10 margin10">
             Grades are already printed/downloaded once and thus finalized. Editing is disabled.
@@ -13,6 +14,12 @@
         </div>
     {% endif %}
     <a class="button primary" href="{% url 'results:gradeformstaff' dstr.id %}"><span class="mif-arrow-left"></span> Back to editing</a>
+    {% if preview %}
+        {# download button for preview #}
+        <a href="{% url 'results:gradefinalpreview' dstr.id 2 %}" class="button primary">Download PDF</a>
+        <a href="{% url 'results:gradefinalpreview' dstr.id 1 %}" class="button primary">Show printable page</a>
+    {% endif %}
+    </p>
     {% block report %}
         <h1>{% if preview %}Preview of: {% endif %}Results for <i>{{ dstr.Student.usermeta.get_nice_name }}</i> for project <i>{{ dstr.Proposal.Title }}</i></h1>
         <h3>Responsible Staff member: {{ dstr.Proposal.ResponsibleStaff.usermeta.get_nice_name }}</h3>
@@ -50,7 +57,6 @@
         </table>
         <h3>Final Grade {% if preview %}(Preview){% endif %}</h3>
         <table class="table border bordered" style="width:100%;">
-
             <tr>
                 <td style="width:50%;"><h1><b>Grade:</b> {{ finalgrade }}</h1></td>
                 <td rowspan="2">{% if preview %}<h1>X</h1>(Preview only, do not use for signing){% endif %}</td>
@@ -58,7 +64,6 @@
             <tr>
                 <td>Signature:</td>
             </tr>
-
         </table>
     {% endblock %}
 {% if not preview %}

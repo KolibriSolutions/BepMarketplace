@@ -4,14 +4,15 @@
 #
 from datetime import timedelta
 
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator, MaxValueValidator, URLValidator
+from django.db import models
+from django.utils.html import format_html
 
+from general_model import clean_text
 from index.models import Track
 from students.models import Distribution
 from timeline.models import TimeSlot
-from general_model import clean_text
 
 
 class Room(models.Model):
@@ -19,12 +20,23 @@ class Room(models.Model):
     A room to do things in.
     """
     Name = models.CharField(max_length=100, unique=True)
+    JoinLink = models.URLField(blank=True, null=True,
+                               help_text='If the presentation is given in an online platform, a join link for the set can be specified here. The URL has to start with "https://"',
+                               validators=[URLValidator(schemes=['https'])],
+                               max_length=2000)
 
     def __str__(self):
         return self.Name
 
     def clean(self):
         self.Name = clean_text(self.Name)
+
+    def room_link(self):
+        if self.JoinLink:
+            return format_html('<a href="{}" target="_blank" title="Click to join online meeting">{}</a>',
+                               self.JoinLink, self.Name)
+        else:
+            return self.Name
 
 
 class PresentationOptions(models.Model):
@@ -51,8 +63,14 @@ class PresentationSet(models.Model):
     PresentationRoom = models.ForeignKey(Room, on_delete=models.PROTECT, related_name="presentationroom")
     AssessmentRoom = models.ForeignKey(Room, on_delete=models.PROTECT, related_name="assessmentroom")
     Track = models.ForeignKey(Track, on_delete=models.CASCADE, blank=True, null=True)
-    Assessors = models.ManyToManyField(get_user_model(), blank=True)
+    Assessors = models.ManyToManyField(get_user_model(), blank=True, related_name='assessors', help_text='Staff member to help or replace the project supervisor in assessing the presentation')
+    PresentationAssessors = models.ManyToManyField(get_user_model(), blank=True, related_name='presentation_assessors', help_text='ESA/STU person to assess the presentation skills.')
     DateTime = models.DateTimeField()
+
+    # JoinLink = models.URLField(blank=True, null=True,
+    #                            help_text='If the presentation is given in an online platform, a join link for the set can be specified here. The URL has to start with "https://"',
+    #                            validators=[URLValidator(schemes=['https'])],
+    #                            max_length=2000)
 
     def __str__(self):
         return "Presentationset for " + self.PresentationOptions.TimeSlot.__str__() + " and track: " + self.Track.__str__()
@@ -66,6 +84,7 @@ class PresentationTimeSlot(models.Model):
     A presentation, assessment or break.
     """
     SlotTypes = (
+        (0, 'Presentation'),
         (1, 'Assessment'),
         (2, 'Break'),
         (3, 'Cancelled')

@@ -45,7 +45,8 @@ CATEGORY_GRADE_QUANTIZATION = 0.25
 
 MAX_NUM_APPLICATIONS = 5              # number of applications a student can have.
 MAX_UPLOAD_SIZE = 10*1024*1024  # max size of any uploaded file 10MB. This limit should be lower than the NGINX limit
-MAXAGESHARELINK = 60*60*24*7
+MAXAGESHARELINK = 60*60*24*7  # max age of a share link for project share links.
+TIMELINE_EDIT_DAYS_AFTER_FINISH = 30  # number of days after which a timeslot/timephase has ended, after which editing of the timeslot/phase is disabled.
 
 ALLOWED_PROJECT_ATTACHMENTS = ['pdf']  # allowed files for project attachments
 ALLOWED_PROPOSAL_ATTACHMENTS = ALLOWED_PROJECT_ATTACHMENTS
@@ -63,3 +64,10 @@ ALLOWED_PRIVATE_STUDENT_DOMAINS = STUDENT_EMAIL_DOMAINS
 
 # How long to cache models that are assumed static. (Group types, timeslots, timphases)
 STATIC_OBJECT_CACHE_DURATION = 15 * 60  # 15 minutes.
+PROJECT_OBJECT_CACHE_DURATION = 24 * 60 * 60  # one day
+
+# regex checks
+EMAILREGEXCHECK = '(^[a-zA-Z0-9]{1}[a-zA-Z0-9_.+-~]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)'  # regex that checks for email.
+# COURSECODEREGEX = r"\b[0-9]\w{4}[0-9]\b|\b[0-9]\w{3}[0-9]\b|\b[0-9]\w{2}[0-9]\b|\w{2}\b[0-9]{3}\b"  # number, 2-4 letters, number
+COURSECODEREGEX = r"\b([A-z]|[0-9]){3,7}\b"
+LINKREGEX = r'\[([^\[]+)\]\(([^\)]+)\)'

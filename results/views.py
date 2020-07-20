@@ -110,14 +110,14 @@ def finalize(request, pk, version=0):
 
 @group_required('type1staff', 'type3staff')
 @phase_required(6, 7)
-def finalize_preview(request, pk, step=0):
+def finalize_preview(request, pk, version=0):
     """
     Edit grade for a category as indexed by step. For each student as given by pk.
     Also edit the individual aspects of each grade category. For trackheads and responsible staff
 
     :param request:
     :param pk: id of distribution
-    :param step: number of step in the menu, index of category
+    :param version: 0 for summary page, 1 for printable page, 2 for pdf export
     :return:
     """
     ts = get_timeslot()
@@ -136,26 +136,36 @@ def finalize_preview(request, pk, step=0):
             get_grouptype('3') not in request.user.groups.all() and \
             request.user not in dstr.presentationtimeslot.Presentations.Assessors.all():
         raise PermissionDenied("You do not have the correct permissions to view print preview.")
-    return render(request, "results/finalize_grades.html", {
-        "dstr": dstr,
-        "catresults": dstr.results.all(),
-        "final": all(f.Final is True for f in dstr.results.all()) if dstr.results.all() else False,
-        "finalgrade": dstr.TotalGradeRounded(),
-        "preview": True,
-    })
-
-
-#
-# def staff_form_file(request, *args, **kwargs):
-#     """
-#     Results wizard to edit grades for files.
-#
-#     :param request:
-#     :param args:
-#     :param kwargs:
-#     :return:
-#     """
-#     return staff_form(request, files=True, *args, **kwargs)
+    if version == 0:
+        return render(request, "results/finalize_grades.html", {
+            "dstr": dstr,
+            "catresults": dstr.results.all(),
+            "final": all(f.Final is True for f in dstr.results.all()) if dstr.results.all() else False,
+            "finalgrade": dstr.TotalGradeRounded(),
+            "preview": True,
+        })
+    elif version == 1:  # printable page with grades
+        return render(request, "results/print_grades_pdf.html", {
+            "dstr": dstr,
+            "catresults": dstr.results.all(),
+            "finalgrade": dstr.TotalGradeRounded(),
+            'final': True,
+        })
+    elif version == 2:
+        html = get_template('results/print_grades_pdf.html').render({
+            "dstr": dstr,
+            "catresults": dstr.results.all(),
+            "finalgrade": dstr.TotalGradeRounded(),
+            'final': True,
+        })
+        buffer = BytesIO()
+        pisa_status = pisa.CreatePDF(html.encode('utf-8'), dest=buffer, encoding='utf-8')
+        if pisa_status.err:
+            raise Exception("Pisa Failed PDF creation in print final grade for distribution {}.".format(dstr))
+        buffer.seek(0)
+        response = HttpResponse(buffer, 'application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="bepresult_{}.pdf"'.format(dstr.Student.usermeta.get_nice_name())
+        return response
 
 
 @group_required('type1staff', 'type3staff')

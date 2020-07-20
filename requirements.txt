@@ -11,26 +11,25 @@ django-htmlmin
 django-impersonate
 django-ipware
 django-js-error-hook
-django-js-error-hook
 django-redis
 django-render-block
 django-sendfile
 django-two-factor-auth
+django-otp
 django
-djangosaml2>=0.17
 docutils
 lxml
 markdown
 oauthlib
-openpyxl==3.0.1  # bug when used together with lxml https://bitbucket.org/openpyxl/openpyxl/issues/1373/broken-writer-with-lxml-defusedxml
+openpyxl
 phonenumbers
 pillow
 pip
-psycopg2-binary
+# psycopg2-binary
 pylti
 pysaml2
 pytz
 pyyaml
 requests
 service_identity
-xhtml2pdf>=0.2b1
+xhtml2pdf>=0.2

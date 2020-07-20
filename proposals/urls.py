@@ -40,6 +40,8 @@ general_urlpatterns = [
     # path('stats/general/<int:step>/', views.stats_general, name='statsgeneral'),
 
     # cpv
+    path('exports/', views.exports, name='exports'),
+    path('exports/<str:download>/', views.exports, name='exports'),
     path('contentpolicy/', views.content_policy_view, name='contentpolicy'),
     path('contentpolicy/calc/', views.content_policy_calc, name='contentpolicycalc'),
 ]

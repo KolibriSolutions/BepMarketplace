@@ -9,7 +9,8 @@ import logging
 import zipfile
 from datetime import date, datetime
 from io import BytesIO
-
+from django.template.loader import get_template
+from xhtml2pdf import pisa
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import PermissionDenied
@@ -20,7 +21,6 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 from htmlmin.decorators import not_minified_response
 
-from distributions.utils import get_distributions
 from general_form import ConfirmForm
 from general_mail import EmailThreadTemplate, mail_track_heads_pending, send_mail
 from general_model import print_list, delete_object
@@ -31,10 +31,12 @@ from presentations.exports import get_list_presentations_xlsx
 from presentations.models import PresentationSet, PresentationTimeSlot
 from proposals.models import Proposal
 from proposals.utils import get_all_proposals
-from results.models import CategoryResult, GradeCategory
+from results.models import GradeCategory
 from students.models import Distribution, TimeSlot
-from timeline.utils import get_timeslot, get_timephase_number, get_recent_timeslots
-from .exports import get_list_students_xlsx, get_list_distributions_xlsx, get_list_projects_xlsx
+from timeline.utils import get_timeslot, get_timephase_number
+from .exports import get_list_distributions_xlsx
+from students.exports import get_list_students_xlsx
+from proposals.exports import get_list_projects_xlsx
 from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm, UserGroupsForm, \
     GroupadministratorEdit, CapacityGroupForm
 from .models import GroupAdministratorThrough, PublicFile, CapacityGroup, mail_staff_options, mail_student_options, \
@@ -533,104 +535,7 @@ def list_staff_projects(request, pk):
         prefetch_related('Assistants', 'distributions', 'applications')
 
     return render(request, 'proposals/list_projects_custom.html',
-                  {"title": "Proposals from " + user.usermeta.get_nice_name(), "proposals": projects})
-
-
-@group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
-def list_students(request, timeslot):
-    """
-    For support staff, responsibles and assistants to view their students.
-    List all students with distributions that the current user is allowed to see.
-    Including a button to view the students files.
-    In later timephase shows the grades as well.
-
-    :param request:
-    :param timeslot: the timeslot to look at. None for current timeslot (Future distributions do not exist)
-    :return:
-    """
-    ts = get_object_or_404(TimeSlot, pk=timeslot)
-    if ts.Begin > timezone.now().date():
-        raise PermissionDenied("Future students are not yet known.")
-    if ts == get_timeslot():
-        current_ts = True
-    else:
-        current_ts = False
-
-    if current_ts:
-        # for current timeslot, check time phases.
-        if get_timephase_number() < 0:  # no timephase
-            if get_timeslot() is None:  # no timeslot
-                raise PermissionDenied("System is closed.")
-        else:
-            if get_timephase_number() < 4:
-                raise PermissionDenied("Students are not yet distributed")
-            if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
-                return render(request, "base.html", {'Message':
-                                                         "When the phase 'Distribution of projects' is finished, you can view your students here."})
-        if get_timephase_number() == -1 or get_timephase_number() >= 6:  # also show grades when timeslot but no timephase.
-            show_grades = True
-        else:
-            show_grades = False
-    else:
-        # historic view of distributions. Hide grades, as they might have changed outside the system.
-        show_grades = False
-
-    des = get_distributions(request.user, ts).select_related('Proposal__ResponsibleStaff',
-                                                             'Proposal__Track',
-                                                             'Student__usermeta').prefetch_related(
-        'Proposal__Assistants')
-    cats = None
-    if show_grades:
-        cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
-        des.prefetch_related('results__Category')
-    deslist = []
-    # make grades
-    for d in des:
-        reslist = []
-        if show_grades:
-            for c in cats:
-                try:
-                    reslist.append(d.results.get(Category=c).Grade)
-                except CategoryResult.DoesNotExist:
-                    reslist.append('-')
-        deslist.append([d, reslist])
-    return render(request, "support/list_students.html", {'des': deslist,
-                                                          'typ': cats,
-                                                          'show_grades': show_grades,
-                                                          'hide_sidebar': True,
-                                                          'timeslots': get_recent_timeslots(),
-                                                          'timeslot': ts,
-                                                          'is_current': current_ts,
-                                                          })
-
-
-@not_minified_response
-@group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
-def list_students_xlsx(request):
-    """
-    Same as liststudents but as XLSX. The combination of students and grades is done in general_excel.
-
-    :param request:
-    """
-    if get_timephase_number() < 0:
-        if get_timeslot() is None:
-            raise PermissionDenied("System is closed.")
-    else:
-        if get_timephase_number() < 4:
-            raise PermissionDenied("Students are not yet distributed")
-        if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
-            return render(request, "base.html", {'Message':
-                                                     "When the phase 'Distribution of projects is "
-                                                     "finished, you can view your students here."})
-
-    typ = GradeCategory.objects.filter(TimeSlot=get_timeslot())
-    des = get_distributions(request.user)
-    file = get_list_students_xlsx(des, typ)
-
-    response = HttpResponse(content=file)
-    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response['Content-Disposition'] = 'attachment; filename=students-grades.xlsx'
-    return response
+                  {"title": "Proposals from " + user.usermeta.get_nice_name(), "projects": projects})
 
 
 @group_required('type3staff')
@@ -828,7 +733,7 @@ def history(request):
     :return:
     """
     tss = TimeSlot.objects.filter(End__lte=datetime.now())
-    return render(request, 'index/history.html', context={
+    return render(request, 'support/history.html', context={
         'timeslots': tss,
     })
 
@@ -866,8 +771,15 @@ def history_download(request, timeslot, download):
         response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
     elif download == 'nonfull':
-        projects = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=ts, num_distr__lt=F(
+        projects = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=ts, Status=4, num_distr__lt=F(
             'NumStudentsMax')).order_by('Title')
+        file = get_list_projects_xlsx(projects)
+        response = HttpResponse(content=file)
+        response['Content-Disposition'] = 'attachment; filename=non-full-proposals-{}.xlsx'.format(ts.Name)
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+    elif download == 'projects':
+        projects = Proposal.objects.filter(TimeSlot=ts, Status=4).order_by('Title')
         file = get_list_projects_xlsx(projects)
         response = HttpResponse(content=file)
         response['Content-Disposition'] = 'attachment; filename=non-full-proposals-{}.xlsx'.format(ts.Name)
@@ -895,23 +807,42 @@ def history_download(request, timeslot, download):
         response = HttpResponse(content_type="application/zip")
         response['Content-Disposition'] = 'attachment; filename="publicfiles-{}.zip"'.format(ts.Name)
         response.write(in_memory.read())
+    elif download == 'results':
+        # first get all results as in memory pdf files.
+        files = []
+        for dstr in ts.distributions.all():
+            html = get_template('results/print_grades_pdf.html').render({
+                "dstr": dstr,
+                "catresults": dstr.results.all(),
+                "finalgrade": dstr.TotalGradeRounded(),
+                'final': True,
+            })
+            buffer = BytesIO()
+            pisa_status = pisa.CreatePDF(html.encode('utf-8'), dest=buffer, encoding='utf-8')
+            if pisa_status.err:
+                raise Exception("Pisa Failed PDF creation in print final grade for distribution {}.".format(dstr))
+            buffer.seek(0)
+            files.append([dstr, buffer])
+        if not files:
+            return render(request, 'base.html', {'Message': 'There are no results available for download.'})
+        # now export all pdfs to zip file
+        in_memory = BytesIO()
+        with zipfile.ZipFile(in_memory, 'w') as archive:
+            for dstr, file in files:
+                fname = "bepresult_{}.pdf".format(dstr.Student.usermeta.get_nice_name())
+                try:
+                    archive.writestr(fname, file.getbuffer())
+                except (
+                        IOError,
+                        ValueError):  # happens if a file is referenced from database but does not exist on disk.
+                    return render(request, 'base.html', {
+                        'Message': 'These files cannot be downloaded, please contact support staff. (Error on file: "{}")'.format(
+                            file)})
+        in_memory.seek(0)
+        # and serve the zip.
+        response = HttpResponse(content_type="application/zip")
+        response['Content-Disposition'] = 'attachment; filename="results-pdf-{}.zip"'.format(ts.Name)
+        response.write(in_memory.read())
     else:
         raise PermissionDenied("Invalid options.")
     return response
-
-#######
-# Cache#
-#######
-#
-# @group_required('type3staff', 'type6staff')
-# def list_users_clear_cache(request):
-#     """
-#     Clear cache for list users
-#
-#     :param request:
-#     :return:
-#     """
-#     cache.delete('listusersbodyhtmladmin')
-#     cache.delete('listusersbodyhtml')
-#
-#     return render(request, 'base.html', {'Message': 'Cache cleared for userlist', "return": "support:listusers"})

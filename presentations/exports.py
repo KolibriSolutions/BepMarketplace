@@ -8,6 +8,7 @@ from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 
 from general_view import timestamp
+from django.template.defaultfilters import truncatechars
 
 
 def get_list_presentations_xlsx(sets):
@@ -35,19 +36,29 @@ def get_list_presentations_xlsx(sets):
         ws['C4'] = "Track responsible staff: " + thead
         ws['C5'] = "Exported on: " + timestamp()
         ws['C6'] = "Presentation room: " + pset.PresentationRoom.Name
+        if pset.PresentationRoom.JoinLink:
+            ws['C6'].hyperlink = pset.PresentationRoom.JoinLink
+            ws['C6'].style = 'Hyperlink'
         ws['C7'] = "Assessment room: " + pset.AssessmentRoom.Name
+        if pset.AssessmentRoom.JoinLink:
+            ws['C7'].hyperlink = pset.AssessmentRoom.JoinLink
+            ws['C7'].style = 'Hyperlink'
         assessors = ''
         for a in pset.Assessors.all():
             assessors += a.usermeta.get_nice_name() + "; "
         ws['C8'] = 'Assessors: ' + assessors[:-2]
-        ws['C9'] = ''
+        passessors = ''
+        for a in pset.PresentationAssessors.all():
+            passessors += a.usermeta.get_nice_name() + "; "
+        ws['C9'] = 'Presentation Assessors: ' + passessors[:-2]
+        ws['C10'] = ''
 
         ws['C1'].style = 'Headline 2'
         # courses span two columns
-        ws['G9'] = 'Courses'
+        ws['G10'] = 'Courses'
         ws.merge_cells('G9:H9')
-        ws['G9'].style = 'Headline 3'
-        ws['H9'].style = 'Headline 3'
+        ws['G10'].style = 'Headline 3'
+        ws['H10'].style = 'Headline 3'
         # custom dimensions
         ws.column_dimensions['C'].width = 25  # std name
         ws.column_dimensions['E'].width = 25  # responsible name
@@ -60,14 +71,15 @@ def get_list_presentations_xlsx(sets):
                   settings.COURSE_CODE_BEP, settings.COURSE_CODE_EXT, "Project", "Time", "Duration"]
         ws.append(header)
         for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']:
-            ws[col + '10'].style = 'Headline 3'
+            ws[col + '11'].style = 'Headline 3'
 
         for slot in pset.timeslots.all():
             if slot.CustomType:
                 row = [slot.get_CustomType_display(), '', '', '', '', '', '', '', '']
             else:
                 d = slot.Distribution
-                row = ['', d.Student.usermeta.Studentnumber, d.Student.usermeta.get_nice_fullname(), d.Student.usermeta.get_nice_name(),
+                row = ['', d.Student.usermeta.Studentnumber, d.Student.usermeta.get_nice_fullname(),
+                       d.Student.usermeta.get_nice_name(),
                        d.Proposal.ResponsibleStaff.usermeta.get_nice_name()]
                 assistants = ''
                 for a in d.Proposal.Assistants.all():

@@ -105,16 +105,7 @@ class StudentGroup(models.Model):
     Max = models.IntegerField(validators=[MinValueValidator(0)])
 
     def __str__(self):
-        return 'Group {} sat {}'.format(self.Number, localtime(self.Start).strftime("%a %d %b %H:%M"))
-
-    def clean(self):
-        try:
-            if self.Members.count() > self.Max:
-                raise ValidationError('Group is full')
-        except:
-            pass
-        if self.Number in [n.Number for n in self.PRV.groups.all()]:
-            raise ValidationError('Group with that number already exists for this professional skill')
+        return 'Group {} at {} ({} of {} students)'.format(self.Number, localtime(self.Start).strftime("%a %d %b %H:%M"), self.Members.count(), self.Max)
 
     class Meta:
         ordering = ['PRV', 'Number']

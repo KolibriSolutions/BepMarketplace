@@ -2,23 +2,37 @@
 #  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
+from io import BytesIO
+import zipfile
+from os import path
+from general_model import get_ext
+from django.template.defaultfilters import truncatechars
+
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Max
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
+from django.utils import timezone
+from htmlmin.decorators import not_minified_response
 
+from distributions.utils import get_distributions
 from general_model import delete_object
-from index.decorators import student_only
+from general_view import get_grouptype
+from index.decorators import student_only, group_required
 from professionalskills.decorators import can_access_professionalskills
 from professionalskills.models import StudentFile
 from proposals.decorators import can_view_project
 from proposals.models import Proposal
 from proposals.utils import get_cached_project
+from results.models import GradeCategory, CategoryResult
 from students.decorators import can_apply
 from students.models import Distribution
-from timeline.utils import get_timeslot
+from timeline.models import TimeSlot
+from timeline.utils import get_timeslot, get_timephase_number, get_recent_timeslots
 from tracking.models import ApplicationTracking
+from .exports import get_list_students_xlsx
 from .forms import StudentFileForm
 from .models import Application
 
@@ -260,3 +274,137 @@ def edit_file(request, pk):
         form = StudentFileForm(request=request, instance=file)
     return render(request, 'GenericForm.html',
                   {'form': form, 'formtitle': 'Edit a file ', 'buttontext': 'Save'})
+
+
+@group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
+def list_students(request, timeslot):
+    """
+    For support staff, responsibles and assistants to view their students.
+    List all students with distributions that the current user is allowed to see.
+    Including a button to view the students files.
+    In later timephase shows the grades as well.
+
+    :param request:
+    :param timeslot: the timeslot to look at. None for current timeslot (Future distributions do not exist)
+    :return:
+    """
+    ts = get_object_or_404(TimeSlot, pk=timeslot)
+    if ts.Begin > timezone.now().date():
+        raise PermissionDenied("Future students are not yet known.")
+    if ts == get_timeslot():
+        current_ts = True
+    else:
+        current_ts = False
+
+    if current_ts:
+        # for current timeslot, check time phases.
+        if get_timephase_number() < 0:  # no timephase
+            if get_timeslot() is None:  # no timeslot
+                raise PermissionDenied("System is closed.")
+        else:
+            if get_timephase_number() < 4:
+                raise PermissionDenied("Students are not yet distributed")
+            if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
+                return render(request, "base.html", {'Message':
+                                                         "When the phase 'Distribution of projects' is finished, you can view your students here."})
+        if get_timephase_number() == -1 or get_timephase_number() >= 6:  # also show grades when timeslot but no timephase.
+            show_grades = True
+        else:
+            show_grades = False
+    else:
+        # historic view of distributions. Hide grades, as they might have changed outside the system.
+        show_grades = False
+
+    des = get_distributions(request.user, ts).select_related('Proposal__ResponsibleStaff',
+                                                             'Proposal__Track',
+                                                             'Student__usermeta').prefetch_related(
+        'Proposal__Assistants')
+    cats = None
+    if show_grades:
+        cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
+        des.prefetch_related('results__Category')
+    deslist = []
+    # make grades
+    for d in des:
+        reslist = []
+        if show_grades:
+            for c in cats:
+                try:
+                    reslist.append(d.results.get(Category=c).Grade)
+                except CategoryResult.DoesNotExist:
+                    reslist.append('-')
+        deslist.append([d, reslist])
+    return render(request, "students/list_students.html", {'des': deslist,
+                                                           'typ': cats,
+                                                           'show_grades': show_grades,
+                                                           'hide_sidebar': True,
+                                                           'timeslots': get_recent_timeslots(),
+                                                           'timeslot': ts,
+                                                           'is_current': current_ts,
+                                                           })
+
+
+@not_minified_response
+@group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
+def list_students_xlsx(request):
+    """
+    Same as liststudents but as XLSX. The combination of students and grades is done in general_excel.
+
+    :param request:
+    """
+    if get_timephase_number() < 0:
+        if get_timeslot() is None:
+            raise PermissionDenied("System is closed.")
+    else:
+        if get_timephase_number() < 4:
+            raise PermissionDenied("Students are not yet distributed")
+        if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
+            return render(request, "base.html", {'Message':
+                                                     "When the phase 'Distribution of projects is "
+                                                     "finished, you can view your students here."})
+
+    typ = GradeCategory.objects.filter(TimeSlot=get_timeslot())
+    des = get_distributions(request.user)
+    file = get_list_students_xlsx(des, typ)
+
+    response = HttpResponse(content=file)
+    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    response['Content-Disposition'] = 'attachment; filename=students-grades.xlsx'
+    return response
+
+
+@not_minified_response
+@group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
+def download_files(request):
+    if 4 > get_timephase_number() >= 0:  # only in phase 4, 5, 6 and 7 (although 4 is not useful)
+        raise PermissionDenied("This page is not available in the current time phase.")
+    in_memory = BytesIO()
+    des = get_distributions(request.user)
+    if not des:
+        return render(request, 'base.html', context={'Message': 'You do not have students.', 'return': 'students:liststudents', 'returnget': get_timeslot().pk})
+    empty = True
+    with zipfile.ZipFile(in_memory, 'w') as archive:
+        for d in des:
+            files = d.files.all()
+            for file in files:
+                empty = False
+                try:
+                    with open(file.File.path, 'rb') as fstream:
+                        name, ext = path.splitext(file.OriginalName)
+                        name = path.basename(truncatechars(name, 25))
+                        ext = get_ext(file.File.name)
+                        archive.writestr('{}-({})/{}/{}-{}.{}'.format(d.Student.usermeta.Fullname, d.Student.username,
+                                                                   file.Type,
+                                                                   timezone.localtime(file.TimeStamp).strftime("%y%m%d%H%M%S"), name, ext
+                                                                   ), fstream.read())
+                except (IOError, ValueError):  # happens if a file is referenced from database but does not exist on disk.
+                    return render(request, 'base.html', {
+                        'Message': 'These files cannot be downloaded, please contact support staff. (Error on file: "{}")'.format(
+                            file)})
+    if empty:
+        return render(request, 'base.html', {'Message': 'Your students did not upload any files yet.', 'return': 'students:liststudents', 'returnget': get_timeslot().pk})
+    in_memory.seek(0)
+    response = HttpResponse(content_type="application/zip")
+    response['Content-Disposition'] = 'attachment; filename="student_files.zip"'
+    response.write(in_memory.read())
+    return response

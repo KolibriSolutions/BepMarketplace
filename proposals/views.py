@@ -9,8 +9,9 @@ from django.contrib.auth.decorators import login_required
 from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count, Sum, F
 from django.forms import modelformset_factory
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from render_block import render_block_to_string
@@ -31,6 +32,7 @@ from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number, get_recent_timeslots
 from tracking.models import ProposalTracking
 from tracking.utils import tracking_visit_project
+from .exports import get_list_projects_xlsx
 from .forms import ProposalFormEdit, ProposalFormCreate, ProposalImageForm, ProposalDowngradeMessageForm, \
     ProposalAttachmentForm, ProposalFormLimited
 from .models import Proposal, ProposalImage, ProposalAttachment
@@ -53,7 +55,7 @@ def list_public_projects(request):
             'projects': projects,
             'DOMAIN': settings.DOMAIN
         })  # render block does not pass through context_processors.
-        cache.set('listproposalsbodyhtml', body_html, None)
+        cache.set('listproposalsbodyhtml', body_html, settings.PROJECT_OBJECT_CACHE_DURATION)
     return render(request, 'proposals/list_projects.html', {
         "bodyhtml": body_html,
         'favorite_projects': get_favorites(request.user),
@@ -267,7 +269,7 @@ def detail_project(request, pk):
                     'cache_string_render': True
                     }
             cdata = render_block_to_string("proposals/detail_project.html", 'body', data, request=request)
-            cache.set('proposaldetail{}'.format(pk), cdata, None)
+            cache.set('proposaldetail{}'.format(pk), cdata, settings.PROJECT_OBJECT_CACHE_DURATION)
 
         tracking_visit_project(prop, request.user)  # always log visits from students
 
@@ -852,3 +854,30 @@ def content_policy_view(request):
         'length_requirements': check_content_policy.length_requirements.items(),
         'results': results,
     })
+
+
+@group_required('type3staff')
+def exports(request, download=None):
+    ts = get_timeslot()
+    if ts is None:
+        # timeslot already finished, get last active timeslot.
+        ts = TimeSlot.objects.order_by('End').last()
+    if not download:
+        return render(request, 'proposals/exports.html', context = {'timeslot':ts})
+    else:
+        if download == 'published':
+            projects = Proposal.objects.filter(TimeSlot=ts, Status=4).order_by('Title')
+        elif download == 'all':
+            projects = Proposal.objects.filter(TimeSlot=ts).order_by('Title')
+        elif download == 'nonfull':
+            projects = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=ts, Status=4, num_distr__lt=F(
+                'NumStudentsMax')).order_by('Title')
+        elif download == 'nondistributed':
+            projects = Proposal.objects.filter(TimeSlot=ts, Status=4, distributions__isnull=True).order_by('Title')
+        else:
+            raise PermissionDenied('Invalid download.')
+    file = get_list_projects_xlsx(projects)
+    response = HttpResponse(content=file)
+    response['Content-Disposition'] = 'attachment; filename=export-proposals-.xlsx'.format(download)
+    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    return response

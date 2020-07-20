@@ -118,7 +118,6 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
         codes_phase7_planning_visible = [
             [['liststudentfiles', {'pk': 1}], self.p_all_this_dist_ta],
             [['viewresponse', {'pk': 0}], self.p_all_this_dist_ta],
-
         ]
         self.info['type'] = 'general'
         self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes_general)

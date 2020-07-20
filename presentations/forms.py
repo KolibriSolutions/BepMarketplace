@@ -16,6 +16,7 @@ class PresentationOptionsForm(forms.ModelForm):
     """
     Global options (guidelines) for all presentations. All presentations link back to this.
     """
+
     def save(self, commit=True):
         if commit:
             self.instance.TimeSlot = get_timeslot()
@@ -36,19 +37,22 @@ class PresentationOptionsForm(forms.ModelForm):
             'PresentationDuration': widgets.MetroNumberInput,
             'AssessmentDuration': widgets.MetroNumberInput,
             'PresentationsBeforeAssessment': widgets.MetroNumberInput,
-         }
+        }
 
 
 class PresentationSetForm(forms.ModelForm):
     """
     A set of presentations. A set is a number of presentations in the same room for one track.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['Assessors'].label_from_instance = self.user_label_from_instance
-        self.fields['Assessors'].queryset = get_grouptype('2').user_set.all() | \
-                                            get_grouptype('2u').user_set.all() | \
-                                            get_grouptype('1').user_set.all()
+        self.fields['Assessors'].queryset = get_grouptype('2').user_set.all().select_related('usermeta') | \
+                                            get_grouptype('2u').user_set.all().select_related('usermeta') | \
+                                            get_grouptype('1').user_set.all().select_related('usermeta')
+        self.fields['PresentationAssessors'].label_from_instance = self.user_label_from_instance
+        self.fields['PresentationAssessors'].queryset = get_grouptype('7').user_set.all().select_related('usermeta')
 
     @staticmethod
     def user_label_from_instance(self):
@@ -56,19 +60,21 @@ class PresentationSetForm(forms.ModelForm):
 
     class Meta:
         model = PresentationSet
-        fields = ['PresentationRoom', 'AssessmentRoom', 'Track', 'Assessors', 'DateTime']
+        fields = ['PresentationRoom', 'AssessmentRoom', 'Track', 'Assessors', 'PresentationAssessors', 'DateTime']
         labels = {
             'PresentationRoom': "Presentation room",
             'AssessmentRoom': "Assessment room",
-            'DateTime': "Start date/time"
+            'DateTime': "Start date/time",
+            'PresentationAssessors': "Presentation Assessor (ESA)",
         }
         widgets = {
             'PresentationRoom': widgets.MetroSelect,
             'AssessmentRoom': widgets.MetroSelect,
             'Track': widgets.MetroSelect,
             'Assessors': widgets.MetroSelectMultiple,
-            'DateTime': widgets.MetroDateTimeInput
-         }
+            'PresentationAssessors': widgets.MetroSelectMultiple,
+            'DateTime': widgets.MetroDateTimeInput,
+        }
 
     def clean_DateTime(self):
         ts = get_timeslot()
@@ -100,14 +106,17 @@ class PresentationRoomForm(forms.ModelForm):
     """
     A room in which presentations or assessments can be held.
     """
+
     class Meta:
         model = Room
-        fields = ['Name']
+        fields = ['Name', 'JoinLink']
         labels = {
             'Name': "Name of the room",
+            'JoinLink': "Join link",
         }
         widgets = {
             'Name': widgets.MetroTextInput,
+            'JoinLink': widgets.MetroURLInput,
         }
 
 
@@ -115,6 +124,7 @@ class MakePublicForm(forms.ModelForm):
     """
     ConfirmForm to make the presentationsplanning public in timephase 6.
     """
+
     class Meta:
         model = PresentationOptions
         fields = ["Public"]

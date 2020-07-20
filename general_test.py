@@ -80,12 +80,12 @@ class ViewsTest(TestCase):
         self.tp.save()
 
         # The timeslot used for testing proposal of next timeslot
-        self.nts = TimeSlot(Begin=datetime.now() + timedelta(days=5), End=datetime.now() + timedelta(days=8),
+        self.nts = TimeSlot(Begin=datetime.now() + timedelta(days=300), End=datetime.now() + timedelta(days=500),
                             Name='nextyear')
         self.nts.save()
 
         # The timeslot used for testing proposal of previous timeslot
-        self.pts = TimeSlot(Begin=datetime.now() - timedelta(days=5), End=datetime.now() - timedelta(days=3),
+        self.pts = TimeSlot(Begin=datetime.now() - timedelta(days=500), End=datetime.now() - timedelta(days=300),
                             Name='prevyear')
         self.pts.save()
 
@@ -132,50 +132,50 @@ class ViewsTest(TestCase):
         # ta = assessor of presentation, 4=groupadministration, 5=studyadvisor, 6=profskill
         # matrix with different types of permissions, set for each user of the array self.usernames
         # permissions by user. The order is the order of self.usernames. User 'god' is disabled (not tested).
-                #  usernames:    r-1  t-1  r-h  t-h  r-2  t-2  t-u  r-3  r-s  t-p  r-4  t-4  r-5  r-6  ra-1  ta-1  sup, ano
-        self.p_forbidden =      [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 302]  # no one
-        self.p_superuser =      [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # no one
-        self.p_all =            [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 302]  # everyone
-        self.p_anonymous =      [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200]  # everyone
-        self.p_redirect =       [302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302]  # everyone
+                #  usernames:    r-1  t-1  r-h  t-h  r-2  t-2  t-u  r-3  r-s  t-p  r-4  t-4  r-5  r-6  r-7  ra-1  ta-1  sup, ano
+        self.p_forbidden =      [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 302]  # no one
+        self.p_superuser =      [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # no one
+        self.p_all =            [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 302]  # everyone
+        self.p_anonymous =      [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200]  # everyone
+        self.p_redirect =       [302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302, 302]  # everyone
 
-        self.p_staff =          [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 200, 200, 200, 200, 200, 200, 200, 302]  # all staff, general
-        self.p_staff_veri =     [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 200, 200, 200, 200, 200, 302]  # all staff, without unverified
-        self.p_staff122u35 =    [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 200, 403, 200, 200, 200, 302]  # all staff, for chooseedit list
-        self.p_staff_prop =     [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 200, 200, 403, 403, 200, 200, 200, 302]  # all staff, to create proposals
-        self.p_staff_prop_no4 = [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 403, 403, 200, 200, 200, 302]  # all staff to create but no type4
-        self.p_staff_prop_nou=  [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 403, 403, 200, 200, 200, 302]  # all staff, to create proposals, no unverified
-        self.p_staff_stud =     [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 403, 403, 403, 200, 200, 200, 200, 302]  # all staff that can see students (1,2,3,6)
+        self.p_staff =          [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 200, 200, 200, 200, 200, 200, 200, 200, 302]  # all staff, general
+        self.p_staff_veri =     [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 200, 200, 403, 200, 200, 200, 302]  # all staff, without unverified, without type7
+        self.p_staff122u35 =    [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 200, 403, 403, 200, 200, 200, 302]  # all staff, for chooseedit list
+        self.p_staff_prop =     [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 200, 200, 403, 403, 403, 200, 200, 200, 302]  # all staff, to create proposals
+        self.p_staff_prop_no4 = [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 200, 302]  # all staff to create but no type4
+        self.p_staff_prop_nou=  [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 403, 403, 403, 200, 200, 200, 302]  # all staff, to create proposals, no unverified
+        self.p_staff_stud =     [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 403, 403, 403, 200, 403, 200, 200, 200, 302]  # all staff that can see students (1,2,3,6)
 
-        self.p_all_this =       [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 403, 200, 302]  # staff of this proposal
-        self.p_all_this_pres=   [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 200, 200, 302]  # staff of this proposal including ta-1
-        self.p_all_this_dist=   [403, 200, 403, 200, 403, 200, 403, 200, 200, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # staff of this proposal, as distributed to r-s (not t-p!) and assessor. Also type6.
-        self.p_all_this_dist_ta=[403, 200, 403, 200, 403, 200, 403, 200, 200, 403, 403, 403, 403, 200, 403, 200, 200, 302]  # staff of this proposal, as distributed to r-s (not t-p!) and assessor. Also type6. and assessor
-        self.p_no_assistant =   [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 200, 302]  # staff of this proposal except assistants. For up/downgrading and edit proposal.
-        self.p_staff_prv_results=[403, 200, 403, 200, 403, 200, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal except assistants including assessors. For results staff grading form, without assessor.
-        self.p_staff_results =  [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal except assistants including assessors. For results staff grading form.
-        self.p_all_this_view =  [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 403, 200, 302]  # staff of this proposal including view only users (type4)
+        self.p_all_this =       [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal
+        self.p_all_this_pres=   [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal including ta-1
+        self.p_all_this_dist=   [403, 200, 403, 200, 403, 200, 403, 200, 200, 403, 403, 403, 403, 200, 403, 403, 403, 200, 302]  # staff of this proposal, as distributed to r-s (not t-p!) and assessor. Also type6.
+        self.p_all_this_dist_ta=[403, 200, 403, 200, 403, 200, 403, 200, 200, 403, 403, 403, 403, 200, 403, 403, 200, 200, 302]  # staff of this proposal, as distributed to r-s (not t-p!) and assessor. Also type6. and assessor
+        self.p_no_assistant =   [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal except assistants. For up/downgrading and edit proposal.
+        self.p_staff_prv_results=[403, 200, 403, 200, 403, 200, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal except assistants including assessors. For results staff grading form, without assessor.
+        self.p_staff_results =  [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal except assistants including assessors. For results staff grading form.
+        self.p_all_this_view =  [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal including view only users (type4)
 
-        self.p_private =        [403, 200, 403, 200, 403, 200, 200, 200, 403, 200, 403, 200, 403, 403, 403, 403, 200, 302]  # private proposal view status 4
-        self.p_private_pres=    [403, 200, 403, 200, 403, 200, 200, 200, 403, 200, 403, 200, 403, 403, 403, 200, 200, 302]  # private proposal view status 4, in phase 7 or if presentation is public.
-        self.p_trackhead =      [403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 200, 302]  # trackhead of proposal and support
-        self.p_grade_final =    [403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # Trackhead and assessor can finalize grades.
-        self.p_grade_staff =    [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal except assistants, for grading
-        self.p_track =          [403, 403, 200, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 302]  # any trackhead
-        self.p_pending =        [200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 200, 200, 403, 403, 200, 200, 200, 302]  # staff with pending proposals
+        self.p_private =        [403, 200, 403, 200, 403, 200, 200, 200, 403, 200, 403, 200, 403, 403, 403, 403, 403, 200, 302]  # private proposal view status 4
+        self.p_private_pres=    [403, 200, 403, 200, 403, 200, 200, 200, 403, 200, 403, 200, 403, 403, 403, 403, 200, 200, 302]  # private proposal view status 4, in phase 7 or if presentation is public.
+        self.p_trackhead =      [403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200, 302]  # trackhead of proposal and support
+        self.p_grade_final =    [403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # Trackhead and assessor can finalize grades.
+        self.p_grade_staff =    [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal except assistants, for grading
+        self.p_track =          [403, 403, 200, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 302]  # any trackhead
+        self.p_pending =        [200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 200, 200, 403, 403, 403, 200, 200, 200, 302]  # staff with pending proposals
 
-        self.p_support      =   [403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # type3 support
-        self.p_support_prv  =   [403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # 3+6
+        self.p_support      =   [403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # type3 support
+        self.p_support_prv  =   [403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200, 403, 403, 403, 200, 302]  # 3+6
 
-        self.p_cgadmin      =   [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 403, 403, 200, 302]  # type4 (not superuser)
-        # self.p_study        =   [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 200, 302]  # type5
-        self.p_prv =            [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 200, 302]  # 6
+        self.p_cgadmin      =   [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 403, 403, 403, 200, 302]  # type4 (not superuser)
+        # self.p_study        =   [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 200, 302]  # type5
+        self.p_prv =            [403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 200, 302]  # 6
 
-        self.p_student =        [403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 403, 403, 403, 403, 403, 302]  # any student
-        self.p_studentnotpriv=  [403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 302]  # student without private proposal
+        self.p_student =        [403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 403, 403, 403, 403, 403, 403, 403, 403, 302]  # any student
+        self.p_studentnotpriv=  [403, 403, 403, 403, 403, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 302]  # student without private proposal
 
-        self.p_download_share=  [404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 403]  # used to test filesdownload (with sharelink proposals)
-        self.p_404 =            [404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 302]  # used to test filesdownload
+        self.p_download_share=  [404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 403]  # used to test filesdownload (with sharelink proposals)
+        self.p_404 =            [404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 404, 302]  # used to test filesdownload
 
 
     def create_groups(self):
@@ -194,6 +194,7 @@ class ViewsTest(TestCase):
             'type4staff',  # Capacity group administration
             'type5staff',  # Study advisor
             'type6staff',  # Prof skill administration
+            'type7staff',  # STU/ESA assessor for presentations
         ]
         for g in self.group_names:
             group, created = Group.objects.get_or_create(name=g)
@@ -225,6 +226,7 @@ class ViewsTest(TestCase):
             't-4',  # Capacity group administration of group of tested proposal
             'r-5',  # Study advisor
             'r-6',  # Prof skill administration
+            'r-7',  # STU/ESA presentation assessor
             'ra-1',  # type1 and assessor of other project
             'ta-1',  # type1 and assessor of project
             'sup',  # god user (superuser)
@@ -254,6 +256,8 @@ class ViewsTest(TestCase):
                     u.groups.add(self.type5staff)
                 elif x == '6':
                     u.groups.add(self.type6staff)
+                elif x == '7':
+                    u.groups.add(self.type7staff)
                 elif n == 'sup':
                     u.groups.add(self.type3staff)
                     u.is_superuser = True

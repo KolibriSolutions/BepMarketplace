@@ -40,11 +40,11 @@ def get_presentation_student(user):
         except (PresentationTimeSlot.DoesNotExist, PresentationTimeSlot.MultipleObjectsReturned):
             return "Your presentation is not (yet) planned."
         start = timezone.localtime(t.DateTime).strftime("%A %d %B %Y %H:%M")
-        room = t.Presentations.PresentationRoom
+        room = t.Presentations.PresentationRoom.room_link()
         url = reverse('presentations:presentationscalendar')
         title = "View all presentations"
-        html = '<p>Your presentation is on {} in {}</p>' \
-               '<a href="{}" class ="button primary">{}</a></p>'
+        html = '<p>Your presentation is on {} in {}.'
+        html += '</p><a href="{}" class ="button primary">{}</a>'
         st = format_html(html, start, room, url, title)
         return st
     else:
@@ -83,7 +83,7 @@ def get_presentations_staff(user):
                 html += '<p>Your tracks presentations are starting on:</p><ul>'
                 for set in sets:
                     start = timezone.localtime(set.DateTime).strftime("%A %d %B %H:%M")
-                    room = set.PresentationRoom
+                    room = set.PresentationRoom.room_link()
                     html += "<li> {}: {} in {} </li>".format(set.Track, start, room)
                 html += "</ul>"
             else:
@@ -97,22 +97,31 @@ def get_presentations_staff(user):
             html += '<p>Your presentations as supervisor are:</p><ul>'
             for presentation in t:
                 start = timezone.localtime(presentation.DateTime).strftime("%A %d %B %H:%M")
-                room = presentation.Presentations.PresentationRoom
+                room = presentation.Presentations.PresentationRoom.room_link()
                 html += "<li> {} at {} in {} </li>".format(presentation.Distribution.Student.usermeta.get_nice_fullname(), start, room)
             html += "</ul>"
         else:
             html += "<p>You do not have any presentations to attend as supervisor.</p>"
 
-        for pset in options.presentationsets.all():
-            if user in pset.Assessors.all():  # ugly way to check if a user has to assess anything
-                html += '<p>You are assessor for presentations starting on:</p><ul>'
-                for set_in in options.presentationsets.all():
-                    if user in set_in.Assessors.all():
-                        start = timezone.localtime(set_in.DateTime).strftime("%A %d %B %H:%M")
-                        room = set_in.PresentationRoom
-                        html += "<li>" + str(set_in.Track) + ": " + str(start) + " in " + str(room) + "</li>"
-                html += "</ul>"
-                break
+        # Assessors / type1
+        if user.assessors.filter(PresentationOptions=options).exists():
+            html += '<p>You are assessor for presentations starting on:</p><ul>'
+            for set_in in options.presentationsets.all():
+                if user in set_in.Assessors.all():
+                    start = timezone.localtime(set_in.DateTime).strftime("%A %d %B %H:%M")
+                    room = set_in.PresentationRoom.room_link()
+                    html += "<li>" + str(set_in.Track) + ": " + str(start) + " in " + str(room) + "</li>"
+            html += "</ul>"
+
+        # Presentation assessor / ESA / Type 7
+        if user.presentation_assessors.filter(PresentationOptions=options).exists():
+            html += '<p>You are presentation assessor for presentations starting on:</p><ul>'
+            for set_in in options.presentationsets.all():
+                if user in set_in.PresentationAssessors.all():
+                    start = timezone.localtime(set_in.DateTime).strftime("%A %d %B %H:%M")
+                    room = set_in.PresentationRoom.room_link()
+                    html += "<li>" + str(set_in.Track) + ": " + str(start) + " in " + str(room) + "</li>"
+            html += "</ul>"
 
         html += '<a href="{}" class ="button primary">{}</a>'
         url = reverse('presentations:presentationscalendarown')

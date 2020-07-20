@@ -78,10 +78,34 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
             [['confirmapply', {'pk': s.ppriv}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
         ]
 
+        # list students
+
+        codes_stud_phase123 = [  # not available when applications/distributions have not yet been made.
+            [['liststudents', {'timeslot': self.ts.pk}], self.p_forbidden],
+            [['liststudents', {'timeslot': self.nts.pk}], self.p_forbidden],
+            [['liststudents', {'timeslot': self.pts.pk}], self.p_staff_stud],
+            [['liststudents_xls', None], self.p_forbidden],
+            [['download_files', None], self.p_forbidden]
+
+        ]
+        codes_stud_phase4567 = [  # list students is also available when no-timephase (but not when no-timeslot)
+            [['liststudents', {'timeslot': self.ts.pk}], self.p_staff_stud],
+            [['liststudents', {'timeslot': self.nts.pk}], self.p_forbidden],
+            [['liststudents', {'timeslot': self.pts.pk}], self.p_staff_stud],
+            [['liststudents_xls', None], self.p_staff_stud],
+            [['download_files', None], self.p_staff_stud]
+        ]
+
+
         self.info['type'] = 'general'
         self.loop_phase_code_user([-1, 1, 2], code_general_phase12)
         self.loop_phase_code_user([3, 4], code_general_phase34)
         self.loop_phase_code_user([5, 6, 7], code_general_phase567)
+
+        # list students
+        self.info['type'] = 'general - list'
+        self.loop_phase_code_user([1, 2, 3], codes_stud_phase123)
+        self.loop_phase_code_user([-1, 4, 5, 6, 7], codes_stud_phase4567)
 
         if s.debug:
             print("Testing proposal apply")

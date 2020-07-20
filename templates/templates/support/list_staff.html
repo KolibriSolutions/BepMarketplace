@@ -19,7 +19,7 @@
         {% for u in staff %}
             <tr>
                 {#  se.append([s, pt1, pt2, pts, dt1, dt2, dts])  #}
-                <td><a href="mailto:{{ u.user.email }}">{{ u.usermeta.get_nice_name }}</a></td>
+                <td><a href="mailto:{{ u.user.email }}">{{ u.user.usermeta.get_nice_name }}</a></td>
                 <td>
                     {% if u.user|has_group:'type1staff' %}
                         Supervisor

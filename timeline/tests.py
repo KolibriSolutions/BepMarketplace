@@ -14,10 +14,13 @@ class TimeLineViewsTest(ViewsTest):
         super().setUp()
 
     def test_view_status(self):
-        ntp = TimePhase(Begin=datetime.now() + timedelta(days=1), End=datetime.now() + timedelta(days=3),
+        # number of days should be larger than settings.
+        # TIMELINE_EDIT_DAYS_AFTER_FINISH = 30  # number of days after which a timeslot/timephase has ended, after which editing of the timeslot/phase is disabled.
+
+        ntp = TimePhase(Begin=datetime.now() + timedelta(days=100), End=datetime.now() + timedelta(days=300),
                         TimeSlot=self.ts, Description=1)
         ntp.save()
-        ptp = TimePhase(Begin=datetime.now() - timedelta(days=3), End=datetime.now() - timedelta(days=1),
+        ptp = TimePhase(Begin=datetime.now() - timedelta(days=300), End=datetime.now() - timedelta(days=100),
                         TimeSlot=self.ts, Description=1)
         ptp.save()
 

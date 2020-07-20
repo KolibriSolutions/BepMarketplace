@@ -10,31 +10,48 @@
 </head>
 <body>
 
-    <h1>Results for <i>{{ dstr.Student.usermeta.get_nice_name }}</i> for project <i>{{ dstr.Proposal.Title }}</i></h1>
-    <h3>Responsible Staff member: {{ dstr.Proposal.ResponsibleStaff.usermeta.get_nice_name }}</h3>
-    <h3>Assistants:</h3>
-    <ul>
+<h1>Results for <i>{{ dstr.Student.usermeta.get_nice_name }}</i> for project <i>{{ dstr.Proposal.Title }}</i></h1>
+<h3>Responsible Staff member: {{ dstr.Proposal.ResponsibleStaff.usermeta.get_nice_name }}</h3>
+<h3>Assistants:</h3>
+<ul>
     {% for assistant in dstr.Proposal.Assistants.all %}
-    <li>{{ assistant.usermeta.get_nice_name }}</li>
+        <li>{{ assistant.usermeta.get_nice_name }}</li>
     {% endfor %}
-    </ul>
-    <h3>Grades per Category:</h3>
-    <table class="table border bordered" style="width:100%;">
+</ul>
+<h3>Grades per Category:</h3>
+<table class="table border bordered" style="width:100%;">
     {% for cat in catresults %}
-    <tr><td colspan="2"><h3>{{ cat.Category }}</h3></td></tr>
-    <tr><td colspan="2"><b>Comments: </b>{{ cat.Comments }}</td> </tr>
-    <tr><td style="width:50%;"><b>Grade:</b></td><td>{{ cat.Grade }}</td></tr>
-    <tr><td colspan="2"><h4>Aspects:</h4></td></tr>
-    {% for aspect in cat.aspectresults.all %}
-        <tr><td style="width:50%;"><i>{{ aspect.CategoryAspect.Name }}</i></td><td><i>{{ aspect.get_Grade_display }}</i></td></tr>
+        <tr>
+            <td colspan="2"><h3>{{ cat.Category }}</h3></td>
+        </tr>
+        <tr>
+            <td colspan="2"><b>Comments: </b>{{ cat.Comments }}</td>
+        </tr>
+        <tr>
+            <td style="width:50%;"><b>Grade:</b></td>
+            <td>{{ cat.Grade }}</td>
+        </tr>
+        <tr>
+            <td colspan="2"><h4>Aspects:</h4></td>
+        </tr>
+        {% for aspect in cat.aspectresults.all %}
+            <tr>
+                <td style="width:50%;"><i>{{ aspect.CategoryAspect.Name }}</i></td>
+                <td><i>{{ aspect.get_Grade_display }}</i></td>
+            </tr>
+        {% endfor %}
     {% endfor %}
-    {% endfor %}
-    </table>
-    <h3>Final Grade</h3>
-    <table class="table border bordered" style="width:100%;">
-    <tr><td style="width:50%;"><h1><b>Grade:</b> {{ finalgrade }}</h1></td><td rowspan="2"></td></tr>
-    <tr><td>Signature:</td></tr>
-    </table>
+</table>
+<h3>Final Grade</h3>
+<table class="table border bordered" style="width:100%;">
+    <tr>
+        <td style="width:50%;"><h1><b>Grade:</b> {{ finalgrade }}</h1></td>
+        <td rowspan="2">{% if final %}<h1>X</h1>(Preview only. Do not use for signing){% endif %}</td>
+    </tr>
+    <tr>
+        <td>Signature:</td>
+    </tr>
+</table>
 
 </body>
 </html>

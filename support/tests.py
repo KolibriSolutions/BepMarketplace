@@ -73,22 +73,7 @@ class SupportViewsTest(ViewsTest):
             [['history_download', {'timeslot': self.ts.pk, 'download': 'students'}], self.p_forbidden],
         ]
 
-        codes_stud_phase123 = [  # not available when applications/distributions have not yet been made.
-            [['liststudents', {'timeslot': self.ts.pk}], self.p_forbidden],
-            [['liststudents', {'timeslot': self.nts.pk}], self.p_forbidden],
-            [['liststudents', {'timeslot': self.pts.pk}], self.p_staff_stud],
-            [['liststudentsXls', None], self.p_forbidden]
-        ]
-        codes_stud_phase4567 = [  # list students is also available when no-timephase (but not when no-timeslot)
-            [['liststudents', {'timeslot': self.ts.pk}], self.p_staff_stud],
-            [['liststudents', {'timeslot': self.nts.pk}], self.p_forbidden],
-            [['liststudents', {'timeslot': self.pts.pk}], self.p_staff_stud],
-            [['liststudentsXls', None], self.p_staff_stud]
-        ]
-
         self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes_general_phase1234567)
-        self.loop_phase_code_user([1, 2, 3], codes_stud_phase123)
-        self.loop_phase_code_user([-1, 4, 5, 6, 7], codes_stud_phase4567)
 
         # check if all urls are processed
         self.assertListEqual(self.allurls, [], msg="Not all URLs of this app are tested!")

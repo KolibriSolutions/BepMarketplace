@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load index_tags %}
+{% load timeline_tags %}
 {% block body %}
     <h1>Professional Skills</h1>
     {% if not user|has_group:'any' %}{# for students #}
@@ -10,8 +11,11 @@
             Students</a>
         <a class="button primary" href="{% url 'professionalskills:printprvforms' %}">Print Results</a>
         <a class="button primary" href="{% url 'professionalskills:filetypecreate' %}">Create New</a>
-        {% else %}
-        <p>To grade a student, use the 'Students' menu.</p>
+    {% else %}
+        <p>This page gives an overview of all professional skills and their description. To grade a student, use the <a href="{% url_timeslot 'students:liststudents' %}">Students
+            {% if phasenumber >= 6 or phasenumber < 0 %} & Grades{% endif %}</a> menu.
+            <a href="{% url "students:download_files" %}" class="button primary">Download all files</a>
+        </p>
     {% endif %}
     <table id="filetypetable" class="table datatable striped hovered">
         <thead>
@@ -51,7 +55,6 @@
                     <td>
                         <a href="{% url 'professionalskills:listfileoftype' filetype.id %}" class="button primary">Delivered</a>
                         <a href="{% url 'professionalskills:listmissingoftype' filetype.id %}" class="button primary">Missing Students</a>
-                        <a href="{% url 'professionalskills:downloadall' filetype.id %}" class="button primary">Download All</a>
                         <a href="{% url 'professionalskills:filetypeedit' filetype.id %}" class="button warning">Edit</a>
                         <a href="{% url 'professionalskills:filetypedelete' filetype.id %}" class="button danger">Delete</a>
                         <br/>

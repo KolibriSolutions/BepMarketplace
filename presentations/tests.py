@@ -14,6 +14,10 @@ class PresentationsViewsTest(ViewsTest):
         codes_phase1234 = [  # also in no-timephase everything should be forbidden.
             [['presentationswizardstep1', None], self.p_forbidden],
             [['presentationswizardstep2', None], self.p_forbidden],
+            [['presentationswizardstep2_edit', {"kind":"add"}], self.p_forbidden],
+            [['presentationswizardstep2_edit', {"kind":"edit"}], self.p_forbidden],
+            [['presentationswizardstep2_edit', {"kind": "asdf"}], self.p_forbidden],
+
             [['presentationswizardstep3', None], self.p_forbidden],
             [['presentationswizardstep4', None], self.p_forbidden],
             [['presentationsplanning', None], self.p_forbidden],
@@ -23,6 +27,8 @@ class PresentationsViewsTest(ViewsTest):
         codes_phase567 = [
             [['presentationswizardstep1', None], self.p_support],
             [['presentationswizardstep2', None], self.p_support],
+            [['presentationswizardstep2_edit', {"kind": "add"}], self.p_support],
+            [['presentationswizardstep2_edit', {"kind": "edit"}], self.p_support],
             [['presentationswizardstep3', None], self.p_support],
             [['presentationswizardstep4', None], self.p_support],
             [['presentationsplanning', None], self.p_support],

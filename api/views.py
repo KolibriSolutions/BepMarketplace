@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.conf import settings
 
 from index.decorators import group_required
 from proposals.decorators import can_edit_project, can_downgrade_project
@@ -81,7 +82,7 @@ def upgrade_status_api(request, pk):
                     verify_assistant_fn(assistant)
         if obj.Status == 4:
             # put the object in cache if status goes from 3->4
-            cache.set('proposal_{}'.format(pk), obj, None)
+            cache.set('proposal_{}'.format(pk), obj, settings.PROJECT_OBJECT_CACHE_DURATION)
             cache.delete('listproposalsbodyhtml')
         return HttpResponse(get_status_str(obj.Status))
 

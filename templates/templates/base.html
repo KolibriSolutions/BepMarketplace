@@ -91,6 +91,7 @@
                                 {% if user|has_group:"type3staff" %}
                                     <li><a href="{% url_timeslot 'proposals:privateproposals' %}">All Private Proposals</a></li>
                                     <li><a href="{% url 'proposals:contentpolicy' %}">Content Policy Violations</a></li>
+                                    <li><a href="{% url 'proposals:exports' %}">Exports</a></li>
                                 {% endif %}
                                 {% if user|has_group:'type1staff;type2staff;type3staff;type4staff' %}
                                     {% if phasenumber > 4 %}
@@ -170,10 +171,6 @@
                                         <a href="#" class="dropdown-toggle">Lists</a>
                                         <ul class="d-menu" data-role="dropdown">
                                             <li><a href="{% url 'support:listusers' %}">All Users</a></li>
-                                            {% comment %}
-                            temporary disabled waiting for osiris integration
-                            <li><a href="{% url 'support:liststudentsldap' %}">All Students</a></li>
-                            {% endcomment %}
                                             <li><a href="{% url 'support:liststaff' %}">All Staff</a></li>
                                         </ul>
                                     </li>
@@ -192,7 +189,6 @@
                                     {#                                    {% if phasenumber < 6 %}#}
                                     {#                                        <li><a href="{% url 'support:ectsform' %}">Students ECTS</a></li>#}
                                     {#                                    {% endif %}#}
-                                    {#                                    <li><a href="{% url 'support:verifyassistants' %}">Verify assistants</a></li>#}
                                     <li>
                                         <a href="" class="dropdown-toggle">Public files</a>
                                         <ul class="d-menu" data-role="dropdown">
@@ -222,7 +218,7 @@
                         {% endif %}
                         {% if user|has_group:'type1staff;type2staff;type3staff;type6staff' %}
                             {% if phasenumber > 3 or phasenumber < 0 and timeslotpresent %}
-                                <li><a href="{% url_timeslot 'support:liststudents' %}"><span class="mif-users icon"></span>Students
+                                <li><a href="{% url_timeslot 'students:liststudents' %}"><span class="mif-users icon"></span>Students
                                     {% if phasenumber >= 6 or phasenumber < 0 %} & Grades{% endif %}</a>
                                 </li>
                             {% endif %}
@@ -240,7 +236,8 @@
                         {#                        <li><a href="{% url 'support:listproposalsadvisor' %}"><span class="mif-mail-read icon"></span>All#}
                         {#                            proposals</a></li>#}
                     {% else %} {# students #}
-                        <li><a href="{% url 'proposals:list' %}"><span class="mif-mail-read icon"></span>Proposals</a>
+                        <li>
+                            <a href="{% url 'proposals:list' %}"><span class="mif-mail-read icon"></span>Proposals</a>
                         </li>
                         {% if phasenumber > 2 %}
                             {% if phasenumber < 5 %}
@@ -372,7 +369,7 @@
                             </div>
                             <br />
                         {% endif %}
-                        {% if user|has_group:"type1staff;type2staff;type2staffunverified" %}
+                        {% if user|has_group:"type1staff;type2staff;type2staffunverified;type7staff" %}
 
                             {# Staff #}
                             {% if user|has_group:"type2staffunverified" and not user.is_superuser %}

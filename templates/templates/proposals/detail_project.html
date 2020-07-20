@@ -230,7 +230,7 @@
                                 <td>{{ project.TimeSlot|default:"Future" }}</td>
                             </tr>
                         {% endif %}
-                        {% if phasenumber > 2 and phasenumber < 5 and project.curyear %}{# View number of applications, visible for all in phase 3 and 4. #}
+                        {% if phasenumber > 2 and phasenumber < 5 and project.curyear and not project.Private.exists %}{# View number of applications, visible for all in phase 3 and 4. #}
                             <tr>
                                 <td>Applications:</td>
                                 <td>
