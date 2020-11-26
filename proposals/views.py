@@ -15,7 +15,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from render_block import render_block_to_string
-
+from datetime import datetime
 from api.views import upgrade_status_api, downgrade_status_api
 from distributions.utils import get_distributions
 from general_mail import mail_proposal_all, mail_proposal_private
@@ -24,8 +24,8 @@ from general_view import get_grouptype, truncate_string
 from index.decorators import group_required
 from index.models import Track
 from proposals import check_content_policy
-from proposals.decorators import can_view_project, can_edit_project, can_share_project, can_downgrade_project, can_create_project
-from students.views import get_all_applications
+from proposals.decorators import can_view_project, can_edit_project, can_share_project, can_downgrade_project, can_create_project, can_upgrade_project
+from students.utils import get_all_applications
 from support.models import CapacityGroup
 from timeline.decorators import phase_required
 from timeline.models import TimeSlot
@@ -40,43 +40,47 @@ from .utils import can_edit_project_fn, prefetch, get_favorites, get_all_project
 
 
 @login_required
-def list_public_projects(request):
+def list_public_projects(request, timeslot=None):
     """
     List all the public (=type4 & not-private) proposals. This is the overview for students to choose a proposal from.
 
     :param request:
     :return:
     """
-    body_html = cache.get('listproposalsbodyhtml')
-    if body_html is None:
-        projects = get_all_projects().filter(Q(Status=4) & Q(Private=None))
-        projects = projects.select_related('ResponsibleStaff__usermeta', 'Track__Head__usermeta', 'TimeSlot', 'Group').prefetch_related('Assistants__usermeta')
-        body_html = render_block_to_string("proposals/list_projects.html", 'body', {
-            'projects': projects,
-            'DOMAIN': settings.DOMAIN
-        })  # render block does not pass through context_processors.
-        cache.set('listproposalsbodyhtml', body_html, settings.PROJECT_OBJECT_CACHE_DURATION)
-    return render(request, 'proposals/list_projects.html', {
-        "bodyhtml": body_html,
-        'favorite_projects': get_favorites(request.user),
-    })
+    if timeslot:
+        ts = get_object_or_404(TimeSlot, pk=timeslot)
+        projects = get_all_projects(old=True).filter(TimeSlot=ts)
+        if ts.End <= datetime.now().date():
+            raise PermissionDenied("Past projects cannot be browsed.")
+    else:
+        ts = None
+        projects = get_all_projects(old=True).filter(TimeSlot=None)  # proposals of future timeslot
 
-
-@login_required
-def list_favorite_projects(request):
-    """
-    List all the projects a student has favorited, this view is not cached
-
-    :param request:
-    :return:
-    """
-    projects = get_all_projects().filter(Q(Status=4) & Q(Private=None) & Q(favorites__User=request.user))
+    projects = projects.filter(Q(Status=4) & Q(Private=None))
     projects = projects.select_related('ResponsibleStaff__usermeta', 'Track__Head__usermeta', 'TimeSlot', 'Group').prefetch_related('Assistants__usermeta')
     return render(request, 'proposals/list_projects.html', {
-        'projects': projects,
+        "projects": projects,
         'favorite_projects': get_favorites(request.user),
-        'favorite': True,
+        'timeslots': TimeSlot.objects.filter(End__gte=datetime.now()),
+        'timeslot': ts,
     })
+
+#
+# @login_required
+# def list_favorite_projects(request):
+#     """
+#     List all the projects a student has favorited, this view is not cached
+#
+#     :param request:
+#     :return:
+#     """
+#     projects = get_all_projects().filter(Q(Status=4) & Q(Private=None) & Q(favorites__User=request.user))
+#     projects = projects.select_related('ResponsibleStaff__usermeta', 'Track__Head__usermeta', 'TimeSlot', 'Group').prefetch_related('Assistants__usermeta')
+#     return render(request, 'proposals/list_projects.html', {
+#         'projects': projects,
+#         'favorite_projects': get_favorites(request.user),
+#         'favorite': True,
+#     })
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type5staff')
@@ -247,14 +251,13 @@ def detail_project(request, pk):
     # if student
     if not request.user.groups.exists():
         # make apply / retract button.
-        if get_timephase_number() != 3:  # phase 3 is for students choosing projects.
+        if request.user.personal_proposal.exists() or not prop.can_apply():
             button = ''
         else:
             button = '<a href="{}" class="button {}">{}</a>'
-            if get_all_applications(request.user).filter(
-                    Proposal=prop).exists():  # if user has applied to this proposal
+            if get_all_applications(request.user, timeslot=prop.TimeSlot).filter(Proposal=prop).exists():  # if user has applied to this proposal
                 button = button.format(reverse('students:retractapplication',
-                                               args=[get_all_applications(request.user).filter(Proposal=prop)[0].id]),
+                                               args=[get_all_applications(request.user, timeslot=prop.TimeSlot).filter(Proposal=prop)[0].id]),
                                        'danger',
                                        'Retract Application')
             else:  # show apply button
@@ -502,7 +505,6 @@ def ask_delete_project(request, pk):
     """
     A confirmform for type3staff to delete a proposal. Regular staff cannot delete a proposal, as this should not
     happen. Public (=status4) proposals cannot be deleted.
-
     :param request:
     :param pk: pk of proposal to delete.
     :return:
@@ -543,7 +545,7 @@ def delete_project(request, pk):
     raise PermissionDenied("You should not access this page directly")
 
 
-@login_required
+@can_upgrade_project
 def upgrade_status(request, pk):
     """
     Upgrade the status of a given proposal.

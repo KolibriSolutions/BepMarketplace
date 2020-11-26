@@ -221,10 +221,10 @@ class ProjectForm(forms.ModelForm):
     """
     Form to create a project.
     """
-    addAssistantsEmail = forms.CharField(label='Extra assistants (email, one per line)',
-                                         widget=widgets.MetroMultiTextInput,
-                                         required=False,
-                                         help_text='Add an assistant using email address. Use this when the assistant cannot be found in the list of assistants')
+    # addAssistantsEmail = forms.CharField(label='Extra assistants (email, one per line)',
+    #                                      widget=widgets.MetroMultiTextInput,
+    #                                      required=False,
+    #                                      help_text='Add an assistant using email address. Use this when the assistant cannot be found in the list of assistants')
     addPrivatesEmail = forms.CharField(label='Private students (email, one per line)',
                                        widget=widgets.MetroMultiTextInput,
                                        required=False,
@@ -239,7 +239,7 @@ class ProjectForm(forms.ModelForm):
                                              get_grouptype('1').user_set.all().select_related('usermeta')
         self.fields['ResponsibleStaff'].label_from_instance = self.user_label_from_instance
         self.fields['Assistants'].label_from_instance = self.user_label_from_instance
-        self.fields['addAssistantsEmail'].widget.attrs['placeholder'] = "Add assistant via email address"
+        # self.fields['addAssistantsEmail'].widget.attrs['placeholder'] = "Add assistant via email address"
         self.fields['Private'].queryset = User.objects.filter(groups=None).select_related('usermeta')
         self.fields['Private'].label_from_instance = self.user_label_from_instance
 
@@ -265,7 +265,7 @@ class ProjectForm(forms.ModelForm):
         fields = ['Title',
                   'ResponsibleStaff',
                   'Assistants',
-                  'addAssistantsEmail',
+                  # 'addAssistantsEmail',
                   'Track',
                   'Group',
                   'NumStudentsMin',
@@ -301,25 +301,25 @@ class ProjectForm(forms.ModelForm):
             'TimeSlot': widgets.MetroSelect,
             'Private': widgets.MetroSelectMultiple
         }
-
-    def clean_addAssistantsEmail(self):
-        """
-        Clean email addresses and check their domain.
-        convert email to user object, create if not exists.
-
-        :return: assistant user accounts, as list
-        """
-        data = self.cleaned_data['addAssistantsEmail']
-        accounts = []
-        if data:
-            for email in data.split('\n'):
-                email = clean_email_default(email, settings.ALLOWED_PROJECT_ASSISTANT_DOMAINS)
-                account = get_or_create_user_email(email, student=False)
-                if account:
-                    accounts.append(account)
-                else:
-                    raise ValidationError("User with email {} is invalid. Please contact support staff to resolve this issue.".format(email))
-        return accounts
+    #
+    # def clean_addAssistantsEmail(self):
+    #     """
+    #     Clean email addresses and check their domain.
+    #     convert email to user object, create if not exists.
+    #
+    #     :return: assistant user accounts, as list
+    #     """
+    #     data = self.cleaned_data['addAssistantsEmail']
+    #     accounts = []
+    #     if data:
+    #         for email in data.split('\n'):
+    #             email = clean_email_default(email, settings.ALLOWED_PROJECT_ASSISTANT_DOMAINS)
+    #             account = get_or_create_user_email(email, student=False)
+    #             if account:
+    #                 accounts.append(account)
+    #             else:
+    #                 raise ValidationError("User with email {} is invalid. Please contact support staff to resolve this issue.".format(email))
+    #     return accounts
 
     def clean_addPrivatesEmail(self):
         """
@@ -373,8 +373,8 @@ class ProjectForm(forms.ModelForm):
         assistants = []
         if cleaned_data.get('Assistants'):
             assistants += cleaned_data.get('Assistants')
-        if cleaned_data.get('addAssistantsEmail'):
-            assistants += cleaned_data.get('addAssistantsEmail')
+        # if cleaned_data.get('addAssistantsEmail'):
+        #     assistants += cleaned_data.get('addAssistantsEmail')
         assistants = set(assistants)
         for account in assistants:
             if account == cleaned_data.get('ResponsibleStaff'):

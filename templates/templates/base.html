@@ -34,9 +34,9 @@
 <div id="wrapper">
     {# This conditional comment is support until IE9. Newer IE won't see it. #}
     <!--[if IE]>
-        <div style="background: #e00; text-align: center; position: absolute; top: 5em; height:7em; left:20%; right:20%; color: #FFF; z-index:1000; padding: 5px;">
+    <div style="background: #e00; text-align: center; position: absolute; top: 5em; height:7em; left:20%; right:20%; color: #FFF; z-index:1000; padding: 5px;">
         <b>Your browser is not compatible with this website. Please update your browser or use another browser.</b>
-        </div>
+    </div>
     <![endif]-->
     <script>
         if (navigator.appVersion.indexOf("MSIE 10") !== -1) {
@@ -62,7 +62,7 @@
                     {% if user|has_group:"any" %}
                         <li><a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Proposals</a>
                             <ul class="d-menu" data-role="dropdown">
-                                <li><a href="{% url 'proposals:list' %}">All published projects</a></li>
+                                <li><a href="{% url_timeslot 'proposals:list' %}">All published projects</a></li>
                                 {% if user|can_create_project %}
                                     <li><a href="{% url 'proposals:create' %}">Create new project</a></li>
                                 {% endif %}
@@ -239,25 +239,23 @@
                         <li>
                             <a href="{% url 'proposals:list' %}"><span class="mif-mail-read icon"></span>Proposals</a>
                         </li>
-                        {% if phasenumber > 2 %}
-                            {% if phasenumber < 5 %}
-                                <li><a href="{% url 'students:listapplications' %}"><span
-                                        class="mif-stack2 icon"></span>Applications</a></li>
-                            {% endif %}
-                            {% if phasenumber > 4 and user.distributions.exists %}
-                                <li>
-                                    <a href="" class="dropdown-toggle"><span
-                                            class="mif-files-empty icon"></span>Files</a>
-                                    <ul class="d-menu" data-role="dropdown">
-                                        <li><a href="{% url 'professionalskills:listownfiles' %}">List files</a></li>
-                                        <li><a href="{% url 'students:addfile' %}">Upload file</a></li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    <a href="{% url 'presentations:presentationscalendar' %}"><span
-                                            class="mif-file-powerpoint icon"></span>Presentations</a>
-                                </li>
-                            {% endif %}
+                        {% if phasenumber < 5 %}
+                            <li><a href="{% url 'students:listapplications' %}"><span
+                                    class="mif-stack2 icon"></span>Applications</a></li>
+                        {% endif %}
+                        {% if phasenumber > 4 and user.distributions.exists %}
+                            <li>
+                                <a href="" class="dropdown-toggle"><span
+                                        class="mif-files-empty icon"></span>Files</a>
+                                <ul class="d-menu" data-role="dropdown">
+                                    <li><a href="{% url 'professionalskills:listownfiles' %}">List files</a></li>
+                                    <li><a href="{% url 'students:addfile' %}">Upload file</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="{% url 'presentations:presentationscalendar' %}"><span
+                                        class="mif-file-powerpoint icon"></span>Presentations</a>
+                            </li>
                         {% endif %}
                     {% endif %}
                     {% if user|has_group:'type3staff;type6staff' %}
@@ -271,16 +269,19 @@
                                 {% endif %}
                             </ul>
                         </li>
-                    {% elif phasenumber > 4 %}
-                        <li>
-                            <a href="#" class="dropdown-toggle"><span class="mif-widgets icon"></span>Professional Skills</a>
-                            <ul class="d-menu" data-role="dropdown">
-                                <li><a href="{% url 'professionalskills:filetypelist' %}">Professional Skills</a></li>
-                                {% if user.distributions.exists %}  {# only distributed students (not filtered by timeslot) #}
+                    {% elif phasenumber > 4 %} {# students with distribution  #}
+                        {% if user.distributions.exists %}  {# only distributed students (not filtered by timeslot) #}
+                            <li>
+                                <a href="#" class="dropdown-toggle"><span class="mif-widgets icon"></span>Professional Skills</a>
+                                <ul class="d-menu" data-role="dropdown">
+                                    <li><a href="{% url 'professionalskills:filetypelist' %}">Professional Skills</a></li>
                                     <li><a href="{% url 'professionalskills:listowngroups' %}">Groups</a></li>
-                                {% endif %}
-                            </ul>
-                        </li>
+                                </ul>
+                            </li>
+                        {% else %} {# students without distribution and type1/2 staff #}
+                            <li><a href="{% url 'professionalskills:filetypelist' %}"><span class="mif-widgets icon"></span>Professional Skills</a></li>
+                        {% endif %}
+
                     {% endif %}
 
                     {% if user.is_superuser %}
@@ -356,18 +357,20 @@
                         <p>Current phase: {% get_timephase %}</p>
                         {% if user|has_group:'type3staff' %}
                             {% get_unverified_users as unverifieds %}
-                            <div class="panel">
-                                <div class="heading">
-                                    <span class="title">Unverified users</span>
+                            {% if unverifieds %}
+                                <div class="panel">
+                                    <div class="heading">
+                                        <span class="title">Unverified users</span>
+                                    </div>
+                                    <div class="content padding5">
+                                        <ul>
+                                            {{ unverifieds|unordered_list }}
+                                        </ul>
+                                        <a href="{% url 'support:listusers' %}" class="button primary">Review user list</a>
+                                    </div>
                                 </div>
-                                <div class="content padding5">
-                                    <ul>
-                                        {{ unverifieds|unordered_list }}
-                                    </ul>
-                                    <a href="{% url 'support:listusers' %}" class="button primary">Review user list</a>
-                                </div>
-                            </div>
-                            <br />
+                                <br/>
+                            {% endif %}
                         {% endif %}
                         {% if user|has_group:"type1staff;type2staff;type2staffunverified;type7staff" %}
 
@@ -445,7 +448,7 @@
     </div>
 </div>
 {% block scripts %}
-    <script src="{% url 'js-error-handler-js' %}"></script>
+{#    <script src="{% url 'js-error-handler-js' %}"></script>#}
     {# for js error logging, load first to capture load errors #}
     <script src="{% static "js/jquery-3.2.1.min.js" %}"></script>
     {# fancy dropdown select #}

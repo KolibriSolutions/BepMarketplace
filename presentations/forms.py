@@ -83,10 +83,10 @@ class PresentationSetForm(forms.ModelForm):
         if data == '' or data is None:
             return data
 
-        if data.date() < Phase.Begin:
-            raise forms.ValidationError("The date is before the presentations timeslot. Please choose a later date")
-        elif data.date() > Phase.End:
-            raise forms.ValidationError("The date is after the presentations timeslot. Please choose an earlier date")
+        if data.date() < ts.Begin:  # allow presentations to be planned before phase 7, but not before timeslot.
+             raise forms.ValidationError("The date is before the begin of this time slot. Please choose a later date")
+        elif data.date() > Phase.End: # presentations cannot be planned after phase 7.
+            raise forms.ValidationError("The date is after the presentations time phase. Please choose an earlier date")
         elif data.time() > time(hour=23):
             raise forms.ValidationError("The start time is after 23:00, which is too late")
         elif data.time() < time(hour=7):

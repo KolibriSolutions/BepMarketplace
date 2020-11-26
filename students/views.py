@@ -35,16 +35,7 @@ from tracking.models import ApplicationTracking
 from .exports import get_list_students_xlsx
 from .forms import StudentFileForm
 from .models import Application
-
-
-def get_all_applications(user):
-    """
-    Get a users applications for this timeslot
-
-    :param user: user to get applications for
-    :return:
-    """
-    return user.applications.filter(Proposal__TimeSlot=get_timeslot())
+from .utils import get_all_applications
 
 
 @student_only()
@@ -54,8 +45,15 @@ def list_applications(request):
 
     :param request:
     """
+    applications = {}
+    tss = set(request.user.applications.all().values_list('Proposal__TimeSlot', flat=True).distinct())
+    for ts in tss:
+        tsn = TimeSlot.objects.filter(pk=ts).first() or 'Future'
+        applications[tsn] = get_all_applications(request.user, timeslot=ts)
+
     return render(request, 'students/list_applications.html', context={
-        'applications': get_all_applications(request.user),
+        'tss': tss,
+        'applications': applications,
         'private': request.user.personal_proposal.filter(TimeSlot=get_timeslot()).exists(),
         'num_app': settings.MAX_NUM_APPLICATIONS,
     })
@@ -70,6 +68,11 @@ def prio_up(request, application_id):
     :param application_id: Application id
     """
     targetapp = get_object_or_404(Application, pk=application_id)
+    if not targetapp.Proposal.cur_or_future():
+        return render(request, 'base.html', context={
+            'Message': 'Old applications cannot be changed.',
+            'return': 'students:listapplications',
+        })
     if targetapp.Student != request.user:
         return render(request, 'base.html', context={
             'Message': 'You are not the owner of this application!',
@@ -80,7 +83,7 @@ def prio_up(request, application_id):
             'Message': 'Already at top priority',
             'return': 'students:listapplications',
         })
-    swappapp = get_all_applications(request.user).filter(Q(Priority=targetapp.Priority - 1))[0]
+    swappapp = get_all_applications(request.user, timeslot=targetapp.Proposal.TimeSlot).filter(Q(Priority=targetapp.Priority - 1))[0]
     swappapp.Priority += 1
     targetapp.Priority -= 1
     swappapp.save()
@@ -97,6 +100,11 @@ def prio_down(request, application_id):
     :param application_id: Application id
     """
     targetapp = get_object_or_404(Application, pk=application_id)
+    if not targetapp.Proposal.cur_or_future():
+        return render(request, 'base.html', context={
+            'Message': 'Old applications cannot be changed.',
+            'return': 'students:listapplications',
+        })
     if targetapp.Student != request.user:
         return render(request, 'base.html', context={
             'Message': 'You are not the owner of this application!',
@@ -107,7 +115,7 @@ def prio_down(request, application_id):
             'Message': 'Already at bottom priority',
             'return': 'students:listapplications',
         })
-    apps = get_all_applications(request.user).filter(Q(Priority=targetapp.Priority + 1))
+    apps = get_all_applications(request.user, timeslot=targetapp.Proposal.TimeSlot).filter(Q(Priority=targetapp.Priority + 1))
     if len(apps) == 0:
         return render(request, 'base.html', context={
             'Message': 'Already at bottom priority',
@@ -131,14 +139,18 @@ def retract_application(request, application_id):
     :param application_id: Application id
     """
     appl = get_object_or_404(Application, pk=application_id)
-
+    if not appl.Proposal.cur_or_future():
+        return render(request, 'base.html', context={
+            'Message': 'Old applications cannot be changed.',
+            'return': 'students:listapplications',
+        })
     track = ApplicationTracking()
     track.Proposal = appl.Proposal
     track.Student = request.user
     track.Type = 'r'
     track.save()
 
-    for app in get_all_applications(request.user):
+    for app in get_all_applications(request.user, timeslot=appl.Proposal.TimeSlot):
         if app.Priority > appl.Priority:
             app.Priority -= 1
             app.save()
@@ -162,13 +174,13 @@ def apply(request, pk):
     if prop.Status < 4:
         raise PermissionDenied('This proposal is not public, application is not possible.')
 
-    if get_all_applications(request.user).count() >= settings.MAX_NUM_APPLICATIONS:
+    if get_all_applications(request.user, timeslot=prop.TimeSlot).count() >= settings.MAX_NUM_APPLICATIONS:
         return render(request, 'base.html', context={
             'Message': 'already at max amount of applied proposals<br>'
                        'retract one first before continuing',
             'return': 'students:listapplications',
         })
-    if get_all_applications(request.user).filter(Q(Proposal=prop)).exists():
+    if get_all_applications(request.user, timeslot=prop.TimeSlot).filter(Q(Proposal=prop)).exists():
         return render(request, 'base.html', context={
             'Message': 'You already applied to this proposal.',
             'return': 'students:listapplications',
@@ -182,7 +194,7 @@ def apply(request, pk):
 
     appl = Application()
     appl.Proposal = prop
-    highestprio = get_all_applications(request.user).aggregate(Max('Priority'))['Priority__max']
+    highestprio = get_all_applications(request.user, timeslot=prop.TimeSlot).aggregate(Max('Priority'))['Priority__max']
     appl.Student = request.user
     if highestprio is None:
         appl.Priority = 1
@@ -209,7 +221,7 @@ def confirm_apply(request, pk):
     if prop.Status < 4:
         raise PermissionDenied('This proposal is not public, application is not possible.')
 
-    if get_all_applications(request.user).filter(Q(Proposal=prop)).exists():
+    if get_all_applications(request.user, timeslot=prop.TimeSlot).filter(Q(Proposal=prop)).exists():
         return render(request, 'base.html', context={
             'Message': 'You already applied to this proposal.',
             'return': 'students:listapplications',

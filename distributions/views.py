@@ -15,17 +15,17 @@ from django.shortcuts import render
 from django.urls import reverse
 from htmlmin.decorators import not_minified_response
 
-from index.decorators import group_required
-from timeline.decorators import phase_required
 from general_form import ConfirmForm
 from general_mail import EmailThreadTemplate
 from general_model import print_list
 from general_view import get_all_students, get_all_staff
+from index.decorators import group_required
 from proposals.models import Proposal
 from proposals.utils import get_all_proposals, get_share_link, get_cached_project
 from students.models import Application, Distribution
-from students.views import get_all_applications
+from students.utils import get_all_applications
 from support.exports import get_list_distributions_xlsx
+from timeline.decorators import phase_required
 from timeline.utils import get_timeslot, get_timephase_number
 from . import distribution
 from .forms import AutomaticDistributionOptionForm
@@ -133,7 +133,7 @@ def api_distribute(request):
             dist.Proposal = get_cached_project(request.POST['propTo'])
             # check whether there was an application
             try:
-                dist.Application = get_all_applications(dist.Student).get(Proposal=dist.Proposal)
+                dist.Application = get_all_applications(dist.Student, timeslot=get_timeslot()).get(Proposal=dist.Proposal)
                 appl_prio = dist.Application.Priority
             except Application.DoesNotExist:
                 appl_prio = -1
@@ -208,7 +208,7 @@ def api_redistribute(request):
             dist.Proposal = get_cached_project(request.POST['propTo'])
             # change Application if user has Application
             try:
-                dist.Application = get_all_applications(dist.Student).get(Proposal=dist.Proposal)
+                dist.Application = get_all_applications(dist.Student, timeslot=get_timeslot()).get(Proposal=dist.Proposal)
                 appl_prio = dist.Application.Priority
             except Application.DoesNotExist:
                 dist.Application = None

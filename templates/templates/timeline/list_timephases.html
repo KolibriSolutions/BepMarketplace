@@ -1,9 +1,15 @@
+
 {% extends "base.html" %}
+{% load timeline_tags %}
 {% block body %}
     <h1>TimePhases of TimeSlot {{ ts }}</h1>
+    <h3>{{ ts.Begin }} - {{ ts.End }}</h3>
     <p>
     Note that all dates are inclusive. The end day of a timephase should be at least one day before the start day of the next timephase. If phases overlap, the one with oldest begin day is taken.
     </p>
+    {% if ts == cur %}
+    <p>This is the active time slot. The current time phase is {% get_timephase_number %}: {% get_timephase %}</p>
+    {% endif %}
     <a href="{% url "timeline:list_timeslots" %}" class="button primary">Back to list time slots</a>
     <a href="{% url "timeline:add_timephase" ts.pk %}" class="button primary">Add time phase</a>
     <table class="table bordered hovered striped datatable">

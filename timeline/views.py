@@ -93,7 +93,7 @@ def list_timephases(request, timeslot):
     """
     ts = get_object_or_404(TimeSlot, pk=timeslot)
     ph = ts.timephases.all()
-    cur = get_timephase()
+    cur = get_timeslot()
     return render(request, 'timeline/list_timephases.html',
                   {'ts': ts, 'ph': ph, 'cur': cur, 'now': datetime.now().date()-timedelta(days=settings.TIMELINE_EDIT_DAYS_AFTER_FINISH)})
 

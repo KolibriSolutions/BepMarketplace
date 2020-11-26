@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load index_tags %}
+{% load timeline_tags %}
+{% get_timephase_number as phasenumber %}
+{% block body %}
+
+    <h1>Students with project in {{ timeslot }}</h1>
+    <p>To grade intermediate results for a student, click the 'Files' button in the rightmost column below.</p>
+    <div class="tabcontrol">
+            <ul class="tabs">
+                {% for ts in timeslots %}
+                    <li {% if ts == timeslot %}class="active"{% endif %}><a href="{% if ts == timeslot %}#{% else %}../{{ ts.pk }}{% endif %}">{{ ts }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% if is_current %}
+        {% if phasenumber == 5 %}
+            <p>The current phase is 'Gather and process objections' so distributions of students might still change.</p>
+        {% endif %}
+        <a href="{% url "students:download_files" %}" class="button primary">Download all files</a>
+        <a href="{% url "students:liststudents_xls" %}" class="button primary">Export Excel</a>
+    {% endif %}
+
+    <a href="#" id="studentinfo" class="columnToggle button"><span></span> student info</a>
+    <a href="#" id="projectinfo" class="columnToggle button"><span></span> project info</a>
+    {% if show_grades %}
+        <a href="#" id="gradeinfo" class="columnToggle button"><span></span> grades</a>
+    {% endif %}
+    <div class="double-scroll">
+        <table class="table bordered hovered striped datatable">
+            <thead>
+            <tr>
+                <th>Student</th>
+                {# Classes on TH are used for collapsing columns with the buttons. #}
+                <th data-visible='false' class="studentinfo">Name</th>
+                <th data-visible='false' class="studentinfo">Email</th>
+                <th data-visible='false' class="studentinfo">Department</th>
+                <th data-visible='false' class="studentinfo">Study</th>
+                <th data-visible='false' class="studentinfo">Cohort</th>
+                <th data-visible='false' class="studentinfo">+5ECTS</th>
+                <th>Project</th>
+                <th data-visible='false' class="projectinfo">Track</th>
+                <th data-visible='false' class="projectinfo">Group</th>
+                <th data-visible='false' class="projectinfo">Responsible staff</th>
+                <th data-visible='false' class="projectinfo">Assistant(s)</th>
+                {% if show_grades %}{# phase 6 onwards, to allow prefill of grades #}
+                    {% for t in typ %}
+                        <th data-visible='false' data-searchable="false" class="gradeinfo">{{ t.Name }} ({{ t.Weight }}%)</th>
+                    {% endfor %}
+                    <th data-visible='false' data-searchable="false" class="gradeinfo">Total</th>
+                    <th data-searchable="false">Total rounded</th>
+                    {% if user|has_group:"type1staff;type3staff" %}
+                        <th data-searchable="false" data-orderable="false">Grades</th>
+                    {% endif %}
+                {% endif %}
+                {% if phasenumber > 3 %}
+                    <th data-searchable="false" data-orderable="false">Files</th>
+                {% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {# d.0 is distribution object, d.1 is list of grades #}
+            {% for d in des %}
+                {% with d.0.Student as ds %}
+                    {% with d.0.Proposal as dp %}
+                        <tr>
+                            <td><a href="mailto:{{ ds.email }}">{{ ds.usermeta.get_nice_fullname }}</a></td>
+                            <td>{{ ds.usermeta.get_nice_name }}</td>
+                            <td>{{ ds.email }}</td>
+                            <td>{{ ds.usermeta.Department }}</td>
+                            <td>{{ ds.usermeta.Study }}</td>
+                            <td>{{ ds.usermeta.Cohort }}</td>
+                            <td data-sort="{{ ds.usermeta.EnrolledExt }}"
+                                data-search="{{ ds.usermeta.EnrolledExt|yesno }}"><span
+                                    class="mif-{{ ds.usermeta.EnrolledExt|yesno:"checkmark fg-green,cross fg-red" }}"></span>
+                            </td>
+                            <td><a href="{% url "proposals:details" dp.id %}">{{ dp.Title }}</a></td>
+                            <td>{{ dp.Track }}</td>
+                            <td>{{ dp.Group }}</td>
+                            <td>
+                                <a href="mailto:{{ dp.ResponsibleStaff.email }}">
+                                    {{ dp.ResponsibleStaff.usermeta.get_nice_name }}
+                                </a>
+                            </td>
+                            <td>
+                                <ul>
+                                    {% for a in dp.Assistants.all %}
+                                        <li><a href="mailto:{{ a.email }}">{{ a.usermeta.get_nice_name }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            {% if show_grades %}
+                                {% for g in d.1 %}
+                                    <td>{{ g|floatformat:"2" }}</td>
+                                {% endfor %}
+
+                                <td>{{ d.0.TotalGrade|floatformat:"2" }}</td>
+                                <td><b>{{ d.0.TotalGradeRounded }}</b></td>
+                                {% if user|has_group:"type1staff;type3staff" %}{# Trackhead can edit grades of their track #}
+                                    <td>
+                                        <a href="{% url 'results:gradeformstaff' d.0.id %}" class="button primary">Grades</a>
+                                    </td>
+                                {% endif %}
+                            {% endif %}
+                            {% if phasenumber > 3 %}
+                                <td><a href="{% url "professionalskills:liststudentfiles" d.0.id %}"
+                                       class="button primary">Files</a></td>
+                            {% endif %}
+                        </tr>
+                    {% endwith %}
+                {% endwith %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        //live search for proposals, using datatables jquery.
+        $(document).ready(function () {
+            //set filters and dt_wrapper
+            var dt = $('.datatable').dt_wrapper([
+                    {column_number: 0, filter_type: "text"}, {# student #}
+                    {column_number: 3, filter_type: "select"}, {# department #}
+                    {column_number: 4, filter_type: "select"}, {# study #}
+                    {column_number: 5, filter_type: "select"}, {# cohort #}
+                    {column_number: 6, filter_type: "select", html5_data: 'data-search'}, {# +5 ec #}
+                    {column_number: 7, filter_type: "select", column_data_type: 'html'}, {# project #}
+                    {column_number: 8, filter_type: "select", filter_match_mode: 'exact'},  {# track #}
+                    {column_number: 9, filter_type: "select", filter_match_mode: 'exact'},  {# group #}
+                    {column_number: 10, filter_type: "select", column_data_type: 'html'},  // to parse mailto links, responsible staff
+                    { {# assistants #}
+                        column_number: 11,
+                        filter_type: "select",
+                        column_data_type: 'html',
+                        html_data_type: 'selector',
+                        html_data_selector: 'li'
+                    }, //to parse ul-li
+                ]
+            );
+
+            // event handlers for hide/show buttons
+            $(".columnToggle").click(function () {
+                //reset width:
+                $(".datatable").width("100%");
+                // Get the column API object
+                var columns = dt.columns("." + $(this).attr('id'));
+                // Toggle the visibility
+                if (columns.visible()[0]) {
+                    columns.visible(false);
+                    $(this).find("span").text("Show");
+                } else {
+                    columns.visible(true);
+                    $(this).find("span").text("Hide")
+                }
+                //trigger resize event for double-scroll because table width has changed.
+                $('.double-scroll').trigger('resize.doubleScroll');
+            });
+
+            //set default text for columns buttons, because datatables saves visibility in state.
+            var but = $('a.columnToggle');
+            but.each(function (i) {
+                var vis = dt.columns("." + $(this).attr('id')).visible()[0];
+                if (vis) {
+                    $(this).find("span").text("Hide")
+                } else {
+                    $(this).find("span").text("Show")
+                }
+            })
+        });
+    </script>
+{% endblock %}

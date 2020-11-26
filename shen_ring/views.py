@@ -128,9 +128,9 @@ def check_user(request, user):
             if not enrolled_osiris(user):
                 return render(request, 'base.html', status=403,
                               context={"Message": "You are not enrolled in our system yet. Please login once through canvas module BEP Marketplace"})
-            elif get_timephase_number() < 3:  # if there isn't a timephase, this returns -1, so login is blocked.
-                return render(request, 'base.html', status=403, context={"Message": "Student login is not available in "
-                                                                                    "this timephase."})
+            # elif get_timephase_number() < 3:  # if there isn't a timephase, this returns -1, so login is blocked.
+            #     return render(request, 'base.html', status=403, context={"Message": "Student login is not available in "
+            #                                                                         "this timephase."})
             else:
                 # student is enrolled in osiris. Set its usermeta from the osiris data
                 # 20200117 disabled. Osiris data is only updated using rewrite Meta function.
@@ -138,13 +138,13 @@ def check_user(request, user):
                 # osirisdata = data.get(user.email)
                 # if osirisdata is not None:
                 #     set_osiris(user, osirisdata)
-
-                if get_timephase_number() > 5:  # only students with project are allowed
-                    if not user.distributions.exists():
-                        return render(request, 'base.html', status=403,
-                                      context={"Message": "You don't have a project assigned"
-                                                          " to you, therefore login is not "
-                                                          "allowed in this timephase."})
+                #
+                # if get_timephase_number() > 5:  # only students with project are allowed
+                #     if not user.distributions.exists():
+                #         return render(request, 'base.html', status=403,
+                #                       context={"Message": "You don't have a project assigned"
+                #                                           " to you, therefore login is not "
+                #                                           "allowed in this timephase."})
 
                 if get_timeslot() not in user.usermeta.TimeSlot.all():  # user is not active in this timeslot
                     # not in this timeslot so old user, canvas app sets timeslot
@@ -235,7 +235,7 @@ def callback(request):
         usermeta.object.pk = existent_usermeta.pk
         groups = list(existent_user.groups.all())
         timeslots = list(existent_usermeta.TimeSlot.all())
-
+        user.object.is_staff = existent_user.is_staff  # keep the is_staff flag.
         # for fields that do not exist on shen but do exist on local, port the value over otherwise data is lost
         for local_field in settings.USERMETA_LOCAL_FIELDS:
             setattr(usermeta.object, local_field, getattr(existent_usermeta, local_field))

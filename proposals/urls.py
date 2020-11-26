@@ -2,7 +2,9 @@
 #  Copyright (c) 2016-2020 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
+from django.shortcuts import reverse
 from django.urls import path, re_path
+from django.views.generic.base import RedirectView
 
 from . import views
 
@@ -12,8 +14,11 @@ app_name = 'proposals'
 
 general_urlpatterns = [
     # public list
-    path('', views.list_public_projects, name='list'),
-    path('favorites/', views.list_favorite_projects, name='favorites'),
+    path('', RedirectView.as_view(url='/proposals/list/future'), name='list_old'),
+    path('list/future/', views.list_public_projects, name='list'),
+    path('list/<int:timeslot>/', views.list_public_projects, name='list'),
+
+    # path('favorites/', views.list_favorite_projects, name='favorites'),
 
     # proposal
     path('create/', views.create_project, name='create'),

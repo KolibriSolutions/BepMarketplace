@@ -127,36 +127,37 @@
                                 {apply_buttons}
                             {% endif %}
                         {% else %}
-                            {% if phasenumber < 3 and phasenumber > 0 or user|has_group:'type3staff' %}
-                                {% if project|can_edit_project:user and project.Status != 4 %}
-                                    {% if proposal.Status == 2 %}
-                                        <a href="{% url 'proposals:upgradestatus' proposal.id %}" class="button success">Publish proposal</a>
-                                    {% else %}
-                                        <a href="{% url 'proposals:upgradestatus' proposal.id %}" class="button success">Upgrade to status {{ proposal.Status|add:"1" }}</a>
-                                    {% endif %}
-                                {% endif %}
-                                {% if project|can_downgrade_project:user %}
-                                    {% if proposal.Status == 4 %}
-                                        <a href="{% url 'proposals:downgradestatusmessage' proposal.id %}" class="button danger">Unpublish</a>
-                                    {% else %}
-                                        <a href="{% url 'proposals:downgradestatusmessage' proposal.id %}" class="button danger">Downgrade to status {{ proposal.Status|add:"-1" }}</a>
-                                    {% endif %}
-                                {% endif %}
-                                <br/><br/>
-                                {# share link always visible for staff when system is still closed for students #}
+                            {% if project|can_share_project:user %}
                                 <a href="{% url 'proposals:sharelink' project.id %}" class="button primary">Get share link</a>
-                                {% if user|has_group:"type3staff" and project.Status < 3 %}
-                                    <a class="button warning"
-                                       href="{% url 'proposals:askdeleteproposal' project.id %}">
-                                        <span class="mif-bin"></span>Delete</a>
-                                {% endif %}
-                                {# policy violations #}
-                                {% if cpv %}
-                                    <h2>Content policy violations:</h2>
-                                    {% include 'proposals/inc_cpv_proj.html' %}
+                            {% endif %}
+                            {% if project|can_upgrade_project:user %}
+                                {% if proposal.Status == 2 %}
+                                    <a href="{% url 'proposals:upgradestatus' proposal.id %}" class="button success">Publish proposal</a>
+                                {% else %}
+                                    <a href="{% url 'proposals:upgradestatus' proposal.id %}" class="button success">Upgrade to
+                                        status {{ proposal.Status|add:"1" }}</a>
                                 {% endif %}
                             {% endif %}
+                            {% if project|can_downgrade_project:user %}
+                                {% if proposal.Status == 4 %}
+                                    <a href="{% url 'proposals:downgradestatusmessage' proposal.id %}" class="button danger">Unpublish</a>
+                                {% else %}
+                                    <a href="{% url 'proposals:downgradestatusmessage' proposal.id %}" class="button danger">Downgrade to
+                                        status {{ proposal.Status|add:"-1" }}</a>
+                                {% endif %}
+                            {% endif %}
+                            <br/><br/>
 
+                            {% if user|has_group:"type3staff" and project.Status < 3 %}
+                                <a class="button warning"
+                                   href="{% url 'proposals:askdeleteproposal' project.id %}">
+                                    <span class="mif-bin"></span>Delete</a>
+                            {% endif %}
+                            {# policy violations #}
+                            {% if cpv %}
+                                <h2>Content policy violations:</h2>
+                                {% include 'proposals/inc_cpv_proj.html' %}
+                            {% endif %}
                         {% endif %}
                     {% endif %}
                 </div>
@@ -194,6 +195,10 @@
                                 {% endif %}
                             </td>
                         </tr>
+                        <tr>
+                            <td>Time slot (semester):</td>
+                            <td>{{ project.TimeSlot|default:"Future" }}</td>
+                        </tr>
                         {% if project.Track.ShortName == "AU" and not project.Private.exists %}
                             <tr>
                                 <td>Warning</td>
@@ -216,7 +221,7 @@
                                 </td>
                             </tr>
                         {% endif %}
-                        {% if project.Status != 4 or not project.curyear %}
+                        {% if project.Status != 4 %}
                             <tr>
                                 <td>Status:</td>
                                 <td>
@@ -225,12 +230,9 @@
                                     </ol>
                                 </td>
                             </tr>
-                            <tr>
-                                <td>Time slot (year):</td>
-                                <td>{{ project.TimeSlot|default:"Future" }}</td>
-                            </tr>
+
                         {% endif %}
-                        {% if phasenumber > 2 and phasenumber < 5 and project.curyear and not project.Private.exists %}{# View number of applications, visible for all in phase 3 and 4. #}
+                        {% if project.cur_or_future and not project.Private.exists %}{# View number of applications #}
                             <tr>
                                 <td>Applications:</td>
                                 <td>

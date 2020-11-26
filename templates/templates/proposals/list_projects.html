@@ -11,11 +11,12 @@
         <h1>
             {% if usrsubject %}Visited by {{ usrsubject.usermeta.get_nice_name }}{% elif favorite %}Favorite Projects{% else %}Published projects{% endif %}
         </h1>
-        {# tabcontrol is now incorrect for visited-by view, but this is only for superusers. #}
         <div class="tabcontrol">
             <ul class="tabs">
-                <li {% if not favorite %} class="active"{% endif %}><a href="{% url 'proposals:list' %}">All projects</a></li>
-                <li {% if favorite %} class="active"{% endif %}><a href="{% url 'proposals:favorites' %}">Favorite only</a></li>
+                {% for ts in timeslots %}
+                    <li {% if ts == timeslot %}class="active" {% endif %}><a href="{% if ts == timeslot %}#{% else %}../{{ ts.pk }}{% endif %}">{{ ts }}</a></li>
+                {% endfor %}
+                <li {% if not timeslot %}class="active" {% endif %}><a href="{% if timeslot %}../future{% else %}#{% endif %}">Future</a></li>
             </ul>
         </div>
         <div class="double-scroll">

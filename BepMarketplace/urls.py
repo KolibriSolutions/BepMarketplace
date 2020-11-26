@@ -21,7 +21,7 @@ urlpatterns = [
     path('download/', include('download.urls')),
     path('godpowers/', include('godpowers.urls')),
     path('impersonate/', include('impersonate.urls')),
-    path('js_error_hook/', include('django_js_error_hook.urls')),
+    # path('js_error_hook/', include('django_js_error_hook.urls')),
     path('osiris/data/', include('osirisdata.urls')),
     path('presentations/', include('presentations.urls')),
     path('professionalskills/', include('professionalskills.urls')),

@@ -64,8 +64,11 @@ def can_edit_project_fn(user, proj, file):
             if user == proj.Track.Head:
                 return False, 'No editing possible. Please downgrade the proposal first.'
             else:
-                return False, 'To edit, ask your track head (%s) to downgrade the status of this proposal.' \
+                if proj.Track.Head:
+                    return False, 'To edit, ask your track head (%s) to downgrade the status of this proposal.' \
                        % proj.Track.Head.usermeta.get_nice_name()
+                else:
+                    return False, 'To edit, ask the support staff to downgrade the status of the proposal.'
         else:  # later timephases for the current year
             return False, 'No editing possible, the project is already active.'
 
@@ -84,17 +87,16 @@ def can_edit_project_fn(user, proj, file):
     if proj.Track.Head == user or group_administrator_status(proj, user) == 2:
         return True, ''
 
-    # if status is either 1 or 2 and user is assistant edit is allowed in create+check timephase
+    # if status is either 1 or 2 and user is assistant edit is allowed in all timephases, as this is not curyear.
     if proj.Status < 3 and (user in proj.Assistants.all() or proj.ResponsibleStaff == user):
         return True, ''
 
     if proj.Status == 3:
         if get_timephase_number() == 2:
-            return False, 'To edit, first downgrade the proposal or ask your track head (%s) to do so.' \
-                   % proj.Track.Head.usermeta.get_nice_name()
+            return False, 'To edit, first downgrade the proposal or ask your track head to do so.'
         else:  # timephase 1
-            return False, 'To edit, first downgrade the proposal or ask the responsible staff (%s) or track head (%s) to do so.' \
-                   % (proj.ResponsibleStaff.usermeta.get_nice_name(), proj.Track.Head.usermeta.get_nice_name())
+            return False, 'To edit, first downgrade the proposal or ask the responsible staff (%s) or track head to do so.' \
+                   % (proj.ResponsibleStaff.usermeta.get_nice_name())
 
     # if status is either 1, 2 or 3 and user is track head
     if proj.Status < 4 and proj.Track.Head == user:
@@ -154,6 +156,50 @@ def can_downgrade_project_fn(user, proj):
         return True, ""
 
     return False, "You are not allowed to downgrade this project."
+
+
+def can_upgrade_project_fn(user, proj):
+    """
+    Check if user can upgrade a project.
+
+    :param user:
+    :param proj:
+    :return:
+    """
+    allowed = can_edit_project_fn(user, proj, False)
+    if allowed[0] is True:
+        if proj.Status == 4:
+            return False, "Already at final stage"
+        if proj.Status == 3 and proj.nextyear():
+            return False, "Cannot publish proposal for future timeslot"
+        elif get_timephase_number() > 2 and \
+                proj.TimeSlot == get_timeslot() and \
+                get_grouptype('3') not in user.groups.all():
+            return False, "Proposal frozen in this timeslot. The timephase of editing has ended."
+        elif user in proj.Assistants.all() and proj.Status >= 2:
+            return False, "You are an assistant and not allowed to increase status further"
+        else:
+            return True, ''
+    return False, allowed[1]
+
+
+def can_share_project_fn(user, proj):
+    """
+    Check if user can share a project. upgrade is same as with can_edit_project_fn
+
+    :param user:
+    :param proj:
+    :return:
+    """
+    allowed = can_edit_project_fn(user, proj, False)
+    if allowed[0] is True:
+        return allowed
+    elif (user == proj.ResponsibleStaff or user in proj.Assistants.all() or
+          user == proj.Track.Head or group_administrator_status(proj, user) > 0 or get_grouptype('3') in user.groups.all()):
+        return True, ""
+    else:
+        return False, "You are not allowed to share this project"
+
 
 #
 # def can_delete_project_fn(user, proj):

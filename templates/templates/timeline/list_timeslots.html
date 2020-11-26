@@ -9,7 +9,7 @@
     </p>
     <a href="{% url "timeline:add_timeslot" %}" class="button primary">Add time slot</a>
     <a href="{% url "timeline:copy_timephases" %}" class="button primary">Copy time phases</a>
-    <table class="table bordered hovered datatable">
+    <table class="table bordered hovered datatable" data-order='[[1, "desc"]]'>
         <thead>
         <tr>
             <th>Name</th>

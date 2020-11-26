@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+{% load index_tags %}
+
+{% block body %}
+    <h1>Presentations step 2; List Rooms</h1>
+    <a href="{% url 'presentations:presentationswizardstep2_edit' 'add' %}" class="button primary">Add Rooms</a>
+    <a href="{% url 'presentations:presentationswizardstep2_edit' 'edit' %}" class="button primary">Edit Rooms</a>
+    <table class="table datatable bordered">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Join Link</th>
+            <th>Used in year</th>
+            <th>Used in</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for room in rooms %}
+            <tr>
+                <td>
+                    {{ room.0 }}
+                </td>
+                <td style="word-wrap: break-word">
+                    {% if room.0.JoinLink %}
+                        <a href="{{ room.0.JoinLink }}" target="_blank">{{ room.0.JoinLink }}</a>
+                    {% endif %}
+                </td>
+                <td>
+                    <ul>                    {{ room.1|unordered_list }}</ul>
+                </td>
+                <td>
+                    <ul>{{ room.2|unordered_list }}</ul>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            $('.datatable').dt_wrapper([
+                    {column_number: 0, filter_type: "text"},
+                    {
+                        column_number: 1,
+                        filter_type: "select",
+                        column_data_type: 'html',
+                        html_data_type: 'selector',
+                        html_data_selector: 'li'
+                    }, //to parse ul-li, timeslots
+                    {column_number: 2, filter_type: "text"},
+                ]
+            );
+        });
+    </script>
+{% endblock %}

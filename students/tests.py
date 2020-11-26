@@ -48,12 +48,7 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
         s.status = 1
 
         # General pages
-        code_general_phase12 = [
-            [['listapplications', None], s.p_forbidden],
-            [['addfile', None], s.p_forbidden],
-            [['editfile', {'pk': f.pk}], s.p_forbidden],
-        ]
-        code_general_phase34 = [
+        code_general_phase1234 = [
             [['listapplications', None], s.p_student],
             [['addfile', None], s.p_forbidden],
             [['editfile', {'pk': f.pk}], s.p_forbidden],
@@ -65,16 +60,16 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
         ]
 
         # Proposal specific pages
-        code_phase124567 = [
-            [['apply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
-            [['confirmapply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
+        code_open = [
+            [['apply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_studentnotpriv]],
+            [['confirmapply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_studentnotpriv]],
             [['apply', {'pk': s.ppriv}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
             [['confirmapply', {'pk': s.ppriv}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
         ]
-        code_phase3 = [
-            [['apply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_studentnotpriv]],
+        code_closed = [
+            [['apply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
             [['apply', {'pk': s.ppriv}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
-            [['confirmapply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_studentnotpriv]],
+            [['confirmapply', {'pk': s.p}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
             [['confirmapply', {'pk': s.ppriv}], [s.p_forbidden, s.p_forbidden, s.p_forbidden, s.p_forbidden]],
         ]
 
@@ -98,8 +93,7 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
 
 
         self.info['type'] = 'general'
-        self.loop_phase_code_user([-1, 1, 2], code_general_phase12)
-        self.loop_phase_code_user([3, 4], code_general_phase34)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4], code_general_phase1234)
         self.loop_phase_code_user([5, 6, 7], code_general_phase567)
 
         # list students
@@ -110,8 +104,8 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
         if s.debug:
             print("Testing proposal apply")
         self.info['type'] = 'apply this timeslot'
-        self.loop_phase_code_user([-1, 1, 2, 4, 5, 6, 7], code_phase124567)
-        self.loop_phase_code_user([3], code_phase3)
+        self.loop_phase_code_user([-1, 1, 2, 3], code_open)
+        self.loop_phase_code_user([4, 5, 6], code_closed)
 
         # Proposal specific for proposal of other timeslot, never allow apply
         self.info['type'] = 'apply prev timeslot'
@@ -120,14 +114,14 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
         s.privateproposal.TimeSlot = s.pts
         s.privateproposal.save()
         # this code matrix has forbidden everywhere (because apply is not possible for other timeslot)
-        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], code_phase124567)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], code_closed)
 
         self.info['type'] = 'apply next timeslot'
         s.proposal.TimeSlot = s.nts
         s.proposal.save()
         s.privateproposal.TimeSlot = s.nts
         s.privateproposal.save()
-        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], code_phase124567)
+        self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], code_open)
 
         # make sure all urls are tested.
         # prio up / down and retract are not tested.

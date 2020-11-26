@@ -6,16 +6,20 @@
     {% if not user|has_group:'any' %}{# for students #}
         <p>To upload files or view your previous uploads, use the 'Files' menu at the top.</p>
         <a href="{% url 'professionalskills:listowngroups' %}" class="button primary">List Enrolled Groups</a>
-    {% elif user|has_group:"type6staff;type3staff" %}
-        <a href="{% url 'professionalskills:mailoverduestudents' %}" class="button primary">Mail Overdue
-            Students</a>
-        <a class="button primary" href="{% url 'professionalskills:printprvforms' %}">Print Results</a>
-        <a class="button primary" href="{% url 'professionalskills:filetypecreate' %}">Create New</a>
-    {% else %}
-        <p>This page gives an overview of all professional skills and their description. To grade a student, use the <a href="{% url_timeslot 'students:liststudents' %}">Students
-            {% if phasenumber >= 6 or phasenumber < 0 %} & Grades{% endif %}</a> menu.
-            <a href="{% url "students:download_files" %}" class="button primary">Download all files</a>
-        </p>
+    {% else %} {# staff #}
+
+        {% if user|has_group:"type6staff;type3staff" %}
+            <a class="button primary" href="{% url 'professionalskills:filetypecreate' %}">Create New</a>
+            <a href="{% url 'professionalskills:mailoverduestudents' %}" class="button primary">Mail Overdue
+                Students</a>
+            <a class="button primary" href="{% url 'professionalskills:printprvforms' %}">Print Results</a>
+        {% else %}
+            <p>This page gives an overview of all professional skills and their description. To grade a student, click 'Delivered' below or use the <a
+                    href="{% url_timeslot 'students:liststudents' %}">Students
+                {% if phasenumber >= 6 or phasenumber < 0 %} & Grades{% endif %}</a> menu.</p>
+        {% endif %}
+                <a href="{% url "students:download_files" %}" class="button primary">Download all files</a>
+
     {% endif %}
     <table id="filetypetable" class="table datatable striped hovered">
         <thead>
@@ -51,19 +55,24 @@
                     </ul>
 
                 </td>
-                {% if user|has_group:'type3staff;type6staff' %}
+                {% if user|has_group:'type1staff;type2staff;type3staff;type6staff' %}
                     <td>
                         <a href="{% url 'professionalskills:listfileoftype' filetype.id %}" class="button primary">Delivered</a>
                         <a href="{% url 'professionalskills:listmissingoftype' filetype.id %}" class="button primary">Missing Students</a>
-                        <a href="{% url 'professionalskills:filetypeedit' filetype.id %}" class="button warning">Edit</a>
-                        <a href="{% url 'professionalskills:filetypedelete' filetype.id %}" class="button danger">Delete</a>
-                        <br/>
-                        <a href="{% url 'professionalskills:listgroups' filetype.pk %}" class="button primary">List
-                            Groups</a>
-                        <a href="{% url 'professionalskills:assignshuffle' filetype.pk %}" class="button warning">Shuffle
-                            Students</a>
+                        {% if user|has_group:'type3staff;type6staff' %}
+                            <a href="{% url 'professionalskills:downloadall' filetype.id %}" class="button primary">Download all files</a>
+                            <a href="{% url 'professionalskills:filetypeedit' filetype.id %}" class="button warning">Edit</a>
+
+                            <a href="{% url 'professionalskills:filetypedelete' filetype.id %}" class="button danger">Delete</a>
+                            <br/>
+                            <a href="{% url 'professionalskills:listgroups' filetype.pk %}" class="button primary">List
+                                Groups</a>
+                            <a href="{% url 'professionalskills:assignshuffle' filetype.pk %}" class="button warning">Shuffle
+                                Students</a>
+                        {% endif %}
                     </td>
                 {% endif %}
+
             </tr>
         {% endfor %}
         </tbody>

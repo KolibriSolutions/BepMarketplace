@@ -45,8 +45,8 @@ class TelemetryMiddleware(MiddlewareMixin):
         return response
 
     def handleuser(self, request, response):
-        if '/js_error_hook/' in request.path:
-            return response
+        # if '/js_error_hook/' in request.path:
+        #     return response
 
         data = self.createpackage(request, response)
         data['user'] = request.user.username

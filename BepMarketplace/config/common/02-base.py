@@ -29,7 +29,7 @@ DOMAIN = 'https://'+HOSTNAME  # also used for SAML metadata
 IPWARE_TRUSTED_PROXY_LIST = []
 
 # django-js-error-hook, fix for csrf failure on post
-JAVASCRIPT_ERROR_CSRF_EXEMPT = True
+# JAVASCRIPT_ERROR_CSRF_EXEMPT = True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -127,5 +127,5 @@ INSTALLED_APPS = [
     'openpyxl',
     'sendfile',
     'two_factor',
-    'django_js_error_hook',
+    # 'django_js_error_hook',
 ]

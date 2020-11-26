@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.conf import settings
 
 from index.decorators import group_required
-from proposals.decorators import can_edit_project, can_downgrade_project
+from proposals.decorators import can_edit_project, can_downgrade_project, can_upgrade_project
 from api.utils import get_status_str
 from general_mail import mail_proposal_all, send_mail
 from general_view import get_grouptype
@@ -29,7 +29,7 @@ def api_info(request):
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
-@can_edit_project
+@can_upgrade_project
 def upgrade_status_api(request, pk):
     """
     API call to increase the status of a proposal.
@@ -40,51 +40,33 @@ def upgrade_status_api(request, pk):
     """
     obj = get_object_or_404(Proposal, pk=pk)
 
-    if obj.Status == 4:
-        return HttpResponse("Already at final stage", status=403)
-
-    if obj.Status == 3 and obj.nextyear():
-        return HttpResponse("Cannot publish proposal for future timeslot", status=403)
-
-    elif get_timephase_number() > 2 and \
-            obj.TimeSlot == get_timeslot() and \
-            get_grouptype('3') not in request.user.groups.all():
-        return HttpResponse("Proposal frozen in this timeslot. The timephase of editing has ended.", status=403)
-
-    elif request.user in obj.Assistants.all() and obj.Status >= 2:
-        return HttpResponse("You are an assistant and not allowed to increase status further", status=403)
-    # Done in can_edit decorator
-    # elif obj.Track.Head != request.user and obj.Status > 2 and not get_grouptype('3') in request.user.groups.all():
-    #     return HttpResponse("Not allowed to publish as non track head", status=403)
-
+    oldstatus = obj.Status
+    if oldstatus == 2:
+        # per default go to publish from 4, 3 is only used if it is explicitly downgraded
+        newstatus = 4
     else:
-        oldstatus = obj.Status
-        if oldstatus == 2:
-            # per default go to publish from 4, 3 is only used if it is explicitly downgraded
-            newstatus = 4
-        else:
-            newstatus = obj.Status + 1
+        newstatus = obj.Status + 1
 
-        obj.Status = newstatus
-        obj.save()
-        mail_proposal_all(request, obj)
+    obj.Status = newstatus
+    obj.save()
+    mail_proposal_all(request, obj)
 
-        notification = ProposalStatusChange()
-        notification.Subject = obj
-        notification.Actor = request.user
-        notification.StatusFrom = oldstatus
-        notification.StatusTo = newstatus
-        notification.save()
+    notification = ProposalStatusChange()
+    notification.Subject = obj
+    notification.Actor = request.user
+    notification.StatusFrom = oldstatus
+    notification.StatusTo = newstatus
+    notification.save()
 
-        if obj.Status > 3:
-            for assistant in obj.Assistants.all():
-                if get_grouptype("2u") in assistant.groups.all():
-                    verify_assistant_fn(assistant)
-        if obj.Status == 4:
-            # put the object in cache if status goes from 3->4
-            cache.set('proposal_{}'.format(pk), obj, settings.PROJECT_OBJECT_CACHE_DURATION)
-            cache.delete('listproposalsbodyhtml')
-        return HttpResponse(get_status_str(obj.Status))
+    if obj.Status > 3:
+        for assistant in obj.Assistants.all():
+            if get_grouptype("2u") in assistant.groups.all():
+                verify_assistant_fn(assistant)
+    if obj.Status == 4:
+        # put the object in cache if status goes from 3->4
+        cache.set('proposal_{}'.format(pk), obj, settings.PROJECT_OBJECT_CACHE_DURATION)
+        cache.delete('listproposalsbodyhtml')
+    return HttpResponse(get_status_str(obj.Status))
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')

@@ -68,7 +68,9 @@
             </tr>
             <tr>
                 <td>User is supporting staff (type 3):</td>
-                <td><span class="mif-{{ type3|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+                <td><span class="mif-{{ type3|yesno:"checkmark fg-green,cross fg-red" }}"></span>
+
+                </td>
             </tr>
             <tr>
                 <td>User is study advisor (type 5):</td>
@@ -90,9 +92,15 @@
                     </td>
                 </tr>
             {% endif %}
+            {% if user.is_staff %}
+                <tr>
+                        <td>User is Staff (allowed to impersonate other users):</td>
+                        <td><span class="mif-checkmark fg-green"></span></td>
+                    </tr>
+            {% endif %}
             {% if user.is_superuser %}
                 <tr>
-                    <td>User is God:</td>
+                    <td>User is Admin/Superuser:</td>
                     <td><span class="mif-checkmark fg-green"></span></td>
                 </tr>
             {% endif %}

@@ -94,8 +94,8 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
         ]
 
         codes_phase567 = [
-            [['listfileoftype', {'pk': 100}], self.p_support_prv],
-            [['listmissingoftype', {'pk': 100}], self.p_support_prv],
+            [['listfileoftype', {'pk': 100}], self.p_staff_stud],
+            [['listmissingoftype', {'pk': 100}], self.p_staff_stud],
             [['filetypelist', None], self.p_all],
             [['filetypeaspects', {'pk': 100}], self.p_all],
             [['listownfiles', None], self.p_student],

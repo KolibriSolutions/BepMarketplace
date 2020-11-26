@@ -24,9 +24,7 @@
                 <th>Other</th>
                 <th>Time slots</th>
                 <th data-searchable="false" data-sortable="false">Edit</th>
-                {% if user.is_superuser %}
-                    <th data-searchable="false" data-sortable="false">Godpowers</th>
-                {% endif %}
+                <th data-searchable="false" data-sortable="false">Admin</th>
             </tr>
             </thead>
             <tbody>
@@ -75,19 +73,24 @@
                             {# student #}
                             <a href="{% url 'support:overruleusermeta' u.id %}" class="button primary">User Meta</a>
                         {% endif %}
-                        {% if u.is_active %}<a href="{% url 'support:toggledisable' u.id %}" class="button warning">Disable</a>
-                        {% else %}<a href="{% url 'support:toggledisable' u.id %}" class="button success">Enable</a>
+                        {% if request.user == u %}
+                            It's you!
+                        {% else %}
+                            {% if u.is_active %}<a href="{% url 'support:toggledisable' u.id %}" class="button warning">Disable</a>
+                            {% else %}<a href="{% url 'support:toggledisable' u.id %}" class="button success">Enable</a>
+                            {% endif %}
                         {% endif %}
                     </td>
-                    {% if user.is_superuser %}
-                        <td>
-                            <a href="{% url 'impersonate-start' u.id %}" class="button primary">Impersonate</a>
+                    <td>
+                        <a href="{% url 'impersonate-start' u.id %}" class="button primary">Impersonate</a>
+                        <a href="{% url 'support:userinfo' u.id %}" class="button primary">Info</a>
+                        {% if user.is_superuser %}
                             <a href="{% url 'tracking:userdetail' u.id %}" class="button primary">Telemetry</a>
-                            <a href="{% url 'support:userinfo' u.id %}" class="button primary">Info</a>
                             <a href="{% url 'admin:auth_user_change' u.id %}" class="button warning">Admin edit</a>
                             {% if u.usermeta %}<a href="{% url 'admin:index_usermeta_change' u.usermeta.id %}" class="button warning">Meta edit</a>{% endif %}
-                        </td>
-                    {% endif %}
+                        {% endif %}
+
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>

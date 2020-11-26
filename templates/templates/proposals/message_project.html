@@ -24,7 +24,7 @@
         {% endfor %}
     </ol>
     {# additional publish button #}
-    {% if project|can_edit_project:user and project.Status == 2 %}
+    {% if project|can_upgrade_project:user and project.Status == 2 %}
         <a href="{% url 'proposals:upgradestatus' project.id %}" class="button success">Publish proposal</a>
     {% endif %}
     <hr/>

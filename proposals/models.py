@@ -17,7 +17,7 @@ from general_model import file_delete_default, filename_default, clean_text, get
 from index.models import Track
 from support.models import CapacityGroup
 from timeline.models import TimeSlot
-from timeline.utils import get_timeslot
+from timeline.utils import get_timeslot, get_timephase_number
 
 logger = logging.getLogger('django')
 
@@ -35,7 +35,7 @@ class Proposal(models.Model):
 
     Title = models.CharField(max_length=100)
     ResponsibleStaff = models.ForeignKey(User, on_delete=models.PROTECT, related_name='proposalsresponsible')
-    Assistants = models.ManyToManyField(User, related_name='proposals', blank=True)
+    Assistants = models.ManyToManyField(User, related_name='proposals', blank=True, help_text='Add an assistant to the project. If the assistant is not found in the list, ask him/her to login at least once in the system.')
     Group = models.ForeignKey(CapacityGroup, on_delete=models.PROTECT)
     NumStudentsMin = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(10)])
     NumStudentsMax = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(10)])
@@ -86,6 +86,12 @@ class Proposal(models.Model):
             return self.TimeSlot == get_timeslot()
         else:  # future proposal
             return False
+
+    def cur_or_future(self):
+        return self.nextyear() or self.curyear()
+
+    def can_apply(self):
+        return self.nextyear() or (self.curyear() and get_timephase_number() < 4)
 
     def clean(self):
         self.Title = clean_text(self.Title)

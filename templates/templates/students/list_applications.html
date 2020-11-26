@@ -3,13 +3,15 @@
 {% block body %}
     <h1>Applications</h1>
     <p>Applications can be changed till the end of the phase "Students choosing projects"</p>
-    <p>You can make up to {{ num_app }} applications.</p>
+    <p>You can make up to {{ num_app }} applications per time slot.</p>
     {% if private %}
         <p> There is a private proposal for you. Therefore you cannot apply to public proposals. Please check out your
             proposal in the sidebar on the right.</p>
-    {% else %}
-        {% if applications %}
+    {% endif %}
 
+    {% if applications %}
+        {% for ts, applications in applications.items %}
+            <h2>{{ ts }}</h2>
             <table class="table">
                 <thead>
                 <tr>
@@ -44,15 +46,15 @@
                         </td>
                         <td>
                             {# <a href="{% url 'students:detailapplication' appl.id %}"><button class="button primary">Details</button> </a> #}
+                            {% if appl.Proposal.can_apply %}
                             <a href="{% url 'students:retractapplication' appl.id %}">
                                 <button class="button danger">Retract</button>
                             </a>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}
             </table>
-        {% else %}
-            Once you have made an application to a proposal, it will show up here.
-        {% endif %}
+        {% endfor %}
     {% endif %}
 {% endblock %}

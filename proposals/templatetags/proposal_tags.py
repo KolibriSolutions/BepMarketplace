@@ -9,7 +9,8 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from general_view import get_grouptype
-from proposals.utils import get_all_proposals, group_administrator_status, can_create_project_fn, can_edit_project_fn, can_downgrade_project_fn
+from proposals.utils import get_all_proposals, group_administrator_status, can_create_project_fn, can_edit_project_fn, can_downgrade_project_fn, can_share_project_fn, \
+    can_upgrade_project_fn
 from timeline.utils import get_timeslot
 
 register = template.Library()
@@ -87,3 +88,13 @@ def can_edit_project_tag(project, user):
 @register.filter(name='can_downgrade_project')
 def can_downgrade_project_tag(project, user):
     return can_downgrade_project_fn(user, project)[0]
+
+
+@register.filter(name='can_upgrade_project')
+def can_upgrade_project_tag(project, user):
+    return can_upgrade_project_fn(user, project)[0]
+
+
+@register.filter(name='can_share_project')
+def can_share_project_tag(project, user):
+    return can_share_project_fn(user, project)[0]

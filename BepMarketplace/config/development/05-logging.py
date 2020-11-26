@@ -33,12 +33,12 @@ LOGGING = {
             'filename': os.path.join(LOG_DIR, 'saml2.log'),
             'formatter': 'verbose',
         },
-        'js_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(LOG_DIR, 'js_error.log'),
-            'formatter': 'verbose',
-        },
+        # 'js_file': {
+        #     'level': 'INFO',
+        #     'class': 'logging.FileHandler',
+        #     'filename': os.path.join(LOG_DIR, 'js_error.log'),
+        #     'formatter': 'verbose',
+        # },
         'mail_admins': {
             'level': 'INFO',
             'class': 'django.utils.log.AdminEmailHandler',
@@ -65,12 +65,12 @@ LOGGING = {
             'handlers': ['saml_file'],
             'level': 'INFO',  # to disable logging on unsolicitedresponses etc.
         },
-        'javascript_error': {
-            'handlers': ['js_file'],
-            'level': 'INFO',
-            # 'filters': ['skip_bots', 'skip_ie7'],
-            'propagate': True,
-        },
+        # 'javascript_error': {
+        #     'handlers': ['js_file'],
+        #     'level': 'INFO',
+        #     # 'filters': ['skip_bots', 'skip_ie7'],
+        #     'propagate': True,
+        # },
     },
 }
 # the subject prefix for error emails.

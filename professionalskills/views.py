@@ -292,7 +292,7 @@ def delete_filetype_aspect(request, pk):
     })
 
 
-@group_required('type3staff', 'type6staff')
+@group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
 @phase_required(5, 6, 7)
 def list_files_of_type(request, pk):
     """
@@ -303,13 +303,25 @@ def list_files_of_type(request, pk):
     :return:
     """
     ftype = get_object_or_404(FileType, pk=pk)
+    if get_grouptype('3') in request.user.groups.all() or\
+        get_grouptype('6') in request.user.groups.all():
+        files = StudentFile.objects.filter(Type=ftype).distinct()
+    else:  # type1 or type2
+        dists = get_distributions(request.user, timeslot=get_timeslot())
+        if not dists:
+            # raise PermissionDenied('You do not have any distributed students at this moment.')
+            return render(request, 'base.html', context={'Message':'You do not have any distributed students at this moment.'})
+        files = StudentFile.objects.filter(Type=ftype, Distribution__in=dists)
+
     return render(request, 'professionalskills/list_files.html', {
         'type': ftype,
-        'files': StudentFile.objects.filter(Type=ftype).distinct()
+        'files': files,
+        'edit': False, # never allow changing files. This view is not for students
+        'respond': True,   # this gives presentation assessors also respondrights if planning is public.
     })
 
 
-@group_required('type3staff', 'type6staff')
+@group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
 @phase_required(5, 6, 7)
 def list_missing_of_type(request, pk):
     """
@@ -321,7 +333,12 @@ def list_missing_of_type(request, pk):
     """
     ftype = get_object_or_404(FileType, pk=pk)
     missing_students = []
-    for dist in get_distributions(request.user):
+    dists = get_distributions(request.user)
+    if not dists:
+        # raise PermissionDenied('You do not have any distributed students at this moment.')
+        return render(request, 'base.html', context={'Message': 'You do not have any distributed students at this moment.'})
+
+    for dist in dists:
         if dist.files.filter(Type=ftype).count() == 0:
             missing_students.append(dist)
     return render(request, 'professionalskills/list_missing_students.html', {

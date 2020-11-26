@@ -5,9 +5,21 @@
 from django.contrib import admin
 from .models import FileType, FileExtension, StudentFile, StaffResponse, StudentGroup, StaffResponseFileAspect, StaffResponseFileAspectResult
 
-admin.site.register(FileType)
+
+class StudentFileAdmin(admin.ModelAdmin):
+    list_filter = ['Distribution__TimeSlot', 'Type']
+    list_display = ['__str__', 'Distribution']
+    search_fields = ('Distribution__Student__username', 'Distribution__Student__last_name')
+
+class FileTypeAdmin(admin.ModelAdmin):
+    list_filter = ['TimeSlot', 'AllowedExtensions']
+    list_display = ['__str__', 'TimeSlot', 'Deadline', 'CheckedBySupervisor']
+    # search_fields = ('Distribution__Student__username', 'Distribution__Student__last_name')
+
+
+admin.site.register(FileType, FileTypeAdmin)
 admin.site.register(FileExtension)
-admin.site.register(StudentFile)
+admin.site.register(StudentFile, StudentFileAdmin)
 admin.site.register(StaffResponse)
 admin.site.register(StudentGroup)
 admin.site.register(StaffResponseFileAspect)

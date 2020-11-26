@@ -10,8 +10,8 @@ from general_view import get_grouptype
 from presentations.models import PresentationTimeSlot
 from presentations.utils import planning_public
 from proposals.models import Project
-from proposals.utils import get_cached_project, group_administrator_status, can_edit_project_fn, can_downgrade_project_fn, can_create_project_fn
-from timeline.utils import get_timephase_number, get_timeslot
+from proposals.utils import get_cached_project, group_administrator_status, can_edit_project_fn, can_downgrade_project_fn, can_create_project_fn, can_share_project_fn, can_upgrade_project_fn
+from timeline.utils import get_timeslot
 
 
 def can_view_project(fn):
@@ -58,8 +58,8 @@ def can_view_project(fn):
                 # this includes assessors as they are type1 or type2.
                 if request.user.groups.exists():
                     return fn(*args, **kw)
-                # students view public proposals or private student views his proposal: Only in timephase after 2
-                elif get_timephase_number() > 2 and proj.TimeSlot == get_timeslot():
+                # students view public proposals or private student views his proposal, all public projects.
+                elif proj.cur_or_future():
                     return fn(*args, **kw)
             # assessors are allowed to view status4 private projects if they have to assess it.
             elif planning_public() and \
@@ -143,6 +143,39 @@ def can_downgrade_project(fn):
     return wrapper
 
 
+def can_upgrade_project(fn):
+    """
+    Test if a user can downgrade a given project.
+
+    :param fn:
+    :return:
+    """
+
+    def wrapper(*args, **kw):
+        if 'pk' in kw:
+            pk = int(kw['pk'])
+        else:
+            pk = int(args[1])
+        proj = get_object_or_404(Project, pk=pk)
+        request = args[0]
+
+        # user needs to be logged in (so no need for login_required on top of this)
+        if not request.user.is_authenticated:
+            page = args[0].path
+            return redirect_to_login(
+                next=page,
+                login_url='index:login',
+                redirect_field_name='next', )
+
+        allowed = can_upgrade_project_fn(request.user, proj)
+        if allowed[0] is True:
+            return fn(*args, **kw)
+        else:
+            raise PermissionDenied(allowed[1])
+
+    return wrapper
+
+
 def can_create_project(fn):
     """
     User is allowed to create project
@@ -215,13 +248,8 @@ def can_share_project(fn):
                 next=page,
                 login_url='index:login',
                 redirect_field_name='next', )
-
-        allowed = can_edit_project_fn(request.user, proj, 'ty' in kw)
+        allowed = can_share_project_fn(request.user, proj)
         if allowed[0] is True:
-            return fn(*args, **kw)
-        elif (
-                request.user == proj.ResponsibleStaff or request.user in proj.Assistants.all() or
-                request.user == proj.Track.Head or group_administrator_status(proj, request.user) > 0) and not proj.prevyear():
             return fn(*args, **kw)
         else:
             raise PermissionDenied(allowed[1])

@@ -29,8 +29,9 @@ CSP_FRAME_ANCESTORS = ("https://canvas.tue.nl")  # Allow is being inherited by c
 CSP_FORM_ACTION = ("'self'")  # where form action=URI can point to
 
 ## Impersonate
+# impersonate is by default enabled for staff users. If a type3 is allowed to impersonate, the is_staff should be set in admin.
 IMPERSONATE = {
-    'REQUIRE_SUPERUSER': True,
+    'REQUIRE_SUPERUSER': False,
     'DISABLE_LOGGING': True,
 }
 
@@ -48,8 +49,13 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'templates/static')
 SENDFILE_BACKEND = 'sendfile.backends.simple'
 SENDFILE_ROOT = MEDIA_ROOT
 SENDFILE_URL = '/protected/'
-
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 if not DEBUG:
+    ## SSL
+    # Nginx should have:  proxy_set_header X-Forwarded-Protocol https;
+    # to let django know it is https using the next setting:
+    # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
+    # To make sure it isn't forgotten to set this header, redirect to bullshit domain if it fails.
     SECURE_HSTS_SECONDS = 63072000  # half year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True

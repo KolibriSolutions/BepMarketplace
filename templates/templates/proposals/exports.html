@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Proposal exports</h1>
+    <p>Download excel with sharelinks of projects of {{ timeslot }}.</p>
+    <p>
+    <ul>
+        <li>Published: All published, status=4, proposals. </li>
+        <li>All projects: Also non-published, draft, proposals. Use with care, probably contains unfinished proposals.</li>
+        <li>Non-full: Projects with less students distributed than max-students of the project.</li>
+        <li>Non-distributed: Projects with no distributed students</li>
+    </ul></p>
+    <p>For historic downloads, see <a href="{% url 'support:history' %}">history</a></p>
+    <p>
+        <a class="button primary" href="{% url 'proposals:exports' 'published' %}">Published (status=4)</a>
+        <a class="button primary" href="{% url 'proposals:exports' 'all' %}">All projects</a>
+        <a class="button primary" href="{% url 'proposals:exports' 'nonfull' %}">Non-full projects</a>
+        <a class="button primary" href="{% url 'proposals:exports' 'nondistributed' %}">Non-distributed projects</a>
+    </p>
+{% endblock %}

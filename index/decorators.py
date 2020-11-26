@@ -66,8 +66,8 @@ def student_only():
         if u.is_authenticated:
             if u.groups.exists():
                 raise PermissionDenied("This page is only available for students.")
-            if get_timephase_number() < 3:
-                raise PermissionDenied("The system is not yet open for students.")
+            # if get_timephase_number() < 3:
+            #     raise PermissionDenied("The system is not yet open for students.")
             return True
         return False
 

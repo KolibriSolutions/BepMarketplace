@@ -7,7 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 
 from proposals.models import Project
-from timeline.utils import get_timephase_number, get_timeslot
+from .models import Application
 
 
 def can_apply(fn):
@@ -29,17 +29,23 @@ def can_apply(fn):
                 login_url='index:login',
                 redirect_field_name='next', )
 
-        if get_timephase_number() != 3:
-            raise PermissionDenied("Apply is not possible in this time phase.")
         if request.user.groups.exists():
             raise PermissionDenied("Only students can apply to proposals")
-        if request.user.personal_proposal.filter(TimeSlot=get_timeslot()).exists():
+        if any([p.cur_or_future() for p in request.user.personal_proposal.all()]):
             raise PermissionDenied("You cannot apply/retract because there is a private proposal for you.")
         if 'pk' in kw:
             pk = int(kw['pk'])
             prop = get_object_or_404(Project, pk=pk)
             if prop.Private.exists():
                 raise PermissionDenied("This proposal is private. It is already assigned.")
+            if not prop.can_apply():
+                raise PermissionDenied("You can no longer apply to proposals of this time slot.")
+        if 'application_id' in kw:
+            pk = int(kw['application_id'])
+            app = get_object_or_404(Application, pk=pk)
+            if not app.Proposal.can_apply():
+                raise PermissionDenied('Applications of this time slot can no longer be changed.')
+
         return fn(*args, **kw)
 
     return wrapper

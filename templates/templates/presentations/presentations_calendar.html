@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load static %}
+{% load index_tags %}
+{% block stylesheets %}
+    <link href="{% static 'css/fullcalendar.min.css' %}" rel="stylesheet">
+    <!--<link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.2.0/fullcalendar.print.css" rel="stylesheet"> Only for printing-->
+    <style>
+        span.dialog-head {
+            font-weight: bold;
+        }
+
+        span.dialog-content {
+
+        }
+        .half-trans {
+            opacity: 0.4;
+        }
+    </style>
+{% endblock %}
+{% block body %}
+    <h1>Presentations planning calendar</h1>
+    <p>Click on a calendar item to show the details. For online meetings, click on the calendar item and then on the link next to 'Location:' to join the meeting.</p>
+    <p>
+        <a href="{% url "presentations:presentationsplanningxls" %}" class="button primary">Export Excel</a>
+        {% if not own %}
+            <a href="{% url 'presentations:presentationscalendarown' %}" class="button primary">Show own set only</a>
+        {% else %}
+            <a href="{% url 'presentations:presentationscalendar' %}" class="button primary">Show all presentations</a>
+        {% endif %}
+    </p>
+    {% if own %}
+        Only showing the presentation set(s) you are in.<br/><br/>
+    {% endif %}
+    {# form to make the calendar public for type3 staff #}
+    {% if user|has_group:"type3staff" %}
+        <div style="border: 2px solid #222;" class="margin20 bg-grayLighter">
+            <p class="margin10">
+                The calendar planning is always visible for support staff.
+                For other staff members and students the planning is always visible in the time phase 7: "Presentation
+                of results".
+                If you set the planning to 'public' staff and students can also see the planning in time
+                phase 6: "Execution of projects".
+            </p>
+            {% if form %}
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    <table class="table" style="text-align:left;">
+                        {{ form.as_table }}
+                        <tr>
+                            <td>
+                                <button class="button success" type="submit">Confirm</button>
+                            </td>
+                            <td></td>
+                        </tr>
+                    </table>
+                </form>
+            {% endif %}
+        </div>
+
+    {% endif %}
+    <div id='calendar'></div>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static "js/moment.min.js" %}"></script>
+    <script src="{% static 'js/fullcalendar.min.js' %}"></script>
+
+    <script>
+        function formatDate(date) {
+            var date = new Date(date);
+            var monthNames = [
+                "January", "February", "March",
+                "April", "May", "June", "July",
+                "August", "September", "October",
+                "November", "December"
+            ];
+
+            var day = date.getDate();
+            var monthIndex = date.getMonth();
+            var year = date.getFullYear();
+            var hour = date.getHours();
+            var minutes = date.getMinutes();
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            return day + ' ' + monthNames[monthIndex] + ' ' + year + " " + hour + ":" + minutes;
+        }
+
+        //live search for proposals, using datatables jquery.
+        $(document).ready(function () {
+            $('#calendar').fullCalendar({
+                header: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'month,agendaWeek,agendaDay,listWeek'
+                },
+                //defaultDate: '2017-02-12', //first day of presentations
+                navLinks: true, // can click day/week names to navigate views
+                editable: false,
+                eventLimit: true, // allow "more" link when too many events
+                slotDuration: '00:15:00',
+                slotLabelInterval: '00:15:00',
+                slotLabelFormat: 'H:mm',
+                timeFormat: 'H:mm',
+                minTime: '07:00:00',
+                maxTime: '23:00:00',
+                scrollTime: '08:30:00',
+                defaultView: 'agendaWeek',
+                titleFormat: 'D MMM YYYY',
+                defaultDate: "{{ beginCalendar|date:"c" }}", // the first day of the presentations timephase
+                aspectRatio: 1.8,
+                eventOrder: "setid", //put events on same day, starting at same time, in order of set ID
+                eventBorderColor: "gray",
+                eventClick: function (event, jsEvent, view) {
+
+                    var txt = event.proposal ? "<span class='dialog-head'>Proposal:</span> <span class='dialog-content'>" + event.proposal + "</span><br />" +
+                        "<span class='dialog-head'>Track head:</span> <span class='dialog-content'>" + event.trackhead + "</span><br />" +
+                        "<span class='dialog-head'>Assessors:</span> <span class='dialog-content'><ul class='no-margin'>" + event.assessors + "</ul></span><br />" +
+                        "<span class='dialog-head'>Presentation Assessors:</span> <span class='dialog-content'><ul class='no-margin'>" + event.presentation_assessors + "</ul></span><br />" +
+                        "<span class='dialog-head'>Responsible:</span> <span class='dialog-content'>" + event.responsible + "</span><br />" +
+                        "<span class='dialog-head'>Assistant(s):</span> <span class='dialog-content'><ul class='no-margin'>" + event.assistants + "</ul></span><br />" : "";
+
+                    txt += "<span class='dialog-head'>Location:</span> <span class='dialog-content'>" + event.location + "</span><br />" +
+                        "<span class='dialog-head'>Start:</span> <span class='dialog-content'>" + formatDate(event.start) + "</span><br />" +
+                        "<span class='dialog-head'>End:</span> <span class='dialog-content'>" + formatDate(event.end) + "</span><br />";
+                    if (event.joinlink) {
+                        txt += "<span class='dialog-head'>Join link:</span> <span class='dialog-content'>" + event.joinlink + "</span><br />";
+                    }
+                    metroDialog.create({
+                        title: event.title,
+                        content: txt,
+                        actions: [
+                            {
+                                title: "Close",
+                                onclick: function (el) {
+                                    $(el).data('dialog').close();
+                                }
+                            }
+                        ],
+                        options: {
+                            modal: false,
+                            overlay: true,
+                            overlayColor: 'bg-gray half-trans',
+                            overlayClickClose: true,
+                        }
+                    });
+                },
+                events: [
+                    {% for set in sets %}
+                        {% cycle "#803E75" "#FF6800" "#C10020" "#CEA262" "#007D34" "#F6768E" "#00538A" "#FF7A5C" "#53377A" "#FF8E00" "#B32851" "#F4C800" "#7F180D" "#93AA00" "#593315" "#F13A13" "#232C16" as setcolor silent %}
+                        {% for slot in set.timeslots.all %}
+                            {
+                                setid: {{ set.id }},
+                                id: {{ slot.id }},
+                                start: '{{ slot.DateTime|date:"c" }}',
+                                end: '{{ slot.DateTimeEnd|date:"c" }}',
+                                {% if slot.CustomType %}
+                                    title: '{{ slot.get_CustomType_display }}',
+                                    {% if slot.CustomType == 1 %}
+                                        location: '{{ set.AssessmentRoom.room_link }}',
+                                    {% else %}
+                                        location: 'Somewhere..',
+                                    {% endif %}
+                                {% else %}
+                                    title: '{{ slot.Distribution.Student.usermeta.get_nice_fullname }} ({{ slot.Distribution.Student.usermeta.Studentnumber }})',
+                                    backgroundColor: "{{ setcolor }}",
+                                    location: '{{set.PresentationRoom.room_link }}',
+                                    proposal: '<a href="{% url 'proposals:details' slot.Distribution.Proposal.pk %}" title="view project">{{ slot.Distribution.Proposal.Title }}</a>',
+                                    responsible: '{{ slot.Distribution.Proposal.ResponsibleStaff.usermeta.get_nice_name }}',
+                                    assistants: '{% for a in slot.Distribution.Proposal.Assistants.all %}<li>{{ a.usermeta.get_nice_name }}</li>{% endfor %}',
+                                    assessors: '{% for a in set.Assessors.all %}<li>{{ a.usermeta.get_nice_name }}</li>{% endfor %}',
+                                    presentation_assessors: '{% for a in set.PresentationAssessors.all %}<li>{{ a.usermeta.get_nice_name }}</li>{% endfor %}',
+                                    trackhead: '{{ slot.Distribution.Proposal.Track.Head.usermeta.get_nice_name }} ({{ slot.Distribution.Proposal.Track.Name }})'
+                                {% endif %}
+                            },
+                        {% endfor %}
+                    {% endfor %}
+                ]
+            });
+        });
+    </script>
+{% endblock %}
