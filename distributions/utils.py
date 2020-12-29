@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.db.models import Q
@@ -28,7 +28,7 @@ def get_distributions(user, timeslot=None):
         return des_all
     else:
         tracks = Track.objects.filter(Head=user)
-        if planning_public():
+        if planning_public() and timeslot == get_timeslot():
             return des_all.filter(Q(Proposal__Track__in=tracks) |
                                   Q(Proposal__ResponsibleStaff=user) |
                                   Q(Proposal__Assistants__id=user.id) |

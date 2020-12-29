@@ -1,10 +1,10 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.urls import path, re_path
 from . import consumers
 
 websocket_urlpatterns = [
-    path('tracking/viewnumber/<int:pk>/', consumers.CurrentViewNumberConsumer),
+    path('tracking/viewnumber/<int:pk>/', consumers.CurrentViewNumberConsumer.as_asgi()),
 ]

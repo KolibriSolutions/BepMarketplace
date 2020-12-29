@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from itertools import chain
@@ -50,7 +50,7 @@ def list_public_projects(request, timeslot=None):
     if timeslot:
         ts = get_object_or_404(TimeSlot, pk=timeslot)
         projects = get_all_projects(old=True).filter(TimeSlot=ts)
-        if ts.End <= datetime.now().date():
+        if ts.End < datetime.now().date():  # on last day timeslot is still active
             raise PermissionDenied("Past projects cannot be browsed.")
     else:
         ts = None
@@ -246,39 +246,39 @@ def detail_project(request, pk):
     :param pk: pk of the project
     :return:
     """
-    prop = get_cached_project(pk)
+    proj = get_cached_project(pk)
 
     # if student
     if not request.user.groups.exists():
         # make apply / retract button.
-        if request.user.personal_proposal.exists() or not prop.can_apply():
+        if request.user.personal_proposal.exists() or not proj.can_apply():
             button = ''
         else:
             button = '<a href="{}" class="button {}">{}</a>'
-            if get_all_applications(request.user, timeslot=prop.TimeSlot).filter(Proposal=prop).exists():  # if user has applied to this proposal
+            if get_all_applications(request.user, timeslot=proj.TimeSlot).filter(Proposal=proj).exists():  # if user has applied to this proposal
                 button = button.format(reverse('students:retractapplication',
-                                               args=[get_all_applications(request.user, timeslot=prop.TimeSlot).filter(Proposal=prop)[0].id]),
+                                               args=[get_all_applications(request.user, timeslot=proj.TimeSlot).filter(Proposal=proj)[0].id]),
                                        'danger',
                                        'Retract Application')
             else:  # show apply button
-                button = button.format(reverse('students:confirmapply', args=[prop.id]), 'primary', 'Apply')
+                button = button.format(reverse('students:confirmapply', args=[proj.id]), 'primary', 'Apply')
 
         # get proposal from cache, or put in cache
         cdata = cache.get("proposaldetail{}".format(pk))
         if cdata is None:
-            data = {"proposal": prop,
-                    "project": prop,
+            data = {"proposal": proj,
+                    "project": proj,
                     "user": request.user,
                     'cache_string_render': True
                     }
             cdata = render_block_to_string("proposals/detail_project.html", 'body', data, request=request)
             cache.set('proposaldetail{}'.format(pk), cdata, settings.PROJECT_OBJECT_CACHE_DURATION)
 
-        tracking_visit_project(prop, request.user)  # always log visits from students
+        tracking_visit_project(proj, request.user)  # always log visits from students
 
         # applications counter
-        if prop.applications.exists():
-            applications_count = prop.applications.count()
+        if proj.applications.exists():
+            applications_count = proj.applications.count()
             applications_count_txt = '{} student'.format(applications_count)
             if applications_count > 1:
                 applications_count_txt += 's'
@@ -287,29 +287,31 @@ def detail_project(request, pk):
 
         return render(request, "proposals/detail_project.html", {
             "bodyhtml": cdata.format(apply_buttons=button, applications_counter=applications_count_txt),
-            'project': prop,
-            'fav': prop.favorites.filter(User=request.user).exists()
+            'project': proj,
+            'fav': proj.favorites.filter(User=request.user).exists()
         })  # send project for if statement in scripts.
 
     # if staff:
     else:
-        data = {"proposal": prop,
-                "project": prop,
+        data = {"proposal": proj,
+                "project": proj,
                 "Editlock": "Editing not possible"}
-        if prop.Status == 4:  # published proposal in this timeslot
-            # support staff can see applications
-            if get_grouptype("3") in request.user.groups.all() and get_timephase_number() > 2:
-                data['applications'] = prop.applications.all()
-                # responsible / assistants can see distributions in distribution phase
-            if get_timephase_number() >= 4:
-                data['distributions'] = get_distributions(request.user).filter(Proposal=prop)
-        allowed = can_edit_project_fn(request.user, prop, False)
+        if proj.Status == 4:
+            # support staff can see applications and distributions always
+            if get_grouptype("3") in request.user.groups.all():
+                data['applications'] = proj.applications.all()
+                data['distributions'] = get_distributions(request.user, timeslot=proj.TimeSlot).filter(Proposal=proj)
+            # other staff users can see old distributions and current in phase 4+
+            elif proj.prevyear() or (proj.curyear() and get_timephase_number() >= 4):
+                data['distributions'] = get_distributions(request.user, timeslot=proj.TimeSlot).filter(Proposal=proj)
+
+        allowed = can_edit_project_fn(request.user, proj, False)
         if allowed[0]:
             data['Editlock'] = False
         else:
             data['Editlock'] = allowed[1]
-        data['fav'] = prop.favorites.filter(User=request.user).exists()
-        data['cpv'] = cache.get('cpv_proj_{}'.format(prop.id))  # if cpv is not in cache, ignore
+        data['fav'] = proj.favorites.filter(User=request.user).exists()
+        data['cpv'] = cache.get('cpv_proj_{}'.format(proj.id))  # if cpv is not in cache, ignore
         return render(request, "proposals/detail_project.html", data)
 
 
@@ -361,6 +363,7 @@ def edit_project(request, pk):
     """
     obj = get_object_or_404(Proposal, pk=pk)
     title = 'Edit Proposal'
+    template = 'GenericForm.html'
 
     if request.method == 'POST':
         # only limited editing when status 4
@@ -381,9 +384,10 @@ def edit_project(request, pk):
         if obj.Status == 4:
             form = ProposalFormLimited(request=request, instance=obj)
             title = 'Edit active Proposal'
+            template = 'proposals/form_active_proposal.html'
         else:
             form = ProposalFormEdit(request=request, instance=obj)
-    return render(request, 'GenericForm.html', {'form': form, 'formtitle': title, 'buttontext': 'Save'})
+    return render(request, template, {'form': form, 'formtitle': title, 'buttontext': 'Save'})
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')
@@ -415,14 +419,9 @@ def copy_project(request, pk):
         old_proposal.TimeSlot = get_timeslot()
         # Assistants and privates are removed, because m2m is not copied in this way.
         form = ProposalFormCreate(request=request, instance=old_proposal, copy=oldpk)
-    if get_timephase_number() == 1:
-        return render(request, 'GenericForm.html', {'form': form,
-                                                    'formtitle': 'Edit copied proposal',
-                                                    'buttontext': 'Create and go to next step'})
-    else:
-        return render(request, 'GenericForm.html', {'form': form,
-                                                    'formtitle': 'Edit copied proposal (For next timeslot)',
-                                                    'buttontext': 'Create and go to next step'})
+    return render(request, 'GenericForm.html', {'form': form,
+                                                'formtitle': 'Edit copied proposal',
+                                                'buttontext': 'Create and go to next step'})
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type4staff')

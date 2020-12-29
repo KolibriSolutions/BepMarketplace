@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django import forms
@@ -15,7 +15,7 @@ from index.models import UserMeta
 from templates import widgets
 from timeline.models import TimeSlot
 from .models import PublicFile, CapacityGroup
-
+from datetime import datetime
 
 def clean_publicfile_default(self):
     file = clean_file_default(self)
@@ -75,11 +75,24 @@ class PublicFileForm(FileForm):
     class Meta(FileForm.Meta):
         model = PublicFile
 
+        fields = ['Caption', 'File', 'TimeSlot']
+        widgets = {
+            'Caption': widgets.MetroTextInput,
+            'File': widgets.MetroFileInput,
+            'TimeSlot': widgets.MetroSelect,
+        }
+
     def clean_File(self):
         return clean_publicfile_default(self)
 
+    def clean_TimeSlot(self):
+        ts = self.cleaned_data.get('TimeSlot')
+        if ts.End < datetime.now().date():
+            raise forms.ValidationError('Adding files to a finished timeslot is not allowed.')
+        return ts
 
-class OverRuleUserMetaForm(forms.ModelForm):
+
+class UserMetaForm(forms.ModelForm):
     """Form to overrule the meta of a user. Overruled means that Osiris/LDAP login doesn't override attributes."""
 
     class Meta:
@@ -89,16 +102,19 @@ class OverRuleUserMetaForm(forms.ModelForm):
             'Study',
             'Cohort',
             'ECTS',
+            'TimeSlot',
+            'Overruled',
             'EnrolledBEP',
-            'EnrolledExt'
+            'EnrolledExt',
         ]
-
         widgets = {
             'Study': widgets.MetroTextInput,
             'Cohort': widgets.MetroNumberInput,
             'ECTS': widgets.MetroNumberInput,
+            'Overruled': widgets.MetroCheckBox,
             'EnrolledBEP': widgets.MetroCheckBox,
             'EnrolledExt': widgets.MetroCheckBox,
+            'TimeSlot': widgets.MetroSelectMultiple,
         }
 
 
@@ -129,7 +145,8 @@ class GroupadministratorEdit(forms.Form):
         Do not allow users to be in both read and write members.
         :return:
         """
-        dups = set(self.cleaned_data.get('readmembers')) & set(self.cleaned_data.get('writemembers'))
+        cleaned_data = super().clean()
+        dups = set(cleaned_data.get('readmembers')) & set(cleaned_data.get('writemembers'))
         if dups:
             raise ValidationError(
                 "User(s) {} cannot be both read and write members. Please remove them from one of the fields.".format(

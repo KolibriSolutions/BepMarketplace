@@ -1,18 +1,24 @@
 {% extends "base.html" %}
-{% load timeline_tags %}
-{% get_timephase_number as phasenumber %}
 {% block body %}
-    {% if phasenumber < 6 %}
-        <h1>Proposals with applications and distributions</h1>
+    {% if timeslot %}
+        <h1>Projects and applications for {{ timeslot }}</h1>
     {% else %}
-        <h1>Projects and their distributions</h1>
-    {% endif %}
-    <a href="{% url "distributions:SupportListDistributionsXls" %}" class="button primary">Export Excel</a>
-    {% if phasenumber == 4 or phasenumber == 5 %}
-        <a href="{% url 'distributions:maildistributions' %}" class="button warning">Mail distributions to students</a>
+        {% if phasenumber < 6 %}
+            <h1>Proposals with applications and distributions</h1>
+        {% else %}
+            <h1>Projects and their distributions</h1>
+        {% endif %}
+        <a href="{% url "distributions:SupportListDistributionsXls" %}" class="button primary">Export Excel</a>
+        {% if phasenumber == 4 or phasenumber == 5 %}
+            <a href="{% url 'distributions:maildistributions' %}" class="button warning">Mail distributions to students</a>
+        {% endif %}
     {% endif %}
     <div class="double-scroll"> {# only in this view use doublescroll, not in distribute view. #}
-        {% include "distributions/inc_dist_table.html" %}
+        {% if timeslot %}
+            {% include "distributions/inc_dist_table.html" with phasenumber=3 %}
+        {% else %}
+            {% include "distributions/inc_dist_table.html" %}
+        {% endif %}
     </div>
 {% endblock %}
 {% block scripts %}
@@ -25,7 +31,7 @@
                     {column_number: 1, filter_type: "select", filter_match_mode: 'exact'},      //track
                     {column_number: 2, filter_type: "select", filter_match_mode: 'exact'},      //group
                     {column_number: 3, filter_type: "select", column_data_type: 'html'},  //responsible
-                    {% if phasenumber < 6 %}
+                    {% if phasenumber < 6 or timeslot %}
                         {#{column_number: 4, filter_type: "number", html5_data: 'data-search'},  maybe range input later on.#}
                         {
                             column_number: 5,

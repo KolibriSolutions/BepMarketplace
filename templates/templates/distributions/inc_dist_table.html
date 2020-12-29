@@ -13,7 +13,9 @@
         {% else %}
             <th>Assistants</th>
         {% endif %}
-        <th data-priority="2">Chosen student</th>
+        {% if phasenumber > 3 %}
+            <th data-priority="2">Chosen student</th>
+        {% endif %}
     </tr>
     </thead>
     <tbody>
@@ -101,6 +103,7 @@
                     </ul>
                 </td>
             {% endif %}
+            {% if phasenumber > 3 %}
             <td class="chosenStudents">
                 <ul class="studentList no-padding-left bg-grey" data-students-list="distributedStudents"
                     data-proposal="{{ proposal.pk }}">
@@ -139,7 +142,9 @@
                         {% endfor %}
                     {% endif %}
                 </ul>
+
             </td>
+            {% endif %}
         </tr>
     {% endfor %}
     </tbody>

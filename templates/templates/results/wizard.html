@@ -37,11 +37,17 @@
                         {{ dstr }}
                     </h3>
                     <p>
+                        Project: <a href="{% url 'proposals:details' pk=dstr.Proposal.pk %}">{{ dstr.Proposal|truncatewords:10 }}</a><br />
+                        Files: <a href="{% url 'professionalskills:liststudentfiles' pk=dstr.pk %}">{{ dstr.Student.usermeta.get_nice_name }}</a>
+
+                    </p>
+                    <p>
                         Use the buttons on the left side to grade, the dark blue buttons are all categories of the grades.
                         Categories consist of multiple aspects.
                     </p>
                     <a href="{% url 'results:about' %}" class="button primary">More information about the categories and aspects</a>
 
+                    <h3>Track head or presentation assessors:</h3>
                     <p>
                         To finish the grading, click the green button. Then there is a summary to do a final check on the
                         grades.

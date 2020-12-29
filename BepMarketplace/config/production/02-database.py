@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 
@@ -33,7 +33,7 @@ CACHES = {
 }
 
 # channels, a new and better way to run Django including websockets.
-ASGI_APPLICATION = 'BepMarketplace.routing.application'
+ASGI_APPLICATION = 'BepMarketplace.asgi.application'
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',

@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from datetime import datetime
@@ -25,7 +25,8 @@ class TimeSlotForm(forms.ModelForm):
         }
 
     def clean(self):
-        if self.cleaned_data['End'] < datetime.now().date():
+        cleaned_data = super().clean()
+        if cleaned_data['End'] < datetime.now().date():
             raise forms.ValidationError('End date cannot be in the past.')
 
 
@@ -49,7 +50,8 @@ class TimePhaseForm(forms.ModelForm):
         }
 
     def clean(self):
-        if self.cleaned_data['End'] < datetime.now().date():
+        cleaned_data = super().clean()
+        if cleaned_data['End'] < datetime.now().date():
             raise forms.ValidationError('End date cannot be in the past.')
 
 

@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from io import BytesIO
@@ -108,7 +108,7 @@ def finalize(request, pk, version=0):
     raise PermissionDenied('Invalid type.')
 
 
-@group_required('type1staff', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type3staff')
 @phase_required(6, 7)
 def finalize_preview(request, pk, version=0):
     """
@@ -134,6 +134,7 @@ def finalize_preview(request, pk, version=0):
             request.user != dstr.Proposal.Track.Head and \
             request.user != dstr.Proposal.ResponsibleStaff and \
             get_grouptype('3') not in request.user.groups.all() and \
+            request.user not in dstr.Proposal.Assistants.all() and \
             request.user not in dstr.presentationtimeslot.Presentations.Assessors.all():
         raise PermissionDenied("You do not have the correct permissions to view print preview.")
     if version == 0:
@@ -149,14 +150,14 @@ def finalize_preview(request, pk, version=0):
             "dstr": dstr,
             "catresults": dstr.results.all(),
             "finalgrade": dstr.TotalGradeRounded(),
-            'final': True,
+            'preview': True,
         })
     elif version == 2:
         html = get_template('results/print_grades_pdf.html').render({
             "dstr": dstr,
             "catresults": dstr.results.all(),
             "finalgrade": dstr.TotalGradeRounded(),
-            'final': True,
+            'preview': True,
         })
         buffer = BytesIO()
         pisa_status = pisa.CreatePDF(html.encode('utf-8'), dest=buffer, encoding='utf-8')
@@ -168,12 +169,12 @@ def finalize_preview(request, pk, version=0):
         return response
 
 
-@group_required('type1staff', 'type3staff')
+@group_required('type1staff', 'type2staff', 'type3staff')
 @phase_required(6, 7)
 def staff_form(request, pk, step=0):
     """
     Edit grade for a category as indexed by step. For each student as given by pk.
-    Also edit the individual aspects of each grade category. For trackheads and responsible staff
+    Also edit the individual aspects of each grade category. For trackheads, assistants and responsible staff
     Used for pregrading as well as grading.
 
     :param request:
@@ -193,11 +194,11 @@ def staff_form(request, pk, step=0):
     if not request.user.is_superuser and \
             request.user != dstr.Proposal.Track.Head and \
             request.user != dstr.Proposal.ResponsibleStaff and \
-            (get_grouptype('1') not in request.user.groups.all() or request.user not in dstr.Proposal.Assistants.all()) and \
+            request.user not in dstr.Proposal.Assistants.all() and \
             get_grouptype('3') not in request.user.groups.all() and \
             request.user not in dstr.presentationtimeslot.Presentations.Assessors.all():
         raise PermissionDenied("You are not the correct owner of this distribution. "
-                               "Only track heads and responsible staff can edit grades.")
+                               "Only track heads, assistants, assessors and responsible staff can change grades.")
 
     cats = GradeCategory.objects.filter(TimeSlot=get_timeslot()).distinct()
     numcategories = len(cats)

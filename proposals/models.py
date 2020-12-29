@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 import logging
@@ -46,7 +46,7 @@ class Proposal(models.Model):
     Private = models.ManyToManyField(User, blank=True, related_name='personal_proposal')
     Status = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(4)],
                                  choices=StatusOptions)
-    TimeSlot = models.ForeignKey(TimeSlot, related_name='proposals', null=True, blank=True, on_delete=models.PROTECT, help_text='The year this proposal is used. Set to "--" to save the proposal for a future time. Only the proposals of the current timeslot can be used in the current timeslot.')
+    TimeSlot = models.ForeignKey(TimeSlot, related_name='proposals', null=True, blank=True, on_delete=models.PROTECT, help_text='The year this proposal is used. Set to "Future" to save the proposal for a future time. Only the proposals of the current timeslot can be used in the current timeslot.')
     TimeStamp = models.DateTimeField(auto_now=True, null=True)
     Created = models.DateTimeField(auto_now_add=True, null=True)
 

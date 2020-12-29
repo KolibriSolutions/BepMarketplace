@@ -1,12 +1,12 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django import template
 from django.template.base import FilterExpression
 from django.template.defaulttags import url
 
-from timeline.utils import get_timephase, get_timephase_number, get_timeslot
+from timeline.utils import get_timephase, get_timephase_number, get_timeslot, get_next_timeslot
 
 register = template.Library()
 
@@ -97,3 +97,8 @@ def url_timeslot(parser, token):
     if ts:
         node.args.append(FilterExpression(token=str(ts.pk), parser=parser))
     return node
+
+
+@register.simple_tag(name='get_next_timeslot')
+def get_next_timeslot_tag():
+    return get_next_timeslot()

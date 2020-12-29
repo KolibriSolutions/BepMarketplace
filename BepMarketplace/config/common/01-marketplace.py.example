@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 ## DJANGO SETTTINGS
@@ -47,6 +47,7 @@ MAX_NUM_APPLICATIONS = 5              # number of applications a student can hav
 MAX_UPLOAD_SIZE = 10*1024*1024  # max size of any uploaded file 10MB. This limit should be lower than the NGINX limit
 MAXAGESHARELINK = 60*60*24*7  # max age of a share link for project share links.
 TIMELINE_EDIT_DAYS_AFTER_FINISH = 30  # number of days after which a timeslot/timephase has ended, after which editing of the timeslot/phase is disabled.
+NUM_TIMESLOTS_VISIBLE = 5  # how many older timeslots are visible in tabbed pages and history download.
 
 ALLOWED_PROJECT_ATTACHMENTS = ['pdf']  # allowed files for project attachments
 ALLOWED_PROPOSAL_ATTACHMENTS = ALLOWED_PROJECT_ATTACHMENTS

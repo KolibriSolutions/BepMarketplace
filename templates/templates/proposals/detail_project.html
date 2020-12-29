@@ -87,32 +87,33 @@
                     {% if user.is_authenticated %} {# To prevent API views using sharelinks to see any buttons. #}
                         <p>
                             {% comment %} Normal edit buttons for staff {% endcomment %}
-                            {% if project|can_edit_project:user %}
+                            {% if user == project.ResponsibleStaff or user in project.Assistants.all or user == project.Track.Head or user|has_group:'type3staff' %}
                                 {% if Editlock != False %}
                                     {{ Editlock }}
                                 {% else %}
                                     <br/>
                                     <a class="button primary" href="{% url 'proposals:edit' project.id %}">
-                                        <span class="mif-pencil"></span>Edit data
+                                        <span class="mif-pencil"></span> Edit data
                                     </a>
                                     {% if project.Status != 4 %}
                                         <a class="button primary" href="{% url 'proposals:editfile' 'i' project.id %}">
-                                            <span class="mif-images"></span>Edit images
+                                            <span class="mif-images"></span> Edit images
                                         </a>
                                         <a class="button primary" href="{% url 'proposals:editfile' 'a' project.id %}">
-                                            <span class="mif-file-pdf"></span>Edit attachments
+                                            <span class="mif-file-pdf"></span> Edit attachments
                                         </a>
                                     {% endif %}
                                     <br>
                                 {% endif %}
-                                {# show "copy to current timeslot" button for proposals of previous timeslots.#}
-                                <br/>
-                                {% if project.prevyear %}
-                                    <a class="button primary" href="{% url 'proposals:copy' project.id %}">
-                                        <span class="mif-versions"></span>Copy
-                                    </a>
-                                {% endif %}
                             {% endif %}
+                            {# show copy button #}
+                            {% if user|has_group:'type1staff;type2staff;type3staff' %}
+                                <br/>
+                                <a class="button primary" href="{% url 'proposals:copy' project.id %}">
+                                    <span class="mif-versions"></span> Copy
+                                </a>
+                            {% endif %}
+
                             {% if user.is_superuser %}
                                 <a href="{% url 'admin:proposals_proposal_change' project.pk %}"
                                    class="button warning">Admin Edit</a>

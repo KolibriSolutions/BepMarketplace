@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 import logging
@@ -166,6 +166,7 @@ class ProposalFormLimited(forms.ModelForm):
     """
     Form to change assistants and title on a project
     """
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         self.support = get_grouptype('3') in self.request.user.groups.all()
@@ -193,7 +194,7 @@ class ProposalFormLimited(forms.ModelForm):
 
         widgets = {
             'Title': widgets.MetroTextInput,
-            'ResponsibleStaff' : widgets.MetroSelect,
+            'ResponsibleStaff': widgets.MetroSelect,
             'Assistants': widgets.MetroSelectMultiple,
         }
 
@@ -245,16 +246,19 @@ class ProjectForm(forms.ModelForm):
 
         # no user label_from_instance for private students because privacy.
         self.fields['addPrivatesEmail'].widget.attrs['placeholder'] = "Add private student via email address"
-
+        self.fields['TimeSlot'].empty_label = 'Future'
         if get_timephase_number() == 1:
-            self.fields['TimeSlot'].queryset = TimeSlot.objects.filter(End__gt=datetime.now())
+            self.fields['TimeSlot'].queryset = TimeSlot.objects.filter(End__gt=datetime.now()).order_by('-Begin')
             self.fields['TimeSlot'].initial = get_timeslot()
         else:
             if self.request.user.is_superuser or get_grouptype('3') in self.request.user.groups.all():
-                self.fields['TimeSlot'].queryset = TimeSlot.objects.all()
+                self.fields['TimeSlot'].queryset = TimeSlot.objects.all().order_by('-Begin')
+                self.fields['TimeSlot'].initial = TimeSlot.objects.filter(Begin__gt=datetime.now()).order_by('-Begin')[0]  # autofill to first next available timeslot.
             else:
                 # phase 2+, only add for future timeslot
-                self.fields['TimeSlot'].queryset = TimeSlot.objects.filter(Begin__gt=datetime.now())
+                tss = TimeSlot.objects.filter(Begin__gt=datetime.now()).order_by('-Begin')
+                self.fields['TimeSlot'].queryset = tss
+                self.fields['TimeSlot'].initial = tss[0]  # autofill to first next available timeslot.
 
     @staticmethod
     def user_label_from_instance(self):
@@ -301,6 +305,7 @@ class ProjectForm(forms.ModelForm):
             'TimeSlot': widgets.MetroSelect,
             'Private': widgets.MetroSelectMultiple
         }
+
     #
     # def clean_addAssistantsEmail(self):
     #     """
@@ -403,6 +408,7 @@ class ProjectFormEdit(ProjectForm):
     Edit an existing project.
     Mail changed assistants or changed responsible on edit.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # memorize responsible to be able to mail them if needed
@@ -538,6 +544,7 @@ class ProjectDowngradeMessageForm(forms.ModelForm):
             'Message': widgets.MetroMultiTextInput,
         }
         labels = {"Message": "Message, leave blank for no message"}
+
 
 # defines for sync with mastermp
 ProposalForm = ProjectForm

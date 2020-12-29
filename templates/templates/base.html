@@ -106,7 +106,6 @@
                             </ul>
                         </li>
                         {% if user|has_group:"type3staff" %}
-                            {% if phasenumber > 2 %}
                                 {# phase 1 and 2 do not have any distributions #}
                                 {# phase 4 - 6 show manual distribution button #}
                                 <li>
@@ -140,9 +139,15 @@
                                                 </a>
                                             </li>
                                         {% endif %}
+                                        {% get_next_timeslot as next_timeslot %}
+                                        {% if next_timeslot %}
+                                            <li><a href="{% url 'distributions:SupportListApplicationsDistributions' next_timeslot.id %}">
+                                                Applications for {{ next_timeslot }}
+                                                </a>
+                                                </li>
+                                        {% endif %}
                                     </ul>
                                 </li>
-                            {% endif %}  {# Distribution menu #}
                             {% if phasenumber > 4 %}
                                 <li>
                                     <a href="" class="dropdown-toggle"><span class="mif-file-powerpoint icon"></span>Presentations</a>
@@ -165,47 +170,55 @@
                                 </li>
                             {% endif %}  {# Presentations menu #}
                             <li>
-                                <a href="" class="dropdown-toggle"><span class="mif-stack2 icon"></span>Support</a>
                                 <ul class="d-menu" data-role="dropdown">
                                     <li>
-                                        <a href="#" class="dropdown-toggle">Lists</a>
+                                        <a href="#" class="dropdown-toggle">Users</a>
                                         <ul class="d-menu" data-role="dropdown">
-                                            <li><a href="{% url 'support:listusers' %}">All Users</a></li>
+                                            <li><a href="{% url 'support:listusers' 'current' %}">Current Users</a></li>
+                                            <li><a href="{% url 'support:listusers' 'recent' %}">Recent Users</a></li>
+                                            <li><a href="{% url 'support:listusers' 'all' %}">All Users</a></li>
                                             <li><a href="{% url 'support:liststaff' %}">All Staff</a></li>
                                         </ul>
                                     </li>
-                                    <li><a href="{% url 'support:mailinglist' %}">Mailing List</a></li>
-                                    <li><a href="{% url 'support:mailingtemplates' %}">Mailing Templates</a></li>
                                     <li>
-                                        <a href="#" class="dropdown-toggle">Osiris Data</a>
+                                        <a href="#" class="dropdown-toggle">Organisation</a>
                                         <ul class="d-menu" data-role="dropdown">
-                                            <li><a href="{% url 'osirisdata:list' %}">All Data</a></li>
-                                            <li><a href="{% url 'osirisdata:tometa' %}">Rewrite Meta</a></li>
+                                            <li><a href="{% url 'support:edit_tracks' %}">Track edit</a></li>
+                                            <li><a href="{% url 'support:listcapacitygroups' %}">Capacity groups</a></li>
+                                            <li><a href="{% url 'support:groupadministratorsform' %}">Group Administration</a></li>
                                         </ul>
                                     </li>
-                                    {% if phasenumber == 2 %}
-                                        <li><a href="{% url 'support:mailtrackheads' %}">Mail Track Heads</a></li>
-                                    {% endif %}
-                                    {#                                    {% if phasenumber < 6 %}#}
-                                    {#                                        <li><a href="{% url 'support:ectsform' %}">Students ECTS</a></li>#}
-                                    {#                                    {% endif %}#}
+                                    <li>
+                                        <a href="#" class="dropdown-toggle">Mailing</a>
+                                        <ul class="d-menu" data-role="dropdown">
+                                            <li><a href="{% url 'support:mailinglist' %}">Mailing List</a></li>
+                                            <li><a href="{% url 'support:mailingtemplates' %}">Mailing Templates</a></li>
+                                            <li><a href="{% url 'support:mailtrackheads' %}">Mail Track Heads</a></li>
+
+                                        </ul>
+                                    </li>
+
+                                    <li>
+                                        <a href="#" class="dropdown-toggle">Students</a>
+                                        <ul class="d-menu" data-role="dropdown">
+                                            <li><a href="{% url 'osirisdata:list' %}">View Osiris import</a></li>
+                                            <li><a href="{% url 'osirisdata:tometa' %}">Import Osiris to Meta</a></li>
+                                            {#                                        <li><a href="{% url 'support:ectsform' %}">Students ECTS</a></li>#}
+{#                                            <li><a href="{% url 'osirisdata:list' %}">Change timeslots</a></li>#}
+                                        </ul>
+                                    </li>
                                     <li>
                                         <a href="" class="dropdown-toggle">Public files</a>
                                         <ul class="d-menu" data-role="dropdown">
+                                            <li><a href="{% url 'support:editfiles' %}">View public files</a></li>
                                             <li><a href="{% url 'support:addfile' %}">Add public file</a></li>
-                                            <li><a href="{% url 'support:editfiles' %}">Edit public files</a></li>
                                         </ul>
                                     </li>
                                     <li><a href="{% url 'timeline:list_timeslots' %}">Timeline edit</a></li>
-                                    {#                                    <li><a href="{% url 'support:capacitygroupadministration' %}">Group#}
-                                    {#                                        Administration</a>#}
-                                    {#                                    </li>#}
-                                    <li><a href="{% url 'index:edit_tracks' %}">Track Head edit</a></li>
                                     <li><a href="{% url 'results:list_categories' %}">Setup Grading</a></li>
-                                    <li><a href="{% url 'support:listcapacitygroups' %}">Capacity groups</a></li>
-                                    <li><a href="{% url 'support:groupadministratorsform' %}">Group Administration</a></li>
                                     <li><a href="{% url 'support:history' %}">History</a></li>
                                 </ul>
+                                <a href="" class="dropdown-toggle"><span class="mif-stack2 icon"></span>Support</a>
                             </li>  {# support menu #}
                         {% else %}
                             {# staff except type3/6 #}
@@ -237,12 +250,12 @@
                         {#                            proposals</a></li>#}
                     {% else %} {# students #}
                         <li>
-                            <a href="{% url 'proposals:list' %}"><span class="mif-mail-read icon"></span>Proposals</a>
+                            <a href="{% url_timeslot 'proposals:list' %}"><span class="mif-mail-read icon"></span>Proposals</a>
                         </li>
-                        {% if phasenumber < 5 %}
-                            <li><a href="{% url 'students:listapplications' %}"><span
-                                    class="mif-stack2 icon"></span>Applications</a></li>
-                        {% endif %}
+                        {#                        {% if phasenumber < 5 %}#}
+                        <li><a href="{% url 'students:listapplications' %}"><span
+                                class="mif-stack2 icon"></span>Applications</a></li>
+                        {#                        {% endif %}#}
                         {% if phasenumber > 4 and user.distributions.exists %}
                             <li>
                                 <a href="" class="dropdown-toggle"><span
@@ -307,7 +320,7 @@
                         </li>
                     {% endif %}
                 {% endif %}
-                <li><a href="{% url 'index:about' %}"><span class="mif-info icon"></span>About</a></li>
+
             </ul>
             <div class="app-bar-pullbutton automatic"></div>
             <ul class="app-bar-menu place-right" data-flexdirection="reverse">
@@ -416,7 +429,7 @@
                         {% endif %}
                         {% if user.is_impersonate %}
                             <p>
-                                <strong>Impersonating user {{ request.user }} as {{ request.impersonator }}</strong>
+                                <strong>Impersonating user {{ request.user.usermeta.get_nice_name }} ({{ request.user }}) as {{ request.impersonator }}</strong>
                                 <br/>
                                 <a href="{% url 'impersonate-stop' %}" class="button primary">Stop impersonating</a>
                             </p>
@@ -443,12 +456,12 @@
     </div>
 
     <div class="place-right text-small">
-        <div class="cell place-left padding10"><a href="{% url 'index:about' %}" title="Kolibri Solutions" class="fg-black">By Kolibri Solutions 2016-2020</a></div>
+        <div class="cell place-left padding10"><a href="{% url 'index:about' %}" title="Kolibri Solutions">By Kolibri Solutions 2016-2021</a></div>
         <div class="cell place-left padding10">Currently deployed: {% get_hash %}</div>
     </div>
 </div>
 {% block scripts %}
-{#    <script src="{% url 'js-error-handler-js' %}"></script>#}
+    {#    <script src="{% url 'js-error-handler-js' %}"></script>#}
     {# for js error logging, load first to capture load errors #}
     <script src="{% static "js/jquery-3.2.1.min.js" %}"></script>
     {# fancy dropdown select #}

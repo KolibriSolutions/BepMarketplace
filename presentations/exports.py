@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.conf import settings
@@ -35,22 +35,30 @@ def get_list_presentations_xlsx(sets):
         ws['C3'] = "Track: " + track
         ws['C4'] = "Track responsible staff: " + thead
         ws['C5'] = "Exported on: " + timestamp()
-        ws['C6'] = "Presentation room: " + pset.PresentationRoom.Name
-        if pset.PresentationRoom.JoinLink:
+        ws['C6'] = f'Presentation room: {pset.PresentationRoom}'
+        if pset.PresentationRoom and pset.PresentationRoom.JoinLink:
             ws['C6'].hyperlink = pset.PresentationRoom.JoinLink
             ws['C6'].style = 'Hyperlink'
-        ws['C7'] = "Assessment room: " + pset.AssessmentRoom.Name
-        if pset.AssessmentRoom.JoinLink:
+        ws['C7'] = f'Assessment room: {pset.AssessmentRoom}'
+        if pset.AssessmentRoom and pset.AssessmentRoom.JoinLink:
             ws['C7'].hyperlink = pset.AssessmentRoom.JoinLink
             ws['C7'].style = 'Hyperlink'
-        assessors = ''
-        for a in pset.Assessors.all():
-            assessors += a.usermeta.get_nice_name() + "; "
-        ws['C8'] = 'Assessors: ' + assessors[:-2]
-        passessors = ''
-        for a in pset.PresentationAssessors.all():
-            passessors += a.usermeta.get_nice_name() + "; "
-        ws['C9'] = 'Presentation Assessors: ' + passessors[:-2]
+        if pset.Assessors.exists():
+            assessors = ''
+            for a in pset.Assessors.all():
+                assessors += a.usermeta.get_nice_name() + "; "
+            assessors = assessors[:-2]
+        else:
+            assessors = '-'
+        ws['C8'] = f'Assessors: {assessors}'
+        if pset.PresentationAssessors.exists():
+            passessors = ''
+            for a in pset.PresentationAssessors.all():
+                passessors += a.usermeta.get_nice_name() + "; "
+            passessors = passessors[:-2]
+        else:
+            passessors = '-'
+        ws['C9'] = f'Presentation Assessors: {passessors}'
         ws['C10'] = ''
 
         ws['C1'].style = 'Headline 2'

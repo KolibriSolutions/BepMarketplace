@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 import json
@@ -26,38 +26,49 @@ from students.models import Application, Distribution
 from students.utils import get_all_applications
 from support.exports import get_list_distributions_xlsx
 from timeline.decorators import phase_required
+from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number
 from . import distribution
 from .forms import AutomaticDistributionOptionForm
+from django.shortcuts import get_object_or_404
 
 warningString = 'Something failed in the server, please refresh this page (F5) or contact system administrator'
 
 
 @group_required("type3staff", "type6staff")
-def list_applications_distributions(request):
+def list_applications_distributions(request, timeslot=None):
     """
     Show a list of all active proposals with the applications and possibly distributions of students.
     Used for support staff as an overview.
     Same table include as in manual distribute
     """
-    if get_timephase_number() < 3:
-        raise PermissionDenied("There are no applications or distributions yet.")
-    elif get_timephase_number() > 5:
-        projects = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
-        projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
-                                                                                         'Private',
-                                                                                         'distributions__Application',
-                                                                                         'distributions__Student__usermeta')
+    if not timeslot:
+        if get_timephase_number() > 5:
+            projects = get_all_proposals().filter(Q(Status=4) & Q(distributions__isnull=False)).distinct()
+            projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
+                                                                                             'Private',
+                                                                                             'distributions__Application',
+                                                                                             'distributions__Student__usermeta')
 
-    else:  # phase 3 & 4 & 5
-        projects = get_all_proposals().filter(Status=4)
+        else:  # phase 3 & 4 & 5
+            projects = get_all_proposals().filter(Status=4)
+            projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
+                                                                                             'Private',
+                                                                                             'applications__Student__usermeta',
+                                                                                             'distributions__Application',
+                                                                                             'distributions__Student__usermeta')
+        return render(request, 'distributions/list_applications_distributions.html', {"proposals": projects})
+
+    else:  # future
+        ts = get_object_or_404(TimeSlot, pk=timeslot)
+        projects = Proposal.objects.filter(TimeSlot=ts, Status=4)
         projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
                                                                                          'Private',
                                                                                          'applications__Student__usermeta',
                                                                                          'distributions__Application',
                                                                                          'distributions__Student__usermeta')
 
-    return render(request, 'distributions/list_applications_distributions.html', {"proposals": projects})
+        return render(request, 'distributions/list_applications_distributions.html', {"proposals": projects, 'timeslot': ts})
 
 
 @not_minified_response
@@ -548,7 +559,9 @@ def list_second_choice(request):
     """
 
     props = get_all_proposals().filter(Status=4, Private__isnull=True).distinct().annotate(num_distr=Count('distributions')).filter(TimeSlot=get_timeslot(),
-                                                                               num_distr__lt=F('NumStudentsMax')).order_by('Title')
+                                                                                                                                    num_distr__lt=F(
+                                                                                                                                        'NumStudentsMax')).order_by(
+        'Title')
     prop_obj = [[prop, get_share_link(prop.pk)] for prop in props]
     no_dist = get_all_students(undistributed=True).filter(distributions__isnull=True, applications__isnull=False).distinct()
     # filter students in this year with only applications in other year

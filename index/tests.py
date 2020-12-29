@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.urls import reverse
@@ -41,7 +41,6 @@ class IndexViewsTest(ProjectViewsTestGeneral):
             [['close_feedback', {'pk': self.fb.id}], self.p_superuser],  # god only
             [['changesettings', None], self.p_all],
             [['termsaccept', None], self.p_redirect],
-            [['edit_tracks', None], self.p_support],
             [['robots', None], self.p_anonymous],
         ]
 

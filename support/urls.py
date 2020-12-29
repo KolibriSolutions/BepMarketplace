@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.urls import path
@@ -28,6 +28,7 @@ urlpatterns = [
 
     # lists
     path('users/', views.list_users, name='listusers'),
+    path('users/<str:filter>/', views.list_users, name='listusers'),
     path('users/<int:pk>', views.user_info, name='userinfo'),
     # path('users/clearcache/', views.list_users_clear_cache, name='clearcacheuserlist'),
     # path('users/upgrade/<int:pk>/', views.upgrade_user, name='upgradeuser'),
@@ -36,6 +37,7 @@ urlpatterns = [
     path('users/groups/<int:pk>/', views.edit_user_groups, name='usergroups'),
     path('user/toggle/<int:pk>/', views.toggle_disable_user, name='toggledisable'),
 
+    path('track/', views.edit_tracks, name='edit_tracks'),
     path('capacitygroup/list/', views.list_capacity_groups, name='listcapacitygroups'),  # listing new way of all capacitygroups
     path('capacitygroup/add/', views.add_capacity_group, name='addcapacitygroup'),
     path('capacitygroup/edit/<int:pk>/', views.edit_capacity_group, name='editcapacitygroup'),
@@ -49,6 +51,8 @@ urlpatterns = [
 
     # path('liststudentsldap/', views.listStudentsLdap, name='liststudentsldap'),# might be re-introduced when OSIRIS link is finished.
     # path('clearcacheallstudentslist/', views.clearCacheAllStudentsList, name='clearcacheallstudentslist'),
+
+    # path('student_timeslots/', views.student_timeslots, name='student_timeslots'),
 
     path('verifyassistants/', views.verify_assistants, name='verifyassistants'),
 

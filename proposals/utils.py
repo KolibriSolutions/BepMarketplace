@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.conf import settings
@@ -65,7 +65,7 @@ def can_edit_project_fn(user, proj, file):
                 return False, 'No editing possible. Please downgrade the proposal first.'
             else:
                 if proj.Track.Head:
-                    return False, 'To edit, ask your track head (%s) to downgrade the status of this proposal.' \
+                    return False, 'To edit, ask your track head (%s) or support staff to downgrade the status of this proposal.' \
                        % proj.Track.Head.usermeta.get_nice_name()
                 else:
                     return False, 'To edit, ask the support staff to downgrade the status of the proposal.'

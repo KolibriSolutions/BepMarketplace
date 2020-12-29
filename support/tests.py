@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.contrib.auth.models import User
@@ -58,6 +58,8 @@ class SupportViewsTest(ViewsTest):
             [['editcapacitygroup', {'pk': CapacityGroup.objects.get(ShortName='ES').id}], self.p_support],
             [['deletecapacitygroup', {'pk': CapacityGroup.objects.get(ShortName='ES').id}], self.p_support],
             # [['capacitygroupadministration', None], self.p_support],  # old groupadmin form.
+
+            [['edit_tracks', None], self.p_support],
 
             # lists
             [['listusers', None], self.p_support_prv],

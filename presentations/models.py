@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from datetime import timedelta
@@ -60,17 +60,12 @@ class PresentationSet(models.Model):
     """
     PresentationOptions = models.ForeignKey(PresentationOptions, on_delete=models.PROTECT,
                                             related_name="presentationsets")
-    PresentationRoom = models.ForeignKey(Room, on_delete=models.PROTECT, related_name="presentationroom")
-    AssessmentRoom = models.ForeignKey(Room, on_delete=models.PROTECT, related_name="assessmentroom")
+    PresentationRoom = models.ForeignKey(Room, on_delete=models.SET_NULL, related_name="presentationroom", null=True)
+    AssessmentRoom = models.ForeignKey(Room, on_delete=models.SET_NULL, related_name="assessmentroom", null=True)
     Track = models.ForeignKey(Track, on_delete=models.CASCADE, blank=True, null=True)
     Assessors = models.ManyToManyField(get_user_model(), blank=True, related_name='assessors', help_text='Staff member to help or replace the project supervisor in assessing the presentation')
     PresentationAssessors = models.ManyToManyField(get_user_model(), blank=True, related_name='presentation_assessors', help_text='ESA/STU person to assess the presentation skills.')
     DateTime = models.DateTimeField()
-
-    # JoinLink = models.URLField(blank=True, null=True,
-    #                            help_text='If the presentation is given in an online platform, a join link for the set can be specified here. The URL has to start with "https://"',
-    #                            validators=[URLValidator(schemes=['https'])],
-    #                            max_length=2000)
 
     def __str__(self):
         return "Presentationset for " + self.PresentationOptions.TimeSlot.__str__() + " and track: " + self.Track.__str__()

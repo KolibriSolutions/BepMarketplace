@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 """
@@ -11,6 +11,7 @@ import sys
 import traceback
 from datetime import datetime, timedelta
 
+from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.test import TestCase, Client
 from django.test import override_settings
@@ -18,6 +19,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.module_loading import import_module
 
+from general_view import get_timephase_number
 from index.models import UserMeta, UserAcceptedTerms, Track
 from presentations.models import PresentationOptions, PresentationTimeSlot, PresentationSet, Room
 from proposals.models import Proposal
@@ -25,8 +27,6 @@ from results.models import ResultOptions
 from students.models import Distribution
 from support.models import GroupAdministratorThrough, CapacityGroup
 from timeline.models import TimeSlot, TimePhase
-from django.conf import settings
-from general_view import get_timephase_number
 
 TEST_HTML_VALID = False
 #
@@ -143,7 +143,7 @@ class ViewsTest(TestCase):
         self.p_staff_veri =     [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 200, 200, 403, 200, 200, 200, 302]  # all staff, without unverified, without type7
         self.p_staff122u35 =    [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 200, 403, 403, 200, 200, 200, 302]  # all staff, for chooseedit list
         self.p_staff_prop =     [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 200, 200, 403, 403, 403, 200, 200, 200, 302]  # all staff, to create proposals
-        self.p_staff_prop_no4 = [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 200, 302]  # all staff to create but no type4
+        # self.p_staff_prop_no4 = [200, 200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 403, 403, 403, 403, 200, 200, 200, 302]  # all staff to create but no type4
         self.p_staff_prop_nou=  [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 200, 200, 403, 403, 403, 200, 200, 200, 302]  # all staff, to create proposals, no unverified
         self.p_staff_stud =     [200, 200, 200, 200, 200, 200, 403, 200, 403, 403, 403, 403, 403, 200, 403, 200, 200, 200, 302]  # all staff that can see students (1,2,3,6)
 
@@ -153,14 +153,13 @@ class ViewsTest(TestCase):
         self.p_all_this_dist_ta=[403, 200, 403, 200, 403, 200, 403, 200, 200, 403, 403, 403, 403, 200, 403, 403, 200, 200, 302]  # staff of this proposal, as distributed to r-s (not t-p!) and assessor. Also type6. and assessor
         self.p_no_assistant =   [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal except assistants. For up/downgrading and edit proposal.
         self.p_staff_prv_results=[403, 200, 403, 200, 403, 200, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal except assistants including assessors. For results staff grading form, without assessor.
-        self.p_staff_results =  [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal except assistants including assessors. For results staff grading form.
+        self.p_staff_results =  [403, 200, 403, 200, 403, 200, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal except assistants including assessors. For results staff grading form.
         self.p_all_this_view =  [403, 200, 403, 200, 403, 200, 200, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200, 302]  # staff of this proposal including view only users (type4)
 
         self.p_private =        [403, 200, 403, 200, 403, 200, 200, 200, 403, 200, 403, 200, 403, 403, 403, 403, 403, 200, 302]  # private proposal view status 4
         self.p_private_pres=    [403, 200, 403, 200, 403, 200, 200, 200, 403, 200, 403, 200, 403, 403, 403, 403, 200, 200, 302]  # private proposal view status 4, in phase 7 or if presentation is public.
         self.p_trackhead =      [403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 200, 302]  # trackhead of proposal and support
         self.p_grade_final =    [403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # Trackhead and assessor can finalize grades.
-        self.p_grade_staff =    [403, 200, 403, 200, 403, 403, 403, 200, 403, 403, 403, 403, 403, 403, 403, 403, 200, 200, 302]  # staff of this proposal except assistants, for grading
         self.p_track =          [403, 403, 200, 200, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 403, 302]  # any trackhead
         self.p_pending =        [200, 200, 200, 200, 200, 200, 200, 403, 403, 403, 200, 200, 403, 403, 403, 200, 200, 200, 302]  # staff with pending proposals
 

@@ -32,7 +32,7 @@
                     <div class="countdown" data-role="countdown" data-days="{{ countdownDays }}"
                          data-hours="{{ countdownHours }}" data-minutes="{{ countdownMinutes }}"></div>
                     <h4>Help and explanation (click on a title to open)</h4>
-                    {% if user|has_group:"type1staff;type2staff;type3staff;type4staff" %} {# staff manual #}
+                    {% if user|has_group:"any" %} {# staff manual #}
                         <div class="accordion" data-role="accordion">
                             <div class="frame">
                                 <div class="heading">Accounts</div>
@@ -68,6 +68,16 @@
                                             <td>yes</td>
                                             <td>yes</td>
                                             <td>yes</td>
+                                        </tr><tr>
+                                            <td>Publish a public project</td>
+                                            <td>yes</td>
+                                            <td>no</td>
+                                            <td>no</td>
+                                        </tr><tr>
+                                            <td>Unpublish a published project</td>
+                                            <td>no</td>
+                                            <td>no</td>
+                                            <td>yes</td>
                                         </tr>
                                         <tr>
                                             <td>See all students that applied</td>
@@ -90,13 +100,7 @@
                                         <tr>
                                             <td>Input student grades</td>
                                             <td>yes</td>
-                                            <td>no</td>
                                             <td>yes</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Delete grades</td>
-                                            <td>no</td>
-                                            <td>no</td>
                                             <td>yes</td>
                                         </tr>
                                     </table>
@@ -107,22 +111,8 @@
                                         accounts, type1, type2 and type3 staff. type1 is a responsible for a proposal,
                                         type2 is an assistant (or daily supervisor) and type3 is a support person. Example of
                                         type1staff is a professor, example of type 2 staff is a PhD'er. Track heads (for
-                                        AU, C&amp;C, SSS and CW) are type 1 staff but have additional rights within the
-                                        system.<br/>
-
-                                        The type3staff is for the support staff such as at this moment Suzanne
-                                        Kuijlaars. This is for administrative purposes.</p>
-                                    <p>
-
-                                        The BEP marketplace team will create accounts on the marketplace with
-                                        appropriate privileges for the type1 staff members. These staff members will
-                                        receive an email with a link to set a password to their account. Password reset
-                                        via email is supported.<br/>
-                                        Type2staff, assistant, can make their own account using the register account
-                                        button on the website. After the account is created, the type2staff can create
-                                        proposals. The type2staff account is verified by the support staff (type3staff)
-                                        or when a proposal is made by the type2staff member is approved by the
-                                        type1staff (Responsible professor).
+                                        different tracks in the education program) are type 1 staff but have additional rights within the
+                                        system.
                                     </p>
                                 </div>
                             </div>
@@ -135,10 +125,6 @@
                                         <li>Generating Project Proposals<br/> Proposals are created and added to the
                                             system following the procedure set out in section below.
                                         </li>
-                                        <li>Project Quality Check <br/> Track heads go through all proposals and approve
-                                            or disapprove proposals. Please note that they can already start doing this
-                                            earlier, but in this phase no new proposals can be added.
-                                        </li>
                                         <li>Students Choosing Projects<br/>Students can apply to proposals. Only the
                                             support staff (type 3) can see these applications.
                                         </li>
@@ -149,7 +135,7 @@
                                             students to their distributions. These have to be within reason. Support
                                             staff will handle this and can manually adjust distribution where needed.
                                         </li>
-                                        <li>Execution of projects<br/>The actual doing of projects for 6 months.</li>
+                                        <li>Execution of projects<br/>Students are working on their project.</li>
                                         <li>Presentation of Results<br/>The students present their results, hand in
                                             their papers and are graded. These grades will be entered into the
                                             marketplace system and presented to support staff. Students cannot see these
@@ -207,30 +193,6 @@
                                         if action is required from that staff member. After a proposal has reached the
                                         "Active proposal" status it can only be unlisted or edited by a type3staff.
                                     </p>
-                                    <p>
-                                        A proposal has the following fields:
-                                    </p>
-                                    <ul>
-                                        <li>Title</li>
-                                        <li>Responsible staff <br/>Usually the professor that creates the proposal</li>
-                                        <li>Assistants (Daily supervisor)<br/>The staff member(s) helping the responsible,
-                                            for instance a PhD'er
-                                        </li>
-                                        <li>Track<br/>Which track the project belongs to (AU, C&amp;C, SSS or CW)</li>
-                                        <li>Group<br/>Which research group the project belongs to</li>
-                                        <li>ECTS<br/>Whether the project is 10 or 15 ECTS</li>
-                                        <li>Private<br/>In case the project is private, which student the project is
-                                            for.
-                                        </li>
-                                        <li>Minimum/maximum number of students</li>
-                                        <li>General description<br/> A general description of the project</li>
-                                        <li>Students task description<br/>A description of the tasks that the students
-                                            will do.
-                                        </li>
-                                        <li>Images<br/>These can be added after creation, using the 'upload images'
-                                            button.
-                                        </li>
-                                    </ul>
 
                                     <h5>Private Proposals</h5>
                                     <p>
@@ -334,7 +296,7 @@
                                 <div class="heading">Grading</div>
                                 <div class="content">
                                     Support staff will put grades in the system, but you can't see them. Your grade will
-                                    be visible via Oase or Canvas.
+                                    be visible via Osiris or Canvas.
                                 </div>
                             </div>
 

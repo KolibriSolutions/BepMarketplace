@@ -155,19 +155,19 @@
                                 {% if slot.CustomType %}
                                     title: '{{ slot.get_CustomType_display }}',
                                     {% if slot.CustomType == 1 %}
-                                        location: '{{ set.AssessmentRoom.room_link }}',
+                                        location: '{{ set.AssessmentRoom.room_link|default:'None' }}',
                                     {% else %}
                                         location: 'Somewhere..',
                                     {% endif %}
                                 {% else %}
                                     title: '{{ slot.Distribution.Student.usermeta.get_nice_fullname }} ({{ slot.Distribution.Student.usermeta.Studentnumber }})',
                                     backgroundColor: "{{ setcolor }}",
-                                    location: '{{set.PresentationRoom.room_link }}',
+                                    location: '{{set.PresentationRoom.room_link|default:'None' }}',
                                     proposal: '<a href="{% url 'proposals:details' slot.Distribution.Proposal.pk %}" title="view project">{{ slot.Distribution.Proposal.Title }}</a>',
                                     responsible: '{{ slot.Distribution.Proposal.ResponsibleStaff.usermeta.get_nice_name }}',
-                                    assistants: '{% for a in slot.Distribution.Proposal.Assistants.all %}<li>{{ a.usermeta.get_nice_name }}</li>{% endfor %}',
-                                    assessors: '{% for a in set.Assessors.all %}<li>{{ a.usermeta.get_nice_name }}</li>{% endfor %}',
-                                    presentation_assessors: '{% for a in set.PresentationAssessors.all %}<li>{{ a.usermeta.get_nice_name }}</li>{% endfor %}',
+                                    assistants: '{% for a in slot.Distribution.Proposal.Assistants.all %}<li>{{ a.usermeta.get_nice_name }}</li>{% empty %}-{% endfor %}',
+                                    assessors: '{% for a in set.Assessors.all %}<li>{{ a.usermeta.get_nice_name }}</li>{% empty %}-{% endfor %}',
+                                    presentation_assessors: '{% for a in set.PresentationAssessors.all %}<li>{{ a.usermeta.get_nice_name }}</li>{% empty %}-{% endfor %}',
                                     trackhead: '{{ slot.Distribution.Proposal.Track.Head.usermeta.get_nice_name }} ({{ slot.Distribution.Proposal.Track.Name }})'
                                 {% endif %}
                             },

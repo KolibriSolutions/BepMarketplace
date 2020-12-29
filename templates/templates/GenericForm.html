@@ -84,7 +84,7 @@
         </button>
         {# On a proposal attachement/images edit form, show the buttons to add a image/attachement #}
         {% if Proposal %}
-            <a href="{% url "proposals:addfile" 'i' Proposal %}" class="button primary"><span
+            &nbsp;<a href="{% url "proposals:addfile" 'i' Proposal %}" class="button primary"><span
                     class="mif-image"></span>Add image to proposal</a>
             <a href="{% url "proposals:addfile" 'a' Proposal %}" class="button primary"><span
                     class="mif-file-pdf"></span>Add attachments to proposal</a><br/><br/>

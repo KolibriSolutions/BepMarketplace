@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.contrib.auth.models import User
@@ -25,6 +25,10 @@ class Track(models.Model):
 
     class Meta:
         ordering = ["Name"]
+
+    def clean(self):
+        self.Name = clean_text(self.Name)
+        self.ShortName = clean_text(self.ShortName)
 
 
 class Broadcast(models.Model):
@@ -69,23 +73,23 @@ class FeedbackReport(models.Model):
 
 class UserMeta(models.Model):
     """
-    Meta for a user. Augmented user model. Overruled is true if some other fields should not be automatically updated
-    using osiris.
+    Meta for a user. Augmented user model.
+    Overruled is true if 'EnrolledBEP' and 'EnrolledExt' 'should not be automatically updated on Canvaslogin.
     """
     User = models.OneToOneField(User, on_delete=models.CASCADE)
-    SuppressStatusMails = models.BooleanField(default=False)
+    SuppressStatusMails = models.BooleanField(default=False, help_text='set to True to receive less emails from the system.')
     Department = models.CharField(max_length=512, null=True, blank=True)
     Study = models.CharField(max_length=512, null=True, blank=True)
-    Cohort = models.IntegerField(null=True, blank=True)
+    Cohort = models.IntegerField(null=True, blank=True, help_text='Start year of students study')
     Studentnumber = models.CharField(max_length=10, null=True, blank=True)
     Culture = models.CharField(max_length=64, null=True, blank=True)
     Initials = models.CharField(max_length=64, null=True, blank=True)
     Fullname = models.CharField(max_length=64, null=True, blank=True)
     ECTS = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(300)], default=0)
-    EnrolledBEP = models.BooleanField(default=False)
-    EnrolledExt = models.BooleanField(default=False)
-    Overruled = models.BooleanField(default=False)
-    TimeSlot = models.ManyToManyField(TimeSlot, default=get_timeslot_id, related_name='users')
+    EnrolledBEP = models.BooleanField(default=False, help_text='Whether student user is enrolled in BEP course.')
+    EnrolledExt = models.BooleanField(default=False, help_text='Whether student user is enrolled in BEP-extension course.')
+    Overruled = models.BooleanField(default=False, help_text='Set to True to not update certain fields during login of user.')
+    TimeSlot = models.ManyToManyField(TimeSlot, default=get_timeslot_id, related_name='users', blank=True, help_text='Time slots where the user (student) is active in.')
 
     def __str__(self):
         return str(self.User)

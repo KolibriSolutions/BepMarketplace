@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 """
@@ -124,7 +124,10 @@ def print_list(lst):
     if len(lst) == 0:
         return 'None'
     elif len(lst) == 1:
-        return lst[0]
+        try:
+            return lst[0]
+        except:  # fis for weird bug when item is not a list.
+            return lst
     else:
         tx = ''
         for item in lst:

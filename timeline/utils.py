@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from datetime import datetime
@@ -83,5 +83,13 @@ def get_recent_timeslots():
 
     :return:
     """
-    NUM_TIMESLOTS_VISIBLE = 5
-    return reversed(TimeSlot.objects.all().order_by('-Begin')[:NUM_TIMESLOTS_VISIBLE])
+
+    return reversed(TimeSlot.objects.all().order_by('-Begin')[:settings.NUM_TIMESLOTS_VISIBLE]) # newest first
+
+
+def get_next_timeslot():
+    """
+    Returns the first next timeslot or None
+    :return:
+    """
+    return TimeSlot.objects.filter(Begin__gte=datetime.now()).order_by('Begin').first()  # oldest first

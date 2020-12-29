@@ -9,7 +9,7 @@
     </p>
     <a href="{% url 'support:groupadministratorsform' %}" class="button primary">Capacity Group Administration</a>
     {#    <a href="{% url 'support:capacitygroupadministration' %}" class="button primary">Capacity Group Administration</a>#}
-    <a href="{% url 'index:edit_tracks' %}" class="button primary">Track heads</a>
+    <a href="{% url 'support:edit_tracks' %}" class="button primary">Track edit</a>
     <a href="{% url 'support:verifyassistants' %}" class="button primary">Verify type2staffunverified</a>
 
     <div class="double-scroll">
@@ -55,9 +55,7 @@
                     </td>
                     <td>
                         <ul>
-                            {% for ts in u.usermeta.TimeSlot.all %}
-                                <li>{{ ts }}</li>
-                            {% endfor %}
+                            {{ u.usermeta.TimeSlot.all|unordered_list }}
                         </ul>
                     </td>
                     <td>
@@ -103,6 +101,7 @@
         $(document).ready(function () {
             $('.datatable').dt_wrapper([
                     {column_number: 0, filter_type: "text"},
+                    {column_number: 1, filter_type: "text"},
                     {column_number: 3, filter_type: "select"},
                     {column_number: 5, filter_type: "select", html5_data: 'data-search'},
                     {

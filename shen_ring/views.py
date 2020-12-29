@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 import base64
@@ -149,7 +149,7 @@ def check_user(request, user):
                 if get_timeslot() not in user.usermeta.TimeSlot.all():  # user is not active in this timeslot
                     # not in this timeslot so old user, canvas app sets timeslot
                     # this security will fail if canvas does not close off old courses as it does now
-                    return render(request, 'base.html', status=403, context={"Message": "You already did your BEP once, login is not allowed."})
+                    return render(request, 'base.html', status=403, context={"Message": "You are not active in this time slot. Please login once via the Canvas module."})
         else:
             return render(request, 'base.html', status=403,
                           context={"Message": "Your email address is not known in the system. Login is not allowed. Please contact the support staff."})

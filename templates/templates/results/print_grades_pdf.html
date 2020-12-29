@@ -3,14 +3,10 @@
 <head>
     <title>bepresult_{{ dstr.Student.usermeta.get_nice_name }}</title>
     <link href="{% static "css/metro.min.css" %}" rel="stylesheet">
-    <link href="{% static "css/metro-icons.min.css" %}" rel="stylesheet">
-    <link href="{% static "css/metro-responsive.min.css" %}" rel="stylesheet">
-    <link href="{% static "css/metro-schemes.min.css" %}" rel="stylesheet">
-    <link href="{% static "css/custom.css" %}" rel="stylesheet">
 </head>
 <body>
 
-<h1>Results for <i>{{ dstr.Student.usermeta.get_nice_name }}</i> for project <i>{{ dstr.Proposal.Title }}</i></h1>
+<h1>{% if preview %}Preview {% endif %}Results for <i>{{ dstr.Student.usermeta.get_nice_name }}</i> for project <i>{{ dstr.Proposal.Title }}</i></h1>
 <h3>Responsible Staff member: {{ dstr.Proposal.ResponsibleStaff.usermeta.get_nice_name }}</h3>
 <h3>Assistants:</h3>
 <ul>
@@ -46,7 +42,7 @@
 <table class="table border bordered" style="width:100%;">
     <tr>
         <td style="width:50%;"><h1><b>Grade:</b> {{ finalgrade }}</h1></td>
-        <td rowspan="2">{% if final %}<h1>X</h1>(Preview only. Do not use for signing){% endif %}</td>
+        <td rowspan="2">{% if preview %}<h1>X</h1>(Preview only. Do not use for signing){% endif %}</td>
     </tr>
     <tr>
         <td>Signature:</td>

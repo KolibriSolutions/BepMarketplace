@@ -7,12 +7,12 @@
     <h1>Students with project in {{ timeslot }}</h1>
     <p>To grade intermediate results for a student, click the 'Files' button in the rightmost column below.</p>
     <div class="tabcontrol">
-            <ul class="tabs">
-                {% for ts in timeslots %}
-                    <li {% if ts == timeslot %}class="active"{% endif %}><a href="{% if ts == timeslot %}#{% else %}../{{ ts.pk }}{% endif %}">{{ ts }}</a></li>
-                {% endfor %}
-            </ul>
-        </div>
+        <ul class="tabs">
+            {% for ts in timeslots %}
+                <li {% if ts == timeslot %}class="active"{% endif %}><a href="{% if ts == timeslot %}#{% else %}../{{ ts.pk }}{% endif %}">{{ ts }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
     {% if is_current %}
         {% if phasenumber == 5 %}
             <p>The current phase is 'Gather and process objections' so distributions of students might still change.</p>
@@ -34,7 +34,7 @@
                 {# Classes on TH are used for collapsing columns with the buttons. #}
                 <th data-visible='false' class="studentinfo">Name</th>
                 <th data-visible='false' class="studentinfo">Email</th>
-                <th data-visible='false' class="studentinfo">Department</th>
+{#                <th data-visible='false' class="studentinfo">Department</th>#}
                 <th data-visible='false' class="studentinfo">Study</th>
                 <th data-visible='false' class="studentinfo">Cohort</th>
                 <th data-visible='false' class="studentinfo">+5ECTS</th>
@@ -49,9 +49,7 @@
                     {% endfor %}
                     <th data-visible='false' data-searchable="false" class="gradeinfo">Total</th>
                     <th data-searchable="false">Total rounded</th>
-                    {% if user|has_group:"type1staff;type3staff" %}
-                        <th data-searchable="false" data-orderable="false">Grades</th>
-                    {% endif %}
+                    <th data-searchable="false" data-orderable="false">Grades</th>
                 {% endif %}
                 {% if phasenumber > 3 %}
                     <th data-searchable="false" data-orderable="false">Files</th>
@@ -67,7 +65,7 @@
                             <td><a href="mailto:{{ ds.email }}">{{ ds.usermeta.get_nice_fullname }}</a></td>
                             <td>{{ ds.usermeta.get_nice_name }}</td>
                             <td>{{ ds.email }}</td>
-                            <td>{{ ds.usermeta.Department }}</td>
+{#                            <td>{{ ds.usermeta.Department }}</td>#}
                             <td>{{ ds.usermeta.Study }}</td>
                             <td>{{ ds.usermeta.Cohort }}</td>
                             <td data-sort="{{ ds.usermeta.EnrolledExt }}"
@@ -96,11 +94,9 @@
 
                                 <td>{{ d.0.TotalGrade|floatformat:"2" }}</td>
                                 <td><b>{{ d.0.TotalGradeRounded }}</b></td>
-                                {% if user|has_group:"type1staff;type3staff" %}{# Trackhead can edit grades of their track #}
-                                    <td>
-                                        <a href="{% url 'results:gradeformstaff' d.0.id %}" class="button primary">Grades</a>
-                                    </td>
-                                {% endif %}
+                                <td>
+                                    <a href="{% url 'results:gradeformstaff' d.0.id %}" class="button primary">Grades</a>
+                                </td>
                             {% endif %}
                             {% if phasenumber > 3 %}
                                 <td><a href="{% url "professionalskills:liststudentfiles" d.0.id %}"
@@ -123,16 +119,17 @@
             //set filters and dt_wrapper
             var dt = $('.datatable').dt_wrapper([
                     {column_number: 0, filter_type: "text"}, {# student #}
-                    {column_number: 3, filter_type: "select"}, {# department #}
-                    {column_number: 4, filter_type: "select"}, {# study #}
-                    {column_number: 5, filter_type: "select"}, {# cohort #}
-                    {column_number: 6, filter_type: "select", html5_data: 'data-search'}, {# +5 ec #}
-                    {column_number: 7, filter_type: "select", column_data_type: 'html'}, {# project #}
-                    {column_number: 8, filter_type: "select", filter_match_mode: 'exact'},  {# track #}
-                    {column_number: 9, filter_type: "select", filter_match_mode: 'exact'},  {# group #}
-                    {column_number: 10, filter_type: "select", column_data_type: 'html'},  // to parse mailto links, responsible staff
-                    { {# assistants #}
-                        column_number: 11,
+                    {#{column_number: 3, filter_type: "select"}, {# department #}
+                    {column_number: 3, filter_type: "select"}, {# study #}
+                    {column_number: 4, filter_type: "select"}, {# cohort #}
+                    {column_number: 5, filter_type: "select", html5_data: 'data-search'}, {# +5 ec #}
+                    {column_number: 6, filter_type: "select", column_data_type: 'html'}, {# project #}
+                    {column_number: 7, filter_type: "select", filter_match_mode: 'exact'}, {# track #}
+                    {column_number: 8, filter_type: "select", filter_match_mode: 'exact'}, {# group #}
+                    {column_number: 9, filter_type: "select", column_data_type: 'html'},  // to parse mailto links, responsible staff
+                    {
+                        {# assistants #}
+                        column_number: 10,
                         filter_type: "select",
                         column_data_type: 'html',
                         html_data_type: 'selector',

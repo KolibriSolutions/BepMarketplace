@@ -125,17 +125,17 @@
 
         <h4>Student Information</h4>
         <table class="table striped">
-            <tr>
-                <td>Department</td>
-                <td>{{ meta.Department }}</td>
-            </tr>
+{#            <tr>#}
+{#                <td>Department</td>#}
+{#                <td>{{ meta.Department }}</td>#}
+{#            </tr>#}
             <tr>
                 <td>Study</td>
-                <td>{{ meta.Study }}</td>
+                <td>{{ meta.Study|default:'Not yet known' }}</td>
             </tr>
             <tr>
                 <td>Cohort</td>
-                <td>{{ meta.Cohort }}</td>
+                <td>{{ meta.Cohort|default:'Not yet known' }}</td>
             </tr>
             <tr>
                 <td>Studentnumber</td>
@@ -152,6 +152,10 @@
             <tr>
                 <td>Enrolled BEP extension (+5 ECTS)</td>
                 <td><span class="mif-{{ meta.EnrolledExt|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+            </tr>
+            <tr>
+                <td>Active in time slots</td>
+                <td><ul>{{ meta.TimeSlot.all|unordered_list|default:'None yet' }}</ul></td>
             </tr>
         </table>
     {% endif %}

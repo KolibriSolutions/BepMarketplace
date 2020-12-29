@@ -379,12 +379,12 @@
                     {% for set in sets %}
                         <th>
                             Presentation:
-                            {{ set.PresentationRoom.room_link }}
+                            {{ set.PresentationRoom.room_link|default:'None' }}
                             <br/>
                             Assessment:
-                                {{ set.AssessmentRoom.room_link }}
+                                {{ set.AssessmentRoom.room_link|default:'None' }}
                             <br/>
-                            Track: {{ set.Track }}<br/>
+                            Track: {{ set.Track|default:'None' }}<br/>
                             Assessors:
                             <ul class="no-margin">{% for a in set.Assessors.all %}
                                 <li>{{ a.usermeta.get_nice_name }}</li>

@@ -3,9 +3,9 @@ asgi_redis
 asgiref>=2
 beautifulsoup4
 bleach
-channels>=2,<3
+channels>=3
 channels_redis
-daphne>=2
+daphne>=3
 django-csp
 django-formtools>=2.2
 django-htmlmin
@@ -17,7 +17,7 @@ django-render-block
 django-sendfile
 django-two-factor-auth
 django-otp
-django
+django>=3
 docutils
 lxml
 markdown

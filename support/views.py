@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 
@@ -9,35 +9,38 @@ import logging
 import zipfile
 from datetime import date, datetime
 from io import BytesIO
-from django.template.loader import get_template
-from xhtml2pdf import pisa
+
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Sum, F, Q
+from django.db.models import ProtectedError
 from django.forms import modelformset_factory
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
+from django.template.loader import get_template
 from django.utils import timezone
 from htmlmin.decorators import not_minified_response
+from xhtml2pdf import pisa
 
 from general_form import ConfirmForm
 from general_mail import EmailThreadTemplate, mail_track_heads_pending, send_mail
 from general_model import print_list, delete_object
 from general_view import get_all_staff, get_grouptype
 from index.decorators import group_required
+from index.forms import TrackForm
 from index.models import Track, UserMeta
 from presentations.exports import get_list_presentations_xlsx
 from presentations.models import PresentationSet, PresentationTimeSlot
+from proposals.exports import get_list_projects_xlsx
 from proposals.models import Proposal
 from proposals.utils import get_all_proposals
 from results.models import GradeCategory
-from students.models import Distribution, TimeSlot
-from timeline.utils import get_timeslot, get_timephase_number
-from .exports import get_list_distributions_xlsx
 from students.exports import get_list_students_xlsx
-from proposals.exports import get_list_projects_xlsx
-from .forms import ChooseMailingList, PublicFileForm, OverRuleUserMetaForm, UserGroupsForm, \
+from students.models import Distribution, TimeSlot
+from timeline.utils import get_timeslot, get_timephase_number, get_recent_timeslots
+from .exports import get_list_distributions_xlsx
+from .forms import ChooseMailingList, PublicFileForm, UserMetaForm, UserGroupsForm, \
     GroupadministratorEdit, CapacityGroupForm
 from .models import GroupAdministratorThrough, PublicFile, CapacityGroup, mail_staff_options, mail_student_options, \
     MailTemplate, Mailing
@@ -360,6 +363,34 @@ def delete_capacity_group(request, pk):
 # Lists#
 #######
 
+@group_required('type3staff')
+def edit_tracks(request):
+    """
+    Edit all tracks.
+
+    :param request:
+    :return:
+    """
+    form_set = modelformset_factory(Track, form=TrackForm, can_delete=True, extra=1)
+    formset = form_set(queryset=Track.objects.all())
+
+    if request.method == 'POST':
+        formset = form_set(request.POST)
+        if formset.is_valid():
+            try:
+                formset.save()
+            except ProtectedError as e:
+                raise PermissionDenied(f'Track can not be deleted, as {len(e.protected_objects)} objects (projects) depend on it. Please remove the others first.')
+
+            return render(request, "base.html",
+                          {"Message": "Track changes saved!",
+                           'return': 'support:edit_tracks',
+                           })
+    return render(request, 'support/form_track.html',
+                  {'formset': formset, 'formtitle': 'Track edit',
+                   'buttontext': 'Save changes'})
+
+
 def list_capacity_groups(request):
     """
     List all capacity groups, edit buttons for support staff
@@ -375,16 +406,23 @@ def list_capacity_groups(request):
 
 
 @group_required('type3staff', 'type6staff')
-def list_users(request):
+def list_users(request, filter=False):
     """
     List of all active users, including upgrade/downgrade button for staff and impersonate button for admins
 
     :param request:
     :return:
     """
+    if filter == 'all':
+        users = User.objects.all()
+    elif filter == 'current':
+        users = User.objects.filter(Q(groups__isnull=False) | Q(usermeta__TimeSlot=get_timeslot())).distinct()
+    else:  # recent
+        users = User.objects.filter(Q(groups__isnull=False) | Q(usermeta__TimeSlot__id__in=[x.id for x in get_recent_timeslots()]) | (Q(usermeta__TimeSlot=None)&Q(last_login__isnull=False))).distinct()
+
     return render(request, "support/list_users.html", {
-        "users": User.objects.all().prefetch_related('groups', 'usermeta', 'usermeta__TimeSlot',
-                                                     'administratoredgroups'),
+        "users": users.prefetch_related('groups', 'usermeta', 'usermeta__TimeSlot',
+                                        'administratoredgroups'),
         'hide_sidebar': True,
     })
 
@@ -392,29 +430,30 @@ def list_users(request):
 @group_required('type3staff')
 def usermeta_overrule(request, pk):
     """
+    Overrule User Meta. Shows additional information of the fields in form_user_meta.html
 
     :param request:
     :param pk:
     :return:
     """
     usr = get_object_or_404(User, pk=pk)
-    obj = get_object_or_404(UserMeta, pk=usr.usermeta.id)
+    obj = usr.usermeta
     if request.method == "POST":
-        form = OverRuleUserMetaForm(request.POST, instance=obj)
+        form = UserMetaForm(request.POST, instance=obj)
         if form.is_valid():
             obj = form.save()
-            obj.Overruled = True
             obj.save()
-
             return render(request, 'base.html', {
-                'Message': 'UserMeta saved!'
+                'Message': 'User Meta saved!',
+                'return': 'support:listusers',
             })
     else:
-        form = OverRuleUserMetaForm(instance=obj)
+        form = UserMetaForm(instance=obj)
 
-    return render(request, 'GenericForm.html', {
-        'formtitle': 'Overrule UserMeta',
+    return render(request, 'support/form_user_meta.html', {
+        'formtitle': f'Change User Meta for {obj.get_nice_name()}',
         'form': form,
+        'settings': settings,
     })
 
 
@@ -553,6 +592,22 @@ def verify_assistants(request):
     })
 
 
+# @group_required('type3staff')
+# def student_timeslots(request):
+#     """
+#     Add/change students from one timeslot to new one.
+#
+#
+#     :param request:
+#     :return:
+#     """
+#     # choose students
+#     if request.method == 'POST':
+#         return render(request, "support/list_students_timeslots.html", {
+#             "students": students
+#         })
+
+
 @group_required('type3staff')
 def edit_user_groups(request, pk):
     """
@@ -592,7 +647,7 @@ def edit_user_groups(request, pk):
             })
     else:
         form = UserGroupsForm(instance=usr)
-    return render(request, 'support/user_groups_form.html', {
+    return render(request, 'support/form_user_groups.html', {
         'formtitle': 'Set user groups for {}'.format(usr.username),
         'form': form,
     })
@@ -644,7 +699,7 @@ def add_file(request):
             file.User = request.user
             file.save()
             return render(request, "base.html",
-                          {"Message": "File uploaded!", "return": "index:index"})
+                          {"Message": "File uploaded!", "return": "support:editfiles"})
     else:
         form = PublicFileForm(request=request)
     return render(request, 'GenericForm.html',
@@ -658,7 +713,7 @@ def edit_file(request, pk):
 
     :param request:
     :param pk: id of file.
-    :return:
+    :return:public file
     """
     obj = get_object_or_404(PublicFile, pk=pk)
     if request.method == 'POST':
@@ -687,7 +742,7 @@ def edit_files(request):
     :param request:
     """
     form_set = modelformset_factory(PublicFile, form=PublicFileForm, can_delete=True, extra=0)
-    qu = PublicFile.objects.filter(TimeSlot=get_timeslot())
+    qu = PublicFile.objects.filter(TimeSlot__End__gte=datetime.now())
     formset = form_set(queryset=qu)
 
     if request.method == 'POST':
@@ -695,7 +750,7 @@ def edit_files(request):
         if formset.is_valid():
             formset.save()
             return render(request, "base.html", {"Message": "File changes saved!", "return": "index:index"})
-    return render(request, 'GenericForm.html',
+    return render(request, 'support/form_public_file.html',
                   {'formset': formset, 'formtitle': 'All public uploaded files', 'buttontext': 'Save changes'})
 
 
@@ -732,7 +787,7 @@ def history(request):
     :param request:
     :return:
     """
-    tss = TimeSlot.objects.filter(End__lte=datetime.now())
+    tss = TimeSlot.objects.filter(End__lte=datetime.now()).order_by('-Begin')[:settings.NUM_TIMESLOTS_VISIBLE]
     return render(request, 'support/history.html', context={
         'timeslots': tss,
     })

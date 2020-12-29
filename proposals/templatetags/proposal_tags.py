@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django import template
@@ -12,7 +12,7 @@ from general_view import get_grouptype
 from proposals.utils import get_all_proposals, group_administrator_status, can_create_project_fn, can_edit_project_fn, can_downgrade_project_fn, can_share_project_fn, \
     can_upgrade_project_fn
 from timeline.utils import get_timeslot
-
+from datetime import datetime
 register = template.Library()
 
 
@@ -48,12 +48,12 @@ def get_personal_tag(user):
     """
     if not user.is_authenticated or user.groups.exists():
         return ''
-    if user.personal_proposal.filter(TimeSlot=get_timeslot()).exists():
-        ps = user.personal_proposal.filter(TimeSlot=get_timeslot())
+    if user.personal_proposal.filter(TimeSlot__End__gte=datetime.now()).exists():  # future timeslots but without 'future'/None
+        ps = user.personal_proposal.filter(TimeSlot__End__gte=datetime.now())
         html = '<p>'
         if ps.count() == 1:
             html += "There is a personal (private) proposal for you. You can view all proposals in the 'proposals' menu but you don't have to do anything with it."
-        else:
+        elif ps.count() > 1:
             html += "There are multiple private proposals for you. Please contact the support staff to remove you from one."
         html += "<br />"
         for p in ps:

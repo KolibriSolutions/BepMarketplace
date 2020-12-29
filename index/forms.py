@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2020 Kolibri Solutions
+#  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 import re
@@ -58,8 +58,6 @@ class TrackForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['Name'].disabled = True
-        self.fields['ShortName'].disabled = True
         self.fields['Head'].queryset = get_grouptype('1').user_set.all().select_related('usermeta')
         self.fields['Head'].label_from_instance = self.user_label_from_instance
 
