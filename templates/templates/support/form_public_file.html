@@ -1,0 +1,8 @@
+{% extends 'GenericForm.html' %}
+{% block formheader %}
+    <p>
+        Public files are visible on the homepage. Files are linked to a time slot. This page shows all files for the current and future timeslots.
+        Only files of the current time slot are shown on the homepage.
+        <br /><a href="{% url 'support:addfile' %}" class="button primary">Add file</a>
+    </p>
+{% endblock %}

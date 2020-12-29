@@ -1,0 +1,9 @@
+{% extends 'GenericForm.html' %}
+{% block formheader %}
+    <p>
+    You are editing a published project, therefore only limited fields can be changed.
+        To edit all fields, unpublish/downgrade the project.
+
+        Unpublishing of active projects is only allowed for the track head ({{ form.instance.Track.Head.usermeta.get_nice_name }}) or support staff.
+    </p>
+{% endblock %}

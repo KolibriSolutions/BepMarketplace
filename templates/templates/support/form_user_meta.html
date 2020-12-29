@@ -1,0 +1,73 @@
+{% extends 'GenericForm.html' %}
+{% block formheader %}
+    <p>
+        User Meta contains the additional information for a student. This includes information from Canvas and from Osiris.
+    </p>
+
+    <h3>Explanation</h3>
+    <table class="table striped hovered">
+        <thead>
+        <tr>
+            <th>Field</th>
+            <th>Explanation</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Study</td>
+            <td>
+                Set by manual import from Osiris or using this form. <br />
+                If this field is set to 'Automotive', the student can be given higher priority on automotive projects during automatic distribution.
+            </td>
+        </tr>
+        <tr>
+            <td>Cohort</td>
+            <td>
+                Set by manual import from Osiris or using this form<br />
+                Start year of the student. The later start year, the more priority in distribution.
+            </td>
+        </tr>
+        <tr>
+            <td>ECTS</td>
+            <td>
+                Set by manual import from Osiris or using this form<br />
+                Number of credits of the student. The higher ECTS, the more priority in distribution.<br />
+                Set to zero if not yet known.
+            </td>
+        </tr>
+
+        <tr>
+            <td>TimeSlots</td>
+            <td>
+                Time slot where this user is active. If a user logs in via the Canvas module, the current timeslot is added to this list.
+                Time slots are never automatically removed. A student can only login to the marketplace if the user is active in the current timeslot.
+                As long as previous Canvas BEP courses are closed for students, this prevents students who already finished their BEP to login.
+            </td>
+        </tr>
+        <tr>
+            <td>Overruled</td>
+            <td>
+                Set to true to not update the 'EnrolledBEP' and 'EnrolledExt' on Canvas login.
+            </td>
+        </tr>
+        <tr>
+            <td>EnrolledBEP</td>
+            <td>
+                Set during Canvas login of a user if 'Overruled' is False.<br />
+                Set to True if the user logs in via Canvas course {{ settings.COURSE_CODE_BEP }} or {{ settings.COURSE_CODE_EXT }}.
+                If this is False, the user cannot login to the system directly (without Canvas).
+                If 'Overruled' is True and 'EnrolledBEP' is False, the user can never login.
+            </td>
+        </tr>
+        <tr>
+            <td>EnrolledExt</td>
+            <td>
+                Set during Canvas login of a user if 'Overruled' is False.<br />
+                Set to True if a user logs in via Canvas module of course {{ settings.COURSE_CODE_EXT }}.
+            </td>
+        </tr>
+        </tbody>
+
+    </table>
+    <br/>
+{% endblock %}
