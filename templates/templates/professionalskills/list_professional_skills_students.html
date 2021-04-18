@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load index_tags %}
+{% load timeline_tags %}
+{% load professionalskills_tags %}
+{% block body %}
+    {% if not user|has_group:'any' %}{# for students #}
+        <h1>Professional Skills</h1>
+        <p>
+            {#        <p>To upload files or view your previous uploads, use the 'Files' menu at the top.</p>#}
+            <a href="{% url 'professionalskills:listowngroups' %}" class="button primary">List Enrolled Groups</a>
+        </p>
+    {% else %}
+        <h1>Professional skill files for {{ dist.Student.usermeta.get_nice_name }}</h1>
+    {% endif %}
+    <table id="filetypetable" class="table datatable striped hovered bordered">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Deadline</th>
+            <th>Files</th>
+            <th>Grading</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for filetype, file in filetypes %}
+            <tr>
+                <td>{{ filetype.Name }}</td>
+                {% if file %}
+                    <td data-sort="{{ filetype.Deadline|date:"U" }}" class="{% if file.after_deadline %}error{% else %}success{% endif %}">
+                        Deadline: {{ filetype.Deadline }}<br/>
+                        {% if file.Created|date:"U" != file.TimeStamp|date:"U" %}
+                            Last change: {{ file.TimeStamp }}<br/>
+                        {% endif %}
+                        Created: {{ file.Created }}<br/>
+                        {% if file.after_deadline %}Hand-in after deadline{% else %}On time{% endif %}
+                    </td>
+                {% else %}
+                    <td data-sort="{{ filetype.Deadline|date:"U" }}" class="{% if file.Type.Deadline < now %}error{% endif %}">
+                    {{ filetype.Deadline }}
+                {% endif %}
+                </td>
+                <td>
+                    {% if file %}
+                        <a href="{% url "download:studentfile" file.id %}" download><span class="icon mif-file-{{ file.metro_icon }}"></span> {{ file.OriginalName }}</a>
+                        <br/>
+                        {{ file.Caption }}
+                        <br/>
+                        {% if dist|can_edit_file:request.user %}
+                            <a href="{% url 'professionalskills:upload' filetype.id %}" class="button primary">Edit</a>
+                        {% endif %}
+                    {% else %}
+                        {% if dist|can_edit_file:request.user %}
+                            <a href="{% url 'professionalskills:upload' filetype.id %}" class="button primary">Upload</a>
+                        {% endif %}
+                        {% if filetype.deadline_passed %}
+                            <b>Deadline has passed!</b>
+                        {% endif %}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if filetype.CheckedBySupervisor %}
+                        {% if file %}
+                            {% if file.staffresponse %}
+                                {% if file.staffresponse.Status == 'V' or file.staffresponse.Status == 'G' %}
+                                    {{ file.staffresponse.Status }}: <span class="mif-checkmark fg-green"></span>
+                                {% else %}
+                                    {{ file.staffresponse.Status }}: <span class="mif-cross fg-red"></span>
+                                {% endif %}
+                            {% else %}
+                                No feedback given.
+                            {% endif %}
+                            <br/>
+                            <a href="{% url 'professionalskills:response' file.id %}" class="button primary">View</a>
+                            {% if dist|can_respond_file:request.user %}
+                                <a href="{% url 'professionalskills:respond' file.id %}" class="button primary">Grade</a>
+                            {% endif %}
+                        {% else %}
+                            No file uploaded yet.
+                        {% endif %}
+                        <br />
+                        <a href="{% url 'professionalskills:list_aspects' filetype.id %}" class="button primary">Grading info</a>
+                    {% else %}
+                        This file does not need grading.
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            $('.datatable').dt_wrapper();
+        });
+    </script>
+{% endblock %}

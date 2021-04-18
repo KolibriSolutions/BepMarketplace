@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load index_tags %}
+{% load timeline_tags %}
+{% load professionalskills_tags %}
+{% block body %}
+    <h1>Professional Skills</h1>
+    {% if user|has_group:"type6staff;type3staff" %}
+        <p>
+            <a class="button primary" href="{% url 'professionalskills:create' %}">Create New</a>
+            <a class="button primary" href="{% url 'professionalskills:extensions' %}">Edit file extensions</a>
+            <a href="{% url 'professionalskills:mailoverduestudents' %}" class="button primary">Mail Overdue
+                Students</a>
+        </p>
+    {% endif %}
+    <p>
+        <a class="button primary" href="{% url 'professionalskills:printprvforms' %}">Print Results</a>
+        <a href="{% url "students:download_files" timeslot.pk %}" class="button primary">Download all files</a>
+    </p>
+    <table id="filetypetable" class="table datatable striped hovered">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Deadline</th>
+            <th>Files</th>
+            <th>Grading</th>
+            {% if user|has_group:'type3staff;type6staff' %}
+                <th data-searchable="false" data-sortable="false">Actions</th>
+            {% endif %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for filetype, nfile, ngrade in filetypes %}
+            <tr>
+                <td>{{ filetype.Name }}</td>
+                <td data-sort="{{ filetype.Deadline|date:"U" }}">{{ filetype.Deadline }}</td>
+                {# todo maybe add coloring? #}
+                <td>
+                    {{ nfile }} of {{ nstud }} handed in<br/>
+                    {% if filetype.CheckedBySupervisor %}
+                    {{ ngrade }} graded <br/>
+                    {% endif %}
+                    <a href="{% url 'professionalskills:listfileoftype' filetype.id %}" class="button primary">View submissions</a>
+                    <a href="{% url 'professionalskills:listmissingoftype' filetype.id %}" class="button primary">Missing Students</a>
+                    <a href="{% url 'professionalskills:downloadall' filetype.id %}" class="button primary">Download files</a>
+                </td>
+                <td>
+                    {% if filetype.CheckedBySupervisor %}
+                        Grade with {{ filetype.aspects.count }} aspect{{ filetype.aspects.all|pluralize }}<br/>
+                        <a href="{% url 'professionalskills:list_aspects' filetype.id %}" class="button primary">Grading options</a>
+                        {% if user|has_group:'type3staff;type6staff' %}
+                            <a href="{% url 'professionalskills:filetype_export' filetype.id %}" class="button primary">Export grading xlsx</a>
+                        {% endif %}
+
+                    {% else %}
+                        No feedback for this file is required.
+                    {% endif %}
+                </td>
+                {% if user|has_group:'type3staff;type6staff' %}
+                    <td>
+                        <a href="{% url 'professionalskills:edit' filetype.id %}" class="button warning">Edit</a>
+                        <a href="{% url 'professionalskills:delete' filetype.id %}" class="button danger">Delete</a>
+                        <br/>
+                        <a href="{% url 'professionalskills:listgroups' filetype.pk %}" class="button primary">List
+                            Groups</a>
+                        <a href="{% url 'professionalskills:assignshuffle' filetype.pk %}" class="button warning">Shuffle
+                            Students</a>
+                    </td>
+                {% endif %}
+
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            $('.datatable').dt_wrapper();
+        });
+    </script>
+{% endblock %}

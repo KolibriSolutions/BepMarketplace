@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Students to add to timeslot {{ ts }}</h1>
+    <h3>Errors</h3>
+    {% if errors %}
+        <ul>{{ errors|unordered_list }}</ul>
+    {% else %}
+        No errors occured during user lookup.
+    {% endif %}
+    <h3>Students</h3>
+    <div style="border: 2px solid #222;" class="margin20 bg-grayLighter">
+        <p class="margin10">
+            Click confirm to add all {{ students|length }} students below to timeslot {{ ts }}.
+        </p>
+        {% if form %}
+            <form method="post" enctype="multipart/form-data" novalidate action="{% url 'timeline:students_confirm' %}">
+                {% csrf_token %}
+                <input type="hidden" name="jsondata" value='{{ jsondata|safe }}'>
+                <table class="table" style="text-align:left;">
+                    {{ form.as_table }}
+                    <tr>
+                        <td>
+                            <button class="button success" type="submit">Confirm</button>
+                        </td>
+                        <td></td>
+                    </tr>
+                </table>
+            </form>
+        {% endif %}
+    </div>
+
+    <div class="double-scroll">
+        <table class="table bordered hovered striped datatable">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th data-searchable="false">Last login</th>
+                <th>Other</th>
+                <th>Time slots</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for u in students %}
+                <tr>
+                    <td>{{ u.usermeta.get_nice_name }}</td>
+                    <td>{{ u.username }}</td>
+                    <td><a href="mailto:{{ u.email }}">{{ u.email }}</a></td>
+                    <td data-sort="{{ u.last_login|date:"U" }}">{{ u.last_login }}</td>
+                    <td>
+                        {% if u.groups.exists %}
+                            {% if u.administratoredgroups.exists %}
+                                Group admin of {% for group in u.administratoredgroups.all %}
+                                {{ group.Group.ShortName }} ({{ group.Super|yesno:"rw,r" }})
+                            {% endfor %}
+                            {% endif %}
+                        {% else %}
+                            Cohort: {{ u.usermeta.Cohort|default:"-" }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <ul>
+                            {{ u.usermeta.TimeSlot.all|unordered_list }}
+                        </ul>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            $('.datatable').dt_wrapper([
+                    {column_number: 0, filter_type: "text"},
+                    {column_number: 1, filter_type: "text"},
+                    {column_number: 3, filter_type: "select"},
+                    {column_number: 5, filter_type: "select", html5_data: 'data-search'},
+                    {
+                        column_number: 6,
+                        filter_type: "select",
+                        column_data_type: 'html',
+                        html_data_type: 'selector',
+                        html_data_selector: 'li'
+                    }, //to parse ul-li, timeslots
+                ]
+            );
+        });
+
+    </script>
+{% endblock %}

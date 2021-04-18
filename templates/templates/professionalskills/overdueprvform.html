@@ -1,0 +1,10 @@
+{% extends 'GenericForm.html' %}
+{% block formheader %}
+    This will mail all current students with the professional skills deadlines they have missed. If a student has handed in everything on time, they are not mailed.
+
+    <ul>
+        {% for s in students %}
+    <li>{{ s.usermeta.get_nice_name }}</li>
+    {% endfor %}
+    </ul>
+{% endblock %}
