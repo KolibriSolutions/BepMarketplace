@@ -2,15 +2,15 @@
 #  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
-
-
 import json
 import logging
 import zipfile
 from datetime import date, datetime
 from io import BytesIO
+from os import path
 
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Sum, F, Q
@@ -18,6 +18,7 @@ from django.db.models import ProtectedError
 from django.forms import modelformset_factory
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
+from django.template.defaultfilters import truncatechars
 from django.template.loader import get_template
 from django.utils import timezone
 from htmlmin.decorators import not_minified_response
@@ -25,6 +26,7 @@ from xhtml2pdf import pisa
 
 from general_form import ConfirmForm
 from general_mail import EmailThreadTemplate, mail_track_heads_pending, send_mail
+from general_model import get_ext
 from general_model import print_list, delete_object
 from general_view import get_all_staff, get_grouptype
 from index.decorators import group_required
@@ -35,8 +37,6 @@ from presentations.models import PresentationSet, PresentationTimeSlot
 from proposals.exports import get_list_projects_xlsx
 from proposals.models import Proposal
 from proposals.utils import get_all_proposals
-from results.models import GradeCategory
-from students.exports import get_list_students_xlsx
 from students.models import Distribution, TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number, get_recent_timeslots
 from .exports import get_list_distributions_xlsx
@@ -418,7 +418,8 @@ def list_users(request, filter=False):
     elif filter == 'current':
         users = User.objects.filter(Q(groups__isnull=False) | Q(usermeta__TimeSlot=get_timeslot())).distinct()
     else:  # recent
-        users = User.objects.filter(Q(groups__isnull=False) | Q(usermeta__TimeSlot__id__in=[x.id for x in get_recent_timeslots()]) | (Q(usermeta__TimeSlot=None)&Q(last_login__isnull=False))).distinct()
+        users = User.objects.filter(Q(groups__isnull=False) | Q(usermeta__TimeSlot__id__in=[x.id for x in get_recent_timeslots()]) | (
+                    Q(usermeta__TimeSlot=None) & Q(last_login__isnull=False))).distinct()
 
     return render(request, "support/list_users.html", {
         "users": users.prefetch_related('groups', 'usermeta', 'usermeta__TimeSlot',
@@ -524,6 +525,50 @@ def user_info(request, pk):
                 'distribution': distribution
             }, default=json_serial),
     })
+
+
+@login_required
+def download_all_of_student(request, pk=None):
+    """
+    Download all files for a student. Used at user info view for download all information of student.
+
+    :param request:
+    :param pk: id of the student
+    :return:
+    """
+    if pk and get_grouptype('3') in request.user.groups.all():  # support can download for any user.
+        user = get_object_or_404(User, pk=pk)
+    elif not pk:  # student can download own files, ignore PK
+        user = request.user
+    else:
+        raise PermissionDenied('Not allowed.')
+
+    if user.groups.exists() or not user.distributions.exists():
+        raise PermissionDenied('This is not a student user with files.')
+    in_memory = BytesIO()
+    with zipfile.ZipFile(in_memory, 'w') as archive:
+        for dist in user.distributions.all():
+            for file in dist.files.all():
+                try:
+                    name, ext = path.splitext(file.OriginalName)
+                    name = path.basename(truncatechars(name, 25))
+                    ext = get_ext(file.File.name)
+                    with open(file.File.path, 'rb') as fstream:
+                        archive.writestr(
+                            '{}/{}/{}.{}'.format(str(dist.TimeSlot), file.Type, name,
+                                                 ext), fstream.read())
+                except (IOError, ValueError):  # happens if a file is referenced from database but does not exist on disk.
+                    return render(request, 'base.html', {
+                        'Message': 'These files cannot be downloaded, please contact support staff. (Error on file: "{}")'.format(
+                            file)})
+    in_memory.seek(0)
+
+    response = HttpResponse(content_type="application/zip")
+    response['Content-Disposition'] = 'attachment; filename="{}.zip"'.format(str(user.username))
+
+    response.write(in_memory.read())
+
+    return response
 
 
 @group_required('type3staff', 'type6staff')
@@ -805,14 +850,6 @@ def history_download(request, timeslot, download):
         file = get_list_distributions_xlsx(projects)
         response = HttpResponse(content=file)
         response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
-        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-
-    elif download == 'students':
-        typ = GradeCategory.objects.filter(TimeSlot=ts)
-        des = Distribution.objects.filter(TimeSlot=ts)
-        file = get_list_students_xlsx(des, typ)
-        response = HttpResponse(content=file)
-        response['Content-Disposition'] = 'attachment; filename=students-grades.xlsx'
         response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
     elif download == 'presentations':

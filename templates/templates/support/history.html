@@ -26,7 +26,9 @@
                 </td>
                 <td>
                     <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'distributions' %}">Distributions</a>
-                    <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'students' %}">Students & Grades</a>
+{#                    <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'students' %}">Students & Grades</a>#}
+                    <a href="{% url "students:liststudents_xls" timeslot.pk %}" class="button primary">Students & Grades</a>
+
                     <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'presentations' %}">Presentations</a>
                     <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'nonfull' %}">Non-full projects</a>
                     <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'projects' %}">All public projects</a>
@@ -34,6 +36,7 @@
                     <a class="button primary" href="{% url 'support:history_download' timeslot.pk 'results' %}">Results (pdf)</a>
                 </td>
                 <td>
+                <a href="{% url "students:download_files" timeslot.pk %}" class="button primary">Download all student files</a>
                     {% for filetype in timeslot.filetypes.all %}
                         <a href="{% url 'professionalskills:downloadall' filetype.id %}" class="button primary">Download {{ filetype }}</a>
                     {% endfor %}

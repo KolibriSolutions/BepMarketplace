@@ -100,12 +100,8 @@ class UserMeta(models.Model):
 
         :return:
         """
-        if self.Fullname and '.' in self.Fullname and ',' in self.Fullname:
-            last_name = self.Fullname.split(',')[0].strip()
-            preposition = self.Fullname.split('.')[-1].strip()
-            if preposition:
-                return self.User.first_name + ' ' + preposition + ' ' + last_name
-            return self.User.first_name + ' ' + last_name
+        if self.Fullname:
+            return self.Fullname
         elif self.User.first_name or self.User.last_name:
             return self.User.get_full_name()
         else:

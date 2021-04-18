@@ -39,14 +39,20 @@ class Distribution(models.Model):
         Return total grade of student as not-rounded float
         :return:
         """
-        return sum([r.Grade*r.Category.Weight for r in self.results.all()]) / 100
+        return sum([r.Grade * r.Category.Weight for r in self.results.all()]) / 100
 
     def TotalGradeRounded(self):
         """
         Grade rounded to half points.
         :return:
         """
-        return round(self.TotalGrade()*2, 0)/2
+        return round(self.TotalGrade() * 2, 0) / 2
+
+    def missing_files(self):
+        return self.TimeSlot.filetypes.exclude(pk__in=self.files.values_list('Type', flat=True))
+
+    def missing_file_gradings(self):
+        return self.files.filter(Type__CheckedBySupervisor=True).filter(staffresponse__isnull=True)
 
     def __str__(self):
         return self.Proposal.Title + " to " + self.Student.usermeta.get_nice_name() + " (" + self.Student.username + ")"

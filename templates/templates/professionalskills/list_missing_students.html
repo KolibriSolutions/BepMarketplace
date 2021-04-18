@@ -3,17 +3,20 @@
 {% block body %}
     <h1>Students with no submission for files of type {{ type }}</h1>
     <h3>Has deadline {{ type.Deadline|date:'D d b' }}</h3>
+    <p>Click on the student name to view all the files of the student.</p>
     <table id="filetable" class="table bordered striped datatable">
         <thead>
         <tr>
             <th>Student</th>
+            <th>Email</th>
             <th>Proposal</th>
         </tr>
         </thead>
         <tbody>
         {% for dist in distributions %}
             <tr>
-                <td><a href="mailto:{{ dist.Student.email }}"> {{ dist.Student.usermeta.get_nice_name }}</a></td>
+                <td><a href="{% url 'professionalskills:student' dist.pk %}"> {{ dist.Student.usermeta.get_nice_name }}</a></td>
+                <td><a href="mailto:{{ dist.Student.email }}"> {{ dist.Student.email }}</a></td>
                 <td><a href="{% url 'proposals:details' dist.Proposal.id %}">{{ dist.Proposal }}</a></td>
             </tr>
         {% endfor %}

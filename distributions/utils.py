@@ -19,6 +19,8 @@ def get_distributions(user, timeslot=None):
     :param user: The user to test
     :param timeslot: TimeSlot to get distributions from
     """
+    if get_grouptype('2u') in user.groups.all():
+        return None
     if timeslot is None:
         timeslot = get_timeslot()
         if timeslot is None:

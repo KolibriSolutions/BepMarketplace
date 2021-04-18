@@ -36,7 +36,7 @@ urlpatterns = [
     path('shen/', include('shen_ring.urls')),
 ]
 
-if settings.DEBUG and False:
+if settings.DEBUG and 'debug_toolbar' in settings.INSTALLED_APPS:
     import debug_toolbar
 
     urlpatterns = [

@@ -14,6 +14,7 @@ from general_model import clean_text, get_ext
 from general_model import file_delete_default, metro_icon_default, filename_default, print_list
 from students.models import Distribution
 from timeline.models import TimeSlot
+from datetime import datetime
 
 
 class FileExtension(models.Model):
@@ -52,6 +53,9 @@ class FileType(models.Model):
         self.Name = clean_text(self.Name)
         self.Description = clean_text(self.Description)
 
+    def deadline_passed(self):
+        return self.Deadline < datetime.now().date()
+
 
 class StudentFile(models.Model):
     """
@@ -81,17 +85,16 @@ class StudentFile(models.Model):
             this_old = StudentFile.objects.get(id=self.id)
             if this_old.File != self.File:
                 this_old.File.delete(save=False)
-        except: # new image object
+        except:  # new file object
             pass
         super(StudentFile, self).save(*args, **kwargs)
 
     def clean(self):
+        # file extensions are cleaned in form.
         self.Caption = clean_text(self.Caption)
-        if self.File:
-            if get_ext(self.File.name) not in self.Type.get_allowed_extensions():
-                raise ValidationError(
-                    'This file type is not allowed. Allowed types: '
-                    + print_list(self.Type.get_allowed_extensions()))
+
+    def after_deadline(self):
+        return self.TimeStamp.date() > self.Type.Deadline
 
 
 class StudentGroup(models.Model):
@@ -133,6 +136,11 @@ class StaffResponse(models.Model):
         ("V", "Sufficient"),
         ("G", "Good")
     )
+    StatusOptionsOsiris = {
+        'O': 'ON',
+        'V': 'VO',
+        'G': 'GO',
+    }
 
     File = models.OneToOneField(StudentFile, on_delete=models.CASCADE)
     TimestampCreated = models.DateTimeField(auto_now_add=True)
@@ -146,6 +154,9 @@ class StaffResponse(models.Model):
 
     def clean(self):
         self.Explanation = clean_text(self.Explanation)
+
+    def file_changed_after_grade(self):
+        return self.TimestampLastEdited < self.File.TimeStamp
 
 
 class StaffResponseFileAspect(models.Model):

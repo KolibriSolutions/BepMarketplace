@@ -12,13 +12,14 @@ from results.models import GradeCategory
 from timeline.utils import get_timeslot
 
 
-def get_list_students_xlsx(des, typ):
+def get_list_students_xlsx(des, typ, timeslot):
     """
     Export students and their grades.
     List all students with their proposal and grades.
 
-    :param des:
-    :param typ:
+    :param des: list of distributions
+    :param typ: list of grade types
+    :param timeslot: timeslot object
     :return:
     """
 
@@ -28,7 +29,7 @@ def get_list_students_xlsx(des, typ):
     ws = wb.active
     ws.title = "grades"
 
-    ws['A1'] = "Students grades from {}".format(settings.NAME_PRETTY)
+    ws['A1'] = f'Students grades from {settings.NAME_PRETTY} of {timeslot}'
     ws['A1'].style = 'Headline 2'
     ws['F1'] = "Exported on: " + timestamp()
 
@@ -39,7 +40,7 @@ def get_list_students_xlsx(des, typ):
     header.append("Total")
     header.append("Total rounded")
 
-    prvs = list(FileType.objects.filter(TimeSlot=get_timeslot()))
+    prvs = list(FileType.objects.filter(TimeSlot=timeslot))
     for prv in prvs:
         header.append(prv.Name)
 
@@ -54,7 +55,7 @@ def get_list_students_xlsx(des, typ):
     for col in cols:
         ws[col + '2'].style = 'Headline 3'
 
-    cats = GradeCategory.objects.filter(TimeSlot=get_timeslot())
+    cats = GradeCategory.objects.filter(TimeSlot=timeslot)
 
     for d in des:
         reslist = []
@@ -79,13 +80,17 @@ def get_list_students_xlsx(des, typ):
         row.append(round(d.TotalGrade(), 2))
         row.append(d.TotalGradeRounded())
         for prv in prvs:
-            try:
-                row.append(d.files.filter(Type=prv).order_by('-id')[0].staffresponse.Status)
-            except IndexError:
+            files = d.files.filter(Type=prv).order_by('-id')
+            if files.exists():
+                cell = ''
+                for file in files:
+                    try:
+                        cell += file.staffresponse.Status+'; '
+                    except StaffResponse.DoesNotExist:
+                        cell += 'file without grading; '
+                row.append(cell)
+            else:
                 row.append('no file')
-            except StaffResponse.DoesNotExist:
-                row.append('no grading')
-
         ws.append(row)
 
     # second tab with prv data

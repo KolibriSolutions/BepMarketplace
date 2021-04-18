@@ -1,62 +1,149 @@
 {% extends "base.html" %}
 {% load static %}
+{% load professionalskills_tags %}
 
 {% block body %}
-    <h1>Response to file {{ file }}</h1>
-    <h3>Professional skill grade</h3>
+    <h1>Response for {{ file.Type }}</h1>
+
+    <h2>Grade</h2>
     <p>
-        {% if response.Status == 'V' or response.Status == 'G' %}
-            {{ response.get_Status_display }}: <span class="mif-checkmark fg-green"></span>
-        {% elif file.staffresponse %}
-            {{ response.get_Status_display }}: <span class="mif-cross fg-red"></span>
+
+    {% if file.Distribution|can_respond_file:request.user %}
+        <a href="{% url 'professionalskills:respond' file.id %}" class="button primary">Edit grade</a><br/>
+    {% endif %}
+        {% if file.staffresponse %}
+            {{ file.staffresponse.get_Status_display }}:
+            {% if file.staffresponse.Status == 'V' or file.staffresponse.Status == 'G' %}
+                <span class="mif-checkmark fg-green"></span>
+            {% else %}
+                <span class="mif-cross fg-red"></span>
+            {% endif %}
+
+            <span class="mif-question clickable link"
+                  data-role="popover"
+                  data-popover-mode="click"
+                  data-popover-shadow="true"
+                  data-popover-position="right"
+                  data-popover-text="<h3>Professional skill grade:</h3>
+                                            <ul>
+                                                {% for opt in file.staffresponse.StatusOptions %}
+                                                    <li>{{ opt.1 }} ({{ opt.0 }})</li>
+                                                {% endfor %}
+                                            </ul>"
+                  data-popover-background="bg-cyan"
+                  data-popover-color="fg-white">
+            </span>
+
+            </p>
+            <p>
+                {{ file.staffresponse.Explanation|default:"No comments given." }}
+            </p>
+
+            <h3>Grading aspects</h3>
+
+            {% if file.staffresponse.aspects.exists %}
+                <p>
+                <span class="mif-question clickable"
+                      data-role="popover"
+                      data-popover-mode="click"
+                      data-popover-shadow="true"
+                      data-popover-position="right"
+                      data-popover-text="<h3>Aspect grade options:</h3>
+                            <ul>
+                                {% for opt in aspectoptions %}
+                                    <li>{{ opt.1 }} ({{ opt.0 }})</li>
+                                {% endfor %}
+                            </ul>"
+                      data-popover-background="bg-cyan"
+                      data-popover-color="fg-white">
+                                </span>
+                </p>
+                <table style="width:100%; table-layout:fixed;" class="table bordered">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Grade</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    {% for aspect in file.staffresponse.aspects.all %}
+                        <tr>
+                            <td>
+                                <b>{{ aspect.Aspect.Name }}</b>
+                            </td>
+                            <td>
+                                {{ aspect.Aspect.Description }}
+                            </td>
+                            <td>
+                                {{ aspect.get_Grade_display }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                No grade aspects are defined for this professional skill.
+            {% endif %}
+
+            <h3>Grading details</h3>
+            <table class="table striped">
+                <tr>
+                    <th>Graded by:</th>
+                    <td>
+                        {{ file.staffresponse.Staff.usermeta.get_nice_name }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Graded on:</th>
+                    <td class="{% if file.staffresponse.TimestampLastEdited < file.TimeStamp %}error{% endif %}">
+                        {{ file.staffresponse.TimestampLastEdited }}
+                        {% if file.staffresponse.file_changed_after_grade %}
+                            <b>Warning: File has changed after grading</b>
+                        {% endif %}
+                    </td>
+                </tr>
+
+            </table>
         {% else %}
             No feedback given.
         {% endif %}
-    </p>
-    <h3>Comment</h3>
-    <p>
-        {{ response.Explanation|default:"No comments given." }}
-    </p>
-    {% if response.aspects.all %}
-        <h3>Aspects</h3>
-        <table style="width:100%; table-layout:fixed;" class="table bordered">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Grade</th>
-            </tr>
-            </thead>
-            <tbody>
+    <h2>File details</h2>
+    <table class="table striped ">
+        <tr>
+            <th>Project and Student:</th>
+            <td>
+                {{ file.Distribution }}
+        </tr>
+        <tr>
+            <th>File:</th>
+            <td>
+                <a href="{% url "download:studentfile" file.id %}" download><span class="icon mif-file-{{ file.metro_icon }}"></span> {{ file.OriginalName }}</a>
+                {% if file.Distribution|can_edit_file:request.user %}
+                    <a href="{% url 'professionalskills:upload' file.Type.id %}" class="button primary">Edit</a>
+                {% endif %}
+        </tr>
+        <tr>
+            <th>Caption:</th>
+            <td>{{ file.Caption|default:'-' }}</td>
+        </tr>
+        <tr>
+            <th>Deadline:</th>
+            <td>{{ file.Type.Deadline }}</td>
+        </tr>
 
-            {% for aspect in response.aspects.all %}
-                <tr>
-                    <td>
-                        {{ aspect.Aspect.Name }}
-                    </td>
-                    <td>
-                        {{ aspect.Aspect.Description }}
-                    </td>
-                    <td>
-                        {{ aspect.get_Grade_display }}
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+        <tr>
+            <th>Last change:</th>
+            <td class="{% if file.after_deadline %}error{% else %}success{% endif %}">{{ file.TimeStamp }}
+                <br/>
+                {% if file.after_deadline %}Hand-in after deadline{% else %}On time{% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Created:</th>
+            <td>{{ file.Created }}</td>
+        </tr>
 
-    {% endif %}
-    <h3>Grade options</h3>
-        <p>Professional skill grade:</p>
-    <ul>
-        {% for opt in response.StatusOptions %}
-            <li>{{ opt.1 }} ({{ opt.0 }})</li>
-        {% endfor %}
-    </ul>
-    <p>Aspect grade options:</p>
-    <ul>
-        {% for opt in aspectoptions %}
-            <li>{{ opt.1 }} ({{ opt.0 }})</li>
-        {% endfor %}
-    </ul>
+    </table>
 {% endblock %}

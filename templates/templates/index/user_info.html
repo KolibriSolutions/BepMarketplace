@@ -49,6 +49,8 @@
             </tr>
         {% endfor %}
     </table>
+    <h2>Uploaded files (professional skills)</h2>
+    <a href="{% url 'support:downloadstudent' view_user.pk %}" class="button primary">Download all PRV files</a>
     <h2>Info as JSON:</h2>
     <label for="json">JSON info</label>
     <textarea id="json">

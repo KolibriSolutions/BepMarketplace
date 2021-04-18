@@ -4,57 +4,64 @@
     <h1>Applications</h1>
     <p>Applications can be changed till the end of the phase "Students choosing projects"</p>
     <p>You can make up to {{ num_app }} applications per time slot.</p>
-    {% if private %}
-        <p> There is a private proposal for you. Therefore you cannot apply to public proposals. Please check out your
-            proposal in the sidebar on the right.</p>
-    {% endif %}
 
     {% if applications %}
-        {% for ts, applications in applications.items %}
+        {% for ts, lst in applications.items %}
+
             <h2>{{ ts }}</h2>
-            <table class="table">
-                <thead>
-                <tr>
-                    <th>Priority</th>
-                    <th>Name</th>
-                    <th>Responsible staff</th>
-                    <th>Assistant(s)</th>
-                    <th>Retract</th>
-                </tr>
-                </thead>
-                {% for appl in applications %}
+            {% if lst.1 %}  {# private #}
+                {% if lst.1.length > 1 %}
+                    There are multiple private proposals for you in this timeslot. Please contact support staff to remove you from one.
+                {% else %}
+                    You have a private project: <a href="{% url "proposals:details" lst.1.0.pk %}">{{ lst.1|first }}</a>
+                {% endif %}
+            {% else %}
+
+                <table class="table">
+                    <thead>
                     <tr>
-                        <td>
-                            {{ appl.Priority }}
-                            {% if appl.Priority != 1 %}
-                                <a href="{% url 'students:prioUp' appl.id %}"><span class="mif-expand-less"></span></a>
-                            {% endif %}
-                            {% if appl.Priority != applications|length %}
-                                <a href="{% url 'students:prioDown' appl.id %}"><span class="mif-expand-more"></span></a>
-                            {% endif %}
-                        </td>
-                        <td><a href="{% url 'proposals:details' appl.Proposal.id %}">{{ appl.Proposal.Title }}</a></td>
-                        <td>{{ appl.Proposal.ResponsibleStaff.usermeta.get_nice_name }}</td>
-                        <td>
-                            <ul class="no-margin">
-                                {% for assistant in appl.Proposal.Assistants.all %}
-                                    <li>
-                                        {{ assistant.usermeta.get_nice_name }}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </td>
-                        <td>
-                            {# <a href="{% url 'students:detailapplication' appl.id %}"><button class="button primary">Details</button> </a> #}
-                            {% if appl.Proposal.can_apply %}
-                            <a href="{% url 'students:retractapplication' appl.id %}">
-                                <button class="button danger">Retract</button>
-                            </a>
-                            {% endif %}
-                        </td>
+                        <th>Priority</th>
+                        <th>Name</th>
+                        <th>Responsible staff</th>
+                        <th>Assistant(s)</th>
+                        <th>Retract</th>
                     </tr>
-                {% endfor %}
-            </table>
+                    </thead>
+
+                    {% for appl in lst.0 %}
+                        <tr>
+                            <td>
+                                {{ appl.Priority }}
+                                {% if appl.Priority != 1 %}
+                                    <a href="{% url 'students:prioUp' appl.id %}"><span class="mif-expand-less"></span></a>
+                                {% endif %}
+                                {% if appl.Priority != applications|length %}
+                                    <a href="{% url 'students:prioDown' appl.id %}"><span class="mif-expand-more"></span></a>
+                                {% endif %}
+                            </td>
+                            <td><a href="{% url 'proposals:details' appl.Proposal.id %}">{{ appl.Proposal.Title }}</a></td>
+                            <td>{{ appl.Proposal.ResponsibleStaff.usermeta.get_nice_name }}</td>
+                            <td>
+                                <ul class="no-margin">
+                                    {% for assistant in appl.Proposal.Assistants.all %}
+                                        <li>
+                                            {{ assistant.usermeta.get_nice_name }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td>
+                                {# <a href="{% url 'students:detailapplication' appl.id %}"><button class="button primary">Details</button> </a> #}
+                                {% if appl.Proposal.can_apply %}
+                                    <a href="{% url 'students:retractapplication' appl.id %}">
+                                        <button class="button danger">Retract</button>
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
         {% endfor %}
     {% endif %}
 {% endblock %}

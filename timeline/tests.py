@@ -45,6 +45,9 @@ class TimeLineViewsTest(ViewsTest):
             [['edit_timephase', {'timephase': self.tp.pk}], self.p_support],
             [['edit_timephase', {'timephase': ntp.pk}], self.p_support],
             [['edit_timephase', {'timephase': ptp.pk}], self.p_forbidden],
+
+            [['students', None], self.p_support],
+            [['students_confirm', None], self.p_forbidden],   # no post data check.
         ]
 
         self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes)

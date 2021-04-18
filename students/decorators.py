@@ -31,11 +31,13 @@ def can_apply(fn):
 
         if request.user.groups.exists():
             raise PermissionDenied("Only students can apply to proposals")
-        if any([p.cur_or_future() for p in request.user.personal_proposal.all()]):
-            raise PermissionDenied("You cannot apply/retract because there is a private proposal for you.")
+        if any([p.nextyear() for p in request.user.personal_proposal.all()]):
+            raise PermissionDenied("You cannot apply/retract because there is a private proposal in a future timeslot for you.")
         if 'pk' in kw:
             pk = int(kw['pk'])
             prop = get_object_or_404(Project, pk=pk)
+            if request.user.personal_proposal.filter(TimeSlot=prop.TimeSlot).exists():
+                raise PermissionDenied(f"There is a private proposal for you in this timeslot ({prop.TimeSlot}). You cannot apply to other projects in this timeslot.")
             if prop.Private.exists():
                 raise PermissionDenied("This proposal is private. It is already assigned.")
             if not prop.can_apply():

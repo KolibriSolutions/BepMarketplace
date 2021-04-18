@@ -251,7 +251,7 @@ def detail_project(request, pk):
     # if student
     if not request.user.groups.exists():
         # make apply / retract button.
-        if request.user.personal_proposal.exists() or not proj.can_apply():
+        if request.user.personal_proposal.filter(TimeSlot=proj.TimeSlot).exists() or not proj.can_apply():
             button = ''
         else:
             button = '<a href="{}" class="button {}">{}</a>'
@@ -302,7 +302,8 @@ def detail_project(request, pk):
                 data['applications'] = proj.applications.all()
                 data['distributions'] = get_distributions(request.user, timeslot=proj.TimeSlot).filter(Proposal=proj)
             # other staff users can see old distributions and current in phase 4+
-            elif proj.prevyear() or (proj.curyear() and get_timephase_number() >= 4):
+            elif (get_grouptype('2u') not in request.user.groups.all()) and \
+                    proj.prevyear() or (proj.curyear() and get_timephase_number() >= 4):
                 data['distributions'] = get_distributions(request.user, timeslot=proj.TimeSlot).filter(Proposal=proj)
 
         allowed = can_edit_project_fn(request.user, proj, False)

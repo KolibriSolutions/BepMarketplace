@@ -29,11 +29,12 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             Description='TestAspectDescription',
             File=f,
         )
-        fa.id=100
+        fa.id = 100
         fa.save()
         sf = StudentFile(
             Caption='TestFile',
             Distribution=self.distribution_random,
+            OriginalName='test.txt',
             Type=f,
         )
         sf.id = 0
@@ -62,28 +63,33 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
 
     def test_view_status(self):
         codes_general = [
-            [['filetypecreate', None], self.p_support_prv],
-            [['filetypeedit', {'pk': 100}], self.p_support_prv],
-            [['filetypedelete', {'pk': 100}], self.p_support_prv],
-            [['addaspect', {'pk': 100}], self.p_support_prv],
-            [['editaspect', {'pk': 100}], self.p_support_prv],
-            [['deleteaspect', {'pk': 100}], self.p_support_prv],
+            [['create', None], self.p_support_prv],
+            [['edit', {'pk': 100}], self.p_support_prv],
+            [['delete', {'pk': 100}], self.p_support_prv],
+            [['add_aspect', {'pk': 100}], self.p_support_prv],
+            [['edit_aspect', {'pk': 100}], self.p_support_prv],
+            [['delete_aspect', {'pk': 100}], self.p_support_prv],
 
             [['creategroup', {'pk': 100}], self.p_support_prv],
             [['creategroup', None], self.p_support_prv],
             [['extensions', None], self.p_support_prv],
             [['editgroup', {'pk': 0}], self.p_support_prv],
             [['listgroups', {'pk': 100}], self.p_support_prv],
+
+            [['copy_overview', {'pk': 100}], self.p_support_prv],
+            [['copy', {'pk': 100, 'from_pk': 100}], self.p_support_prv],  # copy from itself.
+            [['filetype_export', {'pk': 100}], self.p_support_prv],  # copy from itself.
+
         ]
         codes_phase1234 = [  # also no-timephase
             [['listfileoftype', {'pk': 100}], self.p_forbidden],
             [['listmissingoftype', {'pk': 100}], self.p_forbidden],
-            [['filetypelist', None], self.p_support_prv],
-            [['filetypeaspects', {'pk': 100}], self.p_support_prv],
-            [['liststudentfiles', {'pk': 1}], self.p_support_prv],
-            [['listownfiles', None], self.p_forbidden],
-            [['respondfile', {'pk': 0}], self.p_forbidden],
-            [['viewresponse', {'pk': 0}], self.p_forbidden],
+            [['list', None], self.p_staff_veri],
+            [['list_aspects', {'pk': 100}], self.p_support_prv],
+            [['student', {'pk': 1}], self.p_forbidden],
+            [['student', None], self.p_forbidden],
+            [['respond', {'pk': 0}], self.p_forbidden],
+            [['response', {'pk': 0}], self.p_forbidden],
             [['mailoverduestudents', None], self.p_forbidden],
             [['printprvforms', None], self.p_forbidden],
             [['downloadall', {'pk': 100}], self.p_forbidden],
@@ -91,39 +97,47 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['switchgroups', {'pk': 100}], self.p_forbidden],
             [['listgroupmembers', {'pk': 0}], self.p_forbidden],
             [['assignshuffle', {'pk': 100}], self.p_forbidden],
+
+            [['upload', {'pk': 100}], self.p_forbidden],
+
         ]
 
         codes_phase567 = [
             [['listfileoftype', {'pk': 100}], self.p_staff_stud],
             [['listmissingoftype', {'pk': 100}], self.p_staff_stud],
-            [['filetypelist', None], self.p_all],
-            [['filetypeaspects', {'pk': 100}], self.p_all],
-            [['listownfiles', None], self.p_student],
-            [['respondfile', {'pk': 0}], self.p_staff_prv_results],
+            [['list', None], self.p_staff_veri],
+            [['list_aspects', {'pk': 100}], self.p_all],
+            [['student', None], self.p_student],
+            [['respond', {'pk': 0}], self.p_staff_prv_results],
 
             [['mailoverduestudents', None], self.p_support_prv],
-            [['printprvforms', None], self.p_support_prv],
-            [['downloadall', {'pk': 100}], self.p_support_prv],
+            [['printprvforms', None], self.p_staff_stud],
+
 
             [['listowngroups', None], self.p_student],
-            [['switchgroups', {'pk': 100}], self.p_student], # never used and hard to test, so not tested
+            [['switchgroups', {'pk': 100}], self.p_student],  # never used and hard to test, so not tested
             [['listgroupmembers', {'pk': 0}], self.p_all],
             [['assignshuffle', {'pk': 100}], self.p_support_prv],
+
+            [['upload', {'pk': 100}], self.p_student],
         ]
         codes_phase56_planning_hidden = [
-            [['liststudentfiles', {'pk': 1}], self.p_all_this_dist],
-            [['viewresponse', {'pk': 0}], self.p_all_this_dist],
-
+            [['student', None], self.p_student],
+            [['student', {'pk': self.distribution_random.pk}], self.p_all_this_dist],
+            [['response', {'pk': 0}], self.p_all_this_dist_stud],
+            [['downloadall', {'pk': 100}], self.p_all_this_dist],
         ]
+
         codes_phase7_planning_visible = [
-            [['liststudentfiles', {'pk': 1}], self.p_all_this_dist_ta],
-            [['viewresponse', {'pk': 0}], self.p_all_this_dist_ta],
+            [['student', None], self.p_student],
+            [['student', {'pk': self.distribution_random.pk}], self.p_all_this_dist_ta],
+            [['response', {'pk': 0}], self.p_all_this_dist_ta_stud],
+            [['downloadall', {'pk': 100}], self.p_all_this_dist_ta],
         ]
         self.info['type'] = 'general'
         self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes_general)
         self.info['type'] = 'phase'
         self.loop_phase_code_user([-1, 1, 2, 3, 4], codes_phase1234)
-        # self.loop_phase_user([5], codes_phase5)
         self.loop_phase_code_user([5, 6, 7], codes_phase567)
         self.loop_phase_code_user([5, 6], codes_phase56_planning_hidden)
 

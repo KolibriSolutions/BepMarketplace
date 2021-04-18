@@ -38,7 +38,7 @@
                     </h3>
                     <p>
                         Project: <a href="{% url 'proposals:details' pk=dstr.Proposal.pk %}">{{ dstr.Proposal|truncatewords:10 }}</a><br />
-                        Files: <a href="{% url 'professionalskills:liststudentfiles' pk=dstr.pk %}">{{ dstr.Student.usermeta.get_nice_name }}</a>
+                        Files: <a href="{% url 'professionalskills:student' dstr.pk %}">{{ dstr.Student.usermeta.get_nice_name }}</a>
 
                     </p>
                     <p>

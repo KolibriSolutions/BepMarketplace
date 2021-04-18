@@ -17,9 +17,9 @@
         {% if phasenumber == 5 %}
             <p>The current phase is 'Gather and process objections' so distributions of students might still change.</p>
         {% endif %}
-        <a href="{% url "students:download_files" %}" class="button primary">Download all files</a>
-        <a href="{% url "students:liststudents_xls" %}" class="button primary">Export Excel</a>
     {% endif %}
+    <a href="{% url "students:download_files" timeslot.pk %}" class="button primary">Download all files</a>
+    <a href="{% url "students:liststudents_xls" timeslot.pk %}" class="button primary">Export Excel</a>
 
     <a href="#" id="studentinfo" class="columnToggle button"><span></span> student info</a>
     <a href="#" id="projectinfo" class="columnToggle button"><span></span> project info</a>
@@ -52,7 +52,7 @@
                     <th data-searchable="false" data-orderable="false">Grades</th>
                 {% endif %}
                 {% if phasenumber > 3 %}
-                    <th data-searchable="false" data-orderable="false">Files</th>
+                    <th data-searchable="false">Files</th>
                 {% endif %}
             </tr>
             </thead>
@@ -72,7 +72,7 @@
                                 data-search="{{ ds.usermeta.EnrolledExt|yesno }}"><span
                                     class="mif-{{ ds.usermeta.EnrolledExt|yesno:"checkmark fg-green,cross fg-red" }}"></span>
                             </td>
-                            <td><a href="{% url "proposals:details" dp.id %}">{{ dp.Title }}</a></td>
+                            <td><a href="{% url "proposals:details" dp.id %}">{{ dp.Title|truncatewords:'12' }}</a></td>
                             <td>{{ dp.Track }}</td>
                             <td>{{ dp.Group }}</td>
                             <td>
@@ -99,8 +99,14 @@
                                 </td>
                             {% endif %}
                             {% if phasenumber > 3 %}
-                                <td><a href="{% url "professionalskills:liststudentfiles" d.0.id %}"
-                                       class="button primary">Files</a></td>
+                                <td data-sort="{{ d.0.files.count }}">
+                                    <a href="{% url "professionalskills:student" d.0.id %}"
+                                    class="button primary">Files</a>
+                                    <br />
+                                    {{ d.0.files.count }} file{{ d.0.files.count|pluralize }}, {{ d.0.missing_files.count }} type{{ d.0.missing_files.count|pluralize}} missing
+                                    <br />
+                                    {{ d.0.missing_file_gradings.count }} to be graded
+                                </td>
                             {% endif %}
                         </tr>
                     {% endwith %}

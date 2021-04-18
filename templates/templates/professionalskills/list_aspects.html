@@ -3,10 +3,25 @@
 {% load index_tags %}
 
 {% block body %}
-    <h1>File aspects for {{ file }}</h1>
+    <h1>File grading for {{ file }}</h1>
+    <p>Supervisors will place a grade and optionally a comment for this professional skill. The options for grading are:</p>
+    <ul>
+        {% for s in sr %}
+            <li>{{ s.1 }} ({{ s.0 }})</li>
+        {% endfor %}
+    </ul>
+    <p>Next to this general grading, some specific aspects can be specified.</p>
+    <h2>Aspects</h2>
     {% if user|has_group:'type3staff,type6staff' %}
-        <a href="{% url 'professionalskills:addaspect' file.pk %}" class="button primary">Add aspect</a>
+        <a href="{% url 'professionalskills:add_aspect' file.pk %}" class="button primary">Add aspect</a>
+        <a href="{% url 'professionalskills:copy_overview' file.pk %}" class="button primary">Import aspects from other prv</a>
     {% endif %}
+    <p>Aspects are graded in the following scale:</p>
+    <ul>
+        {% for opt in aspectoptions %}
+            <li>{{ opt.1 }} ({{ opt.0 }})</li>
+        {% endfor %}
+    </ul>
     {% if aspects %}
         <table style="width:100%; table-layout:fixed;" class="table bordered">
             <thead>
@@ -30,8 +45,8 @@
                     </td>
                     {% if user|has_group:'type3staff,type6staff' %}
                         <td>
-                            <a href="{% url 'professionalskills:editaspect' aspect.pk %}" class="button primary">Edit</a>
-                            <a href="{% url 'professionalskills:deleteaspect' aspect.pk %}" class="button warning">Delete</a>
+                            <a href="{% url 'professionalskills:edit_aspect' aspect.pk %}" class="button primary">Edit</a>
+                            <a href="{% url 'professionalskills:delete_aspect' aspect.pk %}" class="button warning">Delete</a>
                         </td>
                     {% endif %}
                 </tr>
@@ -39,12 +54,7 @@
             </tbody>
         </table>
     {% else %}
-        <p>No professional skill grade aspects have been defined.</p>
+        <p>No grade aspects have been defined for this professional skill.</p>
     {% endif %}
-    <h2>Grade options</h2>
-    <ul>
-        {% for opt in aspectoptions %}
-            <li>{{ opt.1 }} ({{ opt.0 }})</li>
-        {% endfor %}
-    </ul>
+
 {% endblock %}

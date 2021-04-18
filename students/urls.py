@@ -17,12 +17,12 @@ urlpatterns = [
 
     path('application/retract/<int:application_id>/', views.retract_application, name='retractapplication'),
 
-    path('files/add/', views.add_file, name='addfile'),
-    path('files/edit/<int:pk>/', views.edit_file, name='editfile'),
+    # path('files/add/', views.add_file, name='addfile'),
+    # path('files/edit/<int:pk>/', views.edit_file, name='editfile'),
 
     # view for staff
     path('list/<int:timeslot>/', views.list_students, name='liststudents'),
-    path('list/xlsx/', views.list_students_xlsx, name='liststudents_xls'),
-    path('download/', views.download_files, name='download_files'),
+    path('list/xlsx/<int:timeslot>/', views.list_students_xlsx, name='liststudents_xls'),
+    path('download/<int:timeslot>/', views.download_files, name='download_files'),
 
 ]

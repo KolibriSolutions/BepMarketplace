@@ -8,6 +8,7 @@ from django import forms
 
 from templates import widgets
 from .models import TimeSlot, TimePhase
+from general_model import clean_text
 
 
 class TimeSlotForm(forms.ModelForm):
@@ -65,3 +66,14 @@ class TimePhaseCopyForm(forms.Form):
     ts_to = forms.ModelChoiceField(queryset=TimeSlot.objects.filter(timephases__isnull=True, End__gt=datetime.now()).distinct(),
                                    widget=widgets.MetroSelect,
                                    help_text='Time slot to copy time phases to. Only time slots without time phases can be chosen.')
+
+
+class UserTimeSlotForm(forms.Form):
+    timeslot = forms.ModelChoiceField(queryset=TimeSlot.objects.filter(timephases__isnull=False).distinct(),
+                                      widget=widgets.MetroSelect,
+                                      help_text='Time slot with time phases to copy time phases from.')
+    students = forms.CharField(widget=widgets.MetroMultiTextInput,
+                               help_text='List of emailaddress of students to change. Student should already have an account. Use a whitespace or newline as delimiter.')
+
+    def clean_students(self):
+        return clean_text(self.cleaned_data.get('students'))

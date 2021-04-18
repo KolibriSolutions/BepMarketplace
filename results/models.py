@@ -9,8 +9,6 @@ from django.db import models
 from django.db.models.aggregates import Sum
 
 from general_model import clean_text
-# from index.models import Track
-# from professionalskills.models import FileType, StudentFile
 from students.models import Distribution
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot_id

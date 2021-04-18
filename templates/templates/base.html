@@ -4,6 +4,7 @@
 {% load index_tags %}
 {% load proposal_tags %}
 {% load presentations_tags %}
+{% load professionalskills_tags %}
 {% load students_tags %}
 {% load support_tags %}
 
@@ -106,48 +107,48 @@
                             </ul>
                         </li>
                         {% if user|has_group:"type3staff" %}
-                                {# phase 1 and 2 do not have any distributions #}
-                                {# phase 4 - 6 show manual distribution button #}
-                                <li>
-                                    <a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Distribution</a>
-                                    <ul class="d-menu" data-role="dropdown">
-                                        {% if phasenumber == 6 %}
-                                            <li><a href="{% url 'distributions:supportDistributeApplications' %}">Change</a></li>
-                                        {% endif %}
-                                        {% if phasenumber == 4 or phasenumber == 5 %}
+                            {# phase 1 and 2 do not have any distributions #}
+                            {# phase 4 - 6 show manual distribution button #}
+                            <li>
+                                <a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Distribution</a>
+                                <ul class="d-menu" data-role="dropdown">
+                                    {% if phasenumber == 6 %}
+                                        <li><a href="{% url 'distributions:supportDistributeApplications' %}">Change</a></li>
+                                    {% endif %}
+                                    {% if phasenumber == 4 or phasenumber == 5 %}
+                                        <li>
+                                            <a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
+                                                Manually</a>
+                                        </li>
+                                        {# actual distributions are possible in phase 4 and 5 #}
+                                        {% if phasenumber == 4 %}
+                                            {# phase 4 show automatic distribution menu#}
                                             <li>
-                                                <a href="{% url 'distributions:supportDistributeApplications' %}">Distribute
-                                                    Manually</a>
-                                            </li>
-                                            {# actual distributions are possible in phase 4 and 5 #}
-                                            {% if phasenumber == 4 %}
-                                                {# phase 4 show automatic distribution menu#}
-                                                <li>
-                                                    <a href="{% url 'distributions:automaticoptions' %}">Distribute
-                                                        Automatically</a>
-                                                </li>
-                                            {% endif %}
-                                            <li><a href="{% url 'distributions:SupportListApplicationsDistributions' %}">List
-                                                all</a></li>
-                                            <li><a href="{% url "distributions:secondchoice" %}">Second Choice</a></li>
-                                        {% else %}
-                                            {# show simple list applications/distributions button in phase 3, 6 and 7 #}
-                                            <li>
-                                                <a href="{% url 'distributions:SupportListApplicationsDistributions' %}">
-                                                    {% if phasenumber == 3 %}List Applications{% else %}List
-                                                        Distributions{% endif %}
-                                                </a>
+                                                <a href="{% url 'distributions:automaticoptions' %}">Distribute
+                                                    Automatically</a>
                                             </li>
                                         {% endif %}
-                                        {% get_next_timeslot as next_timeslot %}
-                                        {% if next_timeslot %}
-                                            <li><a href="{% url 'distributions:SupportListApplicationsDistributions' next_timeslot.id %}">
-                                                Applications for {{ next_timeslot }}
-                                                </a>
-                                                </li>
-                                        {% endif %}
-                                    </ul>
-                                </li>
+                                        <li><a href="{% url 'distributions:SupportListApplicationsDistributions' %}">List
+                                            all</a></li>
+                                        <li><a href="{% url "distributions:secondchoice" %}">Second Choice</a></li>
+                                    {% else %}
+                                        {# show simple list applications/distributions button in phase 3, 6 and 7 #}
+                                        <li>
+                                            <a href="{% url 'distributions:SupportListApplicationsDistributions' %}">
+                                                {% if phasenumber == 3 %}List Applications{% else %}List
+                                                    Distributions{% endif %}
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    {% get_next_timeslot as next_timeslot %}
+                                    {% if next_timeslot %}
+                                        <li><a href="{% url 'distributions:SupportListApplicationsDistributions' next_timeslot.id %}">
+                                            Applications for {{ next_timeslot }}
+                                        </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </li>
                             {% if phasenumber > 4 %}
                                 <li>
                                     <a href="" class="dropdown-toggle"><span class="mif-file-powerpoint icon"></span>Presentations</a>
@@ -203,8 +204,9 @@
                                         <ul class="d-menu" data-role="dropdown">
                                             <li><a href="{% url 'osirisdata:list' %}">View Osiris import</a></li>
                                             <li><a href="{% url 'osirisdata:tometa' %}">Import Osiris to Meta</a></li>
+                                            <li><a href="{% url 'timeline:students' %}">Add students to timeslot</a></li>
                                             {#                                        <li><a href="{% url 'support:ectsform' %}">Students ECTS</a></li>#}
-{#                                            <li><a href="{% url 'osirisdata:list' %}">Change timeslots</a></li>#}
+                                            {#                                            <li><a href="{% url 'osirisdata:list' %}">Change timeslots</a></li>#}
                                         </ul>
                                     </li>
                                     <li>
@@ -229,25 +231,22 @@
                                 </li>
                             {% endif %}
                         {% endif %}
+                        {# Students and grades menu #}
                         {% if user|has_group:'type1staff;type2staff;type3staff;type6staff' %}
-                            {% if phasenumber > 3 or phasenumber < 0 and timeslotpresent %}
-                                <li><a href="{% url_timeslot 'students:liststudents' %}"><span class="mif-users icon"></span>Students
-                                    {% if phasenumber >= 6 or phasenumber < 0 %} & Grades{% endif %}</a>
-                                </li>
+                            {% if timeslotpresent %}
+                                {% if phasenumber > 3 or phasenumber < 0 %}
+                                    <li><a href="{% url_timeslot 'students:liststudents' %}"><span class="mif-users icon"></span>Students
+                                        {% if phasenumber >= 6 or phasenumber < 0 %} & Grades{% endif %}</a>
+                                    </li>
+                                {% endif %}
                             {% endif %}
                         {% endif %}
-                        {#                    {% elif user|has_group:"type4staff" %}#}
-                        {#                        <li><a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Proposals</a>#}
-                        {#                            <ul class="d-menu" data-role="dropdown">#}
-                        {#                                <li><a href="{% url 'support:listgroupproposals' %}"><span#}
-                        {#                                        class="mif-mail-read icon"></span>My#}
-                        {#                                    group proposals</a></li>#}
-                        {#                                <li><a href="{% url 'proposals:create' %}">Create new proposal</a></li>#}
-                        {#                            </ul>#}
-                        {#                        </li>#}
-                        {#                    {% elif user|has_group:"type5staff" %}#}
-                        {#                        <li><a href="{% url 'support:listproposalsadvisor' %}"><span class="mif-mail-read icon"></span>All#}
-                        {#                            proposals</a></li>#}
+                        {# Staff PRV #}
+                        {% if user|has_group:'type1staff;type2staff;type3staff;type4staff;type5staff;type6staff' %}
+                            <li><a href="{% url 'professionalskills:list' %}"><span class="mif-widgets icon"></span>Professional Skills</a></li>
+                        {% endif %}
+
+                        {# STUDENTS MENU #}
                     {% else %} {# students #}
                         <li>
                             <a href="{% url_timeslot 'proposals:list' %}"><span class="mif-mail-read icon"></span>Proposals</a>
@@ -258,45 +257,22 @@
                         {#                        {% endif %}#}
                         {% if phasenumber > 4 and user.distributions.exists %}
                             <li>
-                                <a href="" class="dropdown-toggle"><span
-                                        class="mif-files-empty icon"></span>Files</a>
-                                <ul class="d-menu" data-role="dropdown">
-                                    <li><a href="{% url 'professionalskills:listownfiles' %}">List files</a></li>
-                                    <li><a href="{% url 'students:addfile' %}">Upload file</a></li>
-                                </ul>
-                            </li>
-                            <li>
                                 <a href="{% url 'presentations:presentationscalendar' %}"><span
                                         class="mif-file-powerpoint icon"></span>Presentations</a>
                             </li>
-                        {% endif %}
-                    {% endif %}
-                    {% if user|has_group:'type3staff;type6staff' %}
-                        <li>
-                            <a href="#" class="dropdown-toggle"><span class="mif-widgets icon"></span>Professional Skills</a>
-                            <ul class="d-menu" data-role="dropdown">
-                                <li><a href="{% url 'professionalskills:filetypelist' %}">All</a></li>
-                                <li><a href="{% url 'professionalskills:extensions' %}">File extensions</a></li>
-                                {% if user|has_group:'type6staff' %}
-                                    <li><a href="{% url 'professionalskills:filetypecreate' %}">Create New</a></li>
-                                {% endif %}
-                            </ul>
-                        </li>
-                    {% elif phasenumber > 4 %} {# students with distribution  #}
-                        {% if user.distributions.exists %}  {# only distributed students (not filtered by timeslot) #}
+                            {# PRV MENU #}
                             <li>
                                 <a href="#" class="dropdown-toggle"><span class="mif-widgets icon"></span>Professional Skills</a>
                                 <ul class="d-menu" data-role="dropdown">
-                                    <li><a href="{% url 'professionalskills:filetypelist' %}">Professional Skills</a></li>
+                                    <li><a href="{% url 'professionalskills:student' %}">Professional Skills</a></li>
                                     <li><a href="{% url 'professionalskills:listowngroups' %}">Groups</a></li>
                                 </ul>
                             </li>
-                        {% else %} {# students without distribution and type1/2 staff #}
-                            <li><a href="{% url 'professionalskills:filetypelist' %}"><span class="mif-widgets icon"></span>Professional Skills</a></li>
                         {% endif %}
-
                     {% endif %}
 
+
+                    {#  SUPERUSER MENU #}
                     {% if user.is_superuser %}
                         <li>
                             <a href="" class="dropdown-toggle"><span class="mif-wrench"></span>GodPowers</a>
@@ -411,6 +387,16 @@
                                         {% get_presentations_staff user %}
                                     </div>
                                 </div>
+                                <br/>
+                                <div class="panel"> {# staff PRV panel #}
+                                    <div class="heading">
+                                        <span class="title">Prof. Skills:</span>
+                                    </div>
+                                    <div class="content padding5">
+                                        {% get_prv_todo user %}
+                                    </div>
+                                </div>
+
                             {% endif %}
                         {% else %}
                             {# Students #}

@@ -253,12 +253,18 @@ class ProjectForm(forms.ModelForm):
         else:
             if self.request.user.is_superuser or get_grouptype('3') in self.request.user.groups.all():
                 self.fields['TimeSlot'].queryset = TimeSlot.objects.all().order_by('-Begin')
-                self.fields['TimeSlot'].initial = TimeSlot.objects.filter(Begin__gt=datetime.now()).order_by('-Begin')[0]  # autofill to first next available timeslot.
+                try:
+                    self.fields['TimeSlot'].initial = TimeSlot.objects.filter(Begin__gt=datetime.now()).order_by('-Begin')[0]  # autofill to first next available timeslot.
+                except IndexError:
+                    self.fields['TimeSlot'].initial = None
             else:
                 # phase 2+, only add for future timeslot
                 tss = TimeSlot.objects.filter(Begin__gt=datetime.now()).order_by('-Begin')
                 self.fields['TimeSlot'].queryset = tss
-                self.fields['TimeSlot'].initial = tss[0]  # autofill to first next available timeslot.
+                try:
+                    self.fields['TimeSlot'].initial = tss[0]  # autofill to first next available timeslot.
+                except IndexError:
+                    self.fields['TimeSlot'].initial = None
 
     @staticmethod
     def user_label_from_instance(self):

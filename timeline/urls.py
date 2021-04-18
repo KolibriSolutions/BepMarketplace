@@ -17,4 +17,7 @@ urlpatterns = [
     path('timephase/<int:timephase>/', views.edit_timephase, name='edit_timephase'),
     path('timephase/<int:timephase>/delete/', views.delete_timephase, name='delete_timephase'),
     path('copy/', views.copy_timephases, name='copy_timephases'),
+
+    path('students/', views.students, name='students'),
+    path('students/confirm/', views.students_confirm, name='students_confirm'),
 ]

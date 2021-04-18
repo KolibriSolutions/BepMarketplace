@@ -50,13 +50,11 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
         # General pages
         code_general_phase1234 = [
             [['listapplications', None], s.p_student],
-            [['addfile', None], s.p_forbidden],
-            [['editfile', {'pk': f.pk}], s.p_forbidden],
+
         ]
         code_general_phase567 = [
             [['listapplications', None], s.p_student],
-            [['addfile', None], s.p_student],
-            [['editfile', {'pk': f.pk}], s.p_student],
+
         ]
 
         # Proposal specific pages
@@ -79,16 +77,24 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
             [['liststudents', {'timeslot': self.ts.pk}], self.p_forbidden],
             [['liststudents', {'timeslot': self.nts.pk}], self.p_forbidden],
             [['liststudents', {'timeslot': self.pts.pk}], self.p_staff_stud],
-            [['liststudents_xls', None], self.p_forbidden],
-            [['download_files', None], self.p_forbidden]
+            [['liststudents_xls', {'timeslot': self.ts.pk}], self.p_forbidden],
+            [['liststudents_xls', {'timeslot': self.pts.pk}], self.p_staff_stud],
+            [['liststudents_xls', {'timeslot': self.nts.pk}], self.p_forbidden],
+            [['download_files', {'timeslot': self.ts.pk}], self.p_forbidden],
+            [['download_files', {'timeslot': self.pts.pk}], self.p_staff_stud],
+            [['download_files', {'timeslot': self.nts.pk}], self.p_forbidden],
 
         ]
         codes_stud_phase4567 = [  # list students is also available when no-timephase (but not when no-timeslot)
             [['liststudents', {'timeslot': self.ts.pk}], self.p_staff_stud],
             [['liststudents', {'timeslot': self.nts.pk}], self.p_forbidden],
             [['liststudents', {'timeslot': self.pts.pk}], self.p_staff_stud],
-            [['liststudents_xls', None], self.p_staff_stud],
-            [['download_files', None], self.p_staff_stud]
+            [['liststudents_xls', {'timeslot': self.ts.pk}], self.p_staff_stud],
+            [['liststudents_xls', {'timeslot': self.pts.pk}], self.p_staff_stud],
+            [['liststudents_xls', {'timeslot': self.nts.pk}], self.p_forbidden],
+            [['download_files', {'timeslot': self.ts.pk}], self.p_staff_stud],
+            [['download_files', {'timeslot': self.pts.pk}], self.p_staff_stud],
+            [['download_files', {'timeslot': self.nts.pk}], self.p_forbidden],
         ]
 
 

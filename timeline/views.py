@@ -2,18 +2,21 @@
 #  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
+import json
 from datetime import datetime, timedelta
 
+from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, render
 
-from index.decorators import group_required
 from general_form import ConfirmForm
 from general_model import print_list, delete_object
-from .forms import TimePhaseForm, TimeSlotForm, TimePhaseCopyForm
+from index.decorators import group_required
+from .forms import TimePhaseForm, TimeSlotForm, TimePhaseCopyForm, UserTimeSlotForm
 from .models import TimeSlot, TimePhase
-from .utils import get_timeslot, get_timephase
-from django.conf import settings
+from .utils import get_timeslot
+
 
 @group_required('type3staff')
 def list_timeslots(request):
@@ -25,7 +28,8 @@ def list_timeslots(request):
     """
     tss = TimeSlot.objects.all()
     cur = get_timeslot()
-    return render(request, 'timeline/list_timeslots.html', {'tss': tss, 'cur': cur, 'now': datetime.now().date()-timedelta(days=settings.TIMELINE_EDIT_DAYS_AFTER_FINISH)})
+    return render(request, 'timeline/list_timeslots.html',
+                  {'tss': tss, 'cur': cur, 'now': datetime.now().date() - timedelta(days=settings.TIMELINE_EDIT_DAYS_AFTER_FINISH)})
 
 
 @group_required('type3staff')
@@ -56,7 +60,7 @@ def add_timeslot(request):
 @group_required('type3staff')
 def edit_timeslot(request, timeslot):
     ts = get_object_or_404(TimeSlot, pk=timeslot)
-    if ts.End < (datetime.now().date()-timedelta(days=settings.TIMELINE_EDIT_DAYS_AFTER_FINISH)): # allow editing 30 days after timeslot ending.
+    if ts.End < (datetime.now().date() - timedelta(days=settings.TIMELINE_EDIT_DAYS_AFTER_FINISH)):  # allow editing 30 days after timeslot ending.
         raise PermissionDenied('This timeslot has already finished.')
     if request.method == 'POST':
         form = TimeSlotForm(request.POST, instance=ts)
@@ -95,7 +99,7 @@ def list_timephases(request, timeslot):
     ph = ts.timephases.all()
     cur = get_timeslot()
     return render(request, 'timeline/list_timephases.html',
-                  {'ts': ts, 'ph': ph, 'cur': cur, 'now': datetime.now().date()-timedelta(days=settings.TIMELINE_EDIT_DAYS_AFTER_FINISH)})
+                  {'ts': ts, 'ph': ph, 'cur': cur, 'now': datetime.now().date() - timedelta(days=settings.TIMELINE_EDIT_DAYS_AFTER_FINISH)})
 
 
 @group_required('type3staff')
@@ -139,7 +143,7 @@ def edit_timephase(request, timephase):
     :return:
     """
     tp = get_object_or_404(TimePhase, pk=timephase)
-    if tp.End < datetime.now().date()-timedelta(days=settings.TIMELINE_EDIT_DAYS_AFTER_FINISH):
+    if tp.End < datetime.now().date() - timedelta(days=settings.TIMELINE_EDIT_DAYS_AFTER_FINISH):
         raise PermissionDenied('This TimePhase has already finished.')
 
     if request.method == 'POST':
@@ -243,3 +247,79 @@ def delete_timephase(request, timephase):
         'formtitle': 'Delete {}?'.format(name),
         'buttontext': 'Delete'
     })
+
+
+@group_required('type3staff')
+def students(request):
+    """
+    Add a list of students to a specific timeslot
+
+    :param request:
+    :return:
+    """
+
+    if request.method == 'POST':
+        form = UserTimeSlotForm(request.POST)
+        if form.is_valid():
+            ts = form.cleaned_data.get('timeslot')
+            ss = form.cleaned_data.get('students')
+            errors = []
+            students = []
+            for s in ss.strip().split():
+                if s:
+                    s = s.strip()
+                    try:
+                        student = User.objects.get(email=s)
+                        if student.groups.exists():
+                            errors.append(f'Email "{s}" is not a student. Skipped')
+                            continue
+                        students.append(student)
+                    except User.DoesNotExist:
+                        errors.append(f'Email "{s}" is not found.')
+            data = {'ts': ts.pk, 'students': [s.pk for s in students]}
+            return render(request, 'timeline/list_students_confirm.html', {
+                'students': students,
+                'errors': errors,
+                'form': ConfirmForm(),
+                'jsondata': json.dumps(data),
+                'ts': ts,
+            })
+    else:
+        form = UserTimeSlotForm()
+    return render(request, 'GenericForm.html', {
+        'form': form,
+        'formtitle': 'Add students to timeslot',
+        'buttontext': 'Confirm'
+    })
+
+
+@group_required('type3staff')
+def students_confirm(request):
+    """
+    Add a list of students to a specific timeslot
+
+    :param request:
+    :return:
+    """
+    if request.method == 'POST':
+        form = ConfirmForm(request.POST)
+        if form.is_valid():
+            data = json.loads(request.POST.get('jsondata', None))
+            if not data:
+                raise PermissionDenied('Invalid data.')
+            ts = get_object_or_404(TimeSlot, pk=data.get('ts'))
+            cnt = 0
+            for student in data['students']:
+                s = get_object_or_404(User, pk=student, groups=None)
+                s.usermeta.TimeSlot.add(ts)
+                s.usermeta.save()
+                cnt +=1
+            return render(request, 'base.html', {
+                'Message': f'{cnt} students set to {ts}.',
+            })
+        else:
+            return render(request, 'base.html', {
+                'Message': 'Please check confirm.',
+            })
+    else:
+        raise PermissionDenied('Invalid request.')

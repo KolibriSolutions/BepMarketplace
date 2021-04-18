@@ -1,28 +1,23 @@
 {% extends 'base.html' %}
-
+{% load professionalskills_tags %}
 {% block body %}
     {% if type %}
         <h1>All files of type {{ type }}</h1>
         <h3>Has deadline {{ type.Deadline }}</h3>
-    {% else %}
-        <h1>Files list for {{ dist.Student.usermeta.get_nice_name }}</h1>
-        {% if not user.groups.exists %}
-            <a href="{% url 'students:addfile' %}" class="button primary">Upload a file</a>
-        {% endif %}
+        {#    {% else %}#}
+        {#        <h1>Files list for {{ dist.Student.usermeta.get_nice_name }}</h1>#}
+        {#        {% if not user.groups.exists %}#}
+        {#            <a href="{% url 'students:addfile' %}" class="button primary">Upload a file</a>#}
+        {#        {% endif %}#}
     {% endif %}
     <table class="table bordered striped datatable">
         <thead>
         <tr>
             <th>{% if type %}Student{% else %}Type{% endif %}</th>
-            <th data-sortable="false" data-searchable="false"><span class="mif-attachment"></span></th>
-            <th>Name</th>
+            <th><span class="mif-attachment"></span> Name</th>
             <th data-sortable="false">Caption</th>
-            <th>Created</th>
-            <th>Updated</th>
-            <th>Supervisors Email</th>
+            <th>Time Stamp</th>
             <th>Supervisor feedback</th>
-            {#            <th>Approval Timestamp</th>#}
-            {#            <th data-sortable="false">Supervisor comments</th>#}
             <th>Rubric</th>
         </tr>
         </thead>
@@ -30,66 +25,44 @@
         {% for file in files %}
             <tr>
                 <td>{% if type %} {{ file.Distribution.Student.usermeta.get_nice_name }} {% else %} {{ file.Type }} {% endif %}</td>
-                <td><span class="icon mif-file-{{ file.metro_icon }}"></span></td>
                 <td>
-                    <a href="{% url "download:studentfile" file.id %}" download>{{ file.OriginalName }}</a>
-                    {% if edit %}
-                        <a href="{% url 'students:editfile' file.id %}" class="button primary">Edit</a>
-                    {% endif %}
+                    <a href="{% url "download:studentfile" file.id %}" download><span class="icon mif-file-{{ file.metro_icon }}"></span> {{ file.OriginalName }}</a>
                 </td>
                 <td>{{ file.Caption }}</td>
-                <td data-sort="{{ file.Created|date:"U" }}">{{ file.Created }}</td>
-                <td {% if file.TimeStamp.date <= file.Type.Deadline %} class="success" {% else %}class="error"{% endif %}
-                                                                       data-sort="{{ file.TimeStamp|date:"U" }}">{{ file.TimeStamp }}</td>
-                <td>
-                    {{ file.Distribution.Proposal.ResponsibleStaff.email }}<br/>
-                    {% for ass in file.Distribution.Proposal.Assistants.all %}
-                        {{ ass.email }}
-                    {% endfor %}
+                <td data-sort="{{ file.TimeStamp|date:"U" }}" class="{% if file.after_deadline %}error{% else %}success{% endif %}">
+                    {% if file.Created|date:"U" != file.TimeStamp|date:"U" %}
+                        Last change: {{ file.TimeStamp }}<br/>
+                    {% endif %}
+                    Created: {{ file.Created }}<br/>
                 </td>
                 <td>
                     {% if file.Type.CheckedBySupervisor %}
-                        {% if file.staffresponse.Status == 'V' or file.staffresponse.Status == 'G' %}
-                            {{ file.staffresponse.Status }}: <span class="mif-checkmark fg-green"></span>
-                        {% elif file.staffresponse %}
-                            {{ file.staffresponse.Status }}: <span class="mif-cross fg-red"></span>
-                        {% else %}
-                            No feedback given.
+                        {% if file.staffresponse %}
+                            {{ file.staffresponse.get_Status_display }}:
+                            {% if file.staffresponse.Status == 'V' or file.staffresponse.Status == 'G' %}
+                                <span class="mif-checkmark fg-green"></span>
+                            {% else %}
+                                <span class="mif-cross fg-red"></span>
+                            {% endif %}
+                            {% if file.staffresponse.file_changed_after_grade %}
+                                <b>Warning: File has changed after grading</b>
+                        {% endif %}
                         {% endif %}
                     {% else %}
                         No check needed
                     {% endif %}
                 </td>
-                {#                <td>#}
-                {#                    {% if file.Type.CheckedBySupervisor %}#}
-                {#                        {{ file.staffresponse.TimestampLastEdited }}#}
-                {#                    {% else %}#}
-                {#                        No check needed#}
-                {#                    {% endif %}#}
-                {#                </td>#}
-                {#                <td>#}
-                {#                     {% if file.Type.CheckedBySupervisor %}#}
-                {#                     {{ file.staffresponse.Explanation|default:'-' }}#}
-                {#                    {% endif %}#}
-                {#                </td>#}
                 <td>
                     {% if file.Type.CheckedBySupervisor %}
-                        {% if respond %}
-                            <a href="{% url 'professionalskills:respondfile' file.id %}" class="button primary">Edit</a>
+                        {% if file.Distribution|can_respond_file:request.user %}
+                            <a href="{% url 'professionalskills:respond' file.id %}" class="button primary">Grade</a>
                         {% endif %}
-                        <a href="{% url 'professionalskills:viewresponse' file.id %}" class="button primary">View</a>
+                        <a href="{% url 'professionalskills:response' file.id %}" class="button primary">View</a>
                     {% else %}
                         No check needed
                     {% endif %}
                 </td>
-                {#                {% if respond %}#}
-                {#                    <td>#}
-                {#                    {% if file.Type.results.exists %}#}
-                {#                        <a href="{% url 'results:gradeformstafffiles' file.Distribution.pk %}" class="button primary">Grades</a>#}
-                {#                        {% else %}#}
-                {#                        No official grade is required for this file.#}
-                {#                        {% endif %}#}
-                {#                    </td>{% endif %}#}
+
             </tr>
         {% endfor %}
         </tbody>
@@ -100,7 +73,11 @@
     {{ block.super }}
     <script>
         $(document).ready(function () {
-            var dt = $('.datatable').dt_wrapper();
+            var dt = $('.datatable').dt_wrapper(
+                [
+                    {column_number: 0, filter_type: {% if type %}"text"{% else %}"select"{% endif %}}, {# student #}
+                ]
+            );
         });
     </script>
 {% endblock %}

@@ -30,7 +30,7 @@
             <tbody>
             {% for u in users %}
                 <tr>
-                    <td>{{ u.usermeta.get_nice_name }}</td>
+                    <td>{{ u.usermeta.Fullname }}</td>
                     <td>{{ u.username }}</td>
                     <td><a href="mailto:{{ u.email }}">{{ u.email }}</a></td>
                     <td>

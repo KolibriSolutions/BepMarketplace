@@ -220,6 +220,10 @@ td.error {
 .panel > .heading {
     font-size: 100%;
 }
+.panel>.content{
+    overflow-y: scroll;
+    max-height: 25em;
+}
 
 /*Promotion text in sidebar*/
 img.promotionlogo {

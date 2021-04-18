@@ -16,8 +16,10 @@
     {% if title %}
         <h1>{{ title }}</h1>
     {% endif %}
+    <p>
     {% block formheader %}
     {% endblock %}
+    </p>
     <form {% if actionlink %}action="{% url actionlink %}"{% endif %} method="post" enctype="multipart/form-data"
           novalidate>
         {% csrf_token %}

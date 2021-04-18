@@ -3,11 +3,15 @@
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django import forms
+from django.core.exceptions import ValidationError
 from django.forms import ValidationError
+
+from general_form import FileForm, clean_file_default
+from general_model import get_ext, print_list
 
 from templates import widgets
 from timeline.utils import get_timeslot
-from .models import FileType, StaffResponse, StudentGroup, FileExtension, StaffResponseFileAspectResult, StaffResponseFileAspect
+from .models import FileType, StaffResponse, StudentGroup, FileExtension, StaffResponseFileAspectResult, StaffResponseFileAspect, StudentFile
 
 
 class FileTypeModelForm(forms.ModelForm):
@@ -114,7 +118,7 @@ class StudentGroupForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        new_number =cleaned_data.get('Number')
+        new_number = cleaned_data.get('Number')
         g = StudentGroup.objects.filter(Number=new_number, PRV=cleaned_data.get('PRV'))
         if new_number in g.exclude(id=self.instance.id).values_list('Number', flat=True):
             raise ValidationError('Group with that number already exists for this professional skill')
@@ -170,3 +174,29 @@ class StaffResponseFileAspectResultForm(forms.ModelForm):
         widgets = {
             'Grade': widgets.MetroSelectRadioTable
         }
+
+
+class StudentFileForm(FileForm):
+    """
+    Upload or edit a studentfile
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.filetype = kwargs.pop('filetype')
+        super().__init__(*args, **kwargs)
+        self.fields['File'].widget.attrs['accept'] = str(','.join(['.' + f for f in self.filetype.AllowedExtensions.values_list('Name', flat=True)]))
+
+    class Meta(FileForm.Meta):
+        model = StudentFile
+        fields = ['File', 'Caption']
+        widgets = {
+            'File': widgets.MetroFileInput,
+            'Caption': widgets.MetroTextInput,
+        }
+
+    def clean_File(self):
+        file = clean_file_default(self)
+        if get_ext(file.name) not in self.filetype.get_allowed_extensions():
+            raise ValidationError('This file extension is not allowed. Allowed extensions: '
+                                  + print_list(self.filetype.get_allowed_extensions()))
+        return file

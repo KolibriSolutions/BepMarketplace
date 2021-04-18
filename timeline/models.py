@@ -2,6 +2,8 @@
 #  Copyright (c) 2016-2021 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
+from datetime import datetime
+
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -23,6 +25,9 @@ class TimeSlot(models.Model):
 
     class Meta:
         ordering = ["Begin"]
+
+    def is_finished(self):
+        return self.End < datetime.now().date()
 
 
 class TimePhase(models.Model):

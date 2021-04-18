@@ -4,12 +4,12 @@
 #
 from django.contrib.auth.models import User
 
-from general_test import ViewsTest
+from general_test import ProjectViewsTestGeneral
 from index.models import UserMeta
 from support.models import PublicFile, CapacityGroup, MailTemplate
 
 
-class SupportViewsTest(ViewsTest):
+class SupportViewsTest(ProjectViewsTestGeneral):
     def setUp(self):
         self.app = 'support'
         super().setUp()
@@ -70,9 +70,12 @@ class SupportViewsTest(ViewsTest):
             [['deletefile', {'pk': self.publicfile.id}], self.p_support],
 
             [['history', None], self.p_support],
-            [['history_download', {'timeslot': self.pts.pk, 'download': 'students'}], self.p_support],
-            [['history_download', {'timeslot': self.nts.pk, 'download': 'students'}], self.p_forbidden],
-            [['history_download', {'timeslot': self.ts.pk, 'download': 'students'}], self.p_forbidden],
+            [['history_download', {'timeslot': self.pts.pk, 'download': 'presentations'}], self.p_support],
+            [['history_download', {'timeslot': self.nts.pk, 'download': 'presentations'}], self.p_forbidden],
+            [['history_download', {'timeslot': self.ts.pk, 'download': 'presentations'}], self.p_forbidden],
+
+            [['downloadstudent', {'pk': self.users.get('r-s').pk}], self.p_support],
+            [['downloadstudent', None], self.p_student],
         ]
 
         self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes_general_phase1234567)
