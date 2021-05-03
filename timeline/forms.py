@@ -25,10 +25,10 @@ class TimeSlotForm(forms.ModelForm):
             'End': widgets.MetroDateInput,
         }
 
-    def clean(self):
-        cleaned_data = super().clean()
-        if cleaned_data['End'] < datetime.now().date():
+    def clean_End(self):
+        if self.cleaned_data.get('End') < datetime.now().date():
             raise forms.ValidationError('End date cannot be in the past.')
+        return self.cleaned_data.get('End')
 
 
 class TimePhaseForm(forms.ModelForm):
@@ -50,10 +50,10 @@ class TimePhaseForm(forms.ModelForm):
             'TimeSlot': widgets.MetroSelect,
         }
 
-    def clean(self):
-        cleaned_data = super().clean()
-        if cleaned_data['End'] < datetime.now().date():
+    def clean_End(self):
+        if self.cleaned_data.get('End') < datetime.now().date():
             raise forms.ValidationError('End date cannot be in the past.')
+        return self.cleaned_data.get('End')
 
 
 class TimePhaseCopyForm(forms.Form):

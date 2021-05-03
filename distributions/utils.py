@@ -18,13 +18,14 @@ def get_distributions(user, timeslot=None):
 
     :param user: The user to test
     :param timeslot: TimeSlot to get distributions from
+    :return empty queryset on fail
     """
     if get_grouptype('2u') in user.groups.all():
-        return None
+        return Distribution.objects.none()
     if timeslot is None:
         timeslot = get_timeslot()
         if timeslot is None:
-            return None
+            return Distribution.objects.none()  # similar to None, but can be used in chained filter.
     des_all = Distribution.objects.filter(TimeSlot=timeslot)
     if get_grouptype("3") in user.groups.all() or user.is_superuser or get_grouptype("6") in user.groups.all():
         return des_all

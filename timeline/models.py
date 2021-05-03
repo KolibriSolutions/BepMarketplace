@@ -20,6 +20,8 @@ class TimeSlot(models.Model):
         return self.Name
 
     def clean(self):
+        if not self.Begin or not self.End:
+            raise ValidationError('Please fill in all required fields.')
         if self.Begin > self.End:
             raise ValidationError("End date should be larger than begin date")
 
@@ -56,6 +58,9 @@ class TimePhase(models.Model):
         return self.Types[self.Description - 1][1] + " in " + str(self.TimeSlot)
 
     def clean(self):
+
+        if not self.Begin or not self.End or not hasattr(self, 'TimeSlot'):
+            raise ValidationError('Please fill in all required fields.')
         if self.Begin > self.End:
             raise ValidationError("End date should be larger than begin date")
         if not (self.TimeSlot.Begin <= self.Begin <= self.TimeSlot.End):

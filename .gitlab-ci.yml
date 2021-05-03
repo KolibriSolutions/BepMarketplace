@@ -1,5 +1,8 @@
 bepmp:
   script:
+    - redis-server &
+    - REDIS_PID=$!
+    - echo $REDIS_PID
     - virtualenv bepmarketplaceenv
     - . bepmarketplaceenv/bin/activate
     - python -V
@@ -13,3 +16,4 @@ bepmp:
     - touch startup.lock
     - python manage.py migrate --settings=BepMarketplace.settings_development
     - python manage.py test --settings=BepMarketplace.settings_development --parallel
+    - kill $REDIS_PID || true

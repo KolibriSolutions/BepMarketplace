@@ -29,7 +29,10 @@ DOMAIN = 'https://'+HOSTNAME  # also used for SAML metadata
 IPWARE_TRUSTED_PROXY_LIST = []
 
 # django-js-error-hook, fix for csrf failure on post
-# JAVASCRIPT_ERROR_CSRF_EXEMPT = True
+JAVASCRIPT_ERROR_CSRF_EXEMPT = True
+
+# django 3.2 default
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'  # 'django.db.models.AutoField'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

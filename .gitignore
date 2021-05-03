@@ -33,3 +33,4 @@ templates/static/channels/*
 templates/static/debug_toolbar/*
 templates/static/markdownx/*
 tracking/telemetry/*
+/dump.rdb

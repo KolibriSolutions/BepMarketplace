@@ -56,7 +56,7 @@ ALLOWED_PROPOSAL_IMAGES = ALLOWED_PROJECT_IMAGES
 ALLOWED_PUBLIC_FILES = ['pdf','jpg', 'jpeg', 'png', 'bmp', 'gif','doc','docx','xls','xlsx','odt','ods','odp','ppt','pptx','tex','txt','rtf']
 ALLOWED_STUDENT_FILES = ALLOWED_PUBLIC_FILES
 # to check when a user is staff on saml login.
-STAFF_EMAIL_DOMAINS = ['tue.nl', ]
+STAFF_EMAIL_DOMAINS = ['tue.nl', 'jads.nl', ]
 # to check whether a email address can be used to add an assistant
 ALLOWED_PROJECT_ASSISTANT_DOMAINS = STAFF_EMAIL_DOMAINS
 ALLOWED_PROPOSAL_ASSISTANT_DOMAINS = ALLOWED_PROJECT_ASSISTANT_DOMAINS
