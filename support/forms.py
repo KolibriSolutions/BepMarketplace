@@ -159,7 +159,7 @@ class UserGroupsForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['groups'].queryset = Group.objects.exclude(name='type2staffunverified')
-
+        self.fields['groups'].required = True
     class Meta:
         model = get_user_model()
 
