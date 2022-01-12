@@ -4,7 +4,7 @@
 #
 from django.contrib import admin
 
-from .models import CategoryResult, GradeCategory, GradeCategoryAspect, CategoryAspectResult
+from .models import CategoryResult, GradeCategory, GradeCategoryAspect, CategoryAspectResult, ResultOptions
 
 
 class GradeCategoryAdmin(admin.ModelAdmin):
@@ -23,6 +23,7 @@ class CategoryAspectResultAdmin(admin.ModelAdmin):
     list_filter = ('CategoryAspect__Category__TimeSlot', 'CategoryAspect__Category', 'CategoryResult')
 
 
+admin.site.register(ResultOptions, )
 admin.site.register(GradeCategoryAspect, GradeCategoryAspectAdmin)
 admin.site.register(CategoryAspectResult, CategoryAspectResultAdmin)
 admin.site.register(CategoryResult, CategoryResultAdmin)

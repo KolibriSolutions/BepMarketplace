@@ -323,3 +323,35 @@ def students_confirm(request):
             })
     else:
         raise PermissionDenied('Invalid request.')
+
+
+
+@group_required('type3staff')
+def students_applied(request):
+    """
+    Add students who applied in this timeslot to this timeslot
+
+    :param request:
+    :return:
+    """
+    timeslot = get_timeslot()
+    if not timeslot:
+        return render(request, 'base.html', context={'Message':'There is no current active timeslot. This page is not available.'})
+
+    students = User.objects.filter(groups=None, applications__Proposal__TimeSlot=timeslot).exclude(usermeta__TimeSlot=timeslot).distinct()
+    if request.method == 'POST':
+        form = ConfirmForm(request.POST)
+        if form.is_valid():
+            for s in students:
+                s.usermeta.TimeSlot.add(timeslot)
+                s.usermeta.save()
+            return render(request, 'base.html', context={'Message': 'Students added to timeslot.'})
+    else:
+        form = ConfirmForm()
+    return render(request, 'timeline/timeslot_applied_users_form.html', {
+        'form': form,
+        'formtitle': f'Add students to timeslot {timeslot}',
+        'students': students,
+        'timeslot': timeslot,
+        'buttontext': 'Confirm'
+    })

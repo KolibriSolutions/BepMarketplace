@@ -9,7 +9,7 @@ CSP_CONNECT_SRC = ("'self'", "ws://localhost:*")  # websockets and ajax. Make su
 # INSTALLED_APPS.append('debug_toolbar')
 # MIDDLEWARE.insert(0,'debug_toolbar.middleware.DebugToolbarMiddleware')
 INTERNAL_IPS='127.0.0.1'
-ALLOWED_HOSTS = ('*')  # where requests can come from
+ALLOWED_HOSTS = ('*',)  # where requests can come from
 
 DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.versions.VersionsPanel',

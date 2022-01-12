@@ -61,6 +61,11 @@
                             This category has already been finalized. Editing is disabled.
                         </div>
                     {% endif %}
+                    {% if old %}
+                        <div class="bg-darkRed fg-white padding10 margin10">
+                            This is an old grade result. Changing history is not allowed.
+                        </div>
+                    {% endif %}
 
                     {% if saved %}
                         <div class="bg-green fg-white padding10 margin10">
@@ -70,7 +75,7 @@
                     <h1>{{ category }}</h1>
                     <p>Category grades are rounded to <i>{{ rounding }}</i>.</p>
                     <form id="gradeform" action="" method="post" enctype="multipart/form-data" novalidate>
-                        {% if not final %}
+                        {% if not final and not old %}
                             <button type="submit" class="button success">Save</button>
                             {% csrf_token %}
                         {% endif %}
@@ -116,7 +121,7 @@
                         {% else %}
                             <p>This category has no aspects.</p>
                         {% endif %}
-                        {% if not final %}
+                        {% if not final and not old%}
                             <button type="submit" class="button success">Save</button>
                         {% endif %}
                     </form>

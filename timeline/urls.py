@@ -18,6 +18,7 @@ urlpatterns = [
     path('timephase/<int:timephase>/delete/', views.delete_timephase, name='delete_timephase'),
     path('copy/', views.copy_timephases, name='copy_timephases'),
 
-    path('students/', views.students, name='students'),
+    path('students/email/', views.students, name='students'),
+    path('students/applied/', views.students_applied, name='students_applied'),
     path('students/confirm/', views.students_confirm, name='students_confirm'),
 ]

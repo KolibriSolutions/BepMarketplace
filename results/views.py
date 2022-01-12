@@ -36,11 +36,16 @@ def finalize(request, pk, version=0):
     :param version: 0 for summary page, 1 for printable page, 2 for pdf export
     :return:
     """
-    ts = get_timeslot()
+    dstr = get_object_or_404(Distribution, pk=pk)
+    ts = dstr.TimeSlot
+
+    if ts != get_timeslot():
+        raise PermissionDenied('This student is not from the current timeslot. Changing grades is not allowed.')
+
     if not hasattr(ts, 'resultoptions'):
         raise PermissionDenied("Results menu is not yet visible.")
     else:
-        if not get_timeslot().resultoptions.Visible:
+        if not ts.resultoptions.Visible:
             raise PermissionDenied("Results menu is not yet visible.")
 
     dstr = get_object_or_404(Distribution, pk=pk)
@@ -57,7 +62,7 @@ def finalize(request, pk, version=0):
     version = int(version)
     # check if grade is valid
     error_list = ''
-    for cat in GradeCategory.objects.filter(TimeSlot=get_timeslot()):
+    for cat in GradeCategory.objects.filter(TimeSlot=ts):
         try:
             cat_res = cat.results.get(Distribution=dstr)
             if not cat_res.is_valid():
@@ -120,13 +125,17 @@ def finalize_preview(request, pk, version=0):
     :param version: 0 for summary page, 1 for printable page, 2 for pdf export
     :return:
     """
-    ts = get_timeslot()
+    dstr = get_object_or_404(Distribution, pk=pk)
+    ts = dstr.TimeSlot
+
+    if ts != get_timeslot():
+        raise PermissionDenied('This student is not from the current timeslot. Changing grades is not allowed.')
+
     if not hasattr(ts, 'resultoptions'):
         raise PermissionDenied("Results menu is not yet visible.")
     else:
-        if not get_timeslot().resultoptions.Visible:
+        if not ts.resultoptions.Visible:
             raise PermissionDenied("Results menu is not yet visible.")
-    dstr = get_object_or_404(Distribution, pk=pk)
     if not hasattr(dstr, 'presentationtimeslot'):
         raise PermissionDenied('This student does not have a presentation planned. Please plan it first.')
 
@@ -182,13 +191,15 @@ def staff_form(request, pk, step=0):
     :param step: number of step in the menu, index of category
     :return:
     """
-    ts = get_timeslot()
-    if not hasattr(ts, 'resultoptions'):
-        raise PermissionDenied("Results menu is not yet visible.")
-    else:
-        if not get_timeslot().resultoptions.Visible:
-            raise PermissionDenied("Results menu is not yet visible.")
     dstr = get_object_or_404(Distribution, pk=pk)
+    ts = dstr.TimeSlot
+    old = bool(ts != get_timeslot())
+    if not hasattr(ts, 'resultoptions'):
+        raise PermissionDenied("Results menu is not yet available.")
+    else:
+        if not ts.resultoptions.Visible:
+            raise PermissionDenied("Results menu is not yet visible.")
+
     if not hasattr(dstr, 'presentationtimeslot'):
         raise PermissionDenied('This student does not have a presentation planned. Please plan it first.')
     if not request.user.is_superuser and \
@@ -200,7 +211,7 @@ def staff_form(request, pk, step=0):
         raise PermissionDenied("You are not the correct owner of this distribution. "
                                "Only track heads, assistants, assessors and responsible staff can change grades.")
 
-    cats = GradeCategory.objects.filter(TimeSlot=get_timeslot()).distinct()
+    cats = GradeCategory.objects.filter(TimeSlot=ts).distinct()
     numcategories = len(cats)
     step = int(step)
     if step == 0:
@@ -210,6 +221,7 @@ def staff_form(request, pk, step=0):
             "categories": cats,
             "dstr": dstr,
             "final": all(f.Final is True for f in dstr.results.all()) if dstr.results.all() else False,  # fix for all([])=True
+            'old': old,
             # "files": files,
         })
     elif step <= numcategories:
@@ -227,6 +239,8 @@ def staff_form(request, pk, step=0):
                     "Message": "Category Result has already been finalized! Editing is not allowed anymore. "
                                "If this has to be changed, contact support staff"
                 })
+            if old:
+                raise PermissionDenied('Changing history is not allowed.')
             # if files:
             #     category_form = CategoryResultFormFile(request.POST, instance=cat_result, prefix='catform')
             # else:
@@ -257,7 +271,7 @@ def staff_form(request, pk, step=0):
             # if files:
             #     category_form = CategoryResultFormFile(instance=cat_result, initial=initial, prefix='catform', disabled=cat_result.Final)
             # else:
-            category_form = CategoryResultForm(instance=cat_result, prefix='catform', disabled=cat_result.Final)
+            category_form = CategoryResultForm(instance=cat_result, prefix='catform', disabled=(cat_result.Final or old))
             aspect_forms = []
             for i, aspect in enumerate(cat.aspects.all()):
                 try:
@@ -265,7 +279,7 @@ def staff_form(request, pk, step=0):
                 except CategoryAspectResult.DoesNotExist:
                     aspect_result = CategoryAspectResult(CategoryResult=cat_result, CategoryAspect=aspect)
                 aspect_forms.append({
-                    "form": AspectResultForm(instance=aspect_result, prefix="aspect" + str(i), disabled=cat_result.Final),
+                    "form": AspectResultForm(instance=aspect_result, prefix="aspect" + str(i), disabled=(cat_result.Final or old)),
                     "aspect": aspect,
                 })
         return render(request, "results/wizard.html", {
@@ -280,7 +294,8 @@ def staff_form(request, pk, step=0):
             "final": cat_result.Final,
             "aspectlabels": CategoryAspectResult.ResultOptions,
             # "files": files,
-            'rounding': settings.CATEGORY_GRADE_QUANTIZATION
+            'rounding': settings.CATEGORY_GRADE_QUANTIZATION,
+            'old': ts != get_timeslot(),
         })
     else:
         raise PermissionDenied("This category does not exist.")

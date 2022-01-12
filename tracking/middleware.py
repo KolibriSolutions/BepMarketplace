@@ -26,10 +26,11 @@ class TelemetryMiddleware(MiddlewareMixin):
                 stream.write(message + '\n')
 
     def createpackage(self, request, response):
+        ip, _ = get_client_ip(request)
         return {
             'path': request.path,
             'status_code': response.status_code,
-            'ip': get_client_ip(request),
+            'ip': ip,
             'method': request.method,
             'timestamp': int(datetime.utcnow().replace(tzinfo=utc).timestamp()),
             'user_agent': request.META.get('HTTP_USER_AGENT'),

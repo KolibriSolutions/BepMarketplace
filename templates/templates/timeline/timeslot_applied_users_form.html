@@ -1,0 +1,13 @@
+{% extends 'GenericForm.html' %}
+{% block formheader %}
+    <p>
+    Adding {{ students|length }} student{{ students|pluralize }} to timeslot {{ timeslot }}
+    <ul>
+    {% for std in students %}
+    <li>{{ std.usermeta.get_nice_name }}  -  {{ std.email }}</li>
+    {% empty %}
+        <li>No Students</li>
+    {% endfor %}
+    </ul>
+    </p>
+{% endblock %}
