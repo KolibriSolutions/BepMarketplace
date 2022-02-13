@@ -9,7 +9,7 @@
     {% else %}
 
         <h1>
-            {% if usrsubject %}Visited by {{ usrsubject.usermeta.get_nice_name }}{% elif favorite %}Favorite Projects{% else %}Published projects{% endif %}
+            {% if usrsubject %}Visited by {{ usrsubject.usermeta.get_nice_name }}{% elif favorite %}Favorite Published Projects{% else %}Published projects{% endif %}
         </h1>
         <div class="tabcontrol">
             <ul class="tabs">
@@ -67,8 +67,7 @@
 {% endblock %}
 {% block scripts %}
     {{ block.super }}
-    <script src="{% static "js/websocketbridge.js" %}"></script>
-    <script src="{% static "js/favorite.js" %}"></script>
+    <script src="{% static 'js/favorite-project.js' %}"></script>
     <script>
         $(document).ready(function () {
             // custom sort for favorite button, https://datatables.net/examples/plug-ins/dom_sort.html
@@ -100,11 +99,7 @@
                     }, //to parse ul-li}
                 ], cols
             );
-            // load all favorites after cache
-            var favs = {{ favorite_projects }};
-            for (var i = 0; i < favs.length; i++) {
-                $('#fav-' + favs[i]).removeClass('mif-star-empty').addClass('mif-star-full');
-            }
+
         });
 
 

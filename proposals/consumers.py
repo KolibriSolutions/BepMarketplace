@@ -1,18 +1,18 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
-import json
 
 from asgiref.sync import async_to_sync
-from channels.generic.websocket import WebsocketConsumer
+from channels.generic.websocket import WebsocketConsumer, JsonWebsocketConsumer
 from django.contrib.auth.models import Group
 from django.shortcuts import get_object_or_404
 
 from .models import Project, Favorite
+from .utils import get_favorites
 
 
-class FavoriteConsumer(WebsocketConsumer):
+class FavoriteConsumer(JsonWebsocketConsumer):
     def connect(self):
         self.user = self.scope['user']
         if not self.user.is_authenticated:
@@ -31,32 +31,50 @@ class FavoriteConsumer(WebsocketConsumer):
             self.channel_name
         )
 
-    def receive(self, text_data):
+    def receive_json(self, content):
         """
         Receive a number of project to favorite, unfavorite
 
-        :param text_data:
+        :param content: json decoded message content
         :return:
         """
-        a = json.loads(text_data)
-        proj = get_object_or_404(Project, pk=a)
-        q = Favorite.objects.filter(Project=proj, User=self.user)
-        # toggle favorite
-        if q.exists():
-            q.first().delete()
-            fav = False
+        t = content['req']
+        if t == 'all':  # get all favorites of this user
+            self.send_json(content={'req': 'all', 'list': get_favorites(self.user)})
         else:
-            f = Favorite(
-                User=self.user,
-                Project=proj
-            )
-            f.save()
-            fav = True
-        async_to_sync(self.channel_layer.group_send)('project_favorite_{}'.format(self.user.pk), {'type': 'update', 'text': json.dumps([proj.pk, fav])})
+            proj = get_object_or_404(Project, pk=int(content['proj']))
+            q = Favorite.objects.filter(Project=proj, User=self.user)
+            if t == 'ask':
+                fav = q.exists()
+                # update only this websocket, not the whole channel.
+                self.send_json(content={'req': 'ask', 'proj': proj.pk, 'fav': fav})
+            elif t == 'set':
+                # toggle favorite
+                if q.exists():
+                    q.first().delete()
+                    fav = False
+                else:
+                    f = Favorite(
+                        User=self.user,
+                        Project=proj
+                    )
+                    f.save()
+                    fav = True
+                # update all connected websockets (channel group) that this project is (un)favorited.
+                async_to_sync(self.channel_layer.group_send)('project_favorite_{}'.format(self.user.pk), {'type': 'update', 'content': {'req': 'set', 'proj': proj.pk, 'fav': fav}})
 
     def update(self, event):
-        # Handles the messages on channel
-        self.send(text_data=event["text"])
+        """
+        Any message sent to that channel name - or to a group the channel name was added to -
+        will be received by the consumer much like an event from its connected client, and dispatched to a named method on the consumer.
+        The name of the method will be the type of the event with periods replaced by underscores -
+        so, for example, an event coming in over the channel layer with a type of chat.join will be handled by the method chat_join.
+
+        This function responds to channel messages of 'type':'update', and forwards them to the websocket.
+        :param event:
+        :return:
+        """
+        self.send_json(content=event["content"])
 
 
 class CPVProgressConsumer(WebsocketConsumer):

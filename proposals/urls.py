@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.shortcuts import reverse
@@ -17,6 +17,8 @@ general_urlpatterns = [
     path('', RedirectView.as_view(url='/proposals/list/future'), name='list_old'),
     path('list/future/', views.list_public_projects, name='list'),
     path('list/<int:timeslot>/', views.list_public_projects, name='list'),
+    path('favorites/future/', views.list_public_favorites, name='favorites'),
+    path('favorites/<int:timeslot>/', views.list_public_favorites, name='favorites'),
 
     # path('favorites/', views.list_favorite_projects, name='favorites'),
 
@@ -26,7 +28,7 @@ general_urlpatterns = [
 
     # lists
     path('pending/', views.list_pending, name='pending'),
-    path('own/future/', views.list_own_projects, name='chooseedit'),
+    path('own/future/', views.list_own_projects, name='chooseedit'),  # /future is needed so relative links to ../<ts> work
     path('own/<int:timeslot>/', views.list_own_projects, name='chooseedit'),
     path('track/future/', views.list_track, name='listtrackproposals'),
     path('track/<int:timeslot>/', views.list_track, name='listtrackproposals'),

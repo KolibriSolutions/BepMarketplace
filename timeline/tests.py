@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from datetime import datetime, timedelta
@@ -47,6 +47,7 @@ class TimeLineViewsTest(ViewsTest):
             [['edit_timephase', {'timephase': ptp.pk}], self.p_forbidden],
 
             [['students', None], self.p_support],
+            [['students_applied', None], self.p_support],
             [['students_confirm', None], self.p_forbidden],   # no post data check.
         ]
 

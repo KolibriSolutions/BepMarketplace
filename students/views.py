@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 import zipfile
@@ -233,7 +233,7 @@ def confirm_apply(request, pk):
 
 
 @group_required('type1staff', 'type2staff', 'type3staff', 'type6staff')
-def list_students(request, timeslot):
+def list_students(request, timeslot=None):
     """
     For support staff, responsibles and assistants to view their students.
     List all students with distributions that the current user is allowed to see.
@@ -244,30 +244,44 @@ def list_students(request, timeslot):
     :param timeslot: the timeslot to look at. None for current timeslot (Future distributions do not exist)
     :return:
     """
-    ts = get_object_or_404(TimeSlot, pk=timeslot)
-    if ts.Begin > timezone.now().date():
-        raise PermissionDenied("Future students are not yet known.")
-    if ts == get_timeslot():
-        current_ts = True
-    else:
-        current_ts = False
+    ts = None
     show_grades = False
-    if current_ts:
-        # for current timeslot, check time phases.
-        if get_timephase_number() < 0:  # no timephase
-            if get_timeslot() is None:  # no timeslot
-                raise PermissionDenied("System is closed.")
-        else:
-            if get_timephase_number() < 4:
-                raise PermissionDenied("Students are not yet distributed")
-            if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
-                return render(request, "base.html", {'Message':
-                                                         "When the phase 'Distribution of projects' is finished, you can view your students here."})
-        if get_timephase_number() == -1 or get_timephase_number() >= 6:  # also show grades when timeslot but no timephase.
-            show_grades = True
-    else:  # historic grades
-        show_grades = True
+    error = None  # if error set, don't show students but do show notify and tabcontrol
+    current_ts = False
+    if not timeslot:
+        error = 'There is currently not time slot active in the system.'
+    else:
+        ts = get_object_or_404(TimeSlot, pk=timeslot)
 
+        if ts.Begin > timezone.now().date():
+            error = 'Future students are not yet known.'
+        if ts == get_timeslot():
+            current_ts = True
+
+        if current_ts:
+            # for current timeslot, check time phases.
+            if get_timephase_number() < 0:  # no timephase
+                if get_timeslot() is None:  # no timeslot
+                    error = "System is closed."
+            else:
+                if get_timephase_number() < 4:
+                    error = "Students are not yet distributed"
+                if get_timephase_number() < 5 and not get_grouptype("3") in request.user.groups.all():
+                    error = "When the phase 'Distribution of projects' is finished, you can view your students here."
+            if get_timephase_number() == -1 or get_timephase_number() >= 6:  # also show grades when timeslot but no timephase.
+                show_grades = True
+        else:  # historic grades
+            show_grades = True
+
+    if error:  # show error but not permissiondenied so still the tab view is shown.
+        return render(request, "students/list_students.html", {'error': error,
+                                                               'hide_sidebar': True,
+                                                               'timeslots': get_recent_timeslots(),
+                                                               'timeslot': ts,
+                                                               'is_current': current_ts,
+                                                               })
+
+    # show students and possibly grades
     des = get_distributions(request.user, ts).select_related('Proposal__ResponsibleStaff',
                                                              'Proposal__Track',
                                                              'Student__usermeta').prefetch_related(

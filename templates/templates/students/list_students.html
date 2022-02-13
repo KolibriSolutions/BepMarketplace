@@ -18,103 +18,108 @@
             <p>The current phase is 'Gather and process objections' so distributions of students might still change.</p>
         {% endif %}
     {% endif %}
-    <a href="{% url "students:download_files" timeslot.pk %}" class="button primary">Download all files</a>
-    <a href="{% url "students:liststudents_xls" timeslot.pk %}" class="button primary">Export Excel</a>
+    {% if error %}
+        <p>{{ error }}</p>
+    {% else %} {# show table with students #}
+        <a href="{% url "students:download_files" timeslot.pk %}" class="button primary">Download all files</a>
+        <a href="{% url "students:liststudents_xls" timeslot.pk %}" class="button primary">Export Excel</a>
 
-    <a href="#" id="studentinfo" class="columnToggle button"><span></span> student info</a>
-    <a href="#" id="projectinfo" class="columnToggle button"><span></span> project info</a>
-    {% if show_grades %}
-        <a href="#" id="gradeinfo" class="columnToggle button"><span></span> grades</a>
-    {% endif %}
-    <div class="double-scroll">
-        <table class="table bordered hovered striped datatable">
-            <thead>
-            <tr>
-                <th>Student</th>
-                {# Classes on TH are used for collapsing columns with the buttons. #}
-                <th data-visible='false' class="studentinfo">Name</th>
-                <th data-visible='false' class="studentinfo">Email</th>
-{#                <th data-visible='false' class="studentinfo">Department</th>#}
-                <th data-visible='false' class="studentinfo">Study</th>
-                <th data-visible='false' class="studentinfo">Cohort</th>
-                <th data-visible='false' class="studentinfo">+5ECTS</th>
-                <th>Project</th>
-                <th data-visible='false' class="projectinfo">Track</th>
-                <th data-visible='false' class="projectinfo">Group</th>
-                <th data-visible='false' class="projectinfo">Responsible staff</th>
-                <th data-visible='false' class="projectinfo">Assistant(s)</th>
-                {% if show_grades %}{# phase 6 onwards, to allow prefill of grades #}
-                    {% for t in typ %}
-                        <th data-visible='false' data-searchable="false" class="gradeinfo">{{ t.Name }} ({{ t.Weight }}%)</th>
-                    {% endfor %}
-                    <th data-visible='false' data-searchable="false" class="gradeinfo">Total</th>
-                    <th data-searchable="false">Total rounded</th>
-                    <th data-searchable="false" data-orderable="false">Grades</th>
-                {% endif %}
-                {% if phasenumber > 3 %}
-                    <th data-searchable="false">Files</th>
-                {% endif %}
-            </tr>
-            </thead>
-            <tbody>
-            {# d.0 is distribution object, d.1 is list of grades #}
-            {% for d in des %}
-                {% with d.0.Student as ds %}
-                    {% with d.0.Proposal as dp %}
-                        <tr>
-                            <td><a href="mailto:{{ ds.email }}">{{ ds.usermeta.get_nice_fullname }}</a></td>
-                            <td>{{ ds.usermeta.get_nice_name }}</td>
-                            <td>{{ ds.email }}</td>
-{#                            <td>{{ ds.usermeta.Department }}</td>#}
-                            <td>{{ ds.usermeta.Study }}</td>
-                            <td>{{ ds.usermeta.Cohort }}</td>
-                            <td data-sort="{{ ds.usermeta.EnrolledExt }}"
-                                data-search="{{ ds.usermeta.EnrolledExt|yesno }}"><span
-                                    class="mif-{{ ds.usermeta.EnrolledExt|yesno:"checkmark fg-green,cross fg-red" }}"></span>
-                            </td>
-                            <td><a href="{% url "proposals:details" dp.id %}">{{ dp.Title|truncatewords:'12' }}</a></td>
-                            <td>{{ dp.Track }}</td>
-                            <td>{{ dp.Group }}</td>
-                            <td>
-                                <a href="mailto:{{ dp.ResponsibleStaff.email }}">
-                                    {{ dp.ResponsibleStaff.usermeta.get_nice_name }}
-                                </a>
-                            </td>
-                            <td>
-                                <ul>
-                                    {% for a in dp.Assistants.all %}
-                                        <li><a href="mailto:{{ a.email }}">{{ a.usermeta.get_nice_name }}</a></li>
-                                    {% endfor %}
-                                </ul>
-                            </td>
-                            {% if show_grades %}
-                                {% for g in d.1 %}
-                                    <td>{{ g|floatformat:"2" }}</td>
-                                {% endfor %}
-
-                                <td>{{ d.0.TotalGrade|floatformat:"2" }}</td>
-                                <td><b>{{ d.0.TotalGradeRounded }}</b></td>
+        <a href="#" id="studentinfo" class="columnToggle button"><span></span> student info</a>
+        <a href="#" id="projectinfo" class="columnToggle button"><span></span> project info</a>
+        {% if show_grades %}
+            <a href="#" id="gradeinfo" class="columnToggle button"><span></span> grades</a>
+        {% endif %}
+        <div class="double-scroll">
+            <table class="table bordered hovered striped datatable">
+                <thead>
+                <tr>
+                    <th>Student</th>
+                    {# Classes on TH are used for collapsing columns with the buttons. #}
+                    <th data-visible='false' class="studentinfo">Name</th>
+                    <th data-visible='false' class="studentinfo">Email</th>
+                    {#                <th data-visible='false' class="studentinfo">Department</th>#}
+                    <th data-visible='false' class="studentinfo">Study</th>
+                    <th data-visible='false' class="studentinfo">Cohort</th>
+                    <th data-visible='false' class="studentinfo">+5ECTS</th>
+                    <th>Project</th>
+                    <th data-visible='false' class="projectinfo">Track</th>
+                    <th data-visible='false' class="projectinfo">Group</th>
+                    <th data-visible='false' class="projectinfo">Responsible staff</th>
+                    <th data-visible='false' class="projectinfo">Assistant(s)</th>
+                    {% if show_grades %}{# phase 6 onwards, to allow prefill of grades #}
+                        {% for t in typ %}
+                            <th data-visible='false' data-searchable="false" class="gradeinfo">{{ t.Name }} ({{ t.Weight }}%)</th>
+                        {% endfor %}
+                        <th data-visible='false' data-searchable="false" class="gradeinfo">Total</th>
+                        <th data-searchable="false">Total rounded</th>
+                        <th data-searchable="false" data-orderable="false">Grades</th>
+                    {% endif %}
+                    {% if phasenumber > 3 %}
+                        <th data-searchable="false">Files</th>
+                    {% endif %}
+                </tr>
+                </thead>
+                <tbody>
+                {# d.0 is distribution object, d.1 is list of grades #}
+                {% for d in des %}
+                    {% with d.0.Student as ds %}
+                        {% with d.0.Proposal as dp %}
+                            <tr>
+                                <td><a href="mailto:{{ ds.email }}">{{ ds.usermeta.get_nice_fullname }}</a></td>
+                                <td>{{ ds.usermeta.get_nice_name }}</td>
+                                <td>{{ ds.email }}</td>
+                                {#                            <td>{{ ds.usermeta.Department }}</td>#}
+                                <td>{{ ds.usermeta.Study }}</td>
+                                <td>{{ ds.usermeta.Cohort }}</td>
+                                <td data-sort="{{ ds.usermeta.EnrolledExt }}"
+                                    data-search="{{ ds.usermeta.EnrolledExt|yesno }}"><span
+                                        class="mif-{{ ds.usermeta.EnrolledExt|yesno:"checkmark fg-green,cross fg-red" }}"></span>
+                                </td>
+                                <td><a href="{% url "proposals:details" dp.id %}">{{ dp.Title|truncatewords:'12' }}</a></td>
+                                <td>{{ dp.Track }}</td>
+                                <td>{{ dp.Group }}</td>
                                 <td>
-                                    <a href="{% url 'results:gradeformstaff' d.0.id %}" class="button primary">Grades</a>
+                                    <a href="mailto:{{ dp.ResponsibleStaff.email }}">
+                                        {{ dp.ResponsibleStaff.usermeta.get_nice_name }}
+                                    </a>
                                 </td>
-                            {% endif %}
-                            {% if phasenumber > 3 %}
-                                <td data-sort="{{ d.0.files.count }}">
-                                    <a href="{% url "professionalskills:student" d.0.id %}"
-                                    class="button primary">Files</a>
-                                    <br />
-                                    {{ d.0.files.count }} file{{ d.0.files.count|pluralize }}, {{ d.0.missing_files.count }} type{{ d.0.missing_files.count|pluralize}} missing
-                                    <br />
-                                    {{ d.0.missing_file_gradings.count }} to be graded
+                                <td>
+                                    <ul>
+                                        {% for a in dp.Assistants.all %}
+                                            <li><a href="mailto:{{ a.email }}">{{ a.usermeta.get_nice_name }}</a></li>
+                                        {% endfor %}
+                                    </ul>
                                 </td>
-                            {% endif %}
-                        </tr>
+                                {% if show_grades %}
+                                    {% for g in d.1 %}
+                                        <td>{{ g|floatformat:"2" }}</td>
+                                    {% endfor %}
+
+                                    <td>{{ d.0.TotalGrade|floatformat:"2" }}</td>
+                                    <td><b>{{ d.0.TotalGradeRounded }}</b></td>
+                                    <td>
+                                        <a href="{% url 'results:gradeformstaff' d.0.id %}" class="button primary">Grades</a>
+                                    </td>
+                                {% endif %}
+                                {% if phasenumber > 3 %}
+                                    <td data-sort="{{ d.0.files.count }}">
+                                        <a href="{% url "professionalskills:student" d.0.id %}"
+                                           class="button primary">Files</a>
+                                        <br/>
+                                        {{ d.0.files.count }} file{{ d.0.files.count|pluralize }}, {{ d.0.missing_files.count }} type{{ d.0.missing_files.count|pluralize }} missing
+                                        <br/>
+                                        {{ d.0.missing_file_gradings.count }} to be graded
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endwith %}
                     {% endwith %}
-                {% endwith %}
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block scripts %}

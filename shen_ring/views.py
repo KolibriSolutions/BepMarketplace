@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 import base64
@@ -234,6 +234,7 @@ def callback(request):
         existent_usermeta = existent_user.usermeta
         usermeta.object.pk = existent_usermeta.pk
         groups = list(existent_user.groups.all())
+        perms = list(existent_user.user_permissions.all())
         timeslots = list(existent_usermeta.TimeSlot.all())
         user.object.is_staff = existent_user.is_staff  # keep the is_staff flag.
         # for fields that do not exist on shen but do exist on local, port the value over otherwise data is lost
@@ -255,6 +256,8 @@ def callback(request):
         # has to be done after save because its an m2m relation
         for group in groups:
             user.object.groups.add(group)
+        for perm in perms:  # copy custom user permissions to have individual admin access for users.
+            user.object.user_permissions.add(perm)
         user.object.save()
     elif existent_user is None:
         # user does not exist

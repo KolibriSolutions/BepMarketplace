@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from io import BytesIO
@@ -114,7 +114,6 @@ def finalize(request, pk, version=0):
 
 
 @group_required('type1staff', 'type2staff', 'type3staff')
-@phase_required(6, 7)
 def finalize_preview(request, pk, version=0):
     """
     Edit grade for a category as indexed by step. For each student as given by pk.
@@ -127,25 +126,27 @@ def finalize_preview(request, pk, version=0):
     """
     dstr = get_object_or_404(Distribution, pk=pk)
     ts = dstr.TimeSlot
-
-    if ts != get_timeslot():
-        raise PermissionDenied('This student is not from the current timeslot. Changing grades is not allowed.')
-
+    old = bool(ts != get_timeslot())
     if not hasattr(ts, 'resultoptions'):
-        raise PermissionDenied("Results menu is not yet visible.")
+        raise PermissionDenied("Results menu is not yet available.")
     else:
         if not ts.resultoptions.Visible:
             raise PermissionDenied("Results menu is not yet visible.")
+    if not old:  # current ts, check phase
+        if get_timephase_number() != 6 and get_timephase_number() != 7:
+            raise PermissionDenied('This page is only available in time phase "Execution of the projects" and "Presentation of results"')
+
     if not hasattr(dstr, 'presentationtimeslot'):
         raise PermissionDenied('This student does not have a presentation planned. Please plan it first.')
-
     if not request.user.is_superuser and \
             request.user != dstr.Proposal.Track.Head and \
             request.user != dstr.Proposal.ResponsibleStaff and \
-            get_grouptype('3') not in request.user.groups.all() and \
             request.user not in dstr.Proposal.Assistants.all() and \
+            get_grouptype('3') not in request.user.groups.all() and \
             request.user not in dstr.presentationtimeslot.Presentations.Assessors.all():
-        raise PermissionDenied("You do not have the correct permissions to view print preview.")
+        raise PermissionDenied("You are not the correct owner of this distribution. "
+                               "Only track heads, assistants, assessors and responsible staff can view grades.")
+
     if version == 0:
         return render(request, "results/finalize_grades.html", {
             "dstr": dstr,
@@ -179,7 +180,6 @@ def finalize_preview(request, pk, version=0):
 
 
 @group_required('type1staff', 'type2staff', 'type3staff')
-@phase_required(6, 7)
 def staff_form(request, pk, step=0):
     """
     Edit grade for a category as indexed by step. For each student as given by pk.
@@ -194,11 +194,15 @@ def staff_form(request, pk, step=0):
     dstr = get_object_or_404(Distribution, pk=pk)
     ts = dstr.TimeSlot
     old = bool(ts != get_timeslot())
+
     if not hasattr(ts, 'resultoptions'):
         raise PermissionDenied("Results menu is not yet available.")
     else:
         if not ts.resultoptions.Visible:
             raise PermissionDenied("Results menu is not yet visible.")
+    if not old:  # current ts, check phase
+        if get_timephase_number() != 6 and get_timephase_number() != 7:
+            raise PermissionDenied('This page is only available in time phase "Execution of the projects" and "Presentation of results"')
 
     if not hasattr(dstr, 'presentationtimeslot'):
         raise PermissionDenied('This student does not have a presentation planned. Please plan it first.')
@@ -295,7 +299,7 @@ def staff_form(request, pk, step=0):
             "aspectlabels": CategoryAspectResult.ResultOptions,
             # "files": files,
             'rounding': settings.CATEGORY_GRADE_QUANTIZATION,
-            'old': ts != get_timeslot(),
+            'old': old,
         })
     else:
         raise PermissionDenied("This category does not exist.")

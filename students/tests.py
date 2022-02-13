@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from datetime import datetime
@@ -74,8 +74,8 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
         # list students
 
         codes_stud_phase123 = [  # not available when applications/distributions have not yet been made.
-            [['liststudents', {'timeslot': self.ts.pk}], self.p_forbidden],
-            [['liststudents', {'timeslot': self.nts.pk}], self.p_forbidden],
+            [['liststudents', {'timeslot': self.ts.pk}], self.p_staff_stud],
+            [['liststudents', {'timeslot': self.nts.pk}], self.p_staff_stud],
             [['liststudents', {'timeslot': self.pts.pk}], self.p_staff_stud],
             [['liststudents_xls', {'timeslot': self.ts.pk}], self.p_forbidden],
             [['liststudents_xls', {'timeslot': self.pts.pk}], self.p_staff_stud],
@@ -87,7 +87,7 @@ class StudentsViewsTest(ProjectViewsTestGeneral):
         ]
         codes_stud_phase4567 = [  # list students is also available when no-timephase (but not when no-timeslot)
             [['liststudents', {'timeslot': self.ts.pk}], self.p_staff_stud],
-            [['liststudents', {'timeslot': self.nts.pk}], self.p_forbidden],
+            [['liststudents', {'timeslot': self.nts.pk}], self.p_staff_stud],
             [['liststudents', {'timeslot': self.pts.pk}], self.p_staff_stud],
             [['liststudents_xls', {'timeslot': self.ts.pk}], self.p_staff_stud],
             [['liststudents_xls', {'timeslot': self.pts.pk}], self.p_staff_stud],

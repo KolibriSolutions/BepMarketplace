@@ -1,6 +1,6 @@
 Sphinx
 asgi_redis
-asgiref>=2
+asgiref>=2,<=3.3
 beautifulsoup4
 bleach
 channels>=3
@@ -10,14 +10,14 @@ django-csp
 django-formtools>=2.2
 django-htmlmin
 django-impersonate
-django-ipware
+django-ipware>=3
 # django-js-error-hook
 django-redis
 django-render-block
 django-sendfile
 django-two-factor-auth
 django-otp
-django>=3
+django>=3,<4
 docutils
 lxml
 markdown

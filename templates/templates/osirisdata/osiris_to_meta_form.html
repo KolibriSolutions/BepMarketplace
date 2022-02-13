@@ -1,0 +1,9 @@
+{% extends 'GenericForm.html' %}
+{% block formheader %}
+    <p>This will write the osiris data from uploaded XLSX file to the users known in the system.
+        The uploaded data will be written to the users metadata, which is visible from user-list when clicked on button 'User Meta'  </p>
+
+    <p>Please make sure the data to write is correct in <a class="button primary" href="{% url 'osirisdata:list' %}">List osiris data</a> </p>
+        <p>Only students known in the system are updated with the XLSX data</p>
+<p>The last uploaded file from <a href="{% url 'osirisdata:upload' %}">Upload osiris data</a> is used.</p>
+{% endblock %}

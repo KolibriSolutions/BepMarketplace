@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from itertools import chain
@@ -60,27 +60,36 @@ def list_public_projects(request, timeslot=None):
     projects = projects.select_related('ResponsibleStaff__usermeta', 'Track__Head__usermeta', 'TimeSlot', 'Group').prefetch_related('Assistants__usermeta')
     return render(request, 'proposals/list_projects.html', {
         "projects": projects,
-        'favorite_projects': get_favorites(request.user),
         'timeslots': TimeSlot.objects.filter(End__gte=datetime.now()),
         'timeslot': ts,
     })
 
-#
-# @login_required
-# def list_favorite_projects(request):
-#     """
-#     List all the projects a student has favorited, this view is not cached
-#
-#     :param request:
-#     :return:
-#     """
-#     projects = get_all_projects().filter(Q(Status=4) & Q(Private=None) & Q(favorites__User=request.user))
-#     projects = projects.select_related('ResponsibleStaff__usermeta', 'Track__Head__usermeta', 'TimeSlot', 'Group').prefetch_related('Assistants__usermeta')
-#     return render(request, 'proposals/list_projects.html', {
-#         'projects': projects,
-#         'favorite_projects': get_favorites(request.user),
-#         'favorite': True,
-#     })
+
+@login_required
+def list_public_favorites(request, timeslot=None):
+    """
+    List all the public (=type4 & not-private) proposals. This is the overview for students to choose a proposal from.
+
+    :param request:
+    :return:
+    """
+    if timeslot:
+        ts = get_object_or_404(TimeSlot, pk=timeslot)
+        projects = get_all_projects(old=True).filter(TimeSlot=ts)
+        if ts.End < datetime.now().date():  # on last day timeslot is still active
+            raise PermissionDenied("Past projects cannot be browsed.")
+    else:
+        ts = None
+        projects = get_all_projects(old=True).filter(TimeSlot=None)  # proposals of future timeslot
+
+    projects = projects.filter(Q(Status=4) & Q(Private=None)).filter(favorites__User=request.user)
+    projects = projects.select_related('ResponsibleStaff__usermeta', 'Track__Head__usermeta', 'TimeSlot', 'Group').prefetch_related('Assistants__usermeta')
+    return render(request, 'proposals/list_projects.html', {
+        'favorite': True,
+        "projects": projects,
+        'timeslots': TimeSlot.objects.filter(End__gte=datetime.now()),
+        'timeslot': ts,
+    })
 
 
 @group_required('type1staff', 'type2staff', 'type2staffunverified', 'type3staff', 'type5staff')
@@ -109,7 +118,6 @@ def list_own_projects(request, timeslot=None):
     return render(request, 'proposals/list_projects_custom.html', {
         'hide_sidebar': True,
         'projects': projects,
-        'favorite_projects': get_favorites(request.user),
         'timeslots': get_recent_timeslots(),
         'timeslot': ts,
     })
@@ -135,7 +143,6 @@ def list_group_projects(request, timeslot=None):
     return render(request, 'proposals/list_projects_custom.html', {
         'hide_sidebar': True,
         'projects': projects,
-        'favorite_projects': get_favorites(request.user),
         'title': 'Proposals of {}'.format(print_list(request.user.administratoredgroups.all().values_list('Group__ShortName', flat=True))),
         'timeslots': get_recent_timeslots(),
         'timeslot': ts,
@@ -169,7 +176,6 @@ def list_pending(request):
         title = 'Pending projects'
     return render(request, "proposals/list_projects_custom.html", {
         'projects': projects,
-        'favorite_projects': get_favorites(request.user),
         "title": title,
     })
 
@@ -197,7 +203,6 @@ def list_track(request, timeslot=None):
     projects = prefetch(projects)
     return render(request, "proposals/list_projects_custom.html", {
         'projects': projects,
-        'favorite_projects': get_favorites(request.user),
         "title": "Proposals of track {}".format(print_list(tracks)),
         'timeslots': get_recent_timeslots(),
         'timeslot': ts,
@@ -224,7 +229,6 @@ def list_private_projects(request, timeslot=None):
     return render(request, "proposals/list_projects_custom.html", {
         'hide_sidebar': True,
         'projects': projects,
-        'favorite_projects': get_favorites(request.user),
         "title": "All private proposals",
         'timeslots': get_recent_timeslots(),
         'timeslot': ts,
@@ -288,7 +292,6 @@ def detail_project(request, pk):
         return render(request, "proposals/detail_project.html", {
             "bodyhtml": cdata.format(apply_buttons=button, applications_counter=applications_count_txt),
             'project': proj,
-            'fav': proj.favorites.filter(User=request.user).exists()
         })  # send project for if statement in scripts.
 
     # if staff:
@@ -311,7 +314,6 @@ def detail_project(request, pk):
             data['Editlock'] = False
         else:
             data['Editlock'] = allowed[1]
-        data['fav'] = proj.favorites.filter(User=request.user).exists()
         data['cpv'] = cache.get('cpv_proj_{}'.format(proj.id))  # if cpv is not in cache, ignore
         return render(request, "proposals/detail_project.html", data)
 

@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from general_test import ViewsTest
@@ -14,6 +14,7 @@ class OsirisDataTest(ViewsTest):
         codes = [
             [['list', None], self.p_support],
             [['tometa', None], self.p_support],
+            [['upload', None], self.p_support],
         ]
         self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes)
 

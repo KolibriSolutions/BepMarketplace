@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 import random
@@ -47,6 +47,8 @@ def list_filetypes(request):
     :return:
     """
     timeslot = get_timeslot()
+    if not timeslot:
+        raise PermissionDenied('There is no timeslot defined. This page is not available.')
     prvs = FileType.objects.filter(TimeSlot=timeslot)
     lst = []  # list with [prv, nfiles, ngraded]
     dists = get_distributions(request.user, timeslot)

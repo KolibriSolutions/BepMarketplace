@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.contrib.auth.models import User
@@ -30,7 +30,7 @@ class Application(models.Model):
 class Distribution(models.Model):
     """A student distributed to a proposal.x"""
     Proposal = models.ForeignKey(Proposal, on_delete=models.PROTECT, related_name='distributions')
-    Student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='distributions')
+    Student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='distributions', limit_choices_to={'groups':None})
     TimeSlot = models.ForeignKey(TimeSlot, on_delete=models.PROTECT, related_name='distributions')
     Application = models.OneToOneField(Application, on_delete=models.SET_NULL, blank=True, null=True, related_name='distributions')
 

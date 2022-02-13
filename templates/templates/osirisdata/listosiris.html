@@ -2,6 +2,13 @@
 
 {% block body %}
     <h1>All Osiris Data</h1>
+    <a href="{% url 'osirisdata:upload' %}" class="button primary">Upload new</a>
+    <a href="{% url 'osirisdata:tometa' %}" class="button primary">Write to User Meta</a>
+
+    {% if log %}
+    <p>Read errors:</p>
+    <ul>{{ log|unordered_list }}</ul>
+    {% endif %}
     <table class="table bordered striped hovered datatable">
         <thead>
         <tr>
@@ -19,7 +26,7 @@
                 <td>{{ person.idnumber }}</td>
                 <td>{{ person.cohort }}</td>
                 <td>{{ person.ects }}</td>
-                <td><span class="mif-{{ person.automotive|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
+                <td data-sort="{{ person.automotive }}"><span class="mif-{{ person.automotive|yesno:"checkmark fg-green,cross fg-red" }}"></span></td>
             </tr>
         {% endfor %}
         </tbody>

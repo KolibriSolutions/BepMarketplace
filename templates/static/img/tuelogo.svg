@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  - Bep Marketplace ELE
+  - Copyright (c) 2016-2022 Kolibri Solutions
+  - License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
+  -->
+
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="204pt" height="107pt" viewBox="0 0 204 107" version="1.1">
 <g id="surface1">
 <path style=" stroke:none;fill-rule:nonzero;fill:rgb(19.9%,22.3%,55.1%);fill-opacity:1;" d="M 54.816406 17.917969 L 0.199219 17.917969 L 0.199219 30.644531 L 17.269531 30.644531 L 17.269531 88.78125 L 33.6875 88.78125 L 33.6875 30.644531 L 51.167969 30.644531 L 54.816406 17.917969 "/>

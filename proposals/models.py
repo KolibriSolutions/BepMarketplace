@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 import logging
@@ -181,9 +181,6 @@ class Favorite(models.Model):
 
     def __str__(self):
         return self.User.get_username() + " to " + self.Project.__str__()
-
-    # class Meta:
-    #     ordering = ["User"]
 
     def clean(self):
         if self.User.favorites.filter(Project=self.Project).exists():

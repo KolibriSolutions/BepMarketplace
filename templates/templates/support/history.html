@@ -37,9 +37,14 @@
                 </td>
                 <td>
                 <a href="{% url "students:download_files" timeslot.pk %}" class="button primary">Download all student files</a>
+                <ul>
                     {% for filetype in timeslot.filetypes.all %}
+                        <li>
                         <a href="{% url 'professionalskills:downloadall' filetype.id %}" class="button primary">Download {{ filetype }}</a>
+                        <a href="{% url 'professionalskills:filetype_export' filetype.id %}" class="button primary">XLSX {{ filetype }}</a>
+                        </li>
                     {% endfor %}
+                </ul>
                 </td>
             </tr>
 

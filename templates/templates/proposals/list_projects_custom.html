@@ -134,8 +134,7 @@
 {% endblock %}
 {% block scripts %}
     {{ block.super }}
-    <script src="{% static "js/websocketbridge.js" %}"></script>
-    <script src="{% static "js/favorite.js" %}"></script>
+    <script src="{% static 'js/favorite-project.js' %}"></script>
     <script>
         $(document).ready(function () {
             // custom sort for favorite button, https://datatables.net/examples/plug-ins/dom_sort.html
@@ -167,6 +166,8 @@
                     {column_number: 7, filter_type: "select"},
                 ], cols
             );
+
+            // event handlers for hide/show buttons
             $(".columnToggle").click(function () {
                 //reset width:
                 $(".datatable").width("100%");

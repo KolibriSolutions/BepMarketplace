@@ -1,0 +1,23 @@
+{% extends 'GenericForm.html' %}
+{% block formheader %}
+    <p>For file upload, follow this exact format. The first row can contain column headers, and is not read by the system. All fields are case-insensitive</p>
+    <table class="table bordered">
+        <tr>
+            <th>column 1</th>
+            <th>column 2</th>
+            <th>column 3</th>
+            <th>column 4</th>
+            <th>column 5</th>
+        </tr>
+        <tr>
+            <td>Student TU/e Email</td>
+            <td>ID number</td>
+            <td>Cohort</td>
+            <td>ECTS (rounded to integer, half points might round to lower.) </td>
+            <td>Automotive<br>
+                 Set to any of for automotive: 'yes' '1' 1  'bau' 'au'
+            </td>
+        </tr>
+    </table>
+    <p>Only students known in the system are updated with the XLSX data</p>
+{% endblock %}

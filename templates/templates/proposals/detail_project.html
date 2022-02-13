@@ -331,9 +331,10 @@
 
     {{ block.super }}
     <script src="{% static "js/lightbox.js" %}"></script>
-    <script src="{% static "js/websocketbridge.js" %}"></script>
     {% if user.is_authenticated %}{# not when using sharelink #}
-        <script src="{% static "js/favorite.js" %}"></script>
+        {# this handles favorite both for single project and for list. #}
+        <script>var project_id = {{ project.id }}</script>
+        <script src="{% static "js/favorite-project.js" %}"></script>
     {% endif %}
     <script>
         $(document).ready(function () {
@@ -349,16 +350,16 @@
             {% endif %}
 
             {% if user|has_group:"any" and project.Status == 4 %}
-                const webSocketBridgeViewnumber = new channels.WebSocketBridge();
-                webSocketBridgeViewnumber.connect('/tracking/viewnumber/{{ project.id }}/');
-                webSocketBridgeViewnumber.socket.onmessage = function (event) {
-                    $("#uniqueviewsnumber").html(event.data);
-                };
-            {% endif %}
-            {% if fav %}
-                $('#fav-{{ project.pk }}').removeClass('mif-star-half').addClass('mif-star-full');
-            {% else %}
-                $('#fav-{{ project.pk }}').removeClass('mif-star-half').addClass('mif-star-empty');
+                const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+                const viewNumberSocket = new WebSocket(
+                    scheme + '://'
+                    + window.location.host
+                    + '/tracking/viewnumber/{{ project.id }}/'
+                );
+                viewNumberSocket.onmessage = function (e) {
+                    {#const data = JSON.parse(e.data)#}
+                    $("#uniqueviewsnumber").html(e.data);
+                }
             {% endif %}
 
         });

@@ -64,6 +64,7 @@
                         <li><a href="" class="dropdown-toggle"><span class="mif-mail-read icon"></span>Proposals</a>
                             <ul class="d-menu" data-role="dropdown">
                                 <li><a href="{% url_timeslot 'proposals:list' %}">All published projects</a></li>
+                                <li><a href="{% url_timeslot 'proposals:favorites' %}">All published favorites</a></li>
                                 {% if user|can_create_project %}
                                     <li><a href="{% url 'proposals:create' %}">Create new project</a></li>
                                 {% endif %}
@@ -202,8 +203,11 @@
                                     <li>
                                         <a href="#" class="dropdown-toggle">Students</a>
                                         <ul class="d-menu" data-role="dropdown">
-                                            <li><a href="{% url 'osirisdata:list' %}">View Osiris import</a></li>
-                                            <li><a href="{% url 'osirisdata:tometa' %}">Import Osiris to Meta</a></li>
+                                            <li class="menu-title">Osiris Data</li>
+                                            <li><a href="{% url 'osirisdata:upload' %}">1 Upload Osiris data</a></li>
+                                            <li><a href="{% url 'osirisdata:list' %}">2 View Osiris import</a></li>
+                                            <li><a href="{% url 'osirisdata:tometa' %}">3 Write Osiris to Meta</a></li>
+                                            <li class="menu-title">Time slot</li>
                                             <li><a href="{% url 'timeline:students' %}">Add students to timeslot</a></li>
                                             <li><a href="{% url 'timeline:students_applied' %}">Add applied students to timeslot</a></li>
                                             {#                                        <li><a href="{% url 'support:ectsform' %}">Students ECTS</a></li>#}
@@ -234,13 +238,9 @@
                         {% endif %}
                         {# Students and grades menu #}
                         {% if user|has_group:'type1staff;type2staff;type3staff;type6staff' %}
-                            {% if timeslotpresent %}
-                                {% if phasenumber > 3 or phasenumber < 0 %}
-                                    <li><a href="{% url_timeslot 'students:liststudents' %}"><span class="mif-users icon"></span>Students
-                                        {% if phasenumber >= 6 or phasenumber < 0 %} & Grades{% endif %}</a>
-                                    </li>
-                                {% endif %}
-                            {% endif %}
+                            <li><a href="{% url_timeslot 'students:liststudents' %}">
+                                <span class="mif-users icon"></span>Students & Grades</a>
+                            </li>
                         {% endif %}
                         {# Staff PRV #}
                         {% if user|has_group:'type1staff;type2staff;type3staff;type4staff;type5staff;type6staff' %}
@@ -251,6 +251,8 @@
                     {% else %} {# students #}
                         <li>
                             <a href="{% url_timeslot 'proposals:list' %}"><span class="mif-mail-read icon"></span>Proposals</a>
+                        </li>                        <li>
+                            <a href="{% url_timeslot 'proposals:favorites' %}"><span class="mif-mail-read icon"></span>Favorites</a>
                         </li>
                         {#                        {% if phasenumber < 5 %}#}
                         <li><a href="{% url 'students:listapplications' %}"><span
@@ -443,7 +445,7 @@
     </div>
 
     <div class="place-right text-small">
-        <div class="cell place-left padding10"><a href="{% url 'index:about' %}" title="Kolibri Solutions">By Kolibri Solutions 2016-2021</a></div>
+        <div class="cell place-left padding10"><a href="{% url 'index:about' %}" title="Kolibri Solutions">By Kolibri Solutions 2016-2022</a></div>
         <div class="cell place-left padding10">Currently deployed: {% get_hash %}</div>
     </div>
 </div>

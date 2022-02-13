@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from datetime import datetime
@@ -53,7 +53,7 @@ def index(request):
         elif ph == 4:
             info = "Please wait for the support staff to distribute the projects"
         elif ph == 5:
-            info = "The projects are distributed, if you have any objections, please contact Suzanne Kuijlaars."
+            info = "The projects are distributed, if you have any objections, please contact please contact {support_name} at {contact_email}".format(support_name=settings.SUPPORT_NAME, contact_email=settings.CONTACT_EMAIL)
         elif ph == 6:
             info = "Good luck with your project!"
         elif ph == 7:

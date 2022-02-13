@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.contrib.auth.models import User
@@ -41,6 +41,10 @@ class ProposalViewsTest(ProjectViewsTestGeneral):
             [['list', {'timeslot': self.ts.pk}], s.p_all],
             [['list', {'timeslot': self.nts.pk}], s.p_all],
             [['list', {'timeslot': self.pts.pk}], s.p_forbidden],
+            [['favorites', None], s.p_all],
+            [['favorites', {'timeslot': self.ts.pk}], s.p_all],
+            [['favorites', {'timeslot': self.nts.pk}], s.p_all],
+            [['favorites', {'timeslot': self.pts.pk}], s.p_forbidden],
             # [['favorites', None], s.p_all],
             [['create', None], s.p_staff_prop],
             [['pending', None], s.p_pending],

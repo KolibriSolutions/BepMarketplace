@@ -1,5 +1,5 @@
 #  Bep Marketplace ELE
-#  Copyright (c) 2016-2021 Kolibri Solutions
+#  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 import json
@@ -46,9 +46,6 @@ class TelemetryMiddleware(MiddlewareMixin):
         return response
 
     def handleuser(self, request, response):
-        # if '/js_error_hook/' in request.path:
-        #     return response
-
         data = self.createpackage(request, response)
         data['user'] = request.user.username
         data['type'] = 'user'
