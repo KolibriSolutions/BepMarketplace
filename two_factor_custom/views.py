@@ -3,7 +3,7 @@
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django.forms import Form
-from two_factor.forms import MethodForm, PhoneNumberForm, YubiKeyDeviceForm
+from two_factor.forms import MethodForm#, #PhoneNumberForm, YubiKeyDeviceForm
 from two_factor.views.core import LoginView, SetupView
 from two_factor.views.profile import DisableView
 
@@ -52,8 +52,8 @@ class TwoFactorSetupView(SetupView):
         ('welcome', Form),
         ('method', MethodForm),
         ('generator', TwoFactorTOTPDeviceForm),
-        ('sms', PhoneNumberForm),
-        ('call', PhoneNumberForm),
+        # ('sms', PhoneNumberForm),
+        # ('call', PhoneNumberForm),
         ('validation', TwoFactorDeviceValidationForm),
-        ('yubikey', YubiKeyDeviceForm),
+        # ('yubikey', YubiKeyDeviceForm),
     )

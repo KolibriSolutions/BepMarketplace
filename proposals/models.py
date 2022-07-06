@@ -18,14 +18,7 @@ from index.models import Track
 from support.models import CapacityGroup
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number
-from datetime import datetime
 
-from django.conf import settings
-from django.core.cache import cache
-from django.core.exceptions import PermissionDenied
-from django.db.models import Q
-
-from timeline.models import TimeSlot, TimePhase
 logger = logging.getLogger('django')
 
 
@@ -53,7 +46,8 @@ class Proposal(models.Model):
     Private = models.ManyToManyField(User, blank=True, related_name='personal_proposal')
     Status = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(4)],
                                  choices=StatusOptions)
-    TimeSlot = models.ForeignKey(TimeSlot, related_name='proposals', null=True, blank=True, on_delete=models.PROTECT, help_text='The year this proposal is used. Set to "Future" to save the proposal for a future time. Only the proposals of the current timeslot can be used in the current timeslot.')
+    TimeSlot = models.ForeignKey(TimeSlot, related_name='proposals', null=True, blank=True, on_delete=models.PROTECT,
+                                 help_text='The year this proposal is used. Set to "Future" to save the proposal for a future time. Only the proposals of the current timeslot can be used in the current timeslot.')
     TimeStamp = models.DateTimeField(auto_now=True, null=True)
     Created = models.DateTimeField(auto_now_add=True, null=True)
 
@@ -85,7 +79,7 @@ class Proposal(models.Model):
         if not self.TimeSlot:  # anywhere in the future
             return True
         elif self.TimeSlot.Begin > datetime.now().date() or \
-                self.TimeSlot in TimeSlot.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now())).order_by('Begin').exclude(get_timeslot()):
+                (self.TimeSlot.Begin <= datetime.now().date() and not self.curyear()):
             return True  # in future TS or in a secondary current TS when overlapping.
         else:
             return False
@@ -120,6 +114,7 @@ class ProposalFile(models.Model):
     """
     Abstract base class for any object attached to a project. Used for images and attachments.
     """
+
     def make_upload_path(instance, filename):
         filename_new = filename_default(filename)
         return 'proposal_{0}/{1}'.format(instance.Proposal.pk, filename_new)
