@@ -72,12 +72,14 @@ class Proposal(models.Model):
     def nextyear(self):
         """
         Whether this proposal is for the future. Proposals without timeslot are future proposals.
+        Multiple timeslots can be in parallel. Although this does not make san
         :return:
         """
         if not self.TimeSlot:  # anywhere in the future
             return True
-        elif self.TimeSlot.Begin > datetime.now().date():
-            return True
+        elif self.TimeSlot.Begin > datetime.now().date() or \
+                self.TimeSlot in TimeSlot.objects.filter(Q(Begin__lte=datetime.now()) & Q(End__gte=datetime.now())).order_by('Begin').exclude(get_timeslot()):
+            return True  # in future TS or in a secondary current TS when overlapping.
         else:
             return False
 
