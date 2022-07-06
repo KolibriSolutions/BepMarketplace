@@ -18,7 +18,14 @@ from index.models import Track
 from support.models import CapacityGroup
 from timeline.models import TimeSlot
 from timeline.utils import get_timeslot, get_timephase_number
+from datetime import datetime
 
+from django.conf import settings
+from django.core.cache import cache
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
+
+from timeline.models import TimeSlot, TimePhase
 logger = logging.getLogger('django')
 
 
