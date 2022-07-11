@@ -2,14 +2,10 @@
 #  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
-from django.forms import Form
-from two_factor.forms import MethodForm#, #PhoneNumberForm, YubiKeyDeviceForm
-from two_factor.views.core import LoginView, SetupView
+from two_factor.views.core import LoginView
 from two_factor.views.profile import DisableView
 
 from tracking.models import UserLogin
-from .forms import TwoFactorAuthenticationForm, TwoFactorAuthTokenForm, TwoFactorBackupTokenForm, \
-    TwoFactorDeviceValidationForm, TwoFactorTOTPDeviceForm
 
 
 class TwoFactorLoginView(LoginView):
@@ -37,18 +33,3 @@ class TwoFactorLoginView(LoginView):
 class TwoFactorDisableView(DisableView):
     """Profile page, shows information about current 2fa setup."""
     redirect_url = '/two_factor/profile/'
-
-
-class TwoFactorSetupView(SetupView):
-    """
-    Form to setup 2fa.
-    """
-    form_list = (
-        ('welcome', Form),
-        ('method', MethodForm),
-        ('generator', TwoFactorTOTPDeviceForm),
-        # ('sms', PhoneNumberForm),
-        # ('call', PhoneNumberForm),
-        ('validation', TwoFactorDeviceValidationForm),
-        # ('yubikey', YubiKeyDeviceForm),
-    )

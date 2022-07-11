@@ -60,6 +60,11 @@ html, body {
 #toggleSidebarButtonIcon {
     transition: transform 0.8s ease-in-out;
 }
+/* Bootstrap display none class, used by two factor auth form.*/
+.d-none{
+    display: none;
+    visibility: hidden;
+}
 
 #cellSidebar {
     transition: opacity 0.4s linear;
