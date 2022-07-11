@@ -18,7 +18,6 @@ class DistributionsViewsTest(ViewsTest):
             [['distributeproposal', {'dist_type': 1}], self.p_forbidden],
             [['distributeproposal', {'dist_type': 2}], self.p_forbidden],
             [['distributeproposaloption', {'dist_type': 2, 'distribute_random': 0, 'automotive_preference': 0}], self.p_forbidden],
-            [['maildistributions', None], self.p_forbidden],
             [['automaticoptions', None], self.p_forbidden],
         ]
         codes_phase45 = [
@@ -29,18 +28,20 @@ class DistributionsViewsTest(ViewsTest):
             [['distributeproposal', {'dist_type': 2}], self.p_support],
             [['distributeproposaloption', {'dist_type': 2, 'distribute_random': 0, 'automotive_preference': 0}],
              self.p_support],
-            [['maildistributions', None], self.p_support],
             [['automaticoptions', None], self.p_support],
         ]
         codes_phase1237 = [
             [['supportDistributeApplications', None], self.p_forbidden],
             [['secondchoice', None], self.p_forbidden],
+            [['maildistributions', None], self.p_forbidden],
             [['deleterandoms', None], self.p_forbidden],
         ]
         codes_phase456 = [
             [['supportDistributeApplications', None], self.p_support],
             [['secondchoice', None], self.p_support],
             [['deleterandoms', None], self.p_support],
+            [['maildistributions', None], self.p_support],
+
         ]
         codes_dist_phase12 = [
             [['SupportListDistributionsXls', None], self.p_forbidden],

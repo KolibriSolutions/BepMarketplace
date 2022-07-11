@@ -9,7 +9,7 @@
             <h1>Projects and their distributions</h1>
         {% endif %}
         <a href="{% url "distributions:SupportListDistributionsXls" %}" class="button primary">Export Excel</a>
-        {% if phasenumber == 4 or phasenumber == 5 %}
+        {% if phasenumber == 4 or phasenumber == 5 or phasenumber == 6 %}
             <a href="{% url 'distributions:maildistributions' %}" class="button warning">Mail distributions to students</a>
         {% endif %}
     {% endif %}

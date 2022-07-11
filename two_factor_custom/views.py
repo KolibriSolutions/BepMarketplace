@@ -16,11 +16,6 @@ class TwoFactorLoginView(LoginView):
     """
     The view where a user is logged in using 2fa.
     """
-    form_list = (
-        ('auth', TwoFactorAuthenticationForm),
-        ('token', TwoFactorAuthTokenForm),
-        ('backup', TwoFactorBackupTokenForm),
-    )
 
     def done(self, form_list, **kwargs):
         """

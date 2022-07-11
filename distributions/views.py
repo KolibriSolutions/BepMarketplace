@@ -236,6 +236,7 @@ def api_redistribute(request):
 
 
 @group_required('type3staff')
+@phase_required(4,5,6)
 def mail_distributions(request):
     """
     Mail all distributions to affected users
@@ -243,10 +244,6 @@ def mail_distributions(request):
     :param request:
     :return:
     """
-    if get_timephase_number() < 4 or get_timephase_number() > 5:
-        # mailing is possible in phase 4 or 5
-        raise PermissionDenied('Mailing distributions is not possible in this timephase')
-
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
         if form.is_valid():

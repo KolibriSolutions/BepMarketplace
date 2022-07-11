@@ -79,7 +79,7 @@ class PresentationTimeSlot(models.Model):
     A presentation, assessment or break.
     """
     SlotTypes = (
-        (0, 'Presentation'),
+        (0, 'Presentation'),  # for internal use only.
         (1, 'Assessment'),
         (2, 'Break'),
         (3, 'Cancelled')

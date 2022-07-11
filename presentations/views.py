@@ -228,7 +228,7 @@ def wizard_step4(request):
                                                                                                                         'Proposal__Track', 'Student__last_name')
         sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts)  # always ordered by date.
         opts = ts.presentationoptions
-        types = PresentationTimeSlot.SlotTypes
+        types = PresentationTimeSlot.SlotTypes[1:]  # skip the first option, which is presentation, because it is chosen as distribution
         tracks = Track.objects.all()
         return render(request, 'presentations/plan_presentations.html',
                       {'dists': dists, 'sets': sets, 'opts': opts, 'types': types, 'tracks': tracks})
