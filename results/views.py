@@ -567,10 +567,13 @@ def copy(request, pk=None):
     """
     # do a copy
     if pk:
+        tss = get_timeslot()
+        if not tss:
+            raise PermissionDenied('There is no currently active timeslot to copy to.')
         ts = get_object_or_404(TimeSlot, pk=pk)
-        if ts == get_timeslot():
+        if ts == tss:
             raise PermissionDenied("It is not possible to copy the grades from the current timeslot.")
-        if get_timeslot().gradecategories.exists():
+        if tss.gradecategories.exists():
             return render(request, 'base.html', {
                 'Message': "The current timeslot already has grade categories."
                            " Importing is not possible. "

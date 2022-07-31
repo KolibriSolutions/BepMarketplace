@@ -1,9 +1,9 @@
 Sphinx
 asgi_redis
-asgiref>=2,<=3.3
+asgiref>=3.3.1
 beautifulsoup4
 bleach
-channels>=3
+channels==3.0.4  # last version to support python 3.6
 channels_redis
 daphne>=3
 django-csp
@@ -11,26 +11,26 @@ django-formtools>=2.2
 django-htmlmin
 django-impersonate
 django-ipware>=3
-# django-js-error-hook
+django-otp
 django-redis
 django-render-block
 django-sendfile
 django-two-factor-auth
-django-otp
-django>=3,<4
+django>=3.2,<4
 docutils
 lxml
 markdown
+mozilla_django_oidc
 oauthlib
 openpyxl
-phonenumbers
+phonenumberslite
 pillow
 pip
 psycopg2-binary
 pylti
-pysaml2
 pytz
 pyyaml
 requests
 service_identity
 xhtml2pdf>=0.2
+reportlab>=3.5.53,<3.6.7

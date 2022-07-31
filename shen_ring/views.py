@@ -44,28 +44,6 @@ def set_level(user):
         user.save()
 
 
-#
-# def set_osiris(user, osirisdata):
-#     """
-#     Set usermeta based on osiris data
-#
-#     :param user:
-#     :param osirisdata:
-#     :return:
-#     """
-#     meta = user.usermeta
-#     if not meta.Overruled:
-#         if osirisdata.automotive:
-#             meta.Study = 'Automotive'
-#         else:
-#             meta.Study = 'Eletrical Engineering'
-#         meta.Cohort = osirisdata.cohort
-#         meta.ECTS = osirisdata.ects
-#         meta.Studentnumber = osirisdata.idnumber
-#         meta.full_clean()
-#         meta.save()D
-
-
 def is_staff(user):
     """
     Check whether the user is staff. Staff has an @tue.nl email, students have @student.tue.nl email.

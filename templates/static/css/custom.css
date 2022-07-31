@@ -290,3 +290,9 @@ div.popover {
     /* make sure hints (help_texts) on forms are shown above markdown form */
     z-index: 100;
 }
+i.circle{
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    border-radius: 1em;
+}
