@@ -132,5 +132,5 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
         return HttpResponseRedirect(self.success_url)
 
     def login_failure(self):
-        logger.error(f'Login failed for {self.request} ; {self.user} ; {self.request.session}')
+        logger.error(f'Login failed for {self.request} ; {self.user} ; {self.request.session.__dict__}')
         return render(request=self.request, template_name='base.html', status=403, context={'Message': 'You are not allowed to login. If you think this is an error, please contact the support.'})
