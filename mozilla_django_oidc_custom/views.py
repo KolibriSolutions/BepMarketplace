@@ -130,3 +130,7 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
         self.request.session['oidc_id_token_expiration'] = time.time() + expiration_interval
 
         return HttpResponseRedirect(self.success_url)
+
+    def login_failure(self):
+        logger.error(f'Login failed for {self.request} ; {self.user}')
+        return render(request=self.request, template_name='base.html', status=403, context={'Message': 'You are not allowed to login. If you think this is an error, please contact the support.'})
