@@ -91,7 +91,7 @@ def check_user(request, user):
         # login functions for staff and students.
         if is_staff(user):
             # staff, should have valid group
-            unverified_grp = Group.objects.get(name="type2staffunverified")
+            unverified_grp = get_grouptype("2u")
             set_level(user)
             if not user.groups.exists():
                 # existing staff member already have groups
