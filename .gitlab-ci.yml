@@ -10,7 +10,6 @@ bepmp:
     - mkdir -p logging
     - mkdir -p tracking/telemetry/data/
     - pip install -r requirements.txt
-    - pip install -r requirements_development.txt
     - pip install tblib
     - python dev_generate_secrets.py
     - touch startup.lock

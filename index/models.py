@@ -81,7 +81,7 @@ class UserMeta(models.Model):
     Department = models.CharField(max_length=512, null=True, blank=True)
     Study = models.CharField(max_length=512, null=True, blank=True)
     Cohort = models.IntegerField(null=True, blank=True, help_text='Start year of students study')
-    Studentnumber = models.CharField(max_length=10, null=True, blank=True)
+    Studentnumber = models.CharField(max_length=20, null=True, blank=True)
     Culture = models.CharField(max_length=64, null=True, blank=True)
     Initials = models.CharField(max_length=64, null=True, blank=True)
     Fullname = models.CharField(max_length=64, null=True, blank=True)
@@ -90,6 +90,7 @@ class UserMeta(models.Model):
     EnrolledExt = models.BooleanField(default=False, help_text='Whether student user is enrolled in BEP-extension course.')
     Overruled = models.BooleanField(default=False, help_text='Set to True to not update certain fields during login of user.')
     TimeSlot = models.ManyToManyField(TimeSlot, default=get_timeslot_id, related_name='users', blank=True, help_text='Time slots where the user (student) is active in.')
+    Affiliation = models.CharField(max_length=128, null=True, blank=True)
 
     def __str__(self):
         return str(self.User)

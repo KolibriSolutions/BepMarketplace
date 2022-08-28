@@ -30,7 +30,7 @@ def lti(request):
     consumers = config.get('consumers', dict())
     params = dict(request.POST.items())
     headers = request.META
-    headers['X-Forwarded-Proto'] = headers['HTTP_X_FORWARDED_PROTO']
+    headers['X-Forwarded-Proto'] = 'https'  # super nice way of saying were secure
     try:
         verify_request_common(consumers, request.build_absolute_uri(), request.method, headers, params)
     except LTIException as e:

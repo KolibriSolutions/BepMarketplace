@@ -12,28 +12,29 @@ admin.autodiscover()
 admin.site.login = login_required(admin.site.login)
 
 urlpatterns = [
-    path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico')),
+    # path('js_error_hook/', include('django_js_error_hook.urls')),
     path('', include('index.urls')),
     path('admin/', admin.site.urls),
     path('admin/doc/', include('django.contrib.admindocs.urls')),
     path('api/', include('api.urls')),
+    path('canvas/', include('canvas.urls')),
     path('distributions/', include('distributions.urls')),
     path('download/', include('download.urls')),
+    path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico')),
     path('godpowers/', include('godpowers.urls')),
     path('impersonate/', include('impersonate.urls')),
-    # path('js_error_hook/', include('django_js_error_hook.urls')),
+    path('oidc/', include('mozilla_django_oidc.urls')),
     path('osiris/data/', include('osirisdata.urls')),
     path('presentations/', include('presentations.urls')),
     path('professionalskills/', include('professionalskills.urls')),
     path('proposals/', include('proposals.urls')),
     path('results/', include('results.urls')),
+    path('shen/', include('shen_ring.urls')),
     path('student/', include('students.urls')),
     path('support/', include('support.urls')),
     path('timeline/', include('timeline.urls')),
     path('tracking/', include('tracking.urls')),
     path('two_factor/', include('two_factor_custom.urls')),
-    path('canvas/', include('canvas.urls')),
-    path('shen/', include('shen_ring.urls')),
 ]
 
 if settings.DEBUG and 'debug_toolbar' in settings.INSTALLED_APPS:

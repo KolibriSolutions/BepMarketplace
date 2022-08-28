@@ -79,7 +79,7 @@ class Proposal(models.Model):
         if not self.TimeSlot:  # anywhere in the future
             return True
         elif self.TimeSlot.Begin > datetime.now().date() or \
-                (self.TimeSlot.Begin <= datetime.now().date() and not self.curyear()):
+                (self.TimeSlot.Begin <= datetime.now().date() <= self.TimeSlot.End and not self.curyear()):
             return True  # in future TS or in a secondary current TS when overlapping.
         else:
             return False
