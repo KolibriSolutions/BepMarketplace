@@ -95,8 +95,8 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         user.last_name = claims['family_name']
         user.first_name = claims['given_name']
 
-        with open('logging/claimsdump.txt', 'a+') as f:
-            f.write(str(claims))
+        # with open('logging/claimsdump.txt', 'a+') as f:
+        #     f.write(str(claims))
 
         meta.Department = claims.get('ou', None)
         meta.Affiliation = claims.get('eduperson_affiliation', None)
@@ -113,5 +113,6 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
             raise Exception(f"Saving updated user {user.email} failed {meta.Studentnumber}")
         user.save()
         user.usermeta = meta
+        user.full_clean()
         user.save()
         meta.save()

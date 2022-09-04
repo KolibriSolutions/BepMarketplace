@@ -13,6 +13,7 @@ LOGIN_REDIRECT_URL = '/'  # after login go to homepage
 LOGIN_URL = '/login/'  # for saml login
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',  # for superusers, and 2fa.
+    'mozilla_django_oidc_custom.backends.CustomOIDCAuthenticationBackend',
 )
 
 # Password validation

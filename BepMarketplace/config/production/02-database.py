@@ -20,6 +20,7 @@ DATABASES = {
     }
 }
 
+# Use REDIS to cache certain pages and variables.
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
