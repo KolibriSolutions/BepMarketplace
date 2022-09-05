@@ -262,7 +262,7 @@ def callback(request):
         return response
 
     # login user
-    auth.login(request, user)
+    auth.login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
     if next_url is not None:
         if is_safe_url(next_url, None):
