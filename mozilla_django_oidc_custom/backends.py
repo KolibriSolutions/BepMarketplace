@@ -1,7 +1,7 @@
 #  Master Marketplace ELE
 #  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/MasterMarketplace/blob/master/LICENSE
-
+from django.core.exceptions import ValidationError
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 from index.models import UserMeta
@@ -31,7 +31,6 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         required_claims = ['uids', 'acr', 'eduperson_affiliation', 'email', 'email_verified', 'family_name', 'given_name', 'name', 'schac_home_organization', 'sub', 'updated_at']
         for required_claim in required_claims:
             assert required_claim in claims, f'Claim {required_claim} missing from OpenID claims'
-
         return True
 
     def update_user(self, user, claims):
@@ -59,7 +58,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 
     def filter_users_by_claims(self, claims):
         """Return all users matching the specified email or username."""
-        assert claims.get('schac_home_organization',None) == 'tue.nl', f"Non-TU/e user trying to login {claims}"
+        assert claims.get('schac_home_organization', None) == 'tue.nl', f"Non-TU/e user trying to login {claims}"
 
         email = claims.get('email')
         if not email:
@@ -102,15 +101,17 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         meta.Affiliation = claims.get('eduperson_affiliation', None)
 
         try:
-            splitted = claims.get('schac_personal_unique_code')[0].split(';')
-            meta.Studentnumber = splitted[-1][0:19]  # format urn:schac:personalUniqueCode:nl:local:tue.nl;studentid;0803331
-        except:
-            raise Exception(f'Setting studentnumber failed for {claims}, splitted: {splitted}')
+            student_numbers = claims.get('schac_personal_unique_code')[0].split(';')
+            meta.Studentnumber = student_numbers[-1][0:19]  # format urn:schac:personalUniqueCode:nl:local:tue.nl;studentid;0803331
+        except TypeError:
+            pass  # claim can be unavailable
+        except Exception as e:
+            raise Exception(f'Setting student number failed for {claims}, error {e}')
         try:
             meta.full_clean()
             user.full_clean()
-        except :
-            raise Exception(f"Saving updated user {user.email} failed {meta.Studentnumber}")
+        except ValidationError as e:
+            raise Exception(f"Saving updated user {user.email} full_clean failed with {e}")
         user.save()
         user.usermeta = meta
         user.full_clean()
