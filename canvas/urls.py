@@ -9,5 +9,5 @@ from . import views
 app_name = 'canvas'
 
 urlpatterns = [
-    path('', views.lti, name='lti'),
+    path('', views.lti, name='lti'),  # url used in canvas, make sure to set url to /canvas/ in canvas.
 ]

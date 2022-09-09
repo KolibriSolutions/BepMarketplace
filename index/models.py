@@ -2,7 +2,9 @@
 #  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
+from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
@@ -101,12 +103,7 @@ class UserMeta(models.Model):
 
         :return:
         """
-        if self.Fullname:
-            return self.Fullname
-        elif self.User.first_name or self.User.last_name:
-            return self.User.get_full_name()
-        else:
-            return self.User.username  # users without name, should not happen.
+        return self.get_nice_fullname()
 
     def get_nice_fullname(self):
         """
@@ -114,9 +111,18 @@ class UserMeta(models.Model):
 
         :return:
         """
-        if self.Fullname and len(self.Fullname) > 2:
-            return self.Fullname
-        return self.get_nice_name()
+        cname = cache.get('user_nice_fullname_{}'.format(self.id))
+        if cname is None:
+            if self.User.first_name and self.User.last_name:
+                name = f'{self.User.last_name}, {self.User.first_name}'.strip()
+            elif self.Fullname and len(self.Fullname) > 2:
+                name = self.Fullname
+            else:
+                name = self.User.username
+            cache.set('user_nice_fullname_{}'.format(self.id), name, settings.STATIC_OBJECT_CACHE_DURATION)
+            return name
+        else:
+            return cname
 
 
 class Term(models.Model):

@@ -86,7 +86,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
             meta = user.usermeta
         except UserMeta.DoesNotExist:
             meta = UserMeta()
-
+            meta.User = user
         # make last name from fullname
         meta.Fullname = claims.get('name')
 
@@ -113,7 +113,6 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         except ValidationError as e:
             raise Exception(f"Saving updated user {user.email} full_clean failed with {e}")
         user.save()
-        user.usermeta = meta
         user.full_clean()
         user.save()
         meta.save()

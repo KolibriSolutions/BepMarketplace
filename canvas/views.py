@@ -56,8 +56,8 @@ def lti(request):
     except UserMeta.DoesNotExist:
         meta = UserMeta(User=user)
 
-    meta.Studentnumber = studentnumber
     if not meta.Overruled:
+        meta.Studentnumber = studentnumber
         if settings.COURSE_CODE_BEP in coursecode:
             meta.EnrolledBEP = True
         elif settings.COURSE_CODE_EXT in coursecode:
