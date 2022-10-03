@@ -20,7 +20,7 @@
                 {% else %}
                     <p>
                     {% csrf_token %}
-                    Please start by <a href="{% url 'shen_ring:login' %}" class="button primary">logging in</a><br/>
+                    Please start by <a href="{% url 'oidc_authentication_init' %}" class="button primary">logging in</a><br/>
                     {% if phasenumber < 3 %}
                         After logging in, you can be granted staff access. With staff access it is possible to create and edit proposals.
                     {% endif %}

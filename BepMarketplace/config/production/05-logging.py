@@ -18,17 +18,17 @@ LOGGING = {
     },
     'handlers': {
         'file': {
-            'level': 'ERROR',
+            'level': 'WARNING',
             'class': 'logging.FileHandler',
             'filename': os.path.join(LOG_DIR, 'django.log'),
             'formatter': 'verbose',
         },
-        'saml_file': {
-            'level': 'WARNING',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(LOG_DIR, 'saml2.log'),
-            'formatter': 'verbose',
-        },
+        # 'saml_file': {
+        #     'level': 'WARNING',
+        #     'class': 'logging.FileHandler',
+        #     'filename': os.path.join(LOG_DIR, 'saml2.log'),
+        #     'formatter': 'verbose',
+        # },
         # 'js_file': {
         #     'level': 'ERROR',
         #     'class': 'logging.FileHandler',
@@ -49,18 +49,18 @@ LOGGING = {
         },
         'django': {
             'handlers': ['file', 'mail_admins'],
-            'level': 'ERROR',
+            'level': 'WARNING',
             'propagate': True,
         },
         # logging for saml
-        'djangosaml2': {
-            'handlers': ['saml_file', 'mail_admins'],
-            'level': 'WARNING',
-        },
-        'saml2': {
-            'handlers': ['saml_file'],
-            'level': 'CRITICAL',  # to disable logging on unsolicitedresponses etc.
-        },
+        # 'djangosaml2': {
+        #     'handlers': ['saml_file', 'mail_admins'],
+        #     'level': 'WARNING',
+        # },
+        # 'saml2': {
+        #     'handlers': ['saml_file'],
+        #     'level': 'CRITICAL',  # to disable logging on unsolicitedresponses etc.
+        # },
         # 'javascript_error': {
         #     'handlers': ['js_file'],
         #     'level': 'ERROR',

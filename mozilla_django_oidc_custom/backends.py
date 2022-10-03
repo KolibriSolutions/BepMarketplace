@@ -1,10 +1,14 @@
 #  Master Marketplace ELE
 #  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/MasterMarketplace/blob/master/LICENSE
+import logging
+
 from django.core.exceptions import ValidationError
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 from index.models import UserMeta
+
+logger = logging.getLogger('django')
 
 
 class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
@@ -40,6 +44,17 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         :param claims:
         :return:
         """
+        # overwrite if changed
+        new_mail = claims.get('email').lower()
+        if user.email != new_mail:
+            logger.warning(f'Email changed for {user} from {user.email} to {new_mail}')
+            user.email = new_mail
+            user.save()
+        new_uid = self.get_username(claims)
+        if user.username != new_uid:
+            logger.warning(f'UID changed for {user} from {user.username} to {new_uid}')
+            user.username = new_uid
+            user.save()
         self.set_user_info(user, claims)
         return user
 
@@ -85,10 +100,10 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         try:
             meta = user.usermeta
         except UserMeta.DoesNotExist:
-            meta = UserMeta()
-            meta.User = user
+            meta = UserMeta(User=user)
+
         # make last name from fullname
-        meta.Fullname = claims.get('name')
+        meta.Fullname = claims.get('nickname')
 
         # these attributes don't always exist
         user.last_name = claims['family_name']
@@ -100,13 +115,14 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         meta.Department = claims.get('ou', None)
         meta.Affiliation = claims.get('eduperson_affiliation', None)
 
-        try:
-            student_numbers = claims.get('schac_personal_unique_code')[0].split(';')
-            meta.Studentnumber = student_numbers[-1][0:19]  # format urn:schac:personalUniqueCode:nl:local:tue.nl;studentid;0803331
-        except TypeError:
-            pass  # claim can be unavailable
-        except Exception as e:
-            raise Exception(f'Setting student number failed for {claims}, error {e}')
+        if not meta.Overruled:
+            try:
+                student_numbers = claims.get('schac_personal_unique_code')[0].split(';')
+                meta.Studentnumber = student_numbers[-1][0:19]  # format urn:schac:personalUniqueCode:nl:local:tue.nl;studentid;0803331
+            except TypeError:
+                pass  # claim can be unavailable
+            except Exception as e:
+                raise Exception(f'Setting student number failed for {claims}, error {e}')
         try:
             meta.full_clean()
             user.full_clean()

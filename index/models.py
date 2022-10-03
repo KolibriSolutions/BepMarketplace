@@ -111,18 +111,20 @@ class UserMeta(models.Model):
 
         :return:
         """
-        cname = cache.get('user_nice_fullname_{}'.format(self.id))
-        if cname is None:
-            if self.User.first_name and self.User.last_name:
-                name = f'{self.User.last_name}, {self.User.first_name}'.strip()
-            elif self.Fullname and len(self.Fullname) > 2:
+        name = cache.get('user_nice_fullname_{}'.format(self.id))
+        if name is None:
+            if self.Fullname and len(self.Fullname) > 2:
                 name = self.Fullname
             else:
-                name = self.User.username
+                if self.User.first_name and self.User.last_name:
+                    name = f'{self.User.last_name}, {self.User.first_name}'.strip()
+                else:
+                    try:
+                        name = self.User.email.split('@')[0]
+                    except:
+                        name = self.User.username
             cache.set('user_nice_fullname_{}'.format(self.id), name, settings.STATIC_OBJECT_CACHE_DURATION)
-            return name
-        else:
-            return cname
+        return name
 
 
 class Term(models.Model):

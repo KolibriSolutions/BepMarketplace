@@ -29,7 +29,7 @@ urlpatterns = [
     path('professionalskills/', include('professionalskills.urls')),
     path('proposals/', include('proposals.urls')),
     path('results/', include('results.urls')),
-    path('shen/', include('shen_ring.urls')),
+    # path('shen/', include('shen_ring.urls')),
     path('student/', include('students.urls')),
     path('support/', include('support.urls')),
     path('timeline/', include('timeline.urls')),

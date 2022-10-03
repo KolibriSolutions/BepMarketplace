@@ -10,7 +10,7 @@ except ImportError:
 
 ## Login
 LOGIN_REDIRECT_URL = '/'  # after login go to homepage
-LOGIN_URL = '/login/'  # for saml login
+LOGIN_URL = '/oidc/authenticate/'
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',  # for superusers, and 2fa.
     'mozilla_django_oidc_custom.backends.CustomOIDCAuthenticationBackend',
@@ -34,15 +34,15 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # shen ring settings
-SHEN_RING_URL = "https://shen.ele.tue.nl/"
-SHEN_RING_NO_CSRF = False
+# SHEN_RING_URL = "https://shen.ele.tue.nl/"
+# SHEN_RING_NO_CSRF = False
 
 
 
 # OIDC settings
 # URLS From : https://connect.surfconext.nl/.well-known/openid-configuration
 # LOGIN_REDIRECT_URL = '/'
-# LOGOUT_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 OIDC_CALLBACK_CLASS = 'mozilla_django_oidc_custom.views.CustomOIDCAuthenticationCallbackView'
 # OIDC_AUTHENTICATE_CLASS = ''
 OIDC_OP_AUTHORIZATION_ENDPOINT = "https://connect.surfconext.nl/oidc/authorize"

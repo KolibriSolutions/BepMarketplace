@@ -108,7 +108,7 @@ INSTALLED_APPS = [
     'two_factor_custom.apps.TwoFactorCustomConfig',
     'osirisdata.apps.OsirisdataConfig',
     'canvas.apps.CanvasConfig',
-    'shen_ring.apps.ShenRingConfig',
+    # 'shen_ring.apps.ShenRingConfig',
 
     'django.contrib.admin',
     'django.contrib.admindocs',

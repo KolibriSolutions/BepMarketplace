@@ -309,7 +309,8 @@
                     </li>
                     <li><a href="{% url 'index:logout' %}"><span class="mif-vpn-lock icon"></span>Logout</a></li>
                 {% else %}
-                    <li><a href="{% url 'shen_ring:login' %}"><span class="mif-vpn-lock icon"></span>Login</a>
+                    <li>
+                        <a href="{% url 'oidc_authentication_init' %}" id="loginurl"><span class="mif-vpn-lock icon"></span>Login</a>
                     </li>
                 {% endif %}
             </ul>

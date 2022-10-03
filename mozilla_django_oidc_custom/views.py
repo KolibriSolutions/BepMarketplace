@@ -8,7 +8,6 @@ import time
 
 from django.conf import settings
 from django.contrib import auth
-from django.contrib.auth.models import Group
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from mozilla_django_oidc.views import OIDCAuthenticationCallbackView
@@ -92,19 +91,18 @@ def check_user(request, user):
         if is_staff(user):
             # staff, should have valid group
             unverified_grp = get_grouptype("2u")
-            set_level(user)
+            set_level(user)  # for accessgrant
             if not user.groups.exists():
                 # existing staff member already have groups
                 # new staff members get automatically type2staffunverified
                 user.groups.add(unverified_grp)
                 user.save()
-                return True
         elif is_student(user):
             if not enrolled_osiris(user):
                 return render(request, 'base.html', status=403,
                               context={"Message": "You are not enrolled in our system yet. Please login once through canvas module BEP Marketplace"})
             else:
-                if get_timeslot() not in user.usermeta.TimeSlot.all():  # user is not active in this timeslot
+                if get_timeslot() not in meta.TimeSlot.all():  # user is not active in this timeslot
                     # not in this timeslot so old user, canvas app sets timeslot
                     # this security will fail if canvas does not close off old courses as it does now
                     return render(request, 'base.html', status=403, context={"Message": "You are not active in this time slot. Please login once via the Canvas module."})
@@ -132,5 +130,8 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
         return HttpResponseRedirect(self.success_url)
 
     def login_failure(self):
-        logger.error(f'Login failed for {self.request} ; {self.user} ; {self.request.session.__dict__}')
-        return render(request=self.request, template_name='base.html', status=403, context={'Message': 'You are not allowed to login. If you think this is an error, please contact the support.'})
+        logger.info(f'Login failed for {self.request.__dict__} ; {self.user if hasattr(self, "user") else "unknown"} ; {self.request.session.__dict__}; {self.request.POST.__dict__}')
+        logger.error(f'Login failed for {self.user if hasattr(self, "user") else "unknown"}; via {self.request.META.get("HTTP_SEC_FETCH_DEST").lower()}; {self.request.META}')
+        # if self.request.META.get('HTTP_SEC_FETCH_DEST').lower() == 'iframe': to tell if page came from IFRAME (not Safari/IE)
+        return render(request=self.request, template_name='base.html', status=403,
+                      context={'Message': 'You are not allowed to login. If you think this is an error, please contact the support. If you tried to login via CANVAS please refresh the page (F5).'})

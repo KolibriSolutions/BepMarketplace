@@ -4,16 +4,15 @@
 #
 from django.shortcuts import HttpResponse
 from django.urls import path
-
-import support.views
-from shen_ring.views import login
+from django.views.generic import RedirectView
 
 from . import views
 
 app_name = 'index'
 urlpatterns = [
     path('', views.index, name='index'),
-    path('login/', login, name='login'),  # internal call to djangosaml2 login
+    # path('login/', login, name='login'),  # internal call to djangosaml2 login
+    path('login/', RedirectView.as_view(url='/oidc/authenticate/', permanent=False), name='login'),  # internal call to djangosaml2 login
     path('logout/', views.logout, name='logout'),  # Saml logout doesn't work, so only local logout.
     path('profile/', views.profile, name='profile'),
     path('feedback/form/', views.feedback_form, name='feedback_form'),
