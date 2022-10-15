@@ -251,7 +251,8 @@
                     {% else %} {# students #}
                         <li>
                             <a href="{% url_timeslot 'proposals:list' %}"><span class="mif-mail-read icon"></span>Proposals</a>
-                        </li>                        <li>
+                        </li>
+                        <li>
                             <a href="{% url_timeslot 'proposals:favorites' %}"><span class="mif-mail-read icon"></span>Favorites</a>
                         </li>
                         {#                        {% if phasenumber < 5 %}#}
@@ -307,7 +308,11 @@
                 {% if user.is_authenticated %}
                     <li><a href="{% url 'index:profile' %}"><span class="mif-user icon"></span>Profile</a>
                     </li>
-                    <li><a href="{% url 'index:logout' %}"><span class="mif-vpn-lock icon"></span>Logout</a></li>
+                    {% if request|request_get_sec_dest == 'iframe' %} {# show button on canvas logins #}
+                        <li><a href="{% url 'oidc_authentication_init' %}" target="_blank"><span class="mif-enlarge icon"></span>View full</a></li>
+                    {% else %}
+                        <li><a href="{% url 'index:logout' %}"><span class="mif-vpn-lock icon"></span>Logout</a></li>
+                    {% endif %}
                 {% else %}
                     <li>
                         <a href="{% url 'oidc_authentication_init' %}" id="loginurl"><span class="mif-vpn-lock icon"></span>Login</a>

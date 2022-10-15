@@ -585,13 +585,15 @@ def copy(request, pk=None):
             if form.is_valid():
                 for cat in ts.gradecategories.all():
                     old_id = cat.id
-                    old_aspects = cat.aspects.all()
+                    old_aspects = cat.aspects.all().defer(None)
                     cat.id = None
                     cat.TimeSlot = get_timeslot()
+                    cat.full_clean()
                     cat.save()
                     for aspect in old_aspects:
                         aspect.id = None
                         aspect.Category = cat
+                        aspect.full_clean()
                         aspect.save()
 
                 return render(request, 'base.html',

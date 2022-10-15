@@ -85,6 +85,11 @@ def get_broadcasts(user):
     return format_html(str(msg))
 
 
+@register.filter(name='request_get_sec_dest')
+def request_get_sec_dest(request):
+    return request.headers.get('Sec-Fetch-Dest', False)
+
+
 @register.simple_tag
 def broadcast_available(user):
     """

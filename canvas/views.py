@@ -9,7 +9,8 @@ from django.contrib import auth
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
+from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from pylti.common import LTIException
@@ -109,4 +110,10 @@ def lti(request):
 
     # login
     auth.login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-    return redirect('/')
+    return render(request, 'base.html', context={'Message':
+                                                     mark_safe(
+                                                         f'You logged in successfully via CANVAS. From now on, you can also browse the marketplace without CANVAS at <a href="{settings.DOMAIN}/oidc/authenticate/" target="_blank" title="view {settings.HOSTNAME}">{settings.HOSTNAME}</a>'),
+                                                 'return': 'index:index'
+                                                 }
+                  )
+    # return redirect('/')
