@@ -101,7 +101,6 @@ def lti(request):
 
     try:
         meta.full_clean()
-        user.full_clean()
     except ValidationError as e:
         raise Exception(f"Saving updated user {user.email} full_clean failed with {e}")
 
