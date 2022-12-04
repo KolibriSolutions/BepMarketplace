@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Copy prv aspects</h1>
+    <p>Import prv aspects from another prv to the current prv.
+        Prv: {{ prv }} in {{ prv.TimeSlot }}
+
+    </p>
+    <h3>Current aspects</h3>
+    <p>
+        Already present aspects of the PRV will not be removed on import. <a href="{% url 'professionalskills:list_aspects' prv.pk %}" class="button primary">current aspects</a>
+    </p>
+    <ul>
+    {{ prv.aspects.all|unordered_list }}
+    </ul>
+
+    <table class="table bordered hovered striped datatable">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>TimeSlot</th>
+            <th>Aspects</th>
+            <th>View</th>
+            <th>Copy</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for p in prvs %}
+            <tr>
+                <td>{{ p.Name }}</td>
+                <td>{{ p.Description }}</td>
+                <td>{{ p.TimeSlot }}</td>
+                <td>
+                    <ul>
+                        {% for a in p.aspects.all %}
+                            <li>{{ a.Name }}</li>
+                            {% endfor %}
+                    </ul>
+                </td>
+                <td>
+                    <a href="{% url 'professionalskills:list_aspects' p.pk %}" class="button primary">View</a>
+                </td>
+                <td>
+                    <a href="{% url "professionalskills:copy_aspects" prv.pk p.pk %}" class="button primary">Import</a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <br/>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        //live search for proposals, using datatables jquery.
+        $(document).ready(function () {
+            $('.datatable').dt_wrapper([
+                {column_number: 0, filter_type: "text"},
+                {column_number: 1, filter_type: "text"},
+                {column_number: 2, filter_type: "select"},
+
+            ]);
+        });
+    </script>
+{% endblock %}

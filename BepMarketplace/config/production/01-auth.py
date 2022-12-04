@@ -33,12 +33,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# shen ring settings
-# SHEN_RING_URL = "https://shen.ele.tue.nl/"
-# SHEN_RING_NO_CSRF = False
-
-
-
 # OIDC settings
 # URLS From : https://connect.surfconext.nl/.well-known/openid-configuration
 # LOGIN_REDIRECT_URL = '/'

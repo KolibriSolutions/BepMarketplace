@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>Copy prv from other timeslot</h1>
+    <p>Import prv filetypes from old timeslot to the current timeslot ({{ ts }})
+
+    </p>
+    <table class="table bordered hovered striped datatable">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>File Types (and aspects)</th>
+            <th>Copy</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for p in tss %}
+            <tr>
+                <td>{{ p.Name }}</td>
+                <td>
+                    {% if p.filetypes.exists %}
+                        <ul>
+                            {% for ft in p.filetypes.all %}
+                                <li>{{ ft }}
+                                    {% if ft.aspects.exists %}
+                                        <ul>
+                                            {{ ft.aspects.all|unordered_list }}
+                                        </ul>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        None
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if p == ts %}
+                        Current time slot<br/>
+                        {# current timeslot #}
+                        Current
+                    {% else %}
+                        <a href="{% url 'professionalskills:copy_filetypes' p.pk %}" class="button primary">Copy to current timeslot</a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <br/>
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        //live search for proposals, using datatables jquery.
+        $(document).ready(function () {
+            $('.datatable').dt_wrapper();
+        });
+    </script>
+{% endblock %}

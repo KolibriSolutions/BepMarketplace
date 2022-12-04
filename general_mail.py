@@ -42,9 +42,9 @@ def send_mail(subject, email_template_name, context, to_email):
     # send
     try:
         email_message.send()
-    except SMTPException:
+    except SMTPException as e:
         with open("mailcrash.log", "a") as stream:
-            stream.write("Mail to {} could not be send:\n{}\n".format(to_email, html_email))
+            stream.write("Mail to {} could not be send:\n{}\n for reason {}".format(to_email, html_email, e))
     except ConnectionRefusedError:
         if settings.DEBUG:
             print("Send mail refused!")

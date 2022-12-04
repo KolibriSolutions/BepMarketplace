@@ -5,6 +5,7 @@
 import random
 import zipfile
 from io import BytesIO
+from django.utils.safestring import mark_safe
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -20,13 +21,14 @@ from xhtml2pdf import pisa
 from distributions.utils import get_distributions
 from general_form import ConfirmForm
 from general_mail import send_mail, EmailThreadTemplate
-from general_model import delete_object
+from general_model import delete_object, print_list
 from general_view import get_grouptype, get_all_students
 from index.decorators import group_required, student_only
 from professionalskills.decorators import can_access_professionalskills
 from students.models import Distribution
 from timeline.decorators import phase_required
-from timeline.utils import get_timeslot, get_timephase_number
+from timeline.models import TimeSlot
+from timeline.utils import get_timeslot, get_timephase_number, get_recent_timeslots
 from .exports import get_prv_type_xlsx
 from .forms import FileTypeModelForm, StaffResponseForm, StudentGroupForm, StudentGroupChoice, FileExtensionForm, \
     StaffResponseFileAspectResultForm, StaffResponseFileAspectForm, StudentFileForm
@@ -286,7 +288,7 @@ def delete_filetype_aspect(request, pk):
 
 
 @group_required('type3staff', 'type6staff')
-def copy(request, pk, from_pk=None):
+def copy_aspects(request, pk, from_pk=None):
     """
     Show a list of timeslots to import rubrics from.
 
@@ -316,15 +318,69 @@ def copy(request, pk, from_pk=None):
             form = ConfirmForm()
         return render(request, 'GenericForm.html', {
             'form': form,
-            'formtitle': f'Confirm import aspcects to {prv.Name}',
+            'formtitle': f'Confirm import aspects to {prv.Name}',
             'buttontext': 'Confirm'
         })
 
     else:  # show options list
         prvs = FileType.objects.filter(CheckedBySupervisor=True, aspects__isnull=False).exclude(pk=pk).distinct()
-        return render(request, "professionalskills/list_copy.html", {
+        return render(request, "professionalskills/list_copy_aspects.html", {
             "prvs": prvs,
             'prv': prv
+        })
+
+
+@group_required('type3staff', 'type6staff')
+def copy_filetypes(request, from_ts_pk: int = None):
+    """
+    Show a list of timeslots to import rubrics from.
+
+    :param request:
+    :param pk: prv to copy grades to
+    :param from_pk: prv to copy grades from
+    :return:
+    """
+    current_ts = get_timeslot()
+    if from_ts_pk:  # do copy
+        from_ts = get_object_or_404(TimeSlot, pk=from_ts_pk)
+        if current_ts.filetypes.exists():
+            raise PermissionDenied('There are already filetypes defined in this timeslot. Please remove them before importing new ones. Existing file types: ' +
+                                   mark_safe(print_list(current_ts.filetypes.all())) + '.')
+        if request.method == 'POST':
+            form = ConfirmForm(request.POST)
+            if form.is_valid():
+                # copy each filetype one by one including aspects
+                done_list = []
+                for ft in from_ts.filetypes.all():
+                    from_pk = ft.pk
+                    from_prv = get_object_or_404(FileType, pk=from_pk)
+                    # create new
+                    from_prv.id = None
+                    from_prv.TimeSlot = current_ts
+                    from_prv.save()
+                    new_prv = from_prv
+                    from_prv = get_object_or_404(FileType, pk=from_pk)  # get old prv to copy from again to take its aspects.
+                    done_list.append(new_prv)
+                    if not from_prv.CheckedBySupervisor or not from_prv.aspects.exists():
+                        continue
+                    for aspect in from_prv.aspects.all():
+                        aspect.id = None
+                        aspect.File = new_prv
+                        aspect.save()
+
+                return render(request, 'base.html', {'Message': 'Finished! Imported: ' + print_list(done_list), 'return': 'professionalskills:list'})
+        else:
+            form = ConfirmForm()
+        return render(request, 'GenericForm.html', {
+            'form': form,
+            'formtitle': f'Confirm import filetypes from {from_ts} to {current_ts}',
+            'buttontext': 'Confirm'
+        })
+    else:  # show options list
+        # prvs = FileType.objects.filter(TimeSlot=from_ts)
+        return render(request, "professionalskills/list_copy_filetypes.html", {
+            'tss': get_recent_timeslots(),
+            'ts': current_ts
         })
 
 

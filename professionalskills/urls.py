@@ -11,6 +11,8 @@ app_name = 'professionalskills'
 urlpatterns = [
     path('filetype/list/', views.list_filetypes, name='list'),
     path('filetype/create/', views.create_filetype, name='create'),
+    path('copy/', views.copy_filetypes, name='copy_filetypes_overview'),
+    path('copy/<int:from_ts_pk>', views.copy_filetypes, name='copy_filetypes'),
     path('filetype/<int:pk>/edit/', views.edit_filetype, name='edit'),
     path('filetype/<int:pk>/delete/', views.delete_filetype, name='delete'),
     path('filetype/<int:pk>/export/', views.export_filetype_xlsx, name='filetype_export'),
@@ -19,8 +21,8 @@ urlpatterns = [
     path('filetype/<int:pk>/grading/add/', views.add_filetype_aspect, name='add_aspect'),
     path('filetype/grading/<int:pk>/edit/', views.edit_filetype_aspect, name='edit_aspect'),
     path('filetype/grading/<int:pk>/delete/', views.delete_filetype_aspect, name='delete_aspect'),
-    path('copy/<int:pk>/<int:from_pk>/', views.copy, name='copy'),
-    path('copy/<int:pk>/', views.copy, name='copy_overview'),
+    path('filetype/<int:pk>/copy/<int:from_pk>/', views.copy_aspects, name='copy_aspects'),
+    path('filetype/<int:pk>/copy/', views.copy_aspects, name='copy_aspects_overview'),
 
     path('extensions/', views.edit_extensions, name='extensions'),
 

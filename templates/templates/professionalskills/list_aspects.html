@@ -14,7 +14,7 @@
     <h2>Aspects</h2>
     {% if user|has_group:'type3staff,type6staff' %}
         <a href="{% url 'professionalskills:add_aspect' file.pk %}" class="button primary">Add aspect</a>
-        <a href="{% url 'professionalskills:copy_overview' file.pk %}" class="button primary">Import aspects from other prv</a>
+        <a href="{% url 'professionalskills:copy_aspects_overview' file.pk %}" class="button primary">Import aspects from other prv</a>
     {% endif %}
     <p>Aspects are graded in the following scale:</p>
     <ul>

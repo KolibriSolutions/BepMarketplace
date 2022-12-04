@@ -16,13 +16,6 @@ AUTHENTICATION_BACKENDS = (
 AUTH_PASSWORD_VALIDATORS = [
 ]
 
-# shen ring settings
-# SHEN_RING_URL = "http://localhost:8000/"
-# SHEN_RING_URL = "https://shen.ele.tue.nl/"
-# SHEN_RING_NO_CSRF = False
-# SHEN_RING_CLIENT_ID = SHEN_RING_CLIENT_ID
-# SHEN_RING_CLIENT_SECRET = SHEN_RING_CLIENT_SECRET
-
 # OIDC settings
 # URLS From : https://connect.surfconext.nl/.well-known/openid-configuration
 # LOGIN_REDIRECT_URL = '/'

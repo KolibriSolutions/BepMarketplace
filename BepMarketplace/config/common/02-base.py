@@ -78,6 +78,7 @@ TEMPLATES = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/
+LANGUAGE_CODE = 'en-US'
 TIME_ZONE = 'Europe/Amsterdam'
 USE_I18N = False  # translation backend, not used, so False.
 USE_L10N = False  # number formatting based on user's browser locale

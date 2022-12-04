@@ -83,10 +83,10 @@ def get_timeslot_tag():
     return str(ts)
 
 
-@register.tag
+@register.simple_tag(name='url_timeslot')
 def url_timeslot(parser, token):
     """
-    Wrapper around url templatetag which inserts a timeslot argument if a timeslot is present.
+    Wrapper around url template tag which inserts a timeslot argument if a timeslot is present.
 
     :param parser:
     :param token:

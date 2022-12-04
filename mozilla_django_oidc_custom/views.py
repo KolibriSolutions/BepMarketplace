@@ -130,8 +130,6 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
         return HttpResponseRedirect(self.success_url)
 
     def login_failure(self):
-        logger.info(f'Login failed for {self.request.__dict__} ; {self.user if hasattr(self, "user") else "unknown"} ; {self.request.session.__dict__}; {self.request.POST.__dict__}')
         logger.error(f'Login failed for {self.user if hasattr(self, "user") else "unknown"}; via {self.request.META.get("HTTP_SEC_FETCH_DEST").lower()}; {self.request.META}')
-        # if self.request.META.get('HTTP_SEC_FETCH_DEST').lower() == 'iframe': to tell if page came from IFRAME (not Safari/IE)
         return render(request=self.request, template_name='base.html', status=403,
                       context={'Message': 'You are not allowed to login. If you think this is an error, please contact the support. If you tried to login via CANVAS please refresh the page (F5).'})
