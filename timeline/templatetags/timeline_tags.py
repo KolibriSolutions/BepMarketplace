@@ -3,8 +3,7 @@
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from django import template
-from django.template.base import FilterExpression
-from django.template.defaulttags import url
+from django.urls import reverse
 
 from timeline.utils import get_timephase, get_timephase_number, get_timeslot, get_next_timeslot
 
@@ -83,19 +82,19 @@ def get_timeslot_tag():
     return str(ts)
 
 
-@register.simple_tag(name='url_timeslot')
-def url_timeslot(parser, token):
+@register.simple_tag
+def url_timeslot(view_name):
     """
     Wrapper around url template tag which inserts a timeslot argument if a timeslot is present.
 
-    :param parser:
-    :param token:
+    :param view_name:
     :return:
     """
-    node = url(parser, token)  # default url parser
     ts = get_timeslot()
+    kw = {}
     if ts:
-        node.args.append(FilterExpression(token=str(ts.pk), parser=parser))
+        kw = {'timeslot': ts.pk}
+    node = reverse(view_name, kwargs=kw)
     return node
 
 
