@@ -4,7 +4,8 @@
 #
 from BepMarketplace.secret import IMPORT_EMAIL_HOST_PASSWORD
 
-EMAIL_HOST = 'smtp.office365.com'
+# EMAIL_HOST = 'smtp.office365.com'
+EMAIL_HOST = 'smtp.tue.nl'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'svcbepmarktplcmailer@tue.nl'
 EMAIL_HOST_PASSWORD = IMPORT_EMAIL_HOST_PASSWORD

@@ -34,7 +34,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         """
         required_claims = ['uids', 'acr', 'eduperson_affiliation', 'email', 'email_verified', 'family_name', 'given_name', 'name', 'schac_home_organization', 'sub', 'updated_at']
         for required_claim in required_claims:
-            assert required_claim in claims, f'Claim {required_claim} missing from OpenID claims'
+            assert required_claim in claims, f'Claim {required_claim} missing from OpenID claims: {claims}'
         return True
 
     def update_user(self, user, claims):
