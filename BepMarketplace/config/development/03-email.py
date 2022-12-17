@@ -11,9 +11,10 @@ EMAIL_HOST_USER = 'svcbepmarktplcmailer@tue.nl'
 EMAIL_HOST_PASSWORD = IMPORT_EMAIL_HOST_PASSWORD
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
-SERVER_EMAIL = 'bepmarketplace_mailer@tue.nl'
+SERVER_EMAIL = 'bepmarketplace@tue.nl'
 FROM_EMAIL_ADDRESS = SERVER_EMAIL
-EMAIL_TIMOUT = 20  # seconds
+EMAIL_TIMOUT =
+20  # seconds
 
 # EMAIL_HOST = 'localhost'
 # EMAIL_PORT = 1025
