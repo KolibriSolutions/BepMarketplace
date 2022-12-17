@@ -13,8 +13,7 @@ EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 SERVER_EMAIL = 'bepmarketplace@tue.nl'
 FROM_EMAIL_ADDRESS = SERVER_EMAIL
-EMAIL_TIMOUT =
-20  # seconds
+EMAIL_TIMOUT = 20  # seconds
 
 # EMAIL_HOST = 'localhost'
 # EMAIL_PORT = 1025
