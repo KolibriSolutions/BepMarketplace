@@ -6,10 +6,10 @@ import logging
 
 from django.conf import settings
 from django.contrib import auth
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -41,7 +41,10 @@ def lti(request):
         return HttpResponse("Signature Validation failed!", status=403)
 
     data = request.POST
-    assert data['custom_canvas_api_domain'] == 'canvas.tue.nl', 'Error! Invalid CANVAS domain!'
+
+    if data['custom_canvas_api_domain'] != 'canvas.tue.nl':
+        logger.error(f'Invalid domain canvas; {data["custom_canvas_api_domain"]}')
+        return HttpResponse(f'This domain is invalid for accessing {settings.NAME_PRETTY} Error! Invalid CANVAS domain!', status=403)
 
     try:
         username = data['lis_person_sourcedid']
@@ -57,7 +60,7 @@ def lti(request):
     # The new user model and UserMeta is not fully populated, that will be done in the actual login via OIDC/SAML.
     user = get_user(email, username)
     if user is None:
-        user = User(email=email, username=username)
+        user = get_user_model().objects.create_user(email=email, username=username)
         user.save()
     else:  # existing user
         if request.user.is_authenticated:
@@ -101,6 +104,7 @@ def lti(request):
 
     try:
         meta.full_clean()
+        user.full_clean()
     except ValidationError as e:
         raise Exception(f"Saving updated user {user.email} full_clean failed with {e}")
 
@@ -110,9 +114,9 @@ def lti(request):
     # login
     auth.login(request, user, backend='django.contrib.auth.backends.ModelBackend')
     return render(request, 'base.html', context={'Message':
-                                                     mark_safe(
-                                                         f'You logged in successfully via CANVAS. From now on, you can also browse the marketplace without CANVAS at <a href="{settings.DOMAIN}/oidc/authenticate/" target="_blank" title="view {settings.HOSTNAME}">{settings.HOSTNAME}</a>'),
-                                                 'return': 'index:index'
-                                                 }
+        mark_safe(
+            f'You logged in successfully via CANVAS. From now on, you can also browse the marketplace without CANVAS at <a href="{settings.DOMAIN}/oidc/authenticate/" target="_blank" title="view {settings.HOSTNAME}">{settings.HOSTNAME}</a>'),
+        'return': 'index:index'
+    }
                   )
     # return redirect('/')
