@@ -50,6 +50,4 @@ urlpatterns = [
     path('group/switch/<int:pk>/', views.switch_group, name='switchgroups'),
     path('group/members/<int:pk>/', views.list_group_members, name='listgroupmembers'),
 
-
-
 ]

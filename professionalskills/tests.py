@@ -76,8 +76,10 @@ class ProfessionalSkillsViewsTest(ProjectViewsTestGeneral):
             [['editgroup', {'pk': 0}], self.p_support_prv],
             [['listgroups', {'pk': 100}], self.p_support_prv],
 
-            [['copy_overview', {'pk': 100}], self.p_support_prv],
-            [['copy', {'pk': 100, 'from_pk': 100}], self.p_support_prv],  # copy from itself.
+            [['copy_filetypes_overview', None], self.p_support_prv],
+            [['copy_filetypes', {'from_ts_pk': self.pts.pk}], self.p_forbidden],  # always forbidden because current ts already has prof skills.
+            [['copy_aspects_overview', {'pk': 100}], self.p_support_prv],
+            [['copy_aspects', {'pk': 100, 'from_pk': 100}], self.p_support_prv],  # copy from itself.
             [['filetype_export', {'pk': 100}], self.p_support_prv],  # copy from itself.
 
         ]
