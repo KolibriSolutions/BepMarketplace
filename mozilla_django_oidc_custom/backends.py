@@ -117,7 +117,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 
         if not meta.Overruled:
             try:
-                student_numbers = claims.get('schac_personal_unique_code')[0].split(';')
+                student_numbers = claims.get('schac_personal_unique_code')[0].split(':')
                 meta.Studentnumber = student_numbers[-1][0:19]  # format urn:schac:personalUniqueCode:nl:local:tue.nl;studentid;0803331
             except TypeError:
                 pass  # claim can be unavailable
@@ -128,7 +128,5 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
             user.full_clean()
         except ValidationError as e:
             raise Exception(f"Saving updated user {user.email} full_clean failed with {e}")
-        user.save()
-        user.full_clean()
         user.save()
         meta.save()
