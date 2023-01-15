@@ -130,6 +130,6 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
         return HttpResponseRedirect(self.success_url)
 
     def login_failure(self):
-        logger.error(f'Login failed for {self.user if hasattr(self, "user") else "unknown"}; via {self.request.META.get("HTTP_SEC_FETCH_DEST").lower()}; {self.request.META}')
+        logger.error(f'Login failed for {self.user if hasattr(self, "user") else "unknown"}; via {self.request.META.get("HTTP_SEC_FETCH_DEST")}; {self.request.META}')
         return render(request=self.request, template_name='base.html', status=403,
                       context={'Message': 'You are not allowed to login. If you think this is an error, please contact the support. If you tried to login via CANVAS please refresh the page (F5).'})

@@ -17,15 +17,16 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 ## Filters
 CSRF_USE_SESSIONS = True  # do not use cookies for csrf
 CSRF_FAILURE_VIEW = 'index.views.csrf_failure'
+# error handler for other errors is set in root urlconf.
+
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True  # prevent mime-type sniffing
-X_FRAME_OPTIONS = 'allow-from https://canvas.tue.nl'  # superseded by CPS_FRAME_ANCESTORS, only for backwards compat.
 CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'")
 CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")
 CSP_IMG_SRC = ("'self'", "data:")  # base64 images are used by lightbox
 CSP_CONNECT_SRC = ("'self'", "wss://"+HOSTNAME)  # websockets and ajax. Make sure wss:// is set and not ws://.
 CSP_BASE_URI = ("'self'")
-CSP_FRAME_ANCESTORS = ("https://canvas.tue.nl")  # Allow is being inherited by canvas in iframe.
+CSP_FRAME_ANCESTORS = ("https://canvas.tue.nl https://eindhoven.instructure.com")  # Allow is being inherited by canvas in iframe.
 CSP_FORM_ACTION = ("'self'")  # where form action=URI can point to
 
 ## Impersonate
@@ -59,6 +60,3 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 63072000  # half year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-
-## shen
-USERMETA_LOCAL_FIELDS = ['Cohort', 'Study', 'ECTS', 'EnrolledBEP', 'EnrolledExt', 'Overruled', 'Studentnumber', 'SuppressStatusMails']  # not timeslots, these are added in code.

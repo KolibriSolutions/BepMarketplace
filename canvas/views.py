@@ -42,7 +42,7 @@ def lti(request):
 
     data = request.POST
 
-    if data['custom_canvas_api_domain'] != 'canvas.tue.nl':
+    if data['custom_canvas_api_domain'] != 'canvas.tue.nl' and data['custom_canvas_api_domain'] != 'eindhoven.instructure.com':
         logger.error(f'Invalid domain canvas; {data["custom_canvas_api_domain"]}')
         return HttpResponse(f'This domain is invalid for accessing {settings.NAME_PRETTY} Error! Invalid CANVAS domain!', status=403)
 
@@ -51,7 +51,6 @@ def lti(request):
         email = data['lis_person_contact_email_primary']
         studentnumber = data['custom_canvas_user_login_id']
         coursecode = data['context_label']
-
     except KeyError as e:
         logger.error('Invalid post data from canvas; {}; {}'.format(data, e))
         raise PermissionDenied("Missing CANVAS data in POST. Please contact support")
