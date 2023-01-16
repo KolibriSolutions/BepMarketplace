@@ -32,7 +32,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         :param claims:
         :return:
         """
-        required_claims = ['uids', 'acr', 'eduperson_affiliation', 'email', 'email_verified', 'family_name', 'given_name', 'name', 'schac_home_organization', 'sub', 'updated_at']
+        required_claims = ['uids', 'acr', 'eduperson_affiliation', 'email', 'email_verified', 'schac_home_organization', 'sub', 'updated_at']
         for required_claim in required_claims:
             assert required_claim in claims, f'Claim {required_claim} missing from OpenID claims: {claims}'
         return True
@@ -103,14 +103,10 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
             meta = UserMeta(User=user)
 
         # make last name from fullname
-        meta.Fullname = claims.get('nickname')
+        meta.Fullname = claims.get('nickname', None)
 
-        # these attributes don't always exist
-        user.last_name = claims['family_name']
-        user.first_name = claims['given_name']
-
-        # with open('logging/claimsdump.txt', 'a+') as f:
-        #     f.write(str(claims))
+        user.last_name = claims.get('family_name', None)
+        user.first_name = claims.get('given_name', None)
 
         meta.Department = claims.get('ou', None)
         meta.Affiliation = claims.get('eduperson_affiliation', None)
