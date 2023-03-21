@@ -42,6 +42,7 @@ class Proposal(models.Model):
     GeneralDescription = models.TextField()
     StudentsTaskDescription = models.TextField()
     ExtensionDescription = models.TextField(null=True, blank=True)
+    RecommendedCourses = models.CharField(max_length=100, null=True, blank=True, help_text='Recommended courses to have finished for this project. Course code or name, max 100 characters.')
     Track = models.ForeignKey(Track, on_delete=models.PROTECT)
     Private = models.ManyToManyField(User, blank=True, related_name='personal_proposal')
     Status = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(4)],

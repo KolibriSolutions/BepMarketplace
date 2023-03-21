@@ -6,6 +6,7 @@ import zipfile
 from datetime import datetime
 from io import BytesIO
 from os import path
+from tempfile import NamedTemporaryFile
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
@@ -337,12 +338,14 @@ def list_students_xlsx(request, timeslot):
         raise PermissionDenied('Future timeslot.')
     typ = GradeCategory.objects.filter(TimeSlot=timeslot)
     des = get_distributions(request.user, timeslot=timeslot)
-    file = get_list_students_xlsx(des, typ, timeslot=timeslot)
-
-    response = HttpResponse(content=file)
-    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response['Content-Disposition'] = f'attachment; filename=students {timeslot}.xlsx'
-    return response
+    wb = get_list_students_xlsx(des, typ, timeslot=timeslot)
+    with NamedTemporaryFile() as tmp:
+        wb.save(tmp.name)
+        tmp.seek(0)
+        response = HttpResponse(content=tmp.read())
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response['Content-Disposition'] = f'attachment; filename=students {timeslot}.xlsx'
+        return response
 
 
 @not_minified_response

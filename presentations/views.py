@@ -4,6 +4,7 @@
 #
 import json
 from datetime import datetime
+from tempfile import NamedTemporaryFile
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -283,11 +284,14 @@ def export_presentations(request):
         return render(request, "base.html",
                       {"Message": "There is nothing planned yet. Please plan the presentations first."})
 
-    file = get_list_presentations_xlsx(sets)
-    response = HttpResponse(content=file)
-    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response['Content-Disposition'] = 'attachment; filename=presentations-planning.xlsx'
-    return response
+    wb = get_list_presentations_xlsx(sets)
+    with NamedTemporaryFile() as tmp:
+        wb.save(tmp.name)
+        tmp.seek(0)
+        response = HttpResponse(content=tmp.read())
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response['Content-Disposition'] = 'attachment; filename=presentations-planning.xlsx'
+        return response
 
 
 @login_required

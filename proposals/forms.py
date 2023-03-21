@@ -283,6 +283,7 @@ class ProjectForm(forms.ModelForm):
                   'GeneralDescription',
                   'StudentsTaskDescription',
                   'ExtensionDescription',
+                  'RecommendedCourses',
                   'TimeSlot',
                   'addPrivatesEmail',
                   'Private',  # also enabled on Create for resit-students, and for easier form validation.
@@ -294,6 +295,7 @@ class ProjectForm(forms.ModelForm):
             'GeneralDescription': 'General description',
             'StudentsTaskDescription': 'Students task description',
             'ExtensionDescription': 'Description for extension work',
+            'RecommendedCourses': 'Recommended courses',
             'TimeSlot': 'Time slot (year)',
             'Private': 'Change private students',
         }
@@ -308,6 +310,7 @@ class ProjectForm(forms.ModelForm):
             'GeneralDescription': widgets.MetroMarkdownInput,
             'StudentsTaskDescription': widgets.MetroMarkdownInput,
             'ExtensionDescription': widgets.MetroMarkdownInput,
+            'RecommendedCourses': widgets.MetroTextInput,
             'TimeSlot': widgets.MetroSelect,
             'Private': widgets.MetroSelectMultiple
         }

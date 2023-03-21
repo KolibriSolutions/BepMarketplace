@@ -4,7 +4,6 @@
 
 from django.conf import settings
 from openpyxl import Workbook
-from openpyxl.writer.excel import save_virtual_workbook
 
 from general_view import timestamp
 from professionalskills.models import FileType, StaffResponse
@@ -86,4 +85,4 @@ def get_prv_type_xlsx(prv, des):
         else:  # no file
             row.append('No file')
         ws.append(row)
-    return save_virtual_workbook(wb)
+    return wb

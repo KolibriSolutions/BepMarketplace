@@ -5,6 +5,8 @@
 import random
 import zipfile
 from io import BytesIO
+from tempfile import NamedTemporaryFile
+
 from django.utils.safestring import mark_safe
 
 from django.contrib.auth.decorators import login_required
@@ -726,11 +728,13 @@ def export_filetype_xlsx(request, pk):
     dists = get_distributions(request.user, timeslot=prv.TimeSlot)
     if not dists:
         raise PermissionDenied('There are no students')
-    file = get_prv_type_xlsx(prv=prv, des=dists)
-
-    response = HttpResponse(content=file)
-    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response['Content-Disposition'] = f'attachment; filename=students {prv}.xlsx'
+    wb = get_prv_type_xlsx(prv=prv, des=dists)
+    with NamedTemporaryFile() as tmp:
+        wb.save(tmp.name)
+        tmp.seek(0)
+        response = HttpResponse(content=tmp.read())
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response['Content-Disposition'] = f'attachment; filename=students {prv}.xlsx'
     return response
 
 

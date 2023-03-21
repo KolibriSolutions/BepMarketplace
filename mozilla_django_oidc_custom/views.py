@@ -8,8 +8,9 @@ import time
 
 from django.conf import settings
 from django.contrib import auth
+from django.core.exceptions import SuspiciousOperation, PermissionDenied
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from mozilla_django_oidc.views import OIDCAuthenticationCallbackView
 
 from general_view import get_grouptype
@@ -129,7 +130,27 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
 
         return HttpResponseRedirect(self.success_url)
 
-    def login_failure(self):
-        logger.error(f'Login failed for {self.user if hasattr(self, "user") else "unknown"}; via {self.request.META.get("HTTP_SEC_FETCH_DEST")}; {self.request.META}')
-        return render(request=self.request, template_name='base.html', status=403,
-                      context={'Message': 'You are not allowed to login. If you think this is an error, please contact the support. If you tried to login via CANVAS please refresh the page (F5).'})
+    def get(self, request):
+        """Callback handler for OIDC authorization code flow"""
+        try:
+            return super().get(request)
+        except SuspiciousOperation:
+            if request.user.is_authenticated:
+                auth.logout(request)
+            assert not request.user.is_authenticated
+            return self.login_failure(sus=True)
+
+    def login_failure(self, sus=False):
+        if self.request.GET.get("error"):  # surf denied/error
+            logger.error(f'Login SurfConext ERROR: {self.request.GET.get("error")}  for {self.user if hasattr(self, "user") else "unknown"}; {self.request.META}')
+            return render(request=self.request, template_name='base.html', status=403,
+                          context={'Message': f'You are not allowed to login. SurfConext returned error: {self.request.GET.get("error")}. Please login again via the homepage or contact support.'})
+        elif sus or "oidc_states" not in self.request.session:  # via suspicious operation
+            logger.error(f'Login invalid {"SuspiciousOperation" if sus else ""} ERROR:{self.user if hasattr(self, "user") else "unknown"}; {self.request.META}')
+            return render(request=self.request, template_name='base.html', status=400,
+                          context={'Message': f'You tried to login using an invalid key. This can happen if you refreshed the page or re-opened an old page. Please login again via the homepage.'})
+        else:  # any other login error.
+            logger.error(f'Login failed for {self.user if hasattr(self, "user") else "unknown"}; via {self.request.META.get("HTTP_SEC_FETCH_DEST")}; {self.request.META}')
+
+            return render(request=self.request, template_name='base.html', status=403,
+                          context={'Message': 'You are not allowed to login. If you think this is an error, please contact the support. If you tried to login via CANVAS please refresh the page (F5).'})

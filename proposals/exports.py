@@ -6,7 +6,6 @@ from datetime import datetime
 
 from django.conf import settings
 from openpyxl import Workbook
-from openpyxl.writer.excel import save_virtual_workbook
 
 from proposals.utils import get_share_link
 
@@ -43,4 +42,4 @@ def get_list_projects_xlsx(proposals):
         ws.append([p.Title, str(p.Track), str(p.Group), p.ResponsibleStaff.usermeta.get_nice_name(), p.ResponsibleStaff.email,
                    get_share_link(p.pk)])
 
-    return save_virtual_workbook(wb)
+    return wb

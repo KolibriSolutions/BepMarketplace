@@ -186,6 +186,12 @@
                             <td>Capacity group:</td>
                             <td>{{ project.Group.FullName }}</td>
                         </tr>
+                        {% if project.RecommendedCourses %}
+                            <tr>
+                                <td>Recommended courses:</td>
+                                <td>{{ project.RecommendedCourses }}</td>
+                            </tr>
+                        {% endif %}
                         <tr>
                             <td>Students needed:</td>
                             <td>

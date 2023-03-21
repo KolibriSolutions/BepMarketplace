@@ -4,7 +4,6 @@
 
 from django.conf import settings
 from openpyxl import Workbook
-from openpyxl.writer.excel import save_virtual_workbook
 
 from general_view import timestamp
 from professionalskills.models import FileType, StaffResponse
@@ -33,7 +32,7 @@ def get_list_students_xlsx(des, typ, timeslot):
     ws['A1'].style = 'Headline 2'
     ws['F1'] = "Exported on: " + timestamp()
 
-    header = ["Student id", "Student name", "Project", "Responsible teacher", "Assistants", "ECTS", "Track"]
+    header = ["Student id", "Student name", "Project", "Responsible teacher", "Assistants", "Assessors", "Pres. Assessors", "ECTS", "Track"]
     for t in typ:
         header.append(t.Name + " (" + str(t.Weight) + "%)")
 
@@ -48,6 +47,8 @@ def get_list_students_xlsx(des, typ, timeslot):
     ws.column_dimensions['C'].width = 25  # Project
     ws.column_dimensions['D'].width = 25  # responsible
     ws.column_dimensions['E'].width = 25  # assistants
+    ws.column_dimensions['F'].width = 25  # Assessors
+    ws.column_dimensions['G'].width = 25  # Presentation Assessors
 
     ws.append(header)
     cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
@@ -70,6 +71,18 @@ def get_list_students_xlsx(des, typ, timeslot):
         for a in d.Proposal.Assistants.all():
             assistants += a.usermeta.get_nice_name() + "; "
         row.append(assistants)
+        if hasattr(d, 'presentationtimeslot'):
+            ass1 = ''
+            for a in d.presentationtimeslot.Presentations.Assessors.all():
+                ass1 += a.usermeta.get_nice_name() + "; "
+            row.append(ass1)
+            ass2 = ''
+            for a in d.presentationtimeslot.Presentations.PresentationAssessors.all():
+                ass2 += a.usermeta.get_nice_name() + "; "
+            row.append(ass2)
+        else:
+            row.append('-')
+            row.append('-')
         if d.Student.usermeta.EnrolledExt:
             row.append(15)
         else:
@@ -85,7 +98,7 @@ def get_list_students_xlsx(des, typ, timeslot):
                 cell = ''
                 for file in files:
                     try:
-                        cell += file.staffresponse.Status+'; '
+                        cell += file.staffresponse.Status + '; '
                     except StaffResponse.DoesNotExist:
                         cell += 'file without grading; '
                 row.append(cell)
@@ -131,4 +144,4 @@ def get_list_students_xlsx(des, typ, timeslot):
             row.append(r)
         ws.append(row)
 
-    return save_virtual_workbook(wb)
+    return wb

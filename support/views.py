@@ -8,6 +8,7 @@ import zipfile
 from datetime import date, datetime
 from io import BytesIO
 from os import path
+from tempfile import NamedTemporaryFile
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -847,35 +848,47 @@ def history_download(request, timeslot, download):
             "Downloads of the current and future timeslots are not allowed. Please use the regular menu entries.")
     if download == 'distributions':
         projects = Proposal.objects.filter(TimeSlot=ts, Status=4).distinct()
-        file = get_list_distributions_xlsx(projects)
-        response = HttpResponse(content=file)
-        response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
-        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        wb = get_list_distributions_xlsx(projects)
+        with NamedTemporaryFile() as tmp:
+            wb.save(tmp.name)
+            tmp.seek(0)
+            response = HttpResponse(content=tmp.read())
+            response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
+            response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
     elif download == 'presentations':
         sets = PresentationSet.objects.filter(PresentationOptions__TimeSlot=ts)
         if not sets:
             return render(request, "base.html",
                           {"Message": "There is nothing planned yet. Please plan the presentations first."})
-        file = get_list_presentations_xlsx(sets)
-        response = HttpResponse(content=file)
-        response['Content-Disposition'] = 'attachment; filename=presentations-planning.xlsx'
-        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        wb = get_list_presentations_xlsx(sets)
+        with NamedTemporaryFile() as tmp:
+            wb.save(tmp.name)
+            tmp.seek(0)
+            response = HttpResponse(content=tmp.read())
+            response['Content-Disposition'] = 'attachment; filename=presentations-planning.xlsx'
+            response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
     elif download == 'nonfull':
         projects = Proposal.objects.annotate(num_distr=Count('distributions')).filter(TimeSlot=ts, Status=4, num_distr__lt=F(
             'NumStudentsMax')).order_by('Title')
-        file = get_list_projects_xlsx(projects)
-        response = HttpResponse(content=file)
-        response['Content-Disposition'] = 'attachment; filename=non-full-proposals-{}.xlsx'.format(ts.Name)
-        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        wb = get_list_projects_xlsx(projects)
+        with NamedTemporaryFile() as tmp:
+            wb.save(tmp.name)
+            tmp.seek(0)
+            response = HttpResponse(content=tmp.read())
+            response['Content-Disposition'] = 'attachment; filename=non-full-proposals-{}.xlsx'.format(ts.Name)
+            response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
     elif download == 'projects':
         projects = Proposal.objects.filter(TimeSlot=ts, Status=4).order_by('Title')
-        file = get_list_projects_xlsx(projects)
-        response = HttpResponse(content=file)
-        response['Content-Disposition'] = 'attachment; filename=non-full-proposals-{}.xlsx'.format(ts.Name)
-        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        wb = get_list_projects_xlsx(projects)
+        with NamedTemporaryFile() as tmp:
+            wb.save(tmp.name)
+            tmp.seek(0)
+            response = HttpResponse(content=tmp.read())
+            response['Content-Disposition'] = 'attachment; filename=non-full-proposals-{}.xlsx'.format(ts.Name)
+            response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
     elif download == 'publicfiles':
         in_memory = BytesIO()

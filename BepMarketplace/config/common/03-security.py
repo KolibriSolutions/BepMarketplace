@@ -4,14 +4,13 @@
 #
 
 ALLOWED_HOSTS = (HOSTNAME,)  # where requests can come from
-
+CSRF_TRUSTED_ORIGINS = ['https://' + HOSTNAME]
 
 ## Sessions
 SESSION_COOKIE_AGE = 86400  # one day
 SESSION_COOKIE_SECURE = not DEBUG
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-# cached sessions: disabled because SAML2 does not support it
-# SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
 
 ## Filters

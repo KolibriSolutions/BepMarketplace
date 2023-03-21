@@ -2,8 +2,8 @@
 #  Copyright (c) 2016-2022 Kolibri Solutions
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
-from django.conf.urls import url
 from django.urls import path
+
 from . import views
 
 app_name = 'godpowers'

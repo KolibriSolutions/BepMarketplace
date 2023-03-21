@@ -20,7 +20,19 @@ def markdown_safe(payload):
         text=md,
         extensions=['nl2br'],  # newline to linebreak
     )  # generate markdown
-    return bleach.clean(md, tags=bleach.ALLOWED_TAGS + [  # clean generated html
+    return bleach.clean(md, tags=(
+        "a",
+        "abbr",
+        "acronym",
+        "b",
+        "blockquote",
+        "code",
+        "em",
+        "i",
+        "li",
+        "ol",
+        "strong",
+        "ul",
         'img',
         'p',
         'br',
@@ -30,10 +42,11 @@ def markdown_safe(payload):
         'h4',
         'h5',
         'h6',
-    ], attributes={
-        'a': ['href', 'title'],
-        'img': ['src', 'title', 'width', 'height'],
-    })
+    )
+                        , attributes={
+            'a': ['href', 'title'],
+            'img': ['src', 'title', 'width', 'height'],
+        })
 
 
 def shift_markdown_headings(md):

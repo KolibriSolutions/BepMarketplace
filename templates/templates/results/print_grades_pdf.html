@@ -14,30 +14,49 @@
         <li>{{ assistant.usermeta.get_nice_name }}</li>
     {% endfor %}
 </ul>
-<h3>Grades per Category:</h3>
-<table class="table border bordered" style="width:100%;">
-    {% for cat in catresults %}
-        <tr>
-            <td colspan="2"><h3>{{ cat.Category }}</h3></td>
-        </tr>
-        <tr>
-            <td colspan="2"><b>Comments: </b>{{ cat.Comments }}</td>
-        </tr>
-        <tr>
-            <td style="width:50%;"><b>Grade:</b></td>
-            <td>{{ cat.Grade }}</td>
-        </tr>
-        <tr>
-            <td colspan="2"><h4>Aspects:</h4></td>
-        </tr>
-        {% for aspect in cat.aspectresults.all %}
-            <tr>
-                <td style="width:50%;"><i>{{ aspect.CategoryAspect.Name }}</i></td>
-                <td><i>{{ aspect.get_Grade_display }}</i></td>
-            </tr>
+{% if dstr.presentationtimeslot %}
+    <h3>Assessors:</h3>
+    <ul>
+        {% for assessor in dstr.presentationtimeslot.Presentations.Assessors.all %}
+            <li>{{ assessor.usermeta.get_nice_name }}</li>
         {% endfor %}
-    {% endfor %}
-</table>
+    </ul>
+
+    <h3>Presentation assessors:</h3>
+    <ul>
+        {% for assessor in dstr.presentationtimeslot.Presentations.PresentationAssessors.all %}
+            <li>{{ assessor.usermeta.get_nice_name }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+<h3>Grades per Category:</h3>
+{% if catresults %}
+    <table class="table border bordered" style="width:100%;">
+        {% for cat in catresults %}
+            <tr>
+                <td colspan="2"><h3>{{ cat.Category }}</h3></td>
+            </tr>
+            <tr>
+                <td colspan="2"><b>Comments: </b>{{ cat.Comments }}</td>
+            </tr>
+            <tr>
+                <td style="width:50%;"><b>Grade:</b></td>
+                <td>{{ cat.Grade }}</td>
+            </tr>
+            <tr>
+                <td colspan="2"><h4>Aspects:</h4></td>
+            </tr>
+            {% for aspect in cat.aspectresults.all %}
+                <tr>
+                    <td style="width:50%;"><i>{{ aspect.CategoryAspect.Name }}</i></td>
+                    <td><i>{{ aspect.get_Grade_display }}</i></td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+    </table>
+{% else %}
+    None
+{% endif %}
 <h3>Final Grade</h3>
 <table class="table border bordered" style="width:100%;">
     <tr>

@@ -7,6 +7,7 @@ from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 from django.urls import path, include
 from django.views.generic.base import RedirectView
+from two_factor.urls import urlpatterns as tf_urls
 
 admin.autodiscover()
 admin.site.login = login_required(admin.site.login)
@@ -34,7 +35,7 @@ urlpatterns = [
     path('support/', include('support.urls')),
     path('timeline/', include('timeline.urls')),
     path('tracking/', include('tracking.urls')),
-    path('two_factor/', include('two_factor_custom.urls')),
+    path('two_factor/', include(tf_urls)),
 ]
 
 if settings.DEBUG and 'debug_toolbar' in settings.INSTALLED_APPS:

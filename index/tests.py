@@ -46,7 +46,7 @@ class IndexViewsTest(ProjectViewsTestGeneral):
 
         self.loop_phase_code_user([-1, 1, 2, 3, 4, 5, 6, 7], codes_status)
         # check if all urls are processed, except login and logout
-        self.assertListEqual(self.allurls, ['login', 'logout'], msg="Not all URLs of this app are tested!")
+        self.assertListEqual(self.allurls, ['2falogin', 'login', 'logout'], msg="Not all URLs of this app are tested!")
 
     def test_links_visible(self):
         """

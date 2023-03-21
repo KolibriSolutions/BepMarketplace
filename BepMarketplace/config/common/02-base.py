@@ -7,11 +7,7 @@
 ## 02-base.py
 ## Common settings for all django projects in development and production
 import os
-
-try:
-    from BepMarketplace.config.secret import *
-except:
-    from BepMarketplace.secret import *
+from BepMarketplace.secret import *
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,9 +23,6 @@ DOMAIN = 'https://'+HOSTNAME  # also used for SAML metadata
 
 # django-ipware, used in tracking.
 IPWARE_TRUSTED_PROXY_LIST = []
-
-# django-js-error-hook, fix for csrf failure on post
-JAVASCRIPT_ERROR_CSRF_EXEMPT = True
 
 # django 3.2 default
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'  # 'django.db.models.AutoField'
@@ -92,6 +85,7 @@ SHORT_DATETIME_FORMAT = 'd-m-Y H:i'
 
 # Application definition
 INSTALLED_APPS = [
+    'daphne',
     'api.apps.ApiConfig',
     'distributions.apps.DistributionsConfig',
     'download.apps.DownloadConfig',
@@ -106,10 +100,9 @@ INSTALLED_APPS = [
     'templates.apps.TemplatesConfig',
     'timeline.apps.TimelineConfig',
     'tracking.apps.TrackingConfig',
-    'two_factor_custom.apps.TwoFactorCustomConfig',
     'osirisdata.apps.OsirisdataConfig',
     'canvas.apps.CanvasConfig',
-    # 'shen_ring.apps.ShenRingConfig',
+    'mozilla_django_oidc_custom.apps.MozillaDjangoOidcCustomConfig',
 
     'django.contrib.admin',
     'django.contrib.admindocs',
@@ -118,10 +111,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'django_otp',
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
+    'two_factor.plugins.phonenumber',  # required although it should be optional.
 
     'channels',
     'csp',
@@ -129,4 +122,5 @@ INSTALLED_APPS = [
     'openpyxl',
     'sendfile',
     'two_factor',
+    'mozilla_django_oidc',
 ]

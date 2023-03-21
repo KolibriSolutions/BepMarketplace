@@ -3,6 +3,7 @@
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 import json
+from tempfile import NamedTemporaryFile
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -85,11 +86,14 @@ def list_distributions_xlsx(request):
         projects = get_all_proposals().filter(Status=4)
     # projects = projects.select_related('ResponsibleStaff', 'Track').prefetch_related('Assistants',
     #                                                                                  'distributions__Student__usermeta')
-    file = get_list_distributions_xlsx(projects)
-    response = HttpResponse(content=file)
-    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
-    return response
+    wb = get_list_distributions_xlsx(projects)
+    with NamedTemporaryFile() as tmp:
+        wb.save(tmp.name)
+        tmp.seek(0)
+        response = HttpResponse(content=tmp.read())
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response['Content-Disposition'] = 'attachment; filename=marketplace-projects-distributions.xlsx'
+        return response
 
 
 @group_required('type3staff')

@@ -5,10 +5,8 @@
 from django.conf import settings
 from django.utils import timezone
 from openpyxl import Workbook
-from openpyxl.writer.excel import save_virtual_workbook
 
 from general_view import timestamp
-from django.template.defaultfilters import truncatechars
 
 
 def get_list_presentations_xlsx(sets):
@@ -99,4 +97,4 @@ def get_list_presentations_xlsx(sets):
             row.append(timezone.localtime(slot.DateTime).time().strftime("%H:%M"))
             row.append(slot.Duration())
             ws.append(row)
-    return save_virtual_workbook(wb)
+    return wb

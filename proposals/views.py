@@ -3,6 +3,7 @@
 #  License: See LICENSE file or https://github.com/KolibriSolutions/BepMarketplace/blob/master/LICENSE
 #
 from itertools import chain
+from tempfile import NamedTemporaryFile
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -880,8 +881,11 @@ def exports(request, download=None):
             projects = Proposal.objects.filter(TimeSlot=ts, Status=4, distributions__isnull=True).order_by('Title')
         else:
             raise PermissionDenied('Invalid download.')
-    file = get_list_projects_xlsx(projects)
-    response = HttpResponse(content=file)
-    response['Content-Disposition'] = 'attachment; filename=export-proposals-.xlsx'.format(download)
-    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    wb = get_list_projects_xlsx(projects)
+    with NamedTemporaryFile() as tmp:
+        wb.save(tmp.name)
+        tmp.seek(0)
+        response = HttpResponse(content=tmp.read())
+        response['Content-Disposition'] = f'attachment; filename=export-proposals-{download}.xlsx'
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     return response

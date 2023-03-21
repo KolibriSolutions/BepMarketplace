@@ -7,6 +7,7 @@ General functions, used for mailing
 """
 
 import json
+import logging
 import threading
 from math import floor
 from smtplib import SMTPException
@@ -24,6 +25,8 @@ from index.models import Track
 from index.models import UserMeta
 from proposals.utils import get_all_proposals, get_share_link
 from templates import context_processors
+
+logger = logging.getLogger('django')
 
 
 def send_mail(subject, email_template_name, context, to_email):
@@ -43,12 +46,14 @@ def send_mail(subject, email_template_name, context, to_email):
     try:
         email_message.send()
     except SMTPException as e:
+        logger.error(f'Send mail to user {to_email} SMTP error {e} ')
         with open("mailcrash.log", "a") as stream:
             stream.write("Mail to {} could not be send:\n{}\n for reason {}".format(to_email, html_email, e))
-    except ConnectionRefusedError:
+    except ConnectionRefusedError as e:
         if settings.DEBUG:
             print("Send mail refused!")
         else:
+            logger.error(f'Send mail to user {to_email} connection refused {e} ')
             with open("mailcrash.log", "a") as stream:
                 stream.write("Mail to {} could not be send:\n{}\n".format(to_email, html_email))
 

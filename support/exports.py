@@ -6,7 +6,6 @@ from datetime import datetime
 
 from django.conf import settings
 from openpyxl import Workbook
-from openpyxl.writer.excel import save_virtual_workbook
 
 from timeline.utils import get_timeslot
 
@@ -68,6 +67,6 @@ def get_list_distributions_xlsx(proposals):
         # row[4].alignment = Alignment(wrapText=True)
         # row[5].alignment = Alignment(wrapText=True)
         ws.append(row)
-    return save_virtual_workbook(wb)
+    return wb
 
 
