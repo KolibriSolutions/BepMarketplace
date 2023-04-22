@@ -15,7 +15,7 @@ django-otp>=0.8
 django-redis
 django-render-block
 django-phonenumber-field
-django-sendfile
+django-sendfile2
 django-two-factor-auth
 django>=4
 docutils
