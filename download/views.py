@@ -8,7 +8,7 @@ from django.contrib.auth.models import Group
 from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
-from sendfile import sendfile
+from django_sendfile import sendfile
 
 from general_model import get_ext
 from general_view import get_grouptype

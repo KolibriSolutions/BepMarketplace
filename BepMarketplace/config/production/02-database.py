@@ -45,3 +45,5 @@ CHANNEL_LAYERS = {
 }
 
 HTML_MINIFY = True
+
+SENDFILE_BACKEND = 'django_sendfile.backends.nginx'

@@ -45,10 +45,9 @@ MEDIA_URL = '/download/'
 STATIC_URL = '/static/'
 # copy static files from custom apps to the same static root as other files
 STATIC_ROOT = os.path.join(BASE_DIR, 'templates/static')
-# path for media download. This uses auth via the sendfile backend.
-SENDFILE_BACKEND = 'sendfile.backends.simple'
+# path for media download. This uses auth via the sendfile backend. Backend is set in 02-database.py
 SENDFILE_ROOT = MEDIA_ROOT
-SENDFILE_URL = '/protected/'
+SENDFILE_URL = '/media/'
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 if not DEBUG:
     ## SSL

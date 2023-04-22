@@ -34,3 +34,5 @@ CHANNEL_LAYERS = {
 }
 
 HTML_MINIFY = False
+
+SENDFILE_BACKEND = 'django_sendfile.backends.development'

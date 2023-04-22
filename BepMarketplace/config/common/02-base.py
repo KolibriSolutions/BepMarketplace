@@ -120,7 +120,7 @@ INSTALLED_APPS = [
     'csp',
     'impersonate',
     'openpyxl',
-    'sendfile',
+    'django_sendfile',
     'two_factor',
     'mozilla_django_oidc',
 ]
