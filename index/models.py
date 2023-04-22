@@ -97,6 +97,10 @@ class UserMeta(models.Model):
     def __str__(self):
         return str(self.User)
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        cache.delete('user_nice_fullname_{}'.format(self.id))
+
     def get_nice_name(self):
         """
         Get a users full name with preposition
