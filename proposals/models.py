@@ -127,7 +127,7 @@ class ProposalFile(models.Model):
         abstract = True
 
     def __str__(self):
-        return self.Proposal.Title + ' ' + self.Caption
+        return f'{self.Proposal.Title} {self.Caption}'
 
     def clean(self):
         self.Caption = clean_text(self.Caption)
